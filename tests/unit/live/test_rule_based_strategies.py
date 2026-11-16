@@ -2,19 +2,18 @@
 
 import sys
 from types import ModuleType
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Stub MetaTrader5 module for testing in environments without MT5.
-# Additive (mirror of test_rl_robot.py / test_live_entrypoint.py): if a
-# richer stub is already installed by another test module, top it up rather
-# than replacing it — otherwise later tests lose attributes like
-# ``symbol_info`` and hit MagicMock comparison errors.
+# Keep a real module stub so numeric MT5 constants remain numeric across tests.
 try:  # pragma: no cover - depends on platform
     import MetaTrader5  # noqa: F401
 except ImportError:
-    sys.modules.setdefault("MetaTrader5", ModuleType("MetaTrader5"))
-if "MetaTrader5" not in sys.modules or not hasattr(sys.modules["MetaTrader5"], "ORDER_TYPE_BUY"):
-    sys.modules["MetaTrader5"] = MagicMock()
+    mt5_stub = ModuleType("MetaTrader5")
+    setattr(mt5_stub, "TIMEFRAME_H1", 16385)
+    sys.modules.setdefault("MetaTrader5", mt5_stub)
+if not hasattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1"):
+    setattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1", 16385)
 
 
 class TestLiveTradingConfig:

@@ -11146,7 +11146,7 @@
       "name": "build_features",
       "numpy_style": false,
       "package": "features",
-      "source_line": 153,
+      "source_line": 155,
       "source_module": "features.pipeline.feature_matrix_builder",
       "source_path": "features/pipeline/feature_matrix_builder.py"
     },
@@ -12190,7 +12190,7 @@
       "name": "build_features",
       "numpy_style": false,
       "package": "features",
-      "source_line": 153,
+      "source_line": 155,
       "source_module": "features.pipeline.feature_matrix_builder",
       "source_path": "features/pipeline/feature_matrix_builder.py"
     },
@@ -12298,7 +12298,7 @@
       "name": "_DEFAULT_HTF_TIMEFRAMES",
       "numpy_style": false,
       "package": "features",
-      "source_line": 75,
+      "source_line": 77,
       "source_module": "features.pipeline.feature_matrix_builder",
       "source_path": "features/pipeline/feature_matrix_builder.py"
     },
@@ -12310,7 +12310,7 @@
       "name": "_FVG_DIST_CAP",
       "numpy_style": false,
       "package": "features",
-      "source_line": 77,
+      "source_line": 79,
       "source_module": "features.pipeline.feature_matrix_builder",
       "source_path": "features/pipeline/feature_matrix_builder.py"
     },
@@ -12322,7 +12322,7 @@
       "name": "_PO3_TRIGGER_CODE",
       "numpy_style": false,
       "package": "features",
-      "source_line": 83,
+      "source_line": 85,
       "source_module": "features.pipeline.feature_matrix_builder",
       "source_path": "features/pipeline/feature_matrix_builder.py"
     },
@@ -12334,7 +12334,7 @@
       "name": "_normalization_configuration_sha256",
       "numpy_style": false,
       "package": "features",
-      "source_line": 86,
+      "source_line": 88,
       "source_module": "features.pipeline.feature_matrix_builder",
       "source_path": "features/pipeline/feature_matrix_builder.py"
     },
@@ -21334,7 +21334,7 @@
       "name": "COST_US100",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 86,
+      "source_line": 97,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },
@@ -21574,7 +21574,7 @@
       "name": "CostModel.bar_quote",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 67,
+      "source_line": 78,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },
@@ -21586,7 +21586,7 @@
       "name": "CostModel.fill_price",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 47,
+      "source_line": 58,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },
@@ -21598,7 +21598,7 @@
       "name": "CostModel.total_cost",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 32,
+      "source_line": 43,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },

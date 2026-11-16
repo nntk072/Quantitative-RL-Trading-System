@@ -91,7 +91,7 @@ compatibility also depends on source and resolved configuration hashes:
 | Cache identity | Definition | Current version |
 |---|---|---|
 | `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` |
-| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v44-wilder-adx` |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v45-close-aligned-mtf-swings` |
 | `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v7-source-precision-quotes` |
 
 ## Inspect a resolved run

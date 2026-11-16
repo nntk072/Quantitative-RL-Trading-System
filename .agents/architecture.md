@@ -64,7 +64,7 @@ Use package APIs or these command surfaces. `scripts/` includes command entry po
 |---|---|---|
 | `BAR_CACHE_VERSION` | `market_data/loading/market_data_ingestion.py` | `v4-semantic-manifest` |
 | `TICK_CACHE_VERSION` | `market_data/loading/ticks.py` | `v7-source-precision-quotes` |
-| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v44-wilder-adx` |
+| `FEATURE_CACHE_VERSION` | `features/pipeline/feature_cache_identity.py` | `v45-close-aligned-mtf-swings` |
 
 Cache identity must remain causal and include fit scope/configuration inputs that affect generated content.
 

@@ -1362,9 +1362,9 @@
     },
     {
       "links": [
-        "../../../../features/pipeline/feature_matrix_builder.py#L153",
+        "../../../../features/pipeline/feature_matrix_builder.py#L155",
         "../../../../evaluation/reporting/order_chart_regeneration.py#L98",
-        "../../../../features/pipeline/feature_matrix_builder.py#L153",
+        "../../../../features/pipeline/feature_matrix_builder.py#L155",
         "../../../../evaluation/reporting/order_chart_regeneration.py#L98"
       ],
       "orphan_status": "in toctree",
@@ -1386,7 +1386,7 @@
         "../../../../tests/unit/features/test_fold_normalize.py#L58",
         "../../../../tests/unit/features/test_fold_normalize.py#L68",
         "../../../../features/pipeline/normalization.py#L158",
-        "../../../../tests/unit/features/test_feature_cache_and_fit_scope.py#L342",
+        "../../../../tests/unit/features/test_feature_cache_and_fit_scope.py#L405",
         "../../../../tests/unit/features/test_fold_normalize.py#L21"
       ],
       "orphan_status": "in toctree",
@@ -1425,9 +1425,9 @@
     {
       "links": [
         "../../../../features/pipeline/session_context_features.py#L8",
-        "../../../../features/pipeline/feature_matrix_builder.py#L778",
+        "../../../../features/pipeline/feature_matrix_builder.py#L780",
         "../../../../features/pipeline/session_context_features.py#L8",
-        "../../../../features/pipeline/feature_matrix_builder.py#L778"
+        "../../../../features/pipeline/feature_matrix_builder.py#L780"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/features/features__pipeline__session_context_features.md",
@@ -1457,7 +1457,7 @@
     {
       "links": [
         "../../../../features/po3/entries.py#L11",
-        "../../../../features/pipeline/feature_matrix_builder.py#L444"
+        "../../../../features/pipeline/feature_matrix_builder.py#L446"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/features/features__po3__entries.md",
@@ -2412,7 +2412,7 @@
     {
       "links": [
         "../../../../market_data/transforms/session_schedule.py#L13",
-        "../../../../features/pipeline/feature_matrix_builder.py#L290"
+        "../../../../features/pipeline/feature_matrix_builder.py#L292"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/market_data/market_data__transforms__session_schedule.md",
@@ -3146,7 +3146,7 @@
         "../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L90",
         "../../../../trading/execution/broker.py#L257",
         "../../../../tests/integration/backtest/test_broker_quote_parity.py#L22",
-        "../../../../tests/unit/trading/test_cost_model.py#L142",
+        "../../../../tests/unit/trading/test_cost_model.py#L155",
         "../../../../trading/execution/broker.py#L166",
         "../../../../tests/integration/backtest/test_broker_quote_parity.py#L17",
         "../../../../tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py#L87",
@@ -3169,14 +3169,14 @@
         "../../../../trading/execution/costs.py#L13",
         "../../../../tests/integration/backtest/test_broker_fill_accounting.py#L14",
         "../../../../tests/integration/backtest/test_broker_quote_parity.py#L16",
-        "../../../../trading/execution/costs.py#L67",
-        "../../../../tests/unit/trading/test_cost_model.py#L49",
+        "../../../../trading/execution/costs.py#L78",
+        "../../../../tests/unit/trading/test_cost_model.py#L62",
         "../../../../trading/execution/quotes.py#L132",
-        "../../../../trading/execution/costs.py#L47",
-        "../../../../tests/unit/trading/test_cost_model.py#L32",
-        "../../../../tests/unit/trading/test_cost_model.py#L38",
-        "../../../../trading/execution/costs.py#L32",
-        "../../../../tests/unit/trading/test_cost_model.py#L44"
+        "../../../../trading/execution/costs.py#L58",
+        "../../../../tests/unit/trading/test_cost_model.py#L45",
+        "../../../../tests/unit/trading/test_cost_model.py#L51",
+        "../../../../trading/execution/costs.py#L43",
+        "../../../../tests/unit/trading/test_cost_model.py#L57"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__execution__costs.md",
@@ -6372,7 +6372,7 @@
         "../../features/contracts.py#L35",
         "../../features/pipeline/schema.py#L122",
         "../../features/context/reachability.py#L161",
-        "../../features/pipeline/feature_matrix_builder.py#L153",
+        "../../features/pipeline/feature_matrix_builder.py#L155",
         "../../features/po3/fvg.py#L28",
         "../../features/po3/entries.py#L11",
         "../../features/pipeline/walkforward_feature_fitting.py#L13",
@@ -6391,7 +6391,7 @@
         "../../features/pipeline/schema.py#L122",
         "../../features/pipeline/normalization.py#L106",
         "../../features/context/reachability.py#L161",
-        "../../features/pipeline/feature_matrix_builder.py#L153",
+        "../../features/pipeline/feature_matrix_builder.py#L155",
         "../../features/pipeline/walkforward_feature_fitting.py#L13",
         "../../features/pipeline/session_context_features.py#L8",
         "../../features/pipeline/feature_cache_identity.py#L20",
@@ -6702,7 +6702,7 @@
         "../../trading/baselines/step_indexed_strategy.py#L38",
         "../../trading/baselines/step_indexed_strategy.py#L34",
         "../../trading/execution/broker.py#L129",
-        "../../trading/execution/costs.py#L86",
+        "../../trading/execution/costs.py#L97",
         "../../trading/execution/costs.py#L13",
         "../../trading/execution/costs.py#L9",
         "../../trading/execution/broker.py#L46",
@@ -6720,9 +6720,9 @@
         "../../trading/execution/broker.py#L257",
         "../../trading/execution/broker.py#L166",
         "../../trading/execution/broker.py#L154",
-        "../../trading/execution/costs.py#L67",
-        "../../trading/execution/costs.py#L47",
-        "../../trading/execution/costs.py#L32",
+        "../../trading/execution/costs.py#L78",
+        "../../trading/execution/costs.py#L58",
+        "../../trading/execution/costs.py#L43",
         "../../trading/orders/levels.py#L5",
         "../../trading/orders/entries.py#L45",
         "../../trading/orders/timeframes.py#L5",

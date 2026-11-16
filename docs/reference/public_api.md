@@ -284,7 +284,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `InputView` | class | [features.contracts](../../features/contracts.py#L35) | stable |
 | `OBS_RAW_PRICE_COLUMNS` | value | [features.pipeline.schema](../../features/pipeline/schema.py#L122) | stable |
 | `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
-| `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L153) | stable |
+| `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L155) | stable |
 | `build_fvg_zone_features` | function | [features.po3.fvg](../../features/po3/fvg.py#L28) | stable |
 | `build_po3_phase_features` | function | [features.po3.entries](../../features/po3/entries.py#L11) | stable |
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
@@ -303,7 +303,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `OBS_RAW_PRICE_COLUMNS` | value | [features.pipeline.schema](../../features/pipeline/schema.py#L122) | stable |
 | `apply_rolling_zscore_state` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L106) | stable |
 | `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
-| `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L153) | stable |
+| `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L155) | stable |
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
 | `feature_cache_content_hash` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L20) | stable |
@@ -649,7 +649,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `BaseStrategy.fast_forward` | method | [trading.baselines.step_indexed_strategy](../../trading/baselines/step_indexed_strategy.py#L38) | stable |
 | `BaseStrategy.reset` | method | [trading.baselines.step_indexed_strategy](../../trading/baselines/step_indexed_strategy.py#L34) | stable |
 | `Broker` | class | [trading.execution.broker](../../trading/execution/broker.py#L129) | stable |
-| `COST_US100` | value | [trading.execution.costs](../../trading/execution/costs.py#L86) | stable |
+| `COST_US100` | value | [trading.execution.costs](../../trading/execution/costs.py#L97) | stable |
 | `CostModel` | class | [trading.execution.costs](../../trading/execution/costs.py#L13) | stable |
 | `FILL_COST_PROVENANCE_SCHEMA_VERSION` | value | [trading.execution.costs](../../trading/execution/costs.py#L9) | stable |
 | `Position` | class | [trading.execution.broker](../../trading/execution/broker.py#L46) | stable |
@@ -667,9 +667,9 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `Broker.mark_to_market` | method | [trading.execution.broker](../../trading/execution/broker.py#L257) | stable |
 | `Broker.open_position` | method | [trading.execution.broker](../../trading/execution/broker.py#L166) | stable |
 | `Broker.required_margin` | method | [trading.execution.broker](../../trading/execution/broker.py#L154) | stable |
-| `CostModel.bar_quote` | method | [trading.execution.costs](../../trading/execution/costs.py#L67) | stable |
-| `CostModel.fill_price` | method | [trading.execution.costs](../../trading/execution/costs.py#L47) | stable |
-| `CostModel.total_cost` | method | [trading.execution.costs](../../trading/execution/costs.py#L32) | stable |
+| `CostModel.bar_quote` | method | [trading.execution.costs](../../trading/execution/costs.py#L78) | stable |
+| `CostModel.fill_price` | method | [trading.execution.costs](../../trading/execution/costs.py#L58) | stable |
+| `CostModel.total_cost` | method | [trading.execution.costs](../../trading/execution/costs.py#L43) | stable |
 | `DEVIATION_KS` | value | [trading.orders.levels](../../trading/orders/levels.py#L5) | stable |
 | `OrderGeometry` | class | [trading.orders.entries](../../trading/orders/entries.py#L45) | stable |
 | `TIMEFRAME_ORDER` | value | [trading.orders.timeframes](../../trading/orders/timeframes.py#L5) | stable |
