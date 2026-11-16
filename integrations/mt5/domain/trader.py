@@ -273,7 +273,12 @@ class MT5Trader(Trader):
 
     @staticmethod
     def _log_close_result(position: int, result: object | None) -> None:
-        """Report rejected and partial closes; callers must re-query position state."""
+        """Report rejected and partial closes; callers must re-query position state.
+
+        Args:
+            position: Position ticket submitted for close.
+            result: Broker response, or ``None`` if no response was received.
+        """
         if result is None:
             logger.error("Close request for position {} returned no broker result", position)
             return

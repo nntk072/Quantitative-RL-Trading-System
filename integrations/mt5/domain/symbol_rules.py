@@ -7,7 +7,15 @@ import MetaTrader5 as mt5
 
 
 def volume_matches_symbol(symbol_info: object, volume: float) -> bool:
-    """Check that a requested lot volume fits the symbol's live constraints."""
+    """Check that a requested lot volume fits the symbol's live constraints.
+
+    Args:
+        symbol_info: Broker-provided symbol constraints.
+        volume: Requested position volume in lots.
+
+    Returns:
+        Whether the volume satisfies the current minimum, maximum, and step.
+    """
     raw = tuple(
         getattr(symbol_info, name, None) for name in ("volume_min", "volume_max", "volume_step")
     )
@@ -34,7 +42,14 @@ def volume_matches_symbol(symbol_info: object, volume: float) -> bool:
 
 
 def filling_type(symbol_info: object) -> int | None:
-    """Choose a fill policy permitted by current symbol execution metadata."""
+    """Choose a fill policy permitted by current symbol execution metadata.
+
+    Args:
+        symbol_info: Broker-provided execution and filling flags.
+
+    Returns:
+        A permitted MT5 fill constant, or ``None`` if metadata is unsupported.
+    """
     filling = getattr(symbol_info, "filling_mode", None)
     execution = getattr(symbol_info, "trade_exemode", None)
     if isinstance(filling, bool) or isinstance(execution, bool):
@@ -62,7 +77,17 @@ def filling_type(symbol_info: object) -> int | None:
 def symbol_allows_open(
     symbol_info: object, position_type: int, *, sl: float | None, tp: float | None
 ) -> bool:
-    """Check live symbol trade, market-order, stop, and target permissions."""
+    """Check live symbol trade, market-order, stop, and target permissions.
+
+    Args:
+        symbol_info: Broker-provided trade and order flags.
+        position_type: MT5 buy or sell order type.
+        sl: Stop-loss price to attach, if any.
+        tp: Take-profit price to attach, if any.
+
+    Returns:
+        Whether the symbol currently permits the requested entry.
+    """
     trade_mode, order_mode = (
         getattr(symbol_info, "trade_mode", None),
         getattr(symbol_info, "order_mode", None),

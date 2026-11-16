@@ -13102,7 +13102,7 @@
       "name": "MT5Trader",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 8,
+      "source_line": 13,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13114,7 +13114,7 @@
       "name": "RiskManager",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 10,
+      "source_line": 11,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13390,7 +13390,7 @@
       "name": "MT5Trader",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 8,
+      "source_line": 13,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13414,7 +13414,7 @@
       "name": "RiskManager",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 10,
+      "source_line": 11,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13606,7 +13606,7 @@
       "name": "RiskManager.calculate_position_size",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 267,
+      "source_line": 268,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13618,7 +13618,7 @@
       "name": "RiskManager.calculate_stop_loss_price",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 394,
+      "source_line": 399,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13630,7 +13630,7 @@
       "name": "RiskManager.check_risk_limits",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 546,
+      "source_line": 551,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13642,7 +13642,7 @@
       "name": "RiskManager.get_account_balance",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 129,
+      "source_line": 130,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13654,7 +13654,7 @@
       "name": "RiskManager.get_account_equity",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 149,
+      "source_line": 150,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13666,7 +13666,7 @@
       "name": "RiskManager.get_total_exposure",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 435,
+      "source_line": 440,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13678,7 +13678,7 @@
       "name": "RiskManager.get_volatility_multiplier",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 639,
+      "source_line": 644,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13690,7 +13690,7 @@
       "name": "RiskManager.supports_training_account_loss_guardrails",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "integrations.mt5.domain.risk_manager",
       "source_path": "integrations/mt5/domain/risk_manager.py"
     },
@@ -13906,7 +13906,7 @@
       "name": "MT5Trader.calculate_position_size",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 242,
+      "source_line": 291,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13918,7 +13918,7 @@
       "name": "MT5Trader.close_positions",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 64,
+      "source_line": 84,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13930,7 +13930,7 @@
       "name": "MT5Trader.get_all_positions",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 178,
+      "source_line": 210,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13942,7 +13942,7 @@
       "name": "MT5Trader.get_opened_positions",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 140,
+      "source_line": 172,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13954,7 +13954,7 @@
       "name": "MT5Trader.open_position",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 11,
+      "source_line": 16,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },
@@ -13966,7 +13966,7 @@
       "name": "MT5Trader.send_to_break_even",
       "numpy_style": false,
       "package": "integrations",
-      "source_line": 193,
+      "source_line": 225,
       "source_module": "integrations.mt5.domain.trader",
       "source_path": "integrations/mt5/domain/trader.py"
     },

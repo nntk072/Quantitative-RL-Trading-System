@@ -2,7 +2,7 @@
 
 This guide connects every exported callable to its owner, workflow context, and the strongest source-backed usage evidence available. Examples are real call-site excerpts from implementation code, tutorials, or tests; fixture-dependent excerpts link to their source test. An explicit no-call-site label means repository analysis found no direct invocation, so the page gives the owning lifecycle and complete contract without inventing a recipe.
 
-Current source call-site coverage: 470 of 667 callable records.
+Current source call-site coverage: 471 of 667 callable records.
 
 ```{toctree}
 :maxdepth: 1

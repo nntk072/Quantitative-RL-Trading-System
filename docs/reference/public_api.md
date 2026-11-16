@@ -338,8 +338,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `MT5Data` | class | [integrations.mt5.domain.data_sources.mt5_data](../../integrations/mt5/domain/data_sources/mt5_data.py#L7) | stable |
-| `MT5Trader` | class | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L8) | stable |
-| `RiskManager` | class | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L10) | stable |
+| `MT5Trader` | class | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L13) | stable |
+| `RiskManager` | class | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L11) | stable |
 | `ensure_mt5_logged_in` | function | [integrations.mt5.domain.mt5_connection](../../integrations/mt5/domain/mt5_connection.py#L8) | stable |
 | `Trader` | class | [integrations.mt5.adapters.trader](../../integrations/mt5/adapters/trader.py#L5) | stable |
 | `TradingData` | class | [integrations.mt5.adapters.data](../../integrations/mt5/adapters/data.py#L6) | stable |
@@ -356,9 +356,9 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `CombinedStrategy` | class | [integrations.mt5.domain.strategies.combined_strategy](../../integrations/mt5/domain/strategies/combined_strategy.py#L10) | stable |
 | `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8) | stable |
 | `MT5Data` | class | [integrations.mt5.domain.data_sources.mt5_data](../../integrations/mt5/domain/data_sources/mt5_data.py#L7) | stable |
-| `MT5Trader` | class | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L8) | stable |
+| `MT5Trader` | class | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L13) | stable |
 | `MultiSymbolManager` | class | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L11) | stable |
-| `RiskManager` | class | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L10) | stable |
+| `RiskManager` | class | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L11) | stable |
 | `SMCStrategy` | class | [integrations.mt5.domain.strategies.smc_strategy](../../integrations/mt5/domain/strategies/smc_strategy.py#L7) | stable |
 | `TrendBreakoutStrategy` | class | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L9) | stable |
 | `VolatilityAnalyzer` | class | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L11) | stable |
@@ -373,14 +373,14 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `MultiSymbolManager.refresh_data` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L183) | stable |
 | `MultiSymbolManager.remove_symbol` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L158) | stable |
 | `MultiSymbolManager.update_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L94) | stable |
-| `RiskManager.calculate_position_size` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L267) | stable |
-| `RiskManager.calculate_stop_loss_price` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L394) | stable |
-| `RiskManager.check_risk_limits` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L546) | stable |
-| `RiskManager.get_account_balance` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L129) | stable |
-| `RiskManager.get_account_equity` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L149) | stable |
-| `RiskManager.get_total_exposure` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L435) | stable |
-| `RiskManager.get_volatility_multiplier` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L639) | stable |
-| `RiskManager.supports_training_account_loss_guardrails` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L18) | stable |
+| `RiskManager.calculate_position_size` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L268) | stable |
+| `RiskManager.calculate_stop_loss_price` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L399) | stable |
+| `RiskManager.check_risk_limits` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L551) | stable |
+| `RiskManager.get_account_balance` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L130) | stable |
+| `RiskManager.get_account_equity` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L150) | stable |
+| `RiskManager.get_total_exposure` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L440) | stable |
+| `RiskManager.get_volatility_multiplier` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L644) | stable |
+| `RiskManager.supports_training_account_loss_guardrails` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L19) | stable |
 | `CombinedStrategy` | class | [integrations.mt5.domain.strategies.combined_strategy](../../integrations/mt5/domain/strategies/combined_strategy.py#L10) | stable |
 | `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8) | stable |
 | `SMCStrategy` | class | [integrations.mt5.domain.strategies.smc_strategy](../../integrations/mt5/domain/strategies/smc_strategy.py#L7) | stable |
@@ -397,12 +397,12 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TrendBreakoutStrategy.identify_consolidation` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L58) | stable |
 | `TrendBreakoutStrategy.identify_support_resistance` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L36) | stable |
 | `TrendBreakoutStrategy.signal` | method | [integrations.mt5.domain.strategies.trend_breakout_strategy](../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L158) | stable |
-| `MT5Trader.calculate_position_size` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L242) | stable |
-| `MT5Trader.close_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L64) | stable |
-| `MT5Trader.get_all_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L178) | stable |
-| `MT5Trader.get_opened_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L140) | stable |
-| `MT5Trader.open_position` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L11) | stable |
-| `MT5Trader.send_to_break_even` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L193) | stable |
+| `MT5Trader.calculate_position_size` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L291) | stable |
+| `MT5Trader.close_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L84) | stable |
+| `MT5Trader.get_all_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L210) | stable |
+| `MT5Trader.get_opened_positions` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L172) | stable |
+| `MT5Trader.open_position` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L16) | stable |
+| `MT5Trader.send_to_break_even` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L225) | stable |
 | `VolatilityAnalyzer.calculate_atr` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L50) | stable |
 | `VolatilityAnalyzer.calculate_volatility_metrics` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L94) | stable |
 | `VolatilityAnalyzer.get_symbol_info` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L212) | stable |
