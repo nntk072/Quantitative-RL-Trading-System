@@ -21,6 +21,7 @@ def _open_event(
     price: float = 100.0,
     lots: float = 1.0,
     contract_size: float = 1.0,
+    point_value: float = 1.0,
     commission_per_lot: float = 4.0,
 ) -> dict[str, object]:
     return {
@@ -31,6 +32,7 @@ def _open_event(
         "price": price,
         "lots": lots,
         "contract_size": contract_size,
+        "point_value": point_value,
         "commission_per_lot": commission_per_lot,
         "entry_commission": lots * commission_per_lot,
     }
@@ -44,10 +46,11 @@ def _close_event(
     exit_price: float,
     size: float = 1.0,
     contract_size: float = 1.0,
+    point_value: float = 1.0,
     commission_per_lot: float = 4.0,
     position_complete: bool = True,
 ) -> dict[str, object]:
-    gross_pnl = (exit_price - entry_price) * direction * size * contract_size
+    gross_pnl = (exit_price - entry_price) * direction * size * contract_size * point_value
     exit_commission = commission_per_lot * size
     entry_commission_allocated = commission_per_lot * size
     net_pnl = gross_pnl - exit_commission - entry_commission_allocated
@@ -60,6 +63,7 @@ def _close_event(
         "price": exit_price,
         "size": size,
         "contract_size": contract_size,
+        "point_value": point_value,
         "commission_per_lot": commission_per_lot,
         "gross_price_pnl": gross_pnl,
         "exit_commission": exit_commission,
@@ -73,7 +77,7 @@ def _close_event(
 
 def _trace_row(**overrides: object) -> dict[str, object]:
     row: dict[str, object] = {
-        "schema_version": "account_state_trace.v2",
+        "schema_version": "account_state_trace.v3",
         "valuation_time": "2025-01-06T15:00:00Z",
         "decision_time": "2025-01-06T15:00:00Z",
         "state_phase": "post_action_valuation",
@@ -105,6 +109,7 @@ def _trace_row(**overrides: object) -> dict[str, object]:
         "position_entry_price": None,
         "position_mark_price": None,
         "contract_size": 1.0,
+        "point_value": 1.0,
         "trade_event_count": 2,
         "cumulative_payouts": 0.0,
         "total_economic_value": 100_003.0,
@@ -160,6 +165,33 @@ def test_account_trace_reconstructs_cashflows_daily_loss_and_open_mark() -> None
     assert result["checks"]["position_mark_reconstructs_open_pnl"] == 1
     assert result["checks"]["session_net_daily_loss_matches_equity"] == 1
     assert result["checks"]["daily_risk_anchor_matches_session_or_payout_reset"] == 2
+
+
+def test_account_trace_open_mark_uses_recorded_non_unit_point_value() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                balance=100_000.0,
+                equity=100_036.0,
+                open_pnl=36.0,
+                total_economic_value=100_036.0,
+                peak_equity=100_036.0,
+                trailing_drawdown_usd=0.0,
+                position_direction=1,
+                position_size=2.0,
+                position_entry_price=100.0,
+                position_mark_price=103.0,
+                contract_size=3.0,
+                point_value=2.0,
+                trade_event_count=0,
+            )
+        ]
+    )
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame(), breach_events=[])
+
+    assert result["checks"]["position_mark_reconstructs_open_pnl"] == 1
+    assert result["status"] == "matched", result["failures"]
 
 
 def test_account_trace_rejects_boolean_daily_loss_amount() -> None:

@@ -979,7 +979,13 @@ def run_backtest(
 
             geometry_max_tp_dist = max_tp_distance(bars, features["atr_5"]).reindex(bars.index)
 
-    broker = Broker(cost_model=cost_model, **(broker_kwargs or {}))
+    broker_options = dict(broker_kwargs or {})
+    if "contract_size" in broker_options and float(broker_options["contract_size"]) != float(
+        contract_size
+    ):
+        raise ValueError("broker_kwargs.contract_size must match contract_size")
+    broker_options["contract_size"] = contract_size
+    broker = Broker(cost_model=cost_model, **broker_options)
     resolved_guardrails = dict(guardrail_kwargs or {})
     if repeated_payout:
         assert resolved_trading_policy is not None
@@ -1128,6 +1134,7 @@ def run_backtest(
                 breach_reason=breach_reason,
                 trade_event_count=len(state.trade_log),
                 contract_size=float(settings.contract_size),
+                point_value=float(settings.cost_model.point_value),
             ),
         }
 

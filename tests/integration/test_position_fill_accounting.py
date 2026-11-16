@@ -35,6 +35,7 @@ def test_partial_fills_accumulate_once_and_complete_only_at_final_fill() -> None
             cost_model=SimpleNamespace(
                 total_cost=lambda qty: 0.0,
                 commission_per_lot=0.0,
+                point_value=1.0,
             ),
             contract_size=1.0,
         ),

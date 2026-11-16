@@ -40,6 +40,7 @@ def test_cost_decomposition_reconciles_midpoint_to_net_position_pnl() -> None:
                 "price": 101.25,
                 "lots": 1.0,
                 "contract_size": 1.0,
+                "point_value": 2.0,
                 "commission_per_lot": 2.0,
                 "entry_commission": 2.0,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -58,11 +59,12 @@ def test_cost_decomposition_reconciles_midpoint_to_net_position_pnl() -> None:
                 "price": 101.75,
                 "size": 1.0,
                 "contract_size": 1.0,
+                "point_value": 2.0,
                 "commission_per_lot": 2.0,
-                "gross_price_pnl": 0.5,
+                "gross_price_pnl": 1.0,
                 "exit_commission": 2.0,
                 "entry_commission_allocated": 2.0,
-                "net_pnl": -3.5,
+                "net_pnl": -3.0,
                 "position_complete": True,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
                 **_provenance(
@@ -80,12 +82,12 @@ def test_cost_decomposition_reconciles_midpoint_to_net_position_pnl() -> None:
     assert report["status"] == "matched"
     assert report["completed_position_count"] == 1
     assert report["fill_count"] == 2
-    assert report["gross_midpoint_pnl"] == 3.0
-    assert report["gross_executed_price_pnl"] == 0.5
-    assert report["spread_cost"] == 2.0
-    assert report["slippage_cost"] == 0.5
+    assert report["gross_midpoint_pnl"] == 6.0
+    assert report["gross_executed_price_pnl"] == 1.0
+    assert report["spread_cost"] == 4.0
+    assert report["slippage_cost"] == 1.0
     assert report["commission_cost"] == 4.0
-    assert report["net_pnl"] == -3.5
+    assert report["net_pnl"] == -3.0
     assert abs(report["reconciliation_residual"]) < 1e-9
 
     events.loc[1, "gross_price_pnl"] = 0.6
@@ -95,7 +97,7 @@ def test_cost_decomposition_reconciles_midpoint_to_net_position_pnl() -> None:
         corrupted["availability_reason"]
         == "completed_position_close_execution_quote_does_not_reconcile"
     )
-    events.loc[1, "gross_price_pnl"] = 0.5
+    events.loc[1, "gross_price_pnl"] = 1.0
     events.loc[1, "exit_commission"] = 1.9
     corrupted_commission = decompose_fill_costs(events)
     assert corrupted_commission["status"] == "unavailable"
@@ -115,6 +117,7 @@ def test_cost_decomposition_does_not_call_historical_missing_cost_zero() -> None
                 "price": 100.0,
                 "lots": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "entry_commission": 2.0,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -126,6 +129,7 @@ def test_cost_decomposition_does_not_call_historical_missing_cost_zero() -> None
                 "price": 100.0,
                 "size": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "gross_price_pnl": 0.0,
                 "exit_commission": 2.0,
                 "entry_commission_allocated": 2.0,
@@ -153,6 +157,7 @@ def test_cost_decomposition_rejects_corruption_on_untouched_quote_side() -> None
                 "price": 101.25,
                 "lots": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "entry_commission": 2.0,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -171,6 +176,7 @@ def test_cost_decomposition_rejects_corruption_on_untouched_quote_side() -> None
                 "price": 101.75,
                 "size": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "gross_price_pnl": 0.5,
                 "exit_commission": 2.0,
@@ -207,6 +213,7 @@ def test_cost_decomposition_allocates_costs_across_partial_protective_and_market
                 "price": 101.25,
                 "lots": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "entry_commission": 2.0,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -225,6 +232,7 @@ def test_cost_decomposition_allocates_costs_across_partial_protective_and_market
                 "price": 101.75,
                 "size": 0.4,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "gross_price_pnl": 0.2,
                 "exit_commission": 0.8,
@@ -248,6 +256,7 @@ def test_cost_decomposition_allocates_costs_across_partial_protective_and_market
                 "price": 104.75,
                 "size": 0.6,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "gross_price_pnl": 2.1,
                 "exit_commission": 1.2,
@@ -297,6 +306,7 @@ def test_cost_decomposition_reconciles_short_protective_quote_level_slippage() -
                 "price": 98.75,
                 "lots": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "entry_commission": 2.0,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -315,6 +325,7 @@ def test_cost_decomposition_reconciles_short_protective_quote_level_slippage() -
                 "price": 104.25,
                 "size": 1.0,
                 "contract_size": 1.0,
+                "point_value": 1.0,
                 "commission_per_lot": 2.0,
                 "gross_price_pnl": -5.5,
                 "exit_commission": 2.0,

@@ -12,7 +12,7 @@ This page contains 8 public callable records owned by `integrations.mt5.domain.t
 
 **Observed usage:**
 
-1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L45)
+1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L46)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -25,10 +25,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 ) -> None:
     trader = MT5Trader()
     positions = pd.DataFrame(
-        [{"ticket": 17, "symbol": "US100.cash", "volume": 0.2, "type": position_type}]
-    )
-    submitted: list[dict[str, object]] = []
-    monkeypatch.setattr(trader, "get_all_positions", lambda: positions)
+        [
+            {
+                "ticket": 17,
+                "symbol": "US100.cash",
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_close_positions_only_closes_owned_magic_number`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L80)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_close_positions_only_closes_owned_magic_number(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    trader = MT5Trader()
+    positions = pd.DataFrame(
+        [
+            {
+                "ticket": 17,
+                "symbol": "US100.cash",
 # … caller assertions omitted …
 ```
 
@@ -49,7 +66,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L45)
+1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L46)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -62,10 +79,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 ) -> None:
     trader = MT5Trader()
     positions = pd.DataFrame(
-        [{"ticket": 17, "symbol": "US100.cash", "volume": 0.2, "type": position_type}]
-    )
-    submitted: list[dict[str, object]] = []
-    monkeypatch.setattr(trader, "get_all_positions", lambda: positions)
+        [
+            {
+                "ticket": 17,
+                "symbol": "US100.cash",
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_close_positions_only_closes_owned_magic_number`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L80)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_close_positions_only_closes_owned_magic_number(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    trader = MT5Trader()
+    positions = pd.DataFrame(
+        [
+            {
+                "ticket": 17,
+                "symbol": "US100.cash",
 # … caller assertions omitted …
 ```
 
@@ -82,7 +116,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Calculate lots for a stop distance and risk fraction.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.calculate_position_size` · **Source:** [integrations/mt5/domain/trader.py:227](../../../../integrations/mt5/domain/trader.py#L227)
+**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.calculate_position_size` · **Source:** [integrations/mt5/domain/trader.py:242](../../../../integrations/mt5/domain/trader.py#L242)
 
 **Inputs and outputs:**
 
@@ -124,7 +158,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Kind:** method · **Status:** stable · **Owner:** `integrations.mt5.domain.trader`
 
-**Purpose:** Close matching open positions owned by the named robot.
+**Purpose:** Close open positions owned by the named robot's magic number.
 
 **Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.close_positions` · **Source:** [integrations/mt5/domain/trader.py:64](../../../../integrations/mt5/domain/trader.py#L64)
 
@@ -136,11 +170,12 @@ The input, output, and error contract above is the safe boundary for a caller. F
   robot_name: Strategy identifier used to filter positions.
   symbol: Optional broker symbol filter.
   position_type: Optional MetaTrader position type filter.
+  magic_number: Broker-stored identifier assigned to this strategy.
   ```
 
 **Observed usage:**
 
-1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L59)
+1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L68)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -151,11 +186,33 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     )
     monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
 
-    trader.close_positions("test", symbol="US100.cash", position_type=position_type)
+    trader.close_positions(
+        "test", symbol="US100.cash", position_type=position_type, magic_number=42
+    )
 
     assert len(submitted) == 1
     assert submitted[0]["type"] == expected_order_type
     assert submitted[0]["price"] == expected_price
+```
+
+2. [test fixture: `test_close_positions_only_closes_owned_magic_number`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L109)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        lambda _symbol: SimpleNamespace(bid=100.1, ask=100.2),
+        raising=False,
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    trader.close_positions(
+        "test", symbol="US100.cash", position_type=mt5.ORDER_TYPE_BUY, magic_number=42
+    )
+
+    assert len(submitted) == 1
+    assert submitted[0]["position"] == 17
+    assert submitted[0]["magic"] == 42
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -171,7 +228,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Fetch all currently open positions as a data frame.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_all_positions` · **Source:** [integrations/mt5/domain/trader.py:163](../../../../integrations/mt5/domain/trader.py#L163)
+**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_all_positions` · **Source:** [integrations/mt5/domain/trader.py:178](../../../../integrations/mt5/domain/trader.py#L178)
 
 **Inputs and outputs:**
 
@@ -183,7 +240,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `close_positions`](../../../../integrations/mt5/domain/trader.py#L74)
+1. [production caller: `close_positions`](../../../../integrations/mt5/domain/trader.py#L80)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -191,9 +248,9 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         df_open_positions = self.get_all_positions()
 
         if not df_open_positions.empty:
-            if not symbol and position_type is None:
-                position_list = df_open_positions["ticket"].unique().tolist()
-            elif symbol and position_type is None:
+            if "magic" not in df_open_positions.columns:
+                raise ValueError("cannot verify MT5 position ownership without magic metadata")
+            df_open_positions = df_open_positions[df_open_positions["magic"] == magic_number]
 # … caller assertions omitted …
 ```
 
@@ -208,7 +265,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return matching open positions and their total volume.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_opened_positions` · **Source:** [integrations/mt5/domain/trader.py:129](../../../../integrations/mt5/domain/trader.py#L129)
+**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_opened_positions` · **Source:** [integrations/mt5/domain/trader.py:140](../../../../integrations/mt5/domain/trader.py#L140)
 
 **Inputs and outputs:**
 
@@ -217,6 +274,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   ```text
   symbol: Optional broker symbol filter.
   position_type: Optional MetaTrader position type filter.
+  magic_number: Optional strategy ownership filter.
   ```
 
 - **Returns:**
@@ -225,20 +283,44 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Pair containing total volume and the filtered position frame.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_get_opened_positions_filters_by_strategy_magic_number`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L155)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = MT5Trader(...)
-result = instance.get_opened_positions(symbol=..., position_type=...)
+# … caller setup omitted …
+            Position(ticket=18, symbol="US100.cash", type=mt5.ORDER_TYPE_BUY, magic=99),
+        ),
+        raising=False,
+    )
+
+    count, positions = trader.get_opened_positions(
+        "US100.cash", mt5.ORDER_TYPE_BUY, magic_number=42
+    )
+
+    assert count == 1
+    assert positions["ticket"].tolist() == [17]
 ```
 
-**Lifecycle context:** This callable participates in `MT5Trader`: Execution adapter for submitting and managing MetaTrader positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.trader.MT5Trader.open_position`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.close_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_opened_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_all_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.send_to_break_even`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.calculate_position_size`
+2. [test fixture: `test_get_opened_positions_does_not_turn_broker_failure_into_no_positions`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L171)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_get_opened_positions_does_not_turn_broker_failure_into_no_positions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    trader = MT5Trader()
+    monkeypatch.setattr(mt5, "positions_get", lambda: None, raising=False)
+    monkeypatch.setattr(mt5, "last_error", lambda: (1, "terminal unavailable"), raising=False)
+
+    with pytest.raises(RuntimeError, match="terminal unavailable"):
+        trader.get_opened_positions("US100.cash", mt5.ORDER_TYPE_BUY, magic_number=42)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -299,7 +381,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Move eligible positions' stop losses to their break-even price.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.send_to_break_even` · **Source:** [integrations/mt5/domain/trader.py:178](../../../../integrations/mt5/domain/trader.py#L178)
+**Exact API:** {py:obj}`integrations.mt5.domain.trader.MT5Trader.send_to_break_even` · **Source:** [integrations/mt5/domain/trader.py:193](../../../../integrations/mt5/domain/trader.py#L193)
 
 **Inputs and outputs:**
 

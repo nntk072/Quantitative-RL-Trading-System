@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from typing import Any
 
 import yaml
 
-from configuration.paths import repository_root
-
-PROJECT_ROOT = repository_root(__file__)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 VARIANT_POLICY_DIR = PROJECT_ROOT / "config" / "variants"
 
 _NUMERIC_FIELDS = {

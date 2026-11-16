@@ -165,7 +165,7 @@ def bar_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L168)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L244)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -223,7 +223,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L196)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L272)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

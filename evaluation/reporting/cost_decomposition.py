@@ -14,6 +14,7 @@ from trading.execution import (
 )
 
 COST_DECOMPOSITION_SCHEMA_VERSION = "qrl.cost_decomposition.v1"
+_LEGACY_TRADE_CASHFLOW_SCHEMA = "trade_fill_cashflow.v1"
 _CLOSE_TYPES = frozenset(
     {"close", "stop_close", "tp_close", "forced_close", "eod_close", "tp_partial_close"}
 )
@@ -210,9 +211,16 @@ def decompose_fill_costs(
         direction = _number(opened.get("direction"))
         entry_lots = _number(opened.get("lots"))
         contract_size = _number(opened.get("contract_size"))
+        point_value = _number(opened.get("point_value"))
+        if (
+            opened.get("cashflow_schema_version") == _LEGACY_TRADE_CASHFLOW_SCHEMA
+            and point_value is None
+        ):
+            point_value = 1.0
         entry_commission = _number(opened.get("entry_commission"))
         if (
-            opened.get("cashflow_schema_version") != TRADE_CASHFLOW_SCHEMA_VERSION
+            opened.get("cashflow_schema_version")
+            not in {TRADE_CASHFLOW_SCHEMA_VERSION, _LEGACY_TRADE_CASHFLOW_SCHEMA}
             or opened.get("fill_cost_provenance_schema_version")
             != FILL_COST_PROVENANCE_SCHEMA_VERSION
             or direction not in {-1.0, 1.0}
@@ -220,6 +228,8 @@ def decompose_fill_costs(
             or entry_lots <= 0.0
             or contract_size is None
             or contract_size <= 0.0
+            or point_value is None
+            or point_value <= 0.0
             or entry_commission is None
         ):
             return _unavailable(
@@ -294,6 +304,12 @@ def decompose_fill_costs(
         for close_index, close in enumerate(closes):
             close_size = _number(close.get("size"))
             close_contract_size = _number(close.get("contract_size"))
+            close_point_value = _number(close.get("point_value"))
+            if (
+                close.get("cashflow_schema_version") == _LEGACY_TRADE_CASHFLOW_SCHEMA
+                and close_point_value is None
+            ):
+                close_point_value = 1.0
             close_direction = _number(close.get("direction"))
             gross_executed = _number(close.get("gross_price_pnl"))
             entry_allocated = _number(close.get("entry_commission_allocated"))
@@ -311,11 +327,13 @@ def decompose_fill_costs(
             slippage_applied = _boolean(close.get("slippage_applied_here"))
             close_mode = close.get("slippage_application_mode")
             if (
-                close.get("cashflow_schema_version") != TRADE_CASHFLOW_SCHEMA_VERSION
+                close.get("cashflow_schema_version")
+                not in {TRADE_CASHFLOW_SCHEMA_VERSION, _LEGACY_TRADE_CASHFLOW_SCHEMA}
                 or close.get("fill_cost_provenance_schema_version")
                 != FILL_COST_PROVENANCE_SCHEMA_VERSION
                 or close_direction != direction
                 or close_contract_size != contract_size
+                or close_point_value != point_value
                 or close_size is None
                 or close_size <= 0.0
                 or gross_executed is None
@@ -346,7 +364,11 @@ def decompose_fill_costs(
                 )
             exit_side = broker_bid if direction == 1.0 else broker_ask
             expected_gross = (
-                direction * (exit_price - entry_fill_price) * close_size * contract_size
+                direction
+                * (exit_price - entry_fill_price)
+                * close_size
+                * contract_size
+                * point_value
             )
             expected_commission = entry_commission_rate * close_size
             if (
@@ -408,15 +430,19 @@ def decompose_fill_costs(
                 )
             fill_mid = (pre_bid + pre_ask) / 2.0
             position_totals["gross_midpoint_pnl"] += (
-                direction * (fill_mid - entry_mid) * close_size * contract_size
+                direction * (fill_mid - entry_mid) * close_size * contract_size * point_value
             )
             position_totals["gross_executed_price_pnl"] += gross_executed
-            position_totals["spread_cost"] += (pre_ask - pre_bid) / 2.0 * close_size * contract_size
             position_totals["spread_cost"] += (
-                (entry_pre_ask - entry_pre_bid) / 2.0 * close_size * contract_size
+                (pre_ask - pre_bid) / 2.0 * close_size * contract_size * point_value
             )
-            position_totals["slippage_cost"] += slippage * close_size * contract_size
-            position_totals["slippage_cost"] += entry_slippage * close_size * contract_size
+            position_totals["spread_cost"] += (
+                (entry_pre_ask - entry_pre_bid) / 2.0 * close_size * contract_size * point_value
+            )
+            position_totals["slippage_cost"] += slippage * close_size * contract_size * point_value
+            position_totals["slippage_cost"] += (
+                entry_slippage * close_size * contract_size * point_value
+            )
             position_totals["commission_cost"] += entry_allocated + exit_commission
             position_totals["net_pnl"] += net_pnl
             closed_size += close_size

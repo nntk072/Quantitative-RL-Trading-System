@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1110](../../../../evaluation/rollout/trained_policy_rollout.py#L1110)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1202](../../../../evaluation/rollout/trained_policy_rollout.py#L1202)
 
 **Inputs and outputs:**
 
@@ -29,7 +29,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L359)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L388)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -52,6 +52,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert result["completed_data_split"] is True
     assert result["equity"].index[0] == bars.index[obs_window]
     assert len(result["equity"]) == len(bars) - obs_window + 1
+# … caller assertions omitted …
 ```
 
 2. [test fixture: `test_supervised_provider_runs_through_shared_evaluation_path`](../../../../tests/unit/learning/test_learning_supervised_reference.py#L104)
@@ -90,7 +91,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Walk a trained RL ``model`` over *bars*/*features* and collect trades.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:290](../../../../evaluation/rollout/trained_policy_rollout.py#L290)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:367](../../../../evaluation/rollout/trained_policy_rollout.py#L367)
 
 **Inputs and outputs:**
 
@@ -280,7 +281,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1110](../../../../evaluation/rollout/trained_policy_rollout.py#L1110)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1202](../../../../evaluation/rollout/trained_policy_rollout.py#L1202)
 
 **Inputs and outputs:**
 
@@ -301,7 +302,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L359)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L388)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -324,6 +325,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert result["completed_data_split"] is True
     assert result["equity"].index[0] == bars.index[obs_window]
     assert len(result["equity"]) == len(bars) - obs_window + 1
+# … caller assertions omitted …
 ```
 
 2. [test fixture: `test_supervised_provider_runs_through_shared_evaluation_path`](../../../../tests/unit/learning/test_learning_supervised_reference.py#L104)
@@ -362,7 +364,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return an observation → action callable with explicit action typing.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:231](../../../../evaluation/rollout/trained_policy_rollout.py#L231)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:305](../../../../evaluation/rollout/trained_policy_rollout.py#L305)
 
 **Inputs and outputs:**
 
@@ -373,6 +375,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   continuous_actions: Whether to enable or require the continuous actions.
   deterministic: Whether to enable or require the deterministic.
   strategy_actions: Whether to enable or require the strategy actions.
+  decision_callback: Optional receiver for each typed provider result.
   ```
 
 - **Returns:**
@@ -383,7 +386,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_rollout_routes_providers_through_semantic_adapter`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L149)
+1. [test fixture: `test_evaluation_rollout_routes_providers_through_semantic_adapter`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L167)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

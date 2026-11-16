@@ -32,7 +32,7 @@ This page contains 4 public callable records owned by `features.pipeline.feature
 
 **Observed usage:**
 
-1. [test fixture: `test_pipeline_development_cutoff_excludes_later_bar_values`](../../../../tests/integration/test_pipeline_splits.py#L232)
+1. [test fixture: `test_pipeline_development_cutoff_excludes_later_bar_values`](../../../../tests/integration/test_pipeline_splits.py#L362)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -183,7 +183,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_pipeline_development_cutoff_excludes_later_bar_values`](../../../../tests/integration/test_pipeline_splits.py#L232)
+1. [test fixture: `test_pipeline_development_cutoff_excludes_later_bar_values`](../../../../tests/integration/test_pipeline_splits.py#L362)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

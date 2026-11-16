@@ -124,7 +124,9 @@ class MultiSymbolRobot:
 
                 # Process buy signal
             if signal == Signal.BUY:
-                total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
+                total_buy, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+                )
 
                 if total_buy == 0:
                     if not self.paper_trading and not bool(
@@ -189,17 +191,26 @@ class MultiSymbolRobot:
                     logger.info(f"Buy position already exists for {symbol}")
 
                     # Close opposite positions
-                total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
+                total_sell, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+                )
                 if total_sell > 0:
                     logger.info(f"Closing existing sell positions for {symbol}")
                     if not self.paper_trading:
-                        self.trader.close_positions(self.name, symbol, mt5.ORDER_TYPE_SELL)
+                        self.trader.close_positions(
+                            self.name,
+                            symbol,
+                            mt5.ORDER_TYPE_SELL,
+                            magic_number=self.magic_number,
+                        )
                     else:
                         logger.info(f"[PAPER] Would close existing sell positions for {symbol}")
 
                         # Process sell signal
             elif signal == Signal.SELL:
-                total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
+                total_sell, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+                )
 
                 if total_sell == 0:
                     if not self.paper_trading and not bool(
@@ -264,11 +275,18 @@ class MultiSymbolRobot:
                     logger.info(f"Sell position already exists for {symbol}")
 
                     # Close opposite positions
-                total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
+                total_buy, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+                )
                 if total_buy > 0:
                     logger.info(f"Closing existing buy positions for {symbol}")
                     if not self.paper_trading:
-                        self.trader.close_positions(self.name, symbol, mt5.ORDER_TYPE_BUY)
+                        self.trader.close_positions(
+                            self.name,
+                            symbol,
+                            mt5.ORDER_TYPE_BUY,
+                            magic_number=self.magic_number,
+                        )
                     else:
                         logger.info(f"[PAPER] Would close existing buy positions for {symbol}")
 

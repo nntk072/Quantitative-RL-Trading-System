@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `market_data.loading.marke
 
 **Purpose:** Load, resample, clean, label and cache all symbols / timeframes.
 
-**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:47](../../../../market_data/loading/market_data_ingestion.py#L47)
+**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:116](../../../../market_data/loading/market_data_ingestion.py#L116)
 
 **Inputs and outputs:**
 
@@ -52,7 +52,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Load, resample, clean, label and cache all symbols / timeframes.
 
-**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:47](../../../../market_data/loading/market_data_ingestion.py#L47)
+**Exact API:** {py:obj}`market_data.loading.market_data_ingestion.run_pipeline` · **Source:** [market_data/loading/market_data_ingestion.py:116](../../../../market_data/loading/market_data_ingestion.py#L116)
 
 **Inputs and outputs:**
 

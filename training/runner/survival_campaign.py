@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from artifacts.atomic import write_text_atomic
-from configuration.paths import repository_root
 from evaluation.reporting.run_manifest import source_state
 from training.configuration.survival_gate import survival_config_identity
 
-ROOT = repository_root(__file__)
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def validate_survival_campaign(

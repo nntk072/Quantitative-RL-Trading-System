@@ -622,6 +622,7 @@ def apply_policy_action(
                 "lots": position.size,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
                 "contract_size": float(settings.contract_size),
+                "point_value": float(settings.cost_model.point_value),
                 "commission_per_lot": float(settings.cost_model.commission_per_lot),
                 "entry_commission": settings.cost_model.total_cost(position.size),
                 **trade_setup_event_identity_record(trade_setup_event_identity),

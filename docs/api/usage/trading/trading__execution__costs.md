@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `trading.execution.costs`.
 
 **Purpose:** Holds cost parameters and computes fill costs.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel` · **Source:** [trading/execution/costs.py:12](../../../../trading/execution/costs.py#L12)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel` · **Source:** [trading/execution/costs.py:13](../../../../trading/execution/costs.py#L13)
 
 **Observed usage:**
 
@@ -54,7 +54,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Derive bid/ask from close price using spread.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.bar_quote` · **Source:** [trading/execution/costs.py:56](../../../../trading/execution/costs.py#L56)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.bar_quote` · **Source:** [trading/execution/costs.py:67](../../../../trading/execution/costs.py#L67)
 
 **Inputs and outputs:**
 
@@ -73,7 +73,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_bar_quote_derives_ask_from_close`](../../../../tests/unit/trading/test_cost_model.py#L37)
+1. [test fixture: `test_bar_quote_derives_ask_from_close`](../../../../tests/unit/trading/test_cost_model.py#L49)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -108,7 +108,7 @@ def quote_from_bar_price(
 
 **Purpose:** Return the fill price for a market order.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.fill_price` · **Source:** [trading/execution/costs.py:36](../../../../trading/execution/costs.py#L36)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.fill_price` · **Source:** [trading/execution/costs.py:47](../../../../trading/execution/costs.py#L47)
 
 **Inputs and outputs:**
 
@@ -128,7 +128,7 @@ def quote_from_bar_price(
 
 **Observed usage:**
 
-1. [test fixture: `test_fill_price_buy_is_ask`](../../../../tests/unit/trading/test_cost_model.py#L20)
+1. [test fixture: `test_fill_price_buy_is_ask`](../../../../tests/unit/trading/test_cost_model.py#L32)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -139,7 +139,7 @@ def test_fill_price_buy_is_ask():
     assert fill == pytest.approx(100.5)
 ```
 
-2. [test fixture: `test_fill_price_sell_is_bid`](../../../../tests/unit/trading/test_cost_model.py#L26)
+2. [test fixture: `test_fill_price_sell_is_bid`](../../../../tests/unit/trading/test_cost_model.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -163,7 +163,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the explicit transaction cost for one side of a trade.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.total_cost` · **Source:** [trading/execution/costs.py:21](../../../../trading/execution/costs.py#L21)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.total_cost` · **Source:** [trading/execution/costs.py:32](../../../../trading/execution/costs.py#L32)
 
 **Inputs and outputs:**
 
@@ -182,7 +182,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_total_cost_is_commission_only`](../../../../tests/unit/trading/test_cost_model.py#L32)
+1. [test fixture: `test_total_cost_is_commission_only`](../../../../tests/unit/trading/test_cost_model.py#L44)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

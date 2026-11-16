@@ -141,6 +141,13 @@ class Broker:
 
     def __post_init__(self) -> None:
         """Validate and initialize Broker after construction."""
+        if (
+            isinstance(self.contract_size, bool)
+            or not isinstance(self.contract_size, (int, float))
+            or not isfinite(self.contract_size)
+            or self.contract_size <= 0.0
+        ):
+            raise ValueError("contract_size must be finite and positive")
         if self.cost_model is None:
             self.cost_model = CostModel()
 
@@ -230,8 +237,13 @@ class Broker:
         close_size = position.size if size is None else min(float(size), position.size)
         cost = self.cost_model.total_cost(close_size)
         pnl = (
-            fill - position.entry_price
-        ) * position.direction * close_size * self.contract_size - cost
+            (fill - position.entry_price)
+            * position.direction
+            * close_size
+            * self.contract_size
+            * self.cost_model.point_value
+            - cost
+        )
         acc.close_trade(pnl)
         position.size -= close_size
         if position.size <= 1e-9:
@@ -269,6 +281,7 @@ class Broker:
             * position.direction
             * position.size
             * self.contract_size
+            * self.cost_model.point_value
         )
         acc.update_equity(unrealised)
         return unrealised

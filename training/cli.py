@@ -31,6 +31,11 @@ def main() -> None:
     rest = argv[1:] if argv and argv[0] in commands else argv
 
     if command == "train":
+        help_tokens = rest[: rest.index("--")] if "--" in rest else rest
+        if any(token in {"-h", "--help"} for token in help_tokens):
+            from training.cli_arguments import build_train_parser
+
+            build_train_parser().parse_args(rest)
         from training.runner.training import main as command_main
     elif command == "backtest":
         from training.runner.backtest import main as command_main

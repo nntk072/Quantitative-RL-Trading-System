@@ -160,6 +160,7 @@ class RecordingTrader(Trader):
         self.opened: list[tuple[Any, ...]] = []
         self.opened_stops: list[float | None] = []
         self.closed: list[tuple[Any, ...]] = []
+        self.position_queries: list[tuple[Any, ...]] = []
         self.sells_open = sells_open
 
     def open_position(self, symbol, volume, position_type, comment, magic_number, sl=None, tp=None):
@@ -169,12 +170,13 @@ class RecordingTrader(Trader):
         self.opened_stops.append(sl)
         return SimpleNamespace(order=1, volume=volume, price=1.0, retcode=mt5.TRADE_RETCODE_DONE)
 
-    def close_positions(self, robot_name: str, symbol=None, position_type=None):
-        self.closed.append((symbol, position_type))
+    def close_positions(self, robot_name: str, symbol=None, position_type=None, *, magic_number):
+        self.closed.append((symbol, position_type, magic_number))
 
-    def get_opened_positions(self, symbol=None, position_type=None):
+    def get_opened_positions(self, symbol=None, position_type=None, *, magic_number=None):
         import MetaTrader5 as mt5
 
+        self.position_queries.append((symbol, position_type, magic_number))
         if self.sells_open and position_type == mt5.ORDER_TYPE_SELL:
             return 1, pd.DataFrame()
         return 0, pd.DataFrame()
@@ -247,7 +249,28 @@ def test_live_mode_places_buy_and_closes_opposite_sell(
     assert len(trader.opened) == 1
     assert trader.opened[0][2] == mt5.ORDER_TYPE_BUY
     assert trader.opened_stops[0] == 50.1
-    assert trader.closed == [("US100.cash", mt5.ORDER_TYPE_SELL)]
+    assert trader.closed == [("US100.cash", mt5.ORDER_TYPE_SELL, robot.magic_number)]
+    assert trader.position_queries
+    assert all(query[2] == robot.magic_number for query in trader.position_queries)
+
+
+def test_live_robot_does_not_open_when_position_query_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from live.runtime.contracts import LiveSignal
+
+    trader = RecordingTrader()
+    robot, _ = _make_robot(trader, paper_trading=False)
+    monkeypatch.setattr(robot.strategy, "signal", lambda: ("US100.cash", LiveSignal.BUY))
+
+    def positions_unavailable(*_args: Any, **_kwargs: Any):
+        raise RuntimeError("positions query unavailable")
+
+    monkeypatch.setattr(trader, "get_opened_positions", positions_unavailable)
+    with pytest.raises(RuntimeError, match="positions query unavailable"):
+        robot.trade()
+
+    assert trader.opened == []
 
 
 def test_live_robot_rejects_real_order_mode_without_account_loss_guardrails() -> None:

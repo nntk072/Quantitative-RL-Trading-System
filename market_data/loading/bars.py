@@ -9,19 +9,66 @@ SPREAD is in price points.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from pathlib import Path
 from typing import cast
 
+import numpy as np
 import pandas as pd
 
 _BAR_COLS = ["date", "time", "open", "high", "low", "close", "tickvol", "vol", "spread"]
 _DAILY_BAR_COLS = ["date", "open", "high", "low", "close", "tickvol", "vol", "spread"]
 _TICK_COLS = ["date", "time", "bid", "ask", "last", "volume", "flags"]
+_OHLC_COLS = ["open", "high", "low", "close"]
+log = logging.getLogger(__name__)
 
 
 class UnorderedTickSourceError(ValueError):
     """Raised when a cutoff-bounded tick source is not chronological."""
+
+
+def _bar_source_diagnostics(frame: pd.DataFrame) -> dict[str, int]:
+    """Summarize source row-order and duplicate conflicts before sorting.
+
+    Args:
+        frame: Parsed bars in their original source order.
+
+    Returns:
+        Counts of inversions, duplicate rows, and conflicting timestamps.
+    """
+    index = cast(pd.DatetimeIndex, frame.index)
+    duplicate_mask = index.duplicated(keep=False)
+    duplicates = frame.loc[duplicate_mask]
+    conflicting_duplicate_timestamps = int(
+        duplicates.groupby(level=0, sort=False).nunique(dropna=False).gt(1).any(axis=1).sum()
+    )
+    return {
+        "out_of_order_rows": int((index[1:] < index[:-1]).sum()),
+        "duplicate_rows": int(index.duplicated(keep="first").sum()),
+        "conflicting_duplicate_timestamps": conflicting_duplicate_timestamps,
+    }
+
+
+def _validate_bar_ohlc(frame: pd.DataFrame, path: Path) -> None:
+    """Reject non-finite or internally impossible OHLC rows.
+
+    Args:
+        frame: Parsed bars whose OHLC values must be checked.
+        path: Source path included in any validation error.
+    """
+    prices = frame[_OHLC_COLS].to_numpy(dtype=np.float64)
+    invalid = ~np.isfinite(prices).all(axis=1)
+    invalid |= prices[:, 1] < prices[:, 2]
+    invalid |= prices[:, 0] < prices[:, 2]
+    invalid |= prices[:, 0] > prices[:, 1]
+    invalid |= prices[:, 3] < prices[:, 2]
+    invalid |= prices[:, 3] > prices[:, 1]
+    if invalid.any():
+        timestamps = [str(value) for value in frame.index[invalid][:5]]
+        raise ValueError(
+            f"invalid OHLC rows in {path}: count={int(invalid.sum())}, timestamps={timestamps}"
+        )
 
 
 def load_bars(
@@ -78,9 +125,13 @@ def load_bars(
     if not has_time:
         df["time"] = "00:00:00"
     df["datetime"] = pd.to_datetime(df["date"] + " " + df["time"], format="%Y.%m.%d %H:%M:%S")
+    invalid_time = df["datetime"].isna()
+    if invalid_time.any():
+        raise ValueError(
+            f"invalid bar timestamps in {path}: rows={df.index[invalid_time][:5].tolist()}"
+        )
     df = df.drop(columns=["date", "time"])
     df = df.set_index("datetime")
-    df = df.sort_index()
     if start_inclusive is not None:
         if start_inclusive.tzinfo is not None:
             start_inclusive = start_inclusive.tz_localize(None)
@@ -89,6 +140,20 @@ def load_bars(
         if end_exclusive.tzinfo is not None:
             end_exclusive = end_exclusive.tz_localize(None)
         df = df.loc[df.index < end_exclusive]
+    spread = df["spread"].to_numpy(dtype=np.float64)
+    invalid_spread = ~np.isfinite(spread) | (spread < 0.0)
+    if invalid_spread.any():
+        timestamps = [str(value) for value in df.index[invalid_spread][:5]]
+        raise ValueError(
+            f"invalid spread values in {path}: count={int(invalid_spread.sum())}, "
+            f"timestamps={timestamps}"
+        )
+    diagnostics = _bar_source_diagnostics(df)
+    df.attrs["source_diagnostics"] = diagnostics
+    if any(diagnostics.values()):
+        log.warning("bar source order/duplicate diagnostics for %s: %s", path, diagnostics)
+    df = df.sort_index()
+    _validate_bar_ohlc(df, path)
     return df
 
 

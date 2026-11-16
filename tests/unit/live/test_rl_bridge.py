@@ -21,12 +21,20 @@ from omegaconf import OmegaConf
 
 from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
+from decisioning.contracts import (
+    ActionSchemaRef,
+    Decision,
+    DecisionInput,
+    DiscreteAction,
+    PredictorMetadata,
+)
 from decisioning.observations import (
     OBSERVATION_SCHEMA_REPEATED_PAYOUT,
     OBSERVATION_SCHEMA_V2,
     build_observation_schema,
 )
 from integrations.mt5.adapters.data import TradingData
+from live.runtime.strategy import RLStrategyAdapter
 
 # --- headless MetaTrader5 stub (Windows-only package, absent on Linux) -----
 if "MetaTrader5" not in sys.modules:
@@ -401,3 +409,43 @@ def test_rl_bridge_too_few_bars_no_signal(trending_bars):
     strategy = adapter.as_strategy(_StubData(trending_bars.iloc[:5]))
     _, sig = strategy.signal()
     assert sig.value == "none"
+
+
+def test_live_adapter_retains_the_single_typed_decision(monkeypatch: pytest.MonkeyPatch) -> None:
+    schema = ActionSchemaRef(
+        version="live-action-v1",
+        key="hold-enter",
+        coordinates=("hold", "enter"),
+        kind="discrete",
+    )
+    decision = Decision(DiscreteAction(1, "enter"), schema)
+
+    class Provider:
+        metadata = PredictorMetadata(
+            provider_id="test-provider",
+            model_family="test",
+            training_paradigm="test",
+            input_schema_version="account-state-v2",
+            action_schema=schema,
+        )
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision:
+            assert input.schema_version == "account-state-v2"
+            assert deterministic is True
+            self.calls += 1
+            return decision
+
+    provider = Provider()
+    adapter = RLStrategyAdapter(
+        provider=provider,
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    monkeypatch.setattr(adapter, "build_observation", lambda _account_state=None: {})
+
+    assert adapter.predict_signal() == 1
+    assert provider.calls == 1
+    assert adapter.last_decision is decision

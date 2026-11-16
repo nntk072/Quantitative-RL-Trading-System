@@ -481,7 +481,7 @@ class PositionRuntimeMixin(RuntimeMixinBase):
             pos.stale_counter = 0
         else:
             pos.stale_counter += 1
-        notional_adverse = adverse * pos.size * self.contract_size
+        notional_adverse = adverse * pos.size * self.contract_size * self.cost_model.point_value
         if notional_adverse >= self._eod_adverse_cut_usd(pos):
             self._force_close_guard(
                 fill_bid, fill_ask, "eod_max_loss", bar_time, fill_time=fill_time

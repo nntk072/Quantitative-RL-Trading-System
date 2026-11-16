@@ -82,6 +82,7 @@ is read by every listed package.
 | `constrained_rl.lambda_max` | `number` | `100.0` | `learning/rl` |
 | `costs.commission_per_lot` | `number` | `0.0` | `trading/execution` |
 | `costs.point_size` | `number` | `0.01` | `trading/execution` |
+| `costs.point_value` | `number` | `1.0` | `trading/execution` |
 | `costs.slippage_points` | `number` | `5.0` | `trading/execution` |
 | `costs.spread_us100` | `number` | `0.6` | `trading/execution` |
 | `costs.spread_us500` | `number` | `1.53` | `trading/execution` |

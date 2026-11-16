@@ -30,7 +30,6 @@ from omegaconf import DictConfig, OmegaConf
 from torch import nn
 
 from compute.environment.device import get_device
-from configuration.paths import repository_root
 from evaluation import build_run_report, run_episode
 from market_data.splits.definitions import split_train_test
 from simulation.environment.env import TradingEnv
@@ -43,7 +42,7 @@ from training.runner.feature_csv_validation import validate_feature_csv_against_
 from training.runner.feature_preparation import build_split_scoped_features
 
 OBS_WINDOW = 60  # must match TradingEnv's default obs_window
-DEFAULT_CONFIG = str(repository_root(__file__) / "config" / "base" / "default.yaml")
+DEFAULT_CONFIG = str(Path(__file__).resolve().parents[2] / "config" / "base" / "default.yaml")
 
 
 def parse_args() -> argparse.Namespace:

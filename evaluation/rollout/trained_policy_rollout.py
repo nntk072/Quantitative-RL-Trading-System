@@ -228,11 +228,86 @@ def _candidate_geometry_action_trace(
     }
 
 
+def _pre_action_setup_identity(env: Any, candidate_id: int) -> dict[str, Any]:
+    """Resolve setup provenance from the feature row before the environment steps.
+
+    Args:
+        env: Environment exposing the current feature row and step index.
+        candidate_id: Candidate selected by the current typed decision.
+
+    Returns:
+        The selected candidate's event identity, or an explicit empty/status record.
+    """
+    from decisioning.trade_setup import NO_TRADE_ID
+    from features.context.trade_setup_candidates import (
+        trade_setup_candidate_event_identities,
+        trade_setup_event_identity_record,
+    )
+
+    if candidate_id == NO_TRADE_ID:
+        return {}
+    row_at = getattr(env, "_feature_row_at", None)
+    if not callable(row_at):
+        return {
+            "trade_setup_source_event_id": None,
+            "trade_setup_source_event_identity_status": "identity_not_emitted",
+            "trade_setup_source_event_times_ns": [],
+        }
+    identities = trade_setup_candidate_event_identities(
+        row_at(int(env.step_idx)), candidate_ids=(candidate_id,)
+    )
+    if not identities:
+        return {
+            "trade_setup_source_event_id": None,
+            "trade_setup_source_event_identity_status": "candidate_ineligible",
+            "trade_setup_source_event_times_ns": [],
+        }
+    return trade_setup_event_identity_record(identities[0])
+
+
+def _decision_result_record(model: Any, decision: Any) -> dict[str, Any]:
+    """Serialize the typed provider result used to produce one environment action.
+
+    Args:
+        model: Provider whose metadata identifies the inference source.
+        decision: Typed result returned by that provider inference.
+
+    Returns:
+        JSON-compatible provider, action, and schema metadata.
+    """
+    from decisioning.contracts import ContinuousAction, DiscreteAction, StructuredAction
+
+    action = decision.action
+    if isinstance(action, DiscreteAction):
+        action_record = {"kind": "discrete", "index": int(action.index), "name": action.name}
+    elif isinstance(action, ContinuousAction):
+        action_record = {"kind": "continuous", "value": float(action.value)}
+    elif isinstance(action, StructuredAction):
+        action_record = {
+            "kind": "structured",
+            "coordinates": {str(name): float(value) for name, value in action.coordinates.items()},
+        }
+    else:
+        raise TypeError(f"unsupported semantic decision action: {type(action).__name__}")
+    schema = decision.action_schema
+    return {
+        "provider_id": str(model.metadata.provider_id),
+        "action": action_record,
+        "action_schema": {
+            "version": schema.version,
+            "key": schema.key,
+            "kind": schema.kind,
+            "coordinates": list(schema.coordinates),
+        },
+    }
+
+
 def make_action_fn(
     model: Any,
     continuous_actions: bool = False,
     deterministic: bool = True,
     strategy_actions: bool = False,
+    decision_callback: Any = None,
 ) -> Any:
     """Return an observation → action callable with explicit action typing.
 
@@ -253,6 +328,7 @@ def make_action_fn(
         continuous_actions: Whether to enable or require the continuous actions.
         deterministic: Whether to enable or require the deterministic.
         strategy_actions: Whether to enable or require the strategy actions.
+        decision_callback: Optional receiver for each typed provider result.
 
     Returns:
         Result of return an observation → action callable with explicit action typing.
@@ -266,6 +342,7 @@ def make_action_fn(
             deterministic=deterministic,
             continuous_actions=continuous_actions,
             strategy_actions=strategy_actions,
+            decision_callback=decision_callback,
         )
 
     def action_fn(obs: dict[str, Any]) -> Any:
@@ -655,8 +732,13 @@ def evaluate_model(
         obs, _ = env.reset(seed=execution_seed)
     done = False
     truncated = False
+    decision_results: list[Any] = []
     action_fn = make_action_fn(
-        model, continuous_actions, deterministic, strategy_actions=strategy_actions
+        model,
+        continuous_actions,
+        deterministic,
+        strategy_actions=strategy_actions,
+        decision_callback=decision_results.append,
     )
     action_counts: Counter[str] = Counter()
     trade_setup_decision_rows: list[dict[str, Any]] = []
@@ -713,6 +795,7 @@ def evaluate_model(
     discount_factor = 1.0
     while not (done or truncated):
         action = action_fn(obs)
+        decision_result = decision_results.pop() if decision_results else None
         decision_candidate_count: int | None = None
         eligible_candidate_ids: list[int] | None = None
         if isinstance(obs, dict) and "trade_setup_mask" in obs:
@@ -721,7 +804,11 @@ def evaluate_model(
             eligible_candidate_ids = np.flatnonzero(decision_mask).astype(int).tolist()
         trade_setup_record: dict[str, Any] | None = None
         policy = getattr(model, "policy", None)
-        coordinates = tuple(getattr(policy, "hybrid_action_coordinates", ()))
+        coordinates = (
+            tuple(decision_result.action_schema.coordinates)
+            if decision_result is not None
+            else tuple(getattr(policy, "hybrid_action_coordinates", ()))
+        )
         setup_coordinate = "trade_setup" if "trade_setup" in coordinates else None
         if strategy_actions and setup_coordinate is not None and isinstance(obs, dict):
             from decisioning.trade_setup import (
@@ -779,6 +866,8 @@ def evaluate_model(
             trade_setup_record.update(
                 {f"action_{name}": float(values[index]) for index, name in enumerate(coordinates)}
             )
+            if is_valid:
+                trade_setup_record.update(_pre_action_setup_identity(env, selected_id))
         if strategy_actions:
             action_key = str(tuple(np.round(np.asarray(action).reshape(-1), 4)))
         else:
@@ -824,6 +913,8 @@ def evaluate_model(
             "trade_event_start_index": trade_event_start_index,
             "trade_event_end_index_exclusive": len(env.trade_log),
         }
+        if decision_result is not None:
+            decision_row["typed_decision"] = _decision_result_record(model, decision_result)
         if "trade_setup_candidate_id" in info:
             decision_row.update(
                 {
@@ -838,6 +929,15 @@ def evaluate_model(
                     ),
                 }
             )
+        if trade_setup_record is not None:
+            for key in (
+                "trade_setup_event_identity_version",
+                "trade_setup_source_event_id",
+                "trade_setup_source_event_identity_status",
+                "trade_setup_source_event_times_ns",
+            ):
+                if key in trade_setup_record:
+                    decision_row[key] = trade_setup_record[key]
         if decision_candidate_count is not None:
             decision_row["eligible_candidate_count"] = decision_candidate_count
             decision_row["eligible_trade_setup_ids"] = eligible_candidate_ids
@@ -889,14 +989,6 @@ def evaluate_model(
             )
             trade_setup_record["valuation_time"] = str(valuation_time)
             trade_setup_record["decision_id"] = str(info.get("decision_id", ""))
-            for key in (
-                "trade_setup_event_identity_version",
-                "trade_setup_source_event_id",
-                "trade_setup_source_event_identity_status",
-                "trade_setup_source_event_times_ns",
-            ):
-                if key in info:
-                    trade_setup_record[key] = info[key]
             trade_setup_record["decision_bar_index"] = decision_bar_index
             trade_setup_record["entry_rejection_reason"] = str(
                 info.get("entry_rejection_reason", "")

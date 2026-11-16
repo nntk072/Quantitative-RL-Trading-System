@@ -1348,6 +1348,67 @@ class TestLoadMergedConfig:
         cfg = load_merged_config(ns)
         assert str(cfg.env.reward_mode) == "rr"
 
+    def test_locked_report_period_cannot_be_used_for_selection(self) -> None:
+        import argparse
+
+        ns = argparse.Namespace(
+            config=None,
+            strategy="baseline",
+            overrides=[],
+            allow_locked_oos_for_selection=True,
+        )
+        with pytest.raises(ValueError, match="exposed report-only period"):
+            load_merged_config(ns)
+
+    def test_selection_flag_allows_a_non_report_period_holdout(self) -> None:
+        import argparse
+
+        ns = argparse.Namespace(
+            config=None,
+            strategy="baseline",
+            overrides=[
+                "data.split.test_start=2027-01-01",
+                "data.split.test_end=2027-12-31",
+            ],
+            allow_locked_oos_for_selection=True,
+        )
+        cfg = load_merged_config(ns)
+        assert str(cfg.data.split.test_start) == "2027-01-01"
+
+    def test_selection_guard_uses_effective_test_dataset_end(self) -> None:
+        import argparse
+
+        ns = argparse.Namespace(
+            config=None,
+            strategy="baseline",
+            overrides=[
+                "data.split.train_end=2025-12-31",
+                "data.split.test_start=2025-01-01",
+                "data.split.test_end=2025-12-31",
+                "data.datasets.testing.end_date=2026-10-16",
+            ],
+            allow_locked_oos_for_selection=True,
+        )
+        with pytest.raises(ValueError, match="exposed report-only period"):
+            load_merged_config(ns)
+
+    def test_selection_guard_rejects_training_on_report_period(self) -> None:
+        import argparse
+
+        ns = argparse.Namespace(
+            config=None,
+            strategy="baseline",
+            overrides=[
+                "data.split.train_end=2026-03-01",
+                "data.split.test_start=2027-01-01",
+                "data.split.test_end=2027-12-31",
+                "data.datasets.training.end_date=2026-10-16",
+            ],
+            allow_locked_oos_for_selection=True,
+        )
+        with pytest.raises(ValueError, match="exposed report-only period"):
+            load_merged_config(ns)
+
     def test_variant_strategy_overrides_cli_strategy_without_double_merge(self) -> None:
         import argparse
 

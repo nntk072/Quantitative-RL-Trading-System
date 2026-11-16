@@ -80,6 +80,7 @@ class PositionOpenRuntimeMixin(RuntimeMixinBase):
                 entry_price - float(sl_price),
                 float(self.position.size),
                 self.contract_size,
+                self.cost_model.point_value,
             )
         self.position.tp_price = tp_price
         self.position.risk_frac = risk_frac

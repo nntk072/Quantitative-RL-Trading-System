@@ -18,7 +18,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-BUNDLE_VERSION = 4
+BUNDLE_VERSION = 6
 _ARRAY_NAME = re.compile(r"^[A-Za-z0-9_]+$")
 _RELEVANT_CONFIG_PATHS = (
     "env.obs_window",
@@ -126,13 +126,18 @@ def bundle_key(
     config: Mapping[str, Any],
     source_fingerprints: Mapping[str, Any],
     bundle_version: int = BUNDLE_VERSION,
+    *,
+    column_names: Mapping[str, Any] | None = None,
+    labels: Mapping[str, Any] | None = None,
 ) -> str:
-    """Hash relevant config, source fingerprints, and bundle format version.
+    """Hash config, sources, interpretation metadata, and bundle format version.
 
     Args:
         config: Configuration values used by this operation.
         source_fingerprints: Key-value data used for the source fingerprints.
         bundle_version: Numeric value used for the bundle version.
+        column_names: Ordered names that define the meaning of feature arrays.
+        labels: Labels used to interpret encoded bundle values.
 
     Returns:
         Text returned by ``bundle_key``.
@@ -141,6 +146,8 @@ def bundle_key(
         "bundle_version": bundle_version,
         "config": _relevant_config(config),
         "sources": source_fingerprints,
+        "column_names": dict(column_names or {}),
+        "labels": dict(labels or {}),
     }
     canonical = json.dumps(
         _json_compatible(payload), sort_keys=True, separators=(",", ":"), default=str
@@ -186,6 +193,19 @@ def _fsync_directory(path: Path) -> None:
         os.fsync(descriptor)
     finally:
         os.close(descriptor)
+
+
+def _sha256_file(path: Path) -> str:
+    """Return the SHA-256 digest of a file's contents.
+
+    Args:
+        path: File whose contents to hash.
+
+    Returns:
+        Lowercase hexadecimal SHA-256 digest.
+    """
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def _validate_arrays(arrays: Mapping[str, NDArray[Any]]) -> None:
@@ -237,6 +257,7 @@ def _write_bundle_directory(
             "file": filename,
             "shape": list(array.shape),
             "dtype": array.dtype.str,
+            "sha256": _sha256_file(temp_path / filename),
         }
     manifest = {
         "bundle_version": bundle_version,
@@ -284,7 +305,13 @@ def build_bundle(
         Path returned by ``build_bundle``.
     """
     _validate_arrays(arrays)
-    key = bundle_key(config, source_fingerprints, bundle_version)
+    key = bundle_key(
+        config,
+        source_fingerprints,
+        bundle_version,
+        column_names=column_names,
+        labels=labels,
+    )
     root = Path(cache_dir) / "shared_env"
     root.mkdir(parents=True, exist_ok=True)
     bundle_path = root / key
@@ -373,6 +400,17 @@ def load_bundle(path: Path | str) -> BundleArrays:
     bundle_path = Path(path)
     manifest_path = bundle_path / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest_key = manifest.get("key")
+    bundle_version = manifest.get("bundle_version")
+    expected_key = bundle_key(
+        manifest.get("config", {}),
+        manifest.get("source_fingerprints", {}),
+        bundle_version,
+        column_names=manifest.get("column_names", {}),
+        labels=manifest.get("labels", {}),
+    )
+    if manifest_key != expected_key or bundle_path.name != manifest_key:
+        raise ValueError(f"bundle identity digest mismatch: {bundle_path}")
     arrays: dict[str, NDArray[Any]] = {}
     entries = manifest.get("arrays")
     if not isinstance(entries, dict) or not entries:
@@ -381,7 +419,11 @@ def load_bundle(path: Path | str) -> BundleArrays:
         filename = metadata.get("file")
         if not isinstance(filename, str) or Path(filename).name != filename:
             raise ValueError(f"invalid array filename for {name!r}")
-        array = np.load(bundle_path / filename, mmap_mode="r", allow_pickle=False)
+        array_path = bundle_path / filename
+        expected_sha256 = metadata.get("sha256")
+        if not isinstance(expected_sha256, str) or _sha256_file(array_path) != expected_sha256:
+            raise ValueError(f"bundle array content digest mismatch for {name!r}")
+        array = np.load(array_path, mmap_mode="r", allow_pickle=False)
         if list(array.shape) != metadata.get("shape") or array.dtype.str != metadata.get("dtype"):
             raise ValueError(f"array metadata mismatch for {name!r}")
         if array.flags.writeable:

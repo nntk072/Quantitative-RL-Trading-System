@@ -112,6 +112,7 @@ def cost_model(config: dict[str, Any]) -> CostModel:
         spread_points=float(costs.get(spread_key, 0.6)),
         slippage_points=float(costs.get("slippage_points", 0.0)),
         commission_per_lot=float(costs.get("commission_per_lot", 0.0)),
+        point_value=float(costs.get("point_value", 1.0)),
         point_size=float(costs.get("point_size", 0.01)),
     )
 

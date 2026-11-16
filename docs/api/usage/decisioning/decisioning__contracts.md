@@ -327,7 +327,7 @@ def __init__(self, action: Decision) -> None:
     )
 ```
 
-2. [test fixture: `test_rule_and_sb3_providers_share_the_same_rollout_boundary`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L109)
+2. [test fixture: `test_rule_and_sb3_providers_share_the_same_rollout_boundary`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L127)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -543,7 +543,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `action_fn`](../../../../evaluation/rollout/provider.py#L46)
+1. [production caller: `action_fn`](../../../../evaluation/rollout/provider.py#L48)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -553,6 +553,8 @@ def action_fn(observation: dict[str, Any]) -> int | float | np.ndarray[Any, Any]
         DecisionInput(observation=observation, schema_version=input_schema_version),
         deterministic=deterministic,
     )
+    if decision_callback is not None:
+        decision_callback(decision)
     action = to_policy_action(decision)
     if strategy_actions:
         return np.asarray(action, dtype=np.float32).reshape(-1)

@@ -721,9 +721,9 @@ def build_features(
         and _mtf_struct_levels
     ):
         atr5_m1 = feat["atr_5"].where(feat["atr_5"] > 0)
-        for tf, lv_tf in _mtf_struct_levels.items():
-            hi = lv_tf["last_swing_high"].reindex(feat.index, method="ffill")
-            lo = lv_tf["last_swing_low"].reindex(feat.index, method="ffill")
+        for tf in _mtf_struct_levels:
+            hi = feat[f"{tf}_last_swing_high"]
+            lo = feat[f"{tf}_last_swing_low"]
             feat[f"{tf}_dist_to_swing_high_atr"] = (hi - primary["close"]) / atr5_m1
             feat[f"{tf}_dist_to_swing_low_atr"] = (primary["close"] - lo) / atr5_m1
 

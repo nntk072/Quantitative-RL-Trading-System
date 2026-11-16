@@ -272,6 +272,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
             breach_reason=breach_reason,
             trade_event_count=len(self.trade_log),
             contract_size=float(self.broker.contract_size),
+            point_value=float(self.broker.cost_model.point_value),
         )
         self._previous_constraint_ratios = constraint_ratios
         if entry_machine is not None:

@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `market_data.loading.bars`
 
 **Purpose:** Parse a raw MT5 bar CSV into a DataFrame with a UTC-aware DatetimeIndex.
 
-**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:27](../../../../market_data/loading/bars.py#L27)
+**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:74](../../../../market_data/loading/bars.py#L74)
 
 **Inputs and outputs:**
 
@@ -28,7 +28,7 @@ This page contains 3 public callable records owned by `market_data.loading.bars`
 
 **Observed usage:**
 
-1. [test fixture: `test_load_bars_accepts_date_only_daily_export`](../../../../tests/integration/test_loader.py#L18)
+1. [test fixture: `test_load_bars_accepts_date_only_daily_export`](../../../../tests/integration/test_loader.py#L20)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -48,7 +48,7 @@ def test_load_bars_accepts_date_only_daily_export(tmp_path: Path) -> None:
     assert bars.iloc[0]["spread"] == 2
 ```
 
-2. [test fixture: `test_load_bars_keeps_intraday_time_from_export`](../../../../tests/integration/test_loader.py#L33)
+2. [test fixture: `test_load_bars_keeps_intraday_time_from_export`](../../../../tests/integration/test_loader.py#L35)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -79,7 +79,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Stream a raw MT5 tick CSV in bounded-size chunks.
 
-**Exact API:** {py:obj}`market_data.loading.bars.iter_ticks_chunks` · **Source:** [market_data/loading/bars.py:127](../../../../market_data/loading/bars.py#L127)
+**Exact API:** {py:obj}`market_data.loading.bars.iter_ticks_chunks` · **Source:** [market_data/loading/bars.py:192](../../../../market_data/loading/bars.py#L192)
 
 **Inputs and outputs:**
 
@@ -154,7 +154,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Parse a raw MT5 bar CSV into a DataFrame with a UTC-aware DatetimeIndex.
 
-**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:27](../../../../market_data/loading/bars.py#L27)
+**Exact API:** {py:obj}`market_data.loading.bars.load_bars` · **Source:** [market_data/loading/bars.py:74](../../../../market_data/loading/bars.py#L74)
 
 **Inputs and outputs:**
 
@@ -174,7 +174,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_load_bars_accepts_date_only_daily_export`](../../../../tests/integration/test_loader.py#L18)
+1. [test fixture: `test_load_bars_accepts_date_only_daily_export`](../../../../tests/integration/test_loader.py#L20)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -194,7 +194,7 @@ def test_load_bars_accepts_date_only_daily_export(tmp_path: Path) -> None:
     assert bars.iloc[0]["spread"] == 2
 ```
 
-2. [test fixture: `test_load_bars_keeps_intraday_time_from_export`](../../../../tests/integration/test_loader.py#L33)
+2. [test fixture: `test_load_bars_keeps_intraday_time_from_export`](../../../../tests/integration/test_loader.py#L35)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

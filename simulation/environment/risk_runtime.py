@@ -551,7 +551,10 @@ class RiskRuntimeMixin(RuntimeMixinBase):
             assert sl_price is not None
             approved_risk = float(self._last_approved_risk_usd)
             modeled_risk = stop_loss_risk_usd(
-                entry_price - float(sl_price), lots, self.contract_size
+                entry_price - float(sl_price),
+                lots,
+                self.contract_size,
+                self.cost_model.point_value,
             )
             modeled_execution = self._modeled_execution_reserve_usd(lots)
             self._last_execution_reserve_usd = (

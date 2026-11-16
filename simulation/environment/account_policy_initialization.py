@@ -63,7 +63,13 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         self.obs_window = obs_window
         self.initial_balance = initial_balance
         self.cost_model = cost_model
-        self.broker = Broker(cost_model=cost_model, **(broker_kwargs or {}))
+        broker_options = dict(broker_kwargs or {})
+        if "contract_size" in broker_options and float(broker_options["contract_size"]) != float(
+            contract_size
+        ):
+            raise ValueError("broker_kwargs.contract_size must match account.contract_size")
+        broker_options["contract_size"] = contract_size
+        self.broker = Broker(cost_model=cost_model, **broker_options)
         policy_values = dict(trading_policy or {})
         self.trading_policy = TradingPolicyConfig(**policy_values).validate()
         self.repeated_payout_policy = self.trading_policy.repeated_payout

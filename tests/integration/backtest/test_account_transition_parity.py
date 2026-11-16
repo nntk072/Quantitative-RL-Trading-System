@@ -184,12 +184,14 @@ def test_open_position_crossing_prague_midnight_fails_closed_in_both_engines() -
 
 
 @pytest.mark.parametrize("initial_balance", [50_000.0, 100_000.0])
+@pytest.mark.parametrize("contract_size", [1.0, 3.0])
 @pytest.mark.parametrize(
     "daily_pnl_basis",
     ["legacy_gross_closed_losses", "session_net_equity"],
 )
 def test_environment_and_backtest_reconcile_realized_and_open_account_transitions(
     initial_balance: float,
+    contract_size: float,
     daily_pnl_basis: RiskDailyPnlBasis,
 ) -> None:
     """Match a loss, a reset, an open mark, a win, and a second-session loss.
@@ -242,7 +244,7 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
         rr_ratio_range=(1.0, 1.0),
         min_lot=0.01,
         max_lot=1.0,
-        contract_size=1.0,
+        contract_size=contract_size,
         max_loss_per_trade_usd=100.0,
         block_overnight=False,
     )
@@ -287,7 +289,7 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
         swing_buffer_pts=0.0,
         min_lot=0.01,
         max_lot=1.0,
-        contract_size=1.0,
+        contract_size=contract_size,
         max_loss_per_trade_usd=100.0,
         hold_on_zero=True,
         block_overnight=False,
@@ -295,9 +297,11 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
         daily_pnl_basis=daily_pnl_basis,
     )
     account_trace = result["account_state_trace"]
+    assert env.broker.contract_size == pytest.approx(contract_size)
+    assert account_trace["contract_size"].eq(contract_size).all()
     assert result["account_state_trace_complete"] is True
     assert len(account_trace) == len(result["equity"])
-    assert account_trace["schema_version"].eq("account_state_trace.v2").all()
+    assert account_trace["schema_version"].eq("account_state_trace.v3").all()
     assert account_trace["state_phase"].eq("pre_action_valuation").all()
     env_account_trace = pd.DataFrame.from_records(env_account_trace_rows)
     assert len(env_account_trace) == len(actions)

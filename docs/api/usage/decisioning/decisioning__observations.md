@@ -298,7 +298,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         validate_observation_schema(legacy_checkpoint, expected)
 ```
 
-2. [production caller: `build_observation`](../../../../live/runtime/strategy.py#L252)
+2. [production caller: `build_observation`](../../../../live/runtime/strategy.py#L254)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

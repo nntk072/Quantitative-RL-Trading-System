@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
+import features.pipeline.feature_cache_identity as cache_identity
 from features import (
     build_features,
     build_walkforward_fold_features,
@@ -81,6 +82,19 @@ def test_cache_hash_changes_when_feature_flag_flips() -> None:
     cfg_a = _cfg(include_po3=False)
     cfg_b = _cfg(include_po3=True)
     assert feature_cache_content_hash(cfg_a, bars) != feature_cache_content_hash(cfg_b, bars)
+
+
+def test_swing_semantic_change_invalidates_v44_cache_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = _bars()
+    cfg = _cfg()
+    new_hash = feature_cache_content_hash(cfg, bars)
+
+    monkeypatch.setattr(cache_identity, "FEATURE_CACHE_VERSION", "v44-wilder-adx")
+    previous_hash = feature_cache_content_hash(cfg, bars)
+
+    assert new_hash != previous_hash
 
 
 def test_d1_source_normalization_flag_has_distinct_cache_identity() -> None:

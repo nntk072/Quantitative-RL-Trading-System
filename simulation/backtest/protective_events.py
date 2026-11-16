@@ -999,7 +999,12 @@ def process_protective_and_account_events(
                 if position.direction == 1
                 else float(row["high"]) - position.entry_price
             )
-            adverse_usd = max(0.0, adverse) * position.size * settings.contract_size
+            adverse_usd = (
+                max(0.0, adverse)
+                * position.size
+                * settings.contract_size
+                * settings.cost_model.point_value
+            )
             cutoff = adverse_position_loss_limit_usd(
                 float(guard.get("max_loss_usd", 500.0)),
                 float(position.planned_risk_usd or 0.0),

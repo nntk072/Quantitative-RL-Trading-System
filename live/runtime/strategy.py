@@ -22,6 +22,7 @@ from configuration.paths import repository_root
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.contracts import (
     ContinuousAction,
+    Decision,
     DecisionInput,
     DecisionProvider,
     DiscreteAction,
@@ -133,6 +134,7 @@ class RLStrategyAdapter:
                 input_schema_version=self._observation_schema.version,
             )
         self._features: pd.DataFrame | None = None
+        self.last_decision: Decision | None = None
         self._bars: pd.DataFrame | None = None
         self._last_close = 1.0
         self._feature_lock = threading.Lock()
@@ -336,6 +338,7 @@ class RLStrategyAdapter:
             Result of run the provider and return its discrete id or scalar direction.
         """
         obs = self.build_observation(account_state)
+        self.last_decision = None
         decision = self.provider.predict(
             DecisionInput(
                 observation=obs,
@@ -343,6 +346,7 @@ class RLStrategyAdapter:
             ),
             deterministic=True,
         )
+        self.last_decision = decision
         action = decision.action
         if isinstance(action, DiscreteAction):
             return action.index

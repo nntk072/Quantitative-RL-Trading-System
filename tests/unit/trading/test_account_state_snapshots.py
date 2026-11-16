@@ -35,6 +35,7 @@ def test_account_state_snapshot_records_position_and_limit_order_lifecycle() -> 
         position=position,
         trade_event_count=4,
         contract_size=1.0,
+        point_value=2.5,
         pending_order={
             "order_id": "entry-1",
             "order_type": "limit",
@@ -48,7 +49,8 @@ def test_account_state_snapshot_records_position_and_limit_order_lifecycle() -> 
         },
     )
 
-    assert snapshot["schema_version"] == "account_state_trace.v2"
+    assert snapshot["schema_version"] == "account_state_trace.v3"
+    assert snapshot["point_value"] == 2.5
     assert snapshot["equity"] == 100_125.0
     assert snapshot["position_direction"] == 1
     assert snapshot["position_stop_price"] == 19_900.0

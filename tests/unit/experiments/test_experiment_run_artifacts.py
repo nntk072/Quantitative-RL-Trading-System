@@ -757,7 +757,7 @@ def test_comparison_families_share_one_run_and_deduplicate_arms(
     ]
 
 
-def test_experiment_run_evaluation_requires_exposure_before_selection() -> None:
+def test_experiment_run_evaluation_rejects_selection_on_report_only_split() -> None:
     evaluation = {
         "locked_oos_role": "selection_acknowledged",
         "locked_oos_exposure": "previously_inspected_holdout",
@@ -765,7 +765,10 @@ def test_experiment_run_evaluation_requires_exposure_before_selection() -> None:
         "deterministic": True,
     }
 
-    assert controller.validate_experiment_run_evaluation(evaluation)["selection_allowed"] is True
+    with pytest.raises(
+        ValueError, match="report-only experiment split cannot be used for selection"
+    ):
+        controller.validate_experiment_run_evaluation(evaluation)
 
 
 def test_experiment_run_evaluation_accepts_sampled_policy_actions() -> None:
@@ -786,5 +789,7 @@ def test_experiment_run_evaluation_rejects_selection_on_unexposed_holdout() -> N
         "deterministic": True,
     }
 
-    with pytest.raises(ValueError, match="only on explicitly exposed"):
+    with pytest.raises(
+        ValueError, match="report-only experiment split cannot be used for selection"
+    ):
         controller.validate_experiment_run_evaluation(evaluation)

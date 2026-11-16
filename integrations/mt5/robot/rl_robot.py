@@ -201,7 +201,9 @@ class RLRobot:
                 f"positions for {symbol}"
             )
             return
-        self.trader.close_positions(self.name, symbol, position_type)
+        self.trader.close_positions(
+            self.name, symbol, position_type, magic_number=self.magic_number
+        )
 
     def trade(self) -> None:
         """Run one trading cycle: read the signal and act on it."""
@@ -213,25 +215,33 @@ class RLRobot:
             return
 
         if signal == LiveSignal.BUY:
-            total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
+            total_buy, _ = self.trader.get_opened_positions(
+                symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+            )
             if total_buy == 0:
                 logger.info(f"Buy signal detected for {symbol}")
                 self._open(symbol, mt5.ORDER_TYPE_BUY)
             else:
                 logger.info(f"Buy position already exists for {symbol}")
-            total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
+            total_sell, _ = self.trader.get_opened_positions(
+                symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+            )
             if total_sell > 0:
                 logger.info(f"Closing existing sell positions for {symbol}")
                 self._close(symbol, mt5.ORDER_TYPE_SELL)
 
         elif signal == LiveSignal.SELL:
-            total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
+            total_sell, _ = self.trader.get_opened_positions(
+                symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+            )
             if total_sell == 0:
                 logger.info(f"Sell signal detected for {symbol}")
                 self._open(symbol, mt5.ORDER_TYPE_SELL)
             else:
                 logger.info(f"Sell position already exists for {symbol}")
-            total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
+            total_buy, _ = self.trader.get_opened_positions(
+                symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+            )
             if total_buy > 0:
                 logger.info(f"Closing existing buy positions for {symbol}")
                 self._close(symbol, mt5.ORDER_TYPE_BUY)

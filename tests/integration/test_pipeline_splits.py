@@ -169,6 +169,136 @@ def test_pipeline_rejects_reversed_registered_date_window(tmp_path: Path) -> Non
         run_pipeline(cfg)
 
 
+@pytest.mark.parametrize(
+    ("rows", "diagnostic"),
+    [
+        (
+            "2025.12.31\t09:32:00\t500\t501\t499\t500\t10\t0\t2\n"
+            "2025.12.31\t09:31:00\t501\t502\t500\t501\t10\t0\t2\n",
+            "out_of_order_rows",
+        ),
+        (
+            "2025.12.31\t09:31:00\t500\t501\t499\t500\t10\t0\t2\n"
+            "2025.12.31\t09:31:00\t500\t502\t499\t500\t10\t0\t2\n",
+            "conflicting_duplicate_timestamps",
+        ),
+    ],
+)
+def test_pipeline_rejects_bad_native_bars_before_publishing_any_cache(
+    tmp_path: Path, rows: str, diagnostic: str
+) -> None:
+    symbol = "US100.cash"
+    raw = tmp_path / "data"
+    m1_name = f"{symbol}_M1.csv"
+    m3_name = f"{symbol}_M3.csv"
+    _write_m1(raw / m1_name, "2025.12.31", "09:30:00", 100.0)
+    with (raw / m1_name).open("a", encoding="utf-8") as stream:
+        stream.write("2025.12.31\t09:31:00\t101\t102\t100\t101\t10\t0\t2\n")
+    (raw / m3_name).write_text(
+        "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>\n" + rows,
+        encoding="utf-8",
+    )
+    cache_dir = tmp_path / "cache"
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(cache_dir),
+                "tz": "UTC",
+                "symbols": [symbol],
+                "timeframes": ["M1", "M3"],
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(raw),
+                        "m1_files": {symbol: m1_name},
+                        "timeframe_files": {"M3": {symbol: m3_name}},
+                    }
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    with pytest.raises(ValueError, match=diagnostic):
+        run_pipeline(cfg)
+
+    assert not cache_dir.exists()
+
+
+def test_pipeline_rejects_cross_partition_overlap_before_publishing_cache(
+    tmp_path: Path,
+) -> None:
+    symbol = "US100.cash"
+    name = f"{symbol}_M1.csv"
+    first = tmp_path / "training"
+    second = tmp_path / "testing"
+    _write_m1(first / name, "2025.12.31", "09:30:00", 100.0)
+    _write_m1(second / name, "2025.12.31", "09:30:00", 200.0)
+    for root, price in ((first, 100.0), (second, 200.0)):
+        with (root / name).open("a", encoding="utf-8") as stream:
+            stream.write(
+                f"2025.12.31\t09:31:00\t{price + 1}\t{price + 2}\t{price}\t{price + 1}\t10\t0\t2\n"
+            )
+    cache_dir = tmp_path / "cache"
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(cache_dir),
+                "tz": "UTC",
+                "symbols": [symbol],
+                "timeframes": ["M1"],
+                "datasets": {
+                    "training": {"raw_dir": str(first), "m1_files": {symbol: name}},
+                    "testing": {"raw_dir": str(second), "m1_files": {symbol: name}},
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    with pytest.raises(ValueError, match="overlapping M1 rows"):
+        run_pipeline(cfg)
+
+    assert not cache_dir.exists()
+
+
+def test_pipeline_keeps_identical_duplicate_count_through_cleaning_and_cache(
+    tmp_path: Path,
+) -> None:
+    symbol = "US100.cash"
+    name = f"{symbol}_M1.csv"
+    raw = tmp_path / "data"
+    _write_m1(raw / name, "2025.12.31", "09:30:00", 100.0)
+    with (raw / name).open("a", encoding="utf-8") as stream:
+        stream.write("2025.12.31\t09:30:00\t100\t101\t99\t100\t10\t0\t2\n")
+        stream.write("2025.12.31\t09:31:00\t101\t102\t100\t101\t10\t0\t2\n")
+    second = tmp_path / "testing"
+    second_name = f"{symbol}_M1.csv"
+    _write_m1(second / second_name, "2026.01.01", "09:31:00", 101.0)
+    with (second / second_name).open("a", encoding="utf-8") as stream:
+        stream.write("2026.01.01\t09:32:00\t102\t103\t101\t102\t10\t0\t2\n")
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "UTC",
+                "symbols": [symbol],
+                "timeframes": ["M1"],
+                "datasets": {
+                    "training": {"raw_dir": str(raw), "m1_files": {symbol: name}},
+                    "testing": {"raw_dir": str(second), "m1_files": {symbol: second_name}},
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+
+    frames = run_pipeline(cfg)
+
+    assert len(frames[symbol]["M1"]) == 4
+    assert frames[symbol]["M1"].attrs["source_diagnostics"]["duplicate_rows"] == 1
+    assert frames[symbol]["M1"].attrs["source_diagnostics"]["conflicting_duplicate_timestamps"] == 0
+
+
 def test_pipeline_development_cutoff_excludes_later_bar_values(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
