@@ -22,12 +22,51 @@ for _name, _value in {
     "ORDER_TYPE_SELL": 1,
     "ORDER_TIME_GTC": 0,
     "ORDER_FILLING_FOK": 0,
+    "ORDER_FILLING_IOC": 1,
+    "ORDER_FILLING_RETURN": 2,
+    "SYMBOL_FILLING_FOK": 1,
+    "SYMBOL_FILLING_IOC": 2,
+    "SYMBOL_TRADE_EXECUTION_REQUEST": 0,
+    "SYMBOL_TRADE_EXECUTION_INSTANT": 1,
+    "SYMBOL_TRADE_EXECUTION_MARKET": 2,
+    "SYMBOL_TRADE_EXECUTION_EXCHANGE": 3,
+    "SYMBOL_TRADE_MODE_DISABLED": 0,
+    "SYMBOL_TRADE_MODE_LONGONLY": 1,
+    "SYMBOL_TRADE_MODE_SHORTONLY": 2,
+    "SYMBOL_TRADE_MODE_CLOSEONLY": 3,
+    "SYMBOL_TRADE_MODE_FULL": 4,
+    "SYMBOL_ORDER_MARKET": 1,
+    "SYMBOL_ORDER_SL": 16,
+    "SYMBOL_ORDER_TP": 32,
+    "TRADE_RETCODE_DONE": 10009,
+    "TRADE_RETCODE_DONE_PARTIAL": 10010,
     "TIMEFRAME_H1": 16385,
 }.items():
     if not hasattr(mt5, _name):
         setattr(mt5, _name, _value)
 
 from integrations.mt5.domain.trader import MT5Trader  # noqa: E402
+
+
+def _symbol_info(
+    filling_mode: int,
+    execution_mode: int,
+    *,
+    volume_min: float = 0.01,
+    volume_max: float = 100.0,
+    volume_step: float = 0.01,
+    trade_mode: int = 4,
+    order_mode: int = 49,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        filling_mode=filling_mode,
+        trade_exemode=execution_mode,
+        volume_min=volume_min,
+        volume_max=volume_max,
+        volume_step=volume_step,
+        trade_mode=trade_mode,
+        order_mode=order_mode,
+    )
 
 
 @pytest.mark.parametrize(
@@ -59,6 +98,12 @@ def test_close_position_uses_executable_quote_side(
     monkeypatch.setattr(trader, "get_all_positions", lambda: positions)
     monkeypatch.setattr(
         mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(mt5.SYMBOL_FILLING_FOK, mt5.SYMBOL_TRADE_EXECUTION_MARKET),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        mt5,
         "symbol_info_tick",
         lambda _symbol: SimpleNamespace(bid=100.1, ask=100.2),
         raising=False,
@@ -72,6 +117,207 @@ def test_close_position_uses_executable_quote_side(
     assert len(submitted) == 1
     assert submitted[0]["type"] == expected_order_type
     assert submitted[0]["price"] == expected_price
+
+
+@pytest.mark.parametrize(
+    ("filling_mode", "execution_mode", "expected"),
+    [
+        (
+            mt5.SYMBOL_FILLING_FOK | mt5.SYMBOL_FILLING_IOC,
+            mt5.SYMBOL_TRADE_EXECUTION_MARKET,
+            mt5.ORDER_FILLING_FOK,
+        ),
+        (
+            mt5.SYMBOL_FILLING_IOC,
+            mt5.SYMBOL_TRADE_EXECUTION_MARKET,
+            mt5.ORDER_FILLING_IOC,
+        ),
+        (0, mt5.SYMBOL_TRADE_EXECUTION_REQUEST, mt5.ORDER_FILLING_FOK),
+        (0, mt5.SYMBOL_TRADE_EXECUTION_EXCHANGE, mt5.ORDER_FILLING_RETURN),
+    ],
+)
+def test_open_position_uses_a_fill_mode_supported_by_symbol(
+    monkeypatch: pytest.MonkeyPatch,
+    filling_mode: int,
+    execution_mode: int,
+    expected: int,
+) -> None:
+    submitted: list[dict[str, object]] = []
+
+    def send_order(order: dict[str, object]) -> SimpleNamespace:
+        submitted.append(order)
+        return SimpleNamespace(retcode=mt5.TRADE_RETCODE_DONE)
+
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(filling_mode, execution_mode),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        mt5,
+        "order_send",
+        send_order,
+        raising=False,
+    )
+
+    result = MT5Trader().open_position("US100.cash", 0.1, 0, "test", 42)
+
+    assert result is not None
+    assert submitted[0]["type_filling"] == expected
+
+
+def test_open_position_rejects_volume_off_symbol_step(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    submitted: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(mt5.SYMBOL_FILLING_FOK, mt5.SYMBOL_TRADE_EXECUTION_MARKET),
+        raising=False,
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    result = MT5Trader().open_position("US100.cash", 0.015, 0, "test", 42)
+
+    assert result is None
+    assert submitted == []
+
+
+def test_open_position_accepts_volume_steps_from_minimum_volume(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    submitted: list[dict[str, object]] = []
+
+    def send_order(order: dict[str, object]) -> SimpleNamespace:
+        submitted.append(order)
+        return SimpleNamespace(retcode=mt5.TRADE_RETCODE_DONE)
+
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(
+            mt5.SYMBOL_FILLING_FOK,
+            mt5.SYMBOL_TRADE_EXECUTION_MARKET,
+            volume_min=0.1,
+            volume_step=0.2,
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        mt5,
+        "order_send",
+        send_order,
+        raising=False,
+    )
+
+    result = MT5Trader().open_position("US100.cash", 0.3, 0, "test", 42)
+
+    assert result is not None
+    assert submitted[0]["volume"] == 0.3
+
+
+def test_close_position_uses_ioc_when_symbol_disallows_fok(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    trader = MT5Trader()
+    positions = pd.DataFrame(
+        [
+            {
+                "ticket": 17,
+                "symbol": "US100.cash",
+                "volume": 0.2,
+                "type": mt5.ORDER_TYPE_BUY,
+                "magic": 42,
+            }
+        ]
+    )
+    submitted: list[dict[str, object]] = []
+
+    def send_partial_close(order: dict[str, object]) -> SimpleNamespace:
+        submitted.append(order)
+        return SimpleNamespace(retcode=mt5.TRADE_RETCODE_DONE_PARTIAL)
+
+    monkeypatch.setattr(trader, "get_all_positions", lambda: positions)
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(mt5.SYMBOL_FILLING_IOC, mt5.SYMBOL_TRADE_EXECUTION_MARKET),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info_tick",
+        lambda _symbol: SimpleNamespace(bid=100.1, ask=100.2),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        mt5,
+        "order_send",
+        send_partial_close,
+        raising=False,
+    )
+
+    trader.close_positions(
+        "test", symbol="US100.cash", position_type=mt5.ORDER_TYPE_BUY, magic_number=42
+    )
+
+    assert submitted[0]["type_filling"] == mt5.ORDER_FILLING_IOC
+
+
+def test_open_position_rejects_filling_mode_not_allowed_by_market_symbol(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    submitted: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(0, mt5.SYMBOL_TRADE_EXECUTION_MARKET),
+        raising=False,
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    result = MT5Trader().open_position("US100.cash", 0.1, 0, "test", 42)
+
+    assert result is None
+    assert submitted == []
+
+
+@pytest.mark.parametrize(
+    ("trade_mode", "order_mode", "position_type"),
+    [
+        (mt5.SYMBOL_TRADE_MODE_DISABLED, mt5.SYMBOL_ORDER_MARKET, mt5.ORDER_TYPE_BUY),
+        (mt5.SYMBOL_TRADE_MODE_CLOSEONLY, mt5.SYMBOL_ORDER_MARKET, mt5.ORDER_TYPE_SELL),
+        (mt5.SYMBOL_TRADE_MODE_LONGONLY, mt5.SYMBOL_ORDER_MARKET, mt5.ORDER_TYPE_SELL),
+        (mt5.SYMBOL_TRADE_MODE_SHORTONLY, mt5.SYMBOL_ORDER_MARKET, mt5.ORDER_TYPE_BUY),
+        (mt5.SYMBOL_TRADE_MODE_FULL, 0, mt5.ORDER_TYPE_BUY),
+    ],
+)
+def test_open_position_rejects_symbol_trade_restrictions(
+    monkeypatch: pytest.MonkeyPatch,
+    trade_mode: int,
+    order_mode: int,
+    position_type: int,
+) -> None:
+    submitted: list[dict[str, object]] = []
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(
+            mt5.SYMBOL_FILLING_FOK,
+            mt5.SYMBOL_TRADE_EXECUTION_MARKET,
+            trade_mode=trade_mode,
+            order_mode=order_mode,
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    result = MT5Trader().open_position("US100.cash", 0.1, position_type, "test", 42)
+
+    assert result is None
+    assert submitted == []
 
 
 def test_close_positions_only_closes_owned_magic_number(
@@ -98,6 +344,12 @@ def test_close_positions_only_closes_owned_magic_number(
     )
     submitted: list[dict[str, object]] = []
     monkeypatch.setattr(trader, "get_all_positions", lambda: positions)
+    monkeypatch.setattr(
+        mt5,
+        "symbol_info",
+        lambda _symbol: _symbol_info(mt5.SYMBOL_FILLING_FOK, mt5.SYMBOL_TRADE_EXECUTION_MARKET),
+        raising=False,
+    )
     monkeypatch.setattr(
         mt5,
         "symbol_info_tick",

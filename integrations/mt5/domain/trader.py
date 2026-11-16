@@ -3,6 +3,11 @@ import pandas as pd
 from loguru import logger
 
 from integrations.mt5.adapters import Trader
+from integrations.mt5.domain.symbol_rules import (
+    filling_type,
+    symbol_allows_open,
+    volume_matches_symbol,
+)
 
 
 class MT5Trader(Trader):
@@ -33,6 +38,21 @@ class MT5Trader(Trader):
         Returns:
             Result of submit a market order and optionally attach stop and target prices.
         """
+        symbol_info = mt5.symbol_info(symbol)
+        if symbol_info is None or not volume_matches_symbol(symbol_info, volume):
+            logger.error(
+                "Refusing order for {}: volume does not match live symbol constraints", symbol
+            )
+            return None
+        if not symbol_allows_open(symbol_info, position_type, sl=sl, tp=tp):
+            logger.error(
+                "Refusing order for {}: live symbol trading rules reject this entry", symbol
+            )
+            return None
+        fill_policy = filling_type(symbol_info)
+        if fill_policy is None:
+            logger.error("Refusing order for {}: no supported market fill policy", symbol)
+            return None
         order = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
@@ -41,7 +61,7 @@ class MT5Trader(Trader):
             "magic": magic_number,
             "comment": comment,
             "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_FOK,
+            "type_filling": fill_policy,
         }
 
         # Add optional parameters if they are provided
@@ -100,6 +120,18 @@ class MT5Trader(Trader):
                 type_position = df_position["type"].item()
                 symbol_position = df_position["symbol"].item()
                 volume_position = df_position["volume"].item()
+                symbol_info = mt5.symbol_info(symbol_position)
+                if symbol_info is None or not volume_matches_symbol(
+                    symbol_info, float(volume_position)
+                ):
+                    logger.error(
+                        "Cannot close position {}: invalid broker volume metadata", position
+                    )
+                    continue
+                fill_policy = filling_type(symbol_info)
+                if fill_policy is None:
+                    logger.error("Cannot close position {}: no supported fill policy", position)
+                    continue
                 tick = mt5.symbol_info_tick(symbol_position)
                 if tick is None:
                     logger.error("Cannot close position {}: quote unavailable", position)
@@ -117,9 +149,9 @@ class MT5Trader(Trader):
                         "magic": magic_number,
                         "price": price_close,
                         "comment": f"{robot_name} closed position",
-                        "type_filling": mt5.ORDER_FILLING_FOK,
+                        "type_filling": fill_policy,
                     }
-                    mt5.order_send(close_request)
+                    self._log_close_result(position, mt5.order_send(close_request))
 
                 if type_position == mt5.ORDER_TYPE_BUY:
                     # A long position is closed by selling at the bid.
@@ -133,9 +165,9 @@ class MT5Trader(Trader):
                         "magic": magic_number,
                         "price": price_close,
                         "comment": f"{robot_name} closed position",
-                        "type_filling": mt5.ORDER_FILLING_FOK,
+                        "type_filling": fill_policy,
                     }
-                    mt5.order_send(close_request)
+                    self._log_close_result(position, mt5.order_send(close_request))
 
     def get_opened_positions(
         self,
@@ -238,6 +270,18 @@ class MT5Trader(Trader):
                                 "type_filling": mt5.ORDER_FILLING_IOC,
                             }
                             mt5.order_send(modify_order_request)
+
+    @staticmethod
+    def _log_close_result(position: int, result: object | None) -> None:
+        """Report rejected and partial closes; callers must re-query position state."""
+        if result is None:
+            logger.error("Close request for position {} returned no broker result", position)
+            return
+        retcode = getattr(result, "retcode", None)
+        if retcode == mt5.TRADE_RETCODE_DONE_PARTIAL:
+            logger.warning("Close request for position {} filled only part of its volume", position)
+        elif retcode != mt5.TRADE_RETCODE_DONE:
+            logger.error("Close request for position {} failed with retcode {}", position, retcode)
 
     def calculate_position_size(self, symbol: str, stop_loss: float, per_to_risk: float) -> float:
         """Calculate lots for a stop distance and risk fraction.
