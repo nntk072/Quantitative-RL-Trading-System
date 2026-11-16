@@ -130,12 +130,40 @@ def load_market_bars(
     tz = str(cfg.data.tz)
     ny_end = str(cfg.session.end)
     price_grid = configured_price_grid_increment(cfg)
+    dataset = OmegaConf.select(cfg, f"data.datasets.{dataset_name}")
+    source_start = (
+        pd.Timestamp(str(dataset.start_date)).normalize()
+        if dataset is not None and dataset.get("start_date")
+        else None
+    )
+    source_end = (
+        pd.Timestamp(str(dataset.end_date)).normalize()
+        if dataset is not None and dataset.get("end_date")
+        else None
+    )
+    if source_start is not None and source_end is not None and source_start > source_end:
+        raise ValueError(
+            f"dataset {dataset_name!r} has start_date after end_date: "
+            f"{source_start.date()} > {source_end.date()}"
+        )
+    source_end_exclusive = source_end + pd.DateOffset(days=1) if source_end is not None else None
     cutoff = (
         pd.Timestamp(inclusive_max_timestamp).tz_convert(tz)
         if inclusive_max_timestamp is not None
         else None
     )
-    cache_key = (source, tz, ny_end, price_grid, cutoff.isoformat() if cutoff is not None else None)
+    if cutoff is not None:
+        cutoff_end = cutoff.tz_localize(None) + pd.Timedelta(1, unit="ns")
+        source_end_exclusive = (
+            cutoff_end if source_end_exclusive is None else min(source_end_exclusive, cutoff_end)
+        )
+    window_identity = "|".join(
+        (
+            source_start.isoformat() if source_start is not None else "",
+            source_end_exclusive.isoformat() if source_end_exclusive is not None else "",
+        )
+    )
+    cache_key = (source, tz, ny_end, price_grid, window_identity)
     if preprocessed_cache is not None and cache_key in preprocessed_cache:
         if cache_metrics is not None:
             cache_metrics["preprocessed_cache_hits"] = (
@@ -143,9 +171,13 @@ def load_market_bars(
             )
         return preprocessed_cache[cache_key].copy(deep=True), source
     if cutoff is not None:
-        end_exclusive = cutoff.tz_localize(None) + pd.Timedelta(1, unit="ns")
         load_started = time.perf_counter()
-        raw = load_bars(source, end_exclusive=end_exclusive)
+        load_bounds: dict[str, pd.Timestamp] = {}
+        if source_start is not None:
+            load_bounds["start_inclusive"] = source_start
+        if source_end_exclusive is not None:
+            load_bounds["end_exclusive"] = source_end_exclusive
+        raw = load_bars(source, **load_bounds)
         if cache_metrics is not None:
             cache_metrics["raw_loads"] = int(cache_metrics.get("raw_loads", 0)) + 1
             cache_metrics["raw_load_seconds"] = (
@@ -177,6 +209,20 @@ def load_market_bars(
             )
         if raw_cache is not None:
             raw_cache[source] = raw
+    if source_start is not None:
+        raw = raw.loc[raw.index >= source_start]
+    if source_end_exclusive is not None:
+        raw = raw.loc[raw.index < source_end_exclusive]
+    if raw.empty:
+        empty = raw.iloc[:0].copy()
+        if cast(pd.DatetimeIndex, empty.index).tz is None:
+            empty.index = cast(pd.DatetimeIndex, empty.index).tz_localize(
+                tz, ambiguous="infer", nonexistent="shift_forward"
+            )
+        if preprocessed_cache is not None:
+            preprocessed_cache[cache_key] = empty
+            return empty.copy(deep=True), source
+        return empty, source
     preprocess_started = time.perf_counter()
     raw = quantize_bar_prices(raw, price_grid)
     bars = clean(raw, tz=tz)
