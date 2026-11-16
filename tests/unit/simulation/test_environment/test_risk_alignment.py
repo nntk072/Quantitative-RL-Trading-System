@@ -21,6 +21,7 @@ from gymnasium.spaces import Box
 
 from simulation.environment.env import TradingEnv
 from trading.execution.broker import Position
+from trading.execution.costs import CostModel
 from trading.strategies import PO3IFVGStrategy
 
 
@@ -144,6 +145,13 @@ class TestEodGuardRespectsPlannedRisk:
         expected = _risk_pts(pos) * pos.size * env.contract_size
         assert pos.planned_risk_usd == pytest.approx(expected, rel=1e-9)
         assert pos.planned_risk_usd > 0.0
+
+    def test_planned_risk_uses_configured_point_value(self) -> None:
+        env = _make_env(cost_model=CostModel(point_value=2.5))
+        _open_a_position(env)
+        assert env.position is not None
+        expected = _risk_pts(env.position) * env.position.size * env.contract_size * 2.5
+        assert env.position.planned_risk_usd == pytest.approx(expected, rel=1e-9)
 
     def test_planned_risk_never_exceeds_the_sizing_budget(self) -> None:
         env = _make_env(max_loss_per_trade_usd=250.0)

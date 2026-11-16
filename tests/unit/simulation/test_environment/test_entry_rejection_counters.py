@@ -295,6 +295,17 @@ def test_config_slippage_reaches_sl_tp_fills() -> None:
     model = cost_model(cfg)
     assert isinstance(model, CostModel)
     assert model.slippage_points == 5.0
+    assert model.point_value == float(cfg.costs.point_value)
+    configured_point_value = OmegaConf.merge(cfg, {"costs": {"point_value": 2.5}})
+    assert cost_model(configured_point_value).point_value == 2.5
+    from simulation.environment.worker import cost_model as worker_cost_model
+
+    worker_cfg = {
+        "data": {"primary": "US100.cash"},
+        "account": {"currency": "USD"},
+        "costs": {"point_value": 2.5},
+    }
+    assert worker_cost_model(worker_cfg).point_value == 2.5
 
     bars = _bars()
     feats = _features(bars)

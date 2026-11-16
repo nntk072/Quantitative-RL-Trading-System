@@ -18,7 +18,7 @@ from experiments.runs.source_snapshot import (
 
 
 def validate_experiment_run_evaluation(value: object) -> dict[str, Any]:
-    """Validate action mode, report role, and explicit selection on exposed data.
+    """Validate action mode and report role for the frozen report-only split.
 
     Args:
         value: Value to process.
@@ -37,9 +37,9 @@ def validate_experiment_run_evaluation(value: object) -> dict[str, Any]:
     selection_allowed = value.get("selection_allowed", False)
     if not isinstance(selection_allowed, bool):
         raise ValueError("selection_allowed must be a boolean")
-    if selection_allowed and exposure != "previously_inspected_holdout":
-        raise ValueError("selection is allowed only on explicitly exposed historical data")
-    expected_role = "selection_acknowledged" if selection_allowed else "final_report_only"
+    if selection_allowed:
+        raise ValueError("report-only experiment split cannot be used for selection")
+    expected_role = "final_report_only"
     if value.get("locked_oos_role") != expected_role:
         raise ValueError(f"evaluation role must be {expected_role!r} for this selection setting")
     return dict(value)

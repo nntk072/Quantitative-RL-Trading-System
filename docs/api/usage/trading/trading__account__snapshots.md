@@ -37,6 +37,7 @@ This page contains 1 public callable records owned by `trading.account.snapshots
   breach_reason: Risk-breach reason attached to this state, if any.
   trade_event_count: Number of trade events recorded so far.
   contract_size: Instrument contract size used in the account valuation.
+  point_value: Account-currency value of one price unit per contract-size unit.
   ```
 
 - **Returns:**
@@ -113,6 +114,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         position=position,
         trade_event_count=4,
         contract_size=1.0,
+        point_value=2.5,
         pending_order={
             "order_id": "entry-1",
             "order_type": "limit",
@@ -126,10 +128,10 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         },
     )
 
-    assert snapshot["schema_version"] == "account_state_trace.v2"
+    assert snapshot["schema_version"] == "account_state_trace.v3"
+    assert snapshot["point_value"] == 2.5
     assert snapshot["equity"] == 100_125.0
     assert snapshot["position_direction"] == 1
-    assert snapshot["position_stop_price"] == 19_900.0
 # … caller assertions omitted …
 ```
 

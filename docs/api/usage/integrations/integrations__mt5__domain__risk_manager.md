@@ -8,11 +8,11 @@ This page contains 10 public callable records owned by `integrations.mt5.domain.
 
 **Purpose:** Manage risk across multiple trading positions.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager` · **Source:** [integrations/mt5/domain/risk_manager.py:10](../../../../integrations/mt5/domain/risk_manager.py#L10)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager` · **Source:** [integrations/mt5/domain/risk_manager.py:11](../../../../integrations/mt5/domain/risk_manager.py#L11)
 
 **Observed usage:**
 
-1. [test fixture: `test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails`](../../../../tests/unit/live/test_multi_symbol_risk_stops.py#L149)
+1. [test fixture: `test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails`](../../../../tests/unit/live/test_multi_symbol_risk_stops.py#L150)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -60,11 +60,11 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Manage risk across multiple trading positions.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager` · **Source:** [integrations/mt5/domain/risk_manager.py:10](../../../../integrations/mt5/domain/risk_manager.py#L10)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager` · **Source:** [integrations/mt5/domain/risk_manager.py:11](../../../../integrations/mt5/domain/risk_manager.py#L11)
 
 **Observed usage:**
 
-1. [test fixture: `test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails`](../../../../tests/unit/live/test_multi_symbol_risk_stops.py#L149)
+1. [test fixture: `test_multi_symbol_robot_rejects_real_order_mode_without_account_loss_guardrails`](../../../../tests/unit/live/test_multi_symbol_risk_stops.py#L150)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -112,7 +112,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Calculate position size based on stop loss and risk amount.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size` · **Source:** [integrations/mt5/domain/risk_manager.py:267](../../../../integrations/mt5/domain/risk_manager.py#L267)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_position_size` · **Source:** [integrations/mt5/domain/risk_manager.py:268](../../../../integrations/mt5/domain/risk_manager.py#L268)
 
 **Inputs and outputs:**
 
@@ -184,7 +184,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build the broker-side SL using the same distance used for sizing.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price` · **Source:** [integrations/mt5/domain/risk_manager.py:394](../../../../integrations/mt5/domain/risk_manager.py#L394)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.calculate_stop_loss_price` · **Source:** [integrations/mt5/domain/risk_manager.py:399](../../../../integrations/mt5/domain/risk_manager.py#L399)
 
 **Inputs and outputs:**
 
@@ -224,7 +224,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_boolean_quote_cannot_create_a_stop_price`](../../../../tests/unit/live/test_risk_manager.py#L344)
+2. [test fixture: `test_boolean_quote_cannot_create_a_stop_price`](../../../../tests/unit/live/test_risk_manager.py#L356)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -257,7 +257,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Check if proposed position would exceed risk limits.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits` · **Source:** [integrations/mt5/domain/risk_manager.py:546](../../../../integrations/mt5/domain/risk_manager.py#L546)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.check_risk_limits` · **Source:** [integrations/mt5/domain/risk_manager.py:551](../../../../integrations/mt5/domain/risk_manager.py#L551)
 
 **Inputs and outputs:**
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Get current account balance.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance` · **Source:** [integrations/mt5/domain/risk_manager.py:129](../../../../integrations/mt5/domain/risk_manager.py#L129)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_balance` · **Source:** [integrations/mt5/domain/risk_manager.py:130](../../../../integrations/mt5/domain/risk_manager.py#L130)
 
 **Inputs and outputs:**
 
@@ -336,7 +336,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `calculate_position_size`](../../../../integrations/mt5/domain/risk_manager.py#L322)
+1. [production caller: `calculate_position_size`](../../../../integrations/mt5/domain/risk_manager.py#L323)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -356,7 +356,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `check_risk_limits`](../../../../integrations/mt5/domain/risk_manager.py#L560)
+2. [production caller: `check_risk_limits`](../../../../integrations/mt5/domain/risk_manager.py#L565)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -382,7 +382,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Get current account equity (balance + floating P/L).
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity` · **Source:** [integrations/mt5/domain/risk_manager.py:149](../../../../integrations/mt5/domain/risk_manager.py#L149)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_account_equity` · **Source:** [integrations/mt5/domain/risk_manager.py:150](../../../../integrations/mt5/domain/risk_manager.py#L150)
 
 **Inputs and outputs:**
 
@@ -418,7 +418,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Get stop risk and modeled execution reserve across open positions.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure` · **Source:** [integrations/mt5/domain/risk_manager.py:435](../../../../integrations/mt5/domain/risk_manager.py#L435)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_total_exposure` · **Source:** [integrations/mt5/domain/risk_manager.py:440](../../../../integrations/mt5/domain/risk_manager.py#L440)
 
 **Inputs and outputs:**
 
@@ -456,7 +456,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_aggregate_limit_uses_open_stop_risk_not_floating_profit`](../../../../tests/unit/live/test_risk_manager.py#L193)
+2. [test fixture: `test_aggregate_limit_uses_open_stop_risk_not_floating_profit`](../../../../tests/unit/live/test_risk_manager.py#L205)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -489,7 +489,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Calculate the volatility multiplier for position sizing.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier` · **Source:** [integrations/mt5/domain/risk_manager.py:639](../../../../integrations/mt5/domain/risk_manager.py#L639)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.get_volatility_multiplier` · **Source:** [integrations/mt5/domain/risk_manager.py:644](../../../../integrations/mt5/domain/risk_manager.py#L644)
 
 **Inputs and outputs:**
 
@@ -508,7 +508,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_invalid_atr_cannot_increase_or_preserve_position_size`](../../../../tests/unit/live/test_risk_manager.py#L363)
+1. [test fixture: `test_invalid_atr_cannot_increase_or_preserve_position_size`](../../../../tests/unit/live/test_risk_manager.py#L375)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -542,7 +542,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Whether this manager enforces the training daily and max-loss limits.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.supports_training_account_loss_guardrails` · **Source:** [integrations/mt5/domain/risk_manager.py:18](../../../../integrations/mt5/domain/risk_manager.py#L18)
+**Exact API:** {py:obj}`integrations.mt5.domain.risk_manager.RiskManager.supports_training_account_loss_guardrails` · **Source:** [integrations/mt5/domain/risk_manager.py:19](../../../../integrations/mt5/domain/risk_manager.py#L19)
 
 **Inputs and outputs:**
 

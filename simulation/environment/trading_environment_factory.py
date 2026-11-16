@@ -543,6 +543,7 @@ def cost_model(cfg: Any) -> CostModel:
         spread_points=float(get(spread_key, 0.6)),
         slippage_points=float(get("slippage_points", 0.0)),
         commission_per_lot=float(get("commission_per_lot", 0.0)),
+        point_value=float(get("point_value", 1.0)),
         point_size=float(get("point_size", 0.01)),
     )
 

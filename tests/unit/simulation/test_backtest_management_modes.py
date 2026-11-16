@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pandas as pd
 import pytest
 
+from simulation.backtest.accounting import stamp_exit
 from simulation.backtest.protective_events import (
     _advance_management_modes,
     _apply_tp_management,
@@ -56,6 +59,28 @@ def _position(*, tp_mode: str = "fixed") -> Position:
         tp_initial_size=1.0,
         tp_mode=tp_mode,
     )
+
+
+def test_backtest_exit_records_account_currency_point_value() -> None:
+    settings = replace(
+        _settings(),
+        cost_model=CostModel(point_value=2.5),
+        contract_size=3.0,
+    )
+    position = Position(
+        direction=1,
+        size=0.0,
+        entry_price=100.0,
+        margin_used=0.0,
+        initial_size=0.5,
+    )
+    state = BacktestState(account=AccountState(initial_balance=1000.0))
+    record: dict[str, object] = {"type": "close", "pnl": 15.0}
+
+    stamp_exit(state, settings, position, record, fill_price=104.0)
+
+    assert record["gross_price_pnl"] == pytest.approx(15.0)
+    assert record["point_value"] == 2.5
 
 
 def test_explicit_tp_breakeven_pulls_nearest_target_without_retroactive_fill() -> None:

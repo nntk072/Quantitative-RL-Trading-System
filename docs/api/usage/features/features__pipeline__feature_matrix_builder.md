@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `features.pipeline.feature
 
 **Purpose:** Build the full feature matrix for the primary instrument.
 
-**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:153](../../../../features/pipeline/feature_matrix_builder.py#L153)
+**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:155](../../../../features/pipeline/feature_matrix_builder.py#L155)
 
 **Inputs and outputs:**
 
@@ -67,7 +67,7 @@ def _build_chart_features(
 
 **Purpose:** Build the full feature matrix for the primary instrument.
 
-**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:153](../../../../features/pipeline/feature_matrix_builder.py#L153)
+**Exact API:** {py:obj}`features.pipeline.feature_matrix_builder.build_features` · **Source:** [features/pipeline/feature_matrix_builder.py:155](../../../../features/pipeline/feature_matrix_builder.py#L155)
 
 **Inputs and outputs:**
 

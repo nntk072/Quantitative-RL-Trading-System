@@ -17,11 +17,10 @@ from typing import Any
 import yaml
 
 from artifacts.atomic import write_json_atomic
-from configuration.paths import repository_root
 from models.architecture_ids import ENCODER_ARCHITECTURE_IDS
 from training.configuration.variant_risk_policy import variant_ftmo_overrides
 
-PROJECT_ROOT = repository_root(__file__)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # Retained for the standalone tick-coverage audit only; training uses YAML values.
 RANDOMIZED_FILL_LATENCY_MS = 30.0
 EXPERIMENTS_PATH = PROJECT_ROOT / "config" / "experiments.yaml"
@@ -92,7 +91,8 @@ def load_experiments(path: Path | str | None = None) -> dict[str, Any]:
     Raises:
         VariantError: If the parsed file does not contain a variant list.
     """
-    raw = yaml.safe_load(Path(path or EXPERIMENTS_PATH).read_text(encoding="utf-8"))
+    experiments_file = Path(path) if path is not None else EXPERIMENTS_PATH
+    raw = yaml.safe_load(experiments_file.read_text(encoding="utf-8"))
     if not isinstance(raw, dict) or not isinstance(raw.get("variants"), list):
         raise VariantError("experiments.yaml must contain a 'variants' list")
     return raw

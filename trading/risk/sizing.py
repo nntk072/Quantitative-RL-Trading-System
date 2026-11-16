@@ -112,7 +112,7 @@ def compute_lots(
         entry_price (float): Entry price.
         sl_price (float): Stop loss price.
         contract_size (float): Contract multiplier (default 1.0).
-        point_value (float): Dollar value per point per contract (default 1.0).
+        point_value (float): Account-currency value per price unit per contract-size unit.
         min_lot (float): Minimum lot size to trade.
         max_lot (float): Maximum lot size to trade.
         max_loss_cap (float | None): If set, cap the USD loss at this amount (e.g. 100 for $100). Ignored when
@@ -174,7 +174,7 @@ def compute_lots_with_execution_reserve(
         execution_reserve_per_lot: Numeric value used for the execution reserve per lot.
         min_lot: Numeric value used for the min lot.
         max_lot: Numeric value used for the max lot.
-        point_value: Account-currency value of one price unit per contract.
+        point_value: Account-currency value of one price unit per contract-size unit.
         lot_step: Broker volume increment. The result is rounded down to this step.
 
     Returns:

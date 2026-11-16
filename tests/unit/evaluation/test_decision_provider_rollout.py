@@ -102,6 +102,24 @@ def test_provider_rollout_adapter_returns_environment_action(
     assert deterministic is False
 
 
+def test_provider_rollout_exposes_the_typed_result_from_its_single_inference() -> None:
+    schema = ActionSchemaRef(
+        version="d-v1", key="hold-enter", coordinates=("hold", "enter"), kind="discrete"
+    )
+    decision = Decision(DiscreteAction(1, "enter"), schema)
+    provider = _Provider(decision)
+    results: list[Decision] = []
+    action_fn = make_provider_action_fn(
+        provider,
+        input_schema_version="obs-v1",
+        decision_callback=results.append,
+    )
+
+    assert action_fn({"seq": np.ones((2, 3), dtype=np.float32)}) == 1
+    assert len(provider.inputs) == 1
+    assert results == [decision]
+
+
 def test_rule_and_sb3_providers_share_the_same_rollout_boundary() -> None:
     action_schema = ActionSchemaRef(
         version="discrete-v1", key="hold-enter", coordinates=("hold", "enter"), kind="discrete"

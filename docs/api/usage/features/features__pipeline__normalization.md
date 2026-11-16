@@ -167,7 +167,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_fit_scoped_zscore_ignores_future_poison`](../../../../tests/unit/features/test_feature_cache_and_fit_scope.py#L328)
+1. [test fixture: `test_fit_scoped_zscore_ignores_future_poison`](../../../../tests/unit/features/test_feature_cache_and_fit_scope.py#L405)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -7,9 +7,9 @@ from pathlib import Path
 
 from omegaconf import DictConfig, OmegaConf
 
-from configuration.paths import repository_root
-
-DEFAULT_QUALITY_REGISTRY = repository_root(__file__) / "config" / "quality_experiments.yaml"
+DEFAULT_QUALITY_REGISTRY = (
+    Path(__file__).resolve().parents[2] / "config" / "quality_experiments.yaml"
+)
 
 _SELECTABLE_STATUSES = frozenset(
     {"control", "implemented_unit_tested", "existing_encoder_implementation"}

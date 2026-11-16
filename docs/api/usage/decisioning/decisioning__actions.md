@@ -617,18 +617,22 @@ def __init__(self, script: dict[int, int], default: int = 0):
     self._action_schema: dict[str, object] = build_discrete_trading_action_schema().to_dict()
 ```
 
-2. [test fixture: `_StubModel`](../../../../tests/unit/features/test_stage_a_observation.py#L25)
+2. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L403)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-class _StubModel:
-    _observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
-    _action_schema = build_discrete_trading_action_schema().to_dict()
-    action_space: Any = spaces.Discrete(20)
-
-    def predict(self, obs: dict[str, Any], deterministic: bool = True) -> np.ndarray[Any, Any]:  # noqa: ARG002
-        return np.array([1])
+# … caller setup omitted …
+    assert result["equity"].index[0] == bars.index[obs_window]
+    assert len(result["equity"]) == len(bars) - obs_window + 1
+    typed_decisions = result["policy_decisions"]["typed_decision"].dropna()
+    assert len(typed_decisions) == result["n_steps"]
+    assert all(record["provider_id"] == "sb3-policy" for record in typed_decisions)
+    expected_schema = build_discrete_trading_action_schema().to_dict()
+    assert all(
+        record["action_schema"]["version"] == expected_schema["version"]
+        for record in typed_decisions
+    )
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

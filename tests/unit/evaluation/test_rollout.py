@@ -179,6 +179,35 @@ def test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_act
         )
 
 
+def test_pre_action_setup_identity_comes_from_decision_row() -> None:
+    from types import SimpleNamespace
+
+    from decisioning.trade_setup import trade_setup_candidate_id
+    from evaluation.rollout.trained_policy_rollout import _pre_action_setup_identity
+
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M1", 1)
+    decision_row = {
+        "entry_idea_fvg_retest_M1_long": 1.0,
+        "fvg_bull_retest_confirmed_at_time_ns": 100,
+        "fvg_bull_retest_origin_time_ns": 80,
+    }
+    next_row = {
+        **decision_row,
+        "fvg_bull_retest_confirmed_at_time_ns": 200,
+        "fvg_bull_retest_origin_time_ns": 180,
+    }
+    env = SimpleNamespace(
+        step_idx=0,
+        _feature_row_at=lambda index: (decision_row, next_row)[index],
+    )
+
+    identity = _pre_action_setup_identity(env, candidate_id)
+    env.step_idx = 1
+
+    assert identity["trade_setup_source_event_identity_status"] == "identified"
+    assert "confirmed_at_time_ns=100" in identity["trade_setup_source_event_id"]
+
+
 def test_evaluate_model_exports_candidate_geometry_trace_for_no_trade() -> None:
     from types import SimpleNamespace
 
@@ -320,7 +349,7 @@ def test_evaluate_model_produces_trades_and_valid_equity():
     assert result["account_state_trace_complete"] is True
     account_trace = result["account_state_trace"]
     assert len(account_trace) == result["n_steps"]
-    assert account_trace["schema_version"].eq("account_state_trace.v2").all()
+    assert account_trace["schema_version"].eq("account_state_trace.v3").all()
     assert account_trace["balance"].notna().all()
     assert account_trace["equity"].notna().all()
     assert account_trace["daily_floor_equity"].eq(95_000.0).all()
@@ -368,6 +397,93 @@ def test_evaluate_provider_uses_the_same_trading_rollout():
     assert result["completed_data_split"] is True
     assert result["equity"].index[0] == bars.index[obs_window]
     assert len(result["equity"]) == len(bars) - obs_window + 1
+    typed_decisions = result["policy_decisions"]["typed_decision"].dropna()
+    assert len(typed_decisions) == result["n_steps"]
+    assert all(record["provider_id"] == "sb3-policy" for record in typed_decisions)
+    expected_schema = build_discrete_trading_action_schema().to_dict()
+    assert all(
+        record["action_schema"]["version"] == expected_schema["version"]
+        for record in typed_decisions
+    )
+
+
+def test_evaluation_keeps_setup_identity_from_the_pre_action_row(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from decisioning.trade_setup import (
+        build_trade_setup_action_schema,
+        trade_setup_candidate_id,
+        trade_setup_center,
+    )
+    from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+    from simulation.environment.env import TradingEnv
+
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M1", 1)
+    action_schema = build_trade_setup_action_schema(has_sl_mode=True, has_entry_execution=True)
+    action = np.zeros(action_schema.width, dtype=np.float32)
+    action[action_schema.indices["trade_setup"]] = trade_setup_center(candidate_id)
+
+    class CandidateModel:
+        action_space = spaces.Box(
+            low=-1.0, high=1.0, shape=(action_schema.width,), dtype=np.float32
+        )
+        _action_schema = action_schema.to_dict()
+
+        def predict(self, _obs: dict[str, Any], deterministic: bool = True):
+            return action, None
+
+    bars = _make_bars(24)
+    features = _make_features(bars)
+    setup_columns = [name for _, name in trade_setup_candidate_feature_columns()]
+    feature_name = dict(trade_setup_candidate_feature_columns())[candidate_id]
+    setup_features = pd.DataFrame(0.0, index=features.index, columns=setup_columns)
+    setup_features[feature_name] = 1.0
+    setup_features["fvg_bull_retest_confirmed_at_time_ns"] = np.arange(len(features)) + 100
+    setup_features["fvg_bull_retest_origin_time_ns"] = np.arange(len(features)) + 80
+    features = pd.concat((features, setup_features), axis=1)
+
+    original_step = TradingEnv.step
+
+    def report_next_row_identity(env: TradingEnv, selected_action: Any):
+        observation, reward, done, truncated, info = original_step(env, selected_action)
+        if info.get("trade_setup_candidate_id") == candidate_id:
+            info["trade_setup_source_event_id"] = "post-action-row"
+        return observation, reward, done, truncated, info
+
+    monkeypatch.setattr(TradingEnv, "step", report_next_row_identity)
+    provider = SB3DecisionProvider(
+        CandidateModel(),
+        input_schema_version=OBSERVATION_SCHEMA_V1,
+    )
+    result = evaluate_model(
+        provider,
+        bars=bars,
+        features=features,
+        obs_window=10,
+        strategy_actions=True,
+        trade_setup_actions=True,
+        agent_entry_execution=True,
+        trade_setup_candidate_timeframes=("M1",),
+    )
+
+    decisions = result["policy_decisions"]
+    selected = decisions.loc[decisions["trade_setup_candidate_id"].eq(candidate_id)]
+    assert not selected.empty
+    assert (
+        selected["trade_setup_source_event_id"]
+        .str.contains("confirmed_at_time_ns=", regex=False)
+        .all()
+    )
+    setup_decisions = result["trade_setup_decisions"]
+    selected_setups = setup_decisions.loc[
+        setup_decisions["trade_setup_candidate_id"].eq(candidate_id)
+    ]
+    assert not selected_setups.empty
+    assert (
+        selected_setups["trade_setup_source_event_id"]
+        .str.contains("confirmed_at_time_ns=", regex=False)
+        .all()
+    )
 
 
 class _ExposureEnv:

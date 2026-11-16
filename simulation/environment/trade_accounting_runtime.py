@@ -118,6 +118,7 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
         # debited on open; allocate it exactly once, pro rata across fills.
         entry_cost = float(self.broker.cost_model.total_cost(close_size))
         contract_size = float(self.broker.contract_size)
+        point_value = float(self.broker.cost_model.point_value)
         commission_per_lot = float(self.broker.cost_model.commission_per_lot)
         exit_commission = float(self.broker.cost_model.total_cost(close_size))
         gross_price_pnl = (
@@ -125,6 +126,7 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
             * int(pos.direction)
             * close_size
             * contract_size
+            * point_value
         )
         record.update(
             {
@@ -132,6 +134,7 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
                 "direction": int(pos.direction),
                 "entry_price": float(pos.entry_price),
                 "contract_size": contract_size,
+                "point_value": point_value,
                 "commission_per_lot": commission_per_lot,
                 "gross_price_pnl": gross_price_pnl,
                 "exit_commission": exit_commission,
@@ -146,7 +149,9 @@ class TradeAccountingRuntimeMixin(RuntimeMixinBase):
             dist = float(pos.stop_distance)
             if dist <= 1e-12 and pos.sl_initial_price is not None:
                 dist = abs(float(pos.entry_price) - float(pos.sl_initial_price))
-            risk_usd = dist * initial * float(getattr(self.broker, "contract_size", 1.0))
+            risk_usd = (
+                dist * initial * float(getattr(self.broker, "contract_size", 1.0)) * point_value
+            )
         realized = net_pnl / risk_usd if risk_usd > 1e-12 else float("nan")
         planned = pos.planned_rr
         record["sl_ref"] = pos.sl_ref

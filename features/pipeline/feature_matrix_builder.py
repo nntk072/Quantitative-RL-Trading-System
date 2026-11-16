@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +19,7 @@ import numpy as np
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
-from artifacts.atomic import write_json_atomic
+from artifacts.atomic import write_json_atomic, write_text_atomic
 from configuration.paths import repository_root
 from features.context.entry_ideas import build_entry_idea_features
 from features.context.liquidity import detect_bos, detect_liquidity_sweeps, detect_mss
@@ -721,9 +723,9 @@ def build_features(
         and _mtf_struct_levels
     ):
         atr5_m1 = feat["atr_5"].where(feat["atr_5"] > 0)
-        for tf, lv_tf in _mtf_struct_levels.items():
-            hi = lv_tf["last_swing_high"].reindex(feat.index, method="ffill")
-            lo = lv_tf["last_swing_low"].reindex(feat.index, method="ffill")
+        for tf in _mtf_struct_levels:
+            hi = feat[f"{tf}_last_swing_high"]
+            lo = feat[f"{tf}_last_swing_low"]
             feat[f"{tf}_dist_to_swing_high_atr"] = (hi - primary["close"]) / atr5_m1
             feat[f"{tf}_dist_to_swing_low_atr"] = (primary["close"] - lo) / atr5_m1
 
@@ -842,10 +844,22 @@ def build_features(
     if cache_path:
         path = Path(cache_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        feat.to_parquet(path)
+        fd, temporary_name = tempfile.mkstemp(
+            prefix=f".{path.stem}.", suffix=path.suffix, dir=path.parent
+        )
+        os.close(fd)
+        temporary_path = Path(temporary_name)
+        hash_path = path.with_name(path.name + ".hash")
+        try:
+            feat.to_parquet(temporary_path)
+            # shortcut: assumes no concurrent cross-identity cache-path reuse; add locking if needed.
+            hash_path.unlink(missing_ok=True)
+            os.replace(temporary_path, path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
         if requested_reference_mode == "htf_confirmed" and sweep_audit_path is not None:
             htf_sweep_audit.to_parquet(sweep_audit_path)
-        path.with_name(path.name + ".hash").write_text(expected_hash + "\n", encoding="utf-8")
+        write_text_atomic(hash_path, expected_hash + "\n")
 
     if fit_state_path is not None:
         final_state = {

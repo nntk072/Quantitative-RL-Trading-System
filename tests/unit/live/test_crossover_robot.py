@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 from types import ModuleType
 from typing import Any, cast
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,10 +12,11 @@ if "MetaTrader5" not in sys.modules:
     try:  # pragma: no cover - depends on platform
         import MetaTrader5  # noqa: F401
     except ImportError:
-        sys.modules["MetaTrader5"] = ModuleType("MetaTrader5")
-if not hasattr(sys.modules["MetaTrader5"], "ORDER_TYPE_BUY"):
-    sys.modules["MetaTrader5"] = MagicMock()
-
+        mt5_stub = ModuleType("MetaTrader5")
+        setattr(mt5_stub, "TIMEFRAME_H1", 16385)
+        sys.modules["MetaTrader5"] = mt5_stub
+if not hasattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1"):
+    setattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1", 16385)
 from integrations.mt5.robot.cross_over_robot import CrossOverRobot
 
 
@@ -28,6 +28,11 @@ def test_crossover_robot_rejects_nonpaper_mode_without_account_guardrails() -> N
             strategy=cast(Any, object()),
             paper_trading=False,
         )
+
+
+def test_headless_mt5_stub_remains_a_module() -> None:
+    assert isinstance(sys.modules["MetaTrader5"], ModuleType)
+    assert getattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1") == 16385
 
 
 def test_crossover_robot_keeps_paper_mode_available() -> None:

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
-TRADE_CASHFLOW_SCHEMA_VERSION = "trade_fill_cashflow.v1"
+TRADE_CASHFLOW_SCHEMA_VERSION = "trade_fill_cashflow.v2"
 FILL_COST_PROVENANCE_SCHEMA_VERSION = "fill_cost_provenance.v1"
 
 
@@ -15,8 +16,29 @@ class CostModel:
     spread_points: float = 0.6  # US100 default
     slippage_points: float = 0.0
     commission_per_lot: float = 0.0  # 0 as per spec
-    point_value: float = 1.0  # $ per point per unit of contract_size
+    point_value: float = 1.0  # account currency per price unit per contract-size unit
     point_size: float = 0.01  # minimum price increment (e.g., 0.01 for US100)
+
+    def __post_init__(self) -> None:
+        """Reject cost parameters that cannot describe valid quotes and fees."""
+        for name in ("spread_points", "slippage_points", "commission_per_lot"):
+            value = getattr(self, name)
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not isfinite(value)
+                or value < 0.0
+            ):
+                raise ValueError(f"{name} must be finite and non-negative")
+        for name in ("point_value", "point_size"):
+            value = getattr(self, name)
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not isfinite(value)
+                or value <= 0.0
+            ):
+                raise ValueError(f"{name} must be finite and positive")
 
     def total_cost(self, lots: float, direction: int | None = None) -> float:
         """Return the explicit transaction cost for one side of a trade.

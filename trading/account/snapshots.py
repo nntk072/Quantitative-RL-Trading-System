@@ -6,7 +6,7 @@ from typing import Any
 
 from trading.account.account_state import AccountState
 
-ACCOUNT_STATE_TRACE_SCHEMA = "account_state_trace.v2"
+ACCOUNT_STATE_TRACE_SCHEMA = "account_state_trace.v3"
 
 
 def account_state_snapshot(
@@ -33,6 +33,7 @@ def account_state_snapshot(
     breach_reason: str = "",
     trade_event_count: int | None = None,
     contract_size: float | None = None,
+    point_value: float = 1.0,
 ) -> dict[str, Any]:
     """Build a self-contained account state row at one valuation boundary.
 
@@ -62,6 +63,7 @@ def account_state_snapshot(
         breach_reason: Risk-breach reason attached to this state, if any.
         trade_event_count: Number of trade events recorded so far.
         contract_size: Instrument contract size used in the account valuation.
+        point_value: Account-currency value of one price unit per contract-size unit.
 
     Returns:
         Versioned mapping of account equity, guardrails, position, and order state.
@@ -153,6 +155,7 @@ def account_state_snapshot(
             None if position is None or position.mark_price is None else float(position.mark_price)
         ),
         "contract_size": None if contract_size is None else float(contract_size),
+        "point_value": float(point_value),
     }
 
 

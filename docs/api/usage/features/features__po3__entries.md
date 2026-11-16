@@ -28,7 +28,7 @@ This page contains 1 public callable records owned by `features.po3.entries`. St
 
 **Observed usage:**
 
-1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L444)
+1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L446)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

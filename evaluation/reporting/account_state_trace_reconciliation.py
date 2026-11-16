@@ -19,8 +19,9 @@ from trading.risk import (
 )
 
 ACCOUNT_STATE_RECONCILIATION_SCHEMA = "account_state_reconciliation.v2"
-_TRACE_SCHEMA = "account_state_trace.v2"
+_TRACE_SCHEMAS = {"account_state_trace.v2", "account_state_trace.v3"}
 _TRADE_CASHFLOW_SCHEMA = TRADE_CASHFLOW_SCHEMA_VERSION
+_LEGACY_TRADE_CASHFLOW_SCHEMA = "trade_fill_cashflow.v1"
 _CLOSE_TYPES = frozenset(
     {"close", "stop_close", "tp_close", "forced_close", "eod_close", "tp_partial_close"}
 )
@@ -213,8 +214,10 @@ def reconcile_account_state_trace(
     )
     result["trace_schema"] = schemas[0] if len(schemas) == 1 else schemas
     missing = sorted(_REQUIRED_TRACE_COLUMNS - set(trace.columns))
-    if schemas != [_TRACE_SCHEMA]:
+    if len(schemas) != 1 or schemas[0] not in _TRACE_SCHEMAS:
         result["incomplete_reasons"].append("unsupported_or_mixed_trace_schema")
+    if schemas == ["account_state_trace.v3"] and "point_value" not in trace.columns:
+        result["incomplete_reasons"].append("missing_point_value_column")
     if missing:
         result["incomplete_reasons"].append("missing_required_columns")
         result["missing_columns"] = missing
@@ -423,9 +426,13 @@ def reconcile_account_state_trace(
                 entry_price = _number(event.get("price"))
                 lots = _number(event.get("lots"))
                 contract_size = _number(event.get("contract_size"))
+                point_value = _number(event.get("point_value"))
                 commission_per_lot = _number(event.get("commission_per_lot"))
+                cashflow_schema = event.get("cashflow_schema_version")
+                if cashflow_schema == _LEGACY_TRADE_CASHFLOW_SCHEMA and point_value is None:
+                    point_value = 1.0
                 if (
-                    event.get("cashflow_schema_version") != _TRADE_CASHFLOW_SCHEMA
+                    cashflow_schema not in {_TRADE_CASHFLOW_SCHEMA, _LEGACY_TRADE_CASHFLOW_SCHEMA}
                     or not isinstance(position_id, str)
                     or not position_id
                     or direction not in {-1, 1}
@@ -434,6 +441,8 @@ def reconcile_account_state_trace(
                     or lots <= 0.0
                     or contract_size is None
                     or contract_size <= 0.0
+                    or point_value is None
+                    or point_value <= 0.0
                     or commission_per_lot is None
                     or commission_per_lot < 0.0
                     or charge is None
@@ -454,6 +463,7 @@ def reconcile_account_state_trace(
                             "entry_price": entry_price,
                             "lots": lots,
                             "contract_size": contract_size,
+                            "point_value": point_value,
                             "commission_per_lot": commission_per_lot,
                             "closed_size": 0.0,
                             "net_pnl": 0.0,
@@ -477,6 +487,10 @@ def reconcile_account_state_trace(
                 direction = _number(event.get("direction"))
                 entry_price = _number(event.get("entry_price"))
                 contract_size = _number(event.get("contract_size"))
+                point_value = _number(event.get("point_value"))
+                cashflow_schema = event.get("cashflow_schema_version")
+                if cashflow_schema == _LEGACY_TRADE_CASHFLOW_SCHEMA and point_value is None:
+                    point_value = 1.0
                 commission_per_lot = _number(event.get("commission_per_lot"))
                 raw_position_complete = event.get("position_complete")
                 if isinstance(raw_position_complete, bool):
@@ -488,7 +502,7 @@ def reconcile_account_state_trace(
                 else:
                     position_complete = None
                 if (
-                    event.get("cashflow_schema_version") != _TRADE_CASHFLOW_SCHEMA
+                    cashflow_schema not in {_TRADE_CASHFLOW_SCHEMA, _LEGACY_TRADE_CASHFLOW_SCHEMA}
                     or original is None
                     or pnl is None
                     or exit_price is None
@@ -501,6 +515,7 @@ def reconcile_account_state_trace(
                     or direction not in {-1, 1}
                     or entry_price is None
                     or contract_size is None
+                    or point_value is None
                     or commission_per_lot is None
                     or position_complete is None
                 ):
@@ -511,6 +526,7 @@ def reconcile_account_state_trace(
                         * original["direction"]
                         * size
                         * original["contract_size"]
+                        * original["point_value"]
                     )
                     expected_exit_commission = original["commission_per_lot"] * size
                     expected_entry_allocation = original["commission_per_lot"] * size
@@ -528,6 +544,12 @@ def reconcile_account_state_trace(
                         "close_contract_size_matches_open",
                         contract_size,
                         original["contract_size"],
+                    )
+                    check(
+                        row_index,
+                        "close_point_value_matches_open",
+                        point_value,
+                        original["point_value"],
                     )
                     check(
                         row_index,
@@ -846,10 +868,11 @@ def reconcile_account_state_trace(
             entry = _number(row["position_entry_price"])
             mark = _number(row["position_mark_price"])
             contract_size = _number(row["contract_size"])
-            if entry is None or mark is None or contract_size is None:
+            point_value = _number(row.get("point_value", 1.0))
+            if entry is None or mark is None or contract_size is None or point_value is None:
                 result["incomplete_reasons"].append("open_position_mark_price_missing")
             else:
-                expected_open_pnl = (mark - entry) * direction * size * contract_size
+                expected_open_pnl = (mark - entry) * direction * size * contract_size * point_value
                 check(row_index, "position_mark_reconstructs_open_pnl", open_pnl, expected_open_pnl)
         else:
             result["incomplete_reasons"].append("invalid_position_state")

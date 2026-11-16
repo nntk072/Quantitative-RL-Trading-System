@@ -41,19 +41,20 @@ def _package_names(root: Path) -> tuple[str, ...]:
     return tuple(packages)
 
 
-def _tracked_paths(root: Path) -> list[Path]:
-    """Return tracked and unignored worktree paths without local cache outputs."""
+def _git_paths(root: Path) -> list[Path]:
+    """Return Git-known tracked and unignored paths, including deleted files."""
     result = subprocess.run(
         ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=root,
         check=True,
         capture_output=True,
     )
-    return [
-        root / item.decode()
-        for item in result.stdout.split(b"\0")
-        if item and (root / item.decode()).is_file()
-    ]
+    return [root / item.decode() for item in result.stdout.split(b"\0") if item]
+
+
+def _tracked_paths(root: Path) -> list[Path]:
+    """Return existing tracked and unignored worktree files."""
+    return [path for path in _git_paths(root) if path.is_file()]
 
 
 def _definitions(tree: ast.AST) -> list[ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef]:
@@ -237,6 +238,156 @@ def audit_tests(root: Path, test_paths: Iterable[Path]) -> dict[str, Any]:
     }
 
 
+def _audit_file_accountability(root: Path, paths: Iterable[Path]) -> dict[str, Any]:
+    """Classify repository files for review, deriving ownership from path rules."""
+    paths = list(paths)
+    owners = {
+        "configuration": "ml_engineer",
+        "config": "ml_engineer",
+        "decisioning": "ml_engineer",
+        "models": "ml_engineer",
+        "learning": "ml_engineer",
+        "training": "ml_engineer",
+        "experiments": "ml_engineer",
+        "compute": "ml_engineer",
+        "market_data": "data_scientist_engineer",
+        "features": "data_scientist_engineer",
+        "trading": "quantitative_trading_engineer",
+        "simulation": "quantitative_trading_engineer",
+        "artifacts": "evidence_reporting_engineer",
+        "evaluation": "evidence_reporting_engineer",
+        "docs": "evidence_reporting_engineer",
+        "tests": "architect",
+        "tools": "evidence_reporting_engineer",
+        ".github": "ci_operation_engineer",
+    }
+    test_owners = {
+        "__init__.py": "architect",
+        "configuration": "ml_engineer",
+        "decisioning": "ml_engineer",
+        "compute": "ml_engineer",
+        "experiments": "ml_engineer",
+        "market_data": "data_scientist_engineer",
+        "features": "data_scientist_engineer",
+        "trading": "quantitative_trading_engineer",
+        "simulation": "quantitative_trading_engineer",
+        "learning": "ml_engineer",
+        "models": "ml_engineer",
+        "training": "ml_engineer",
+        "evaluation": "evidence_reporting_engineer",
+        "artifacts": "evidence_reporting_engineer",
+        "research": "evidence_reporting_engineer",
+        "tooling": "evidence_reporting_engineer",
+        "live": "quantitative_trading_engineer",
+        "orchestra": "architect",
+    }
+    integration_owners = {
+        "__init__.py": "architect",
+        "backtest": "quantitative_trading_engineer",
+        "evaluation": "evidence_reporting_engineer",
+        "test_pipeline_splits.py": "data_scientist_engineer",
+        "test_bar_cache_manifest.py": "data_scientist_engineer",
+        "test_loader.py": "data_scientist_engineer",
+        "test_resample_m10.py": "data_scientist_engineer",
+        "test_sac_agent_integration.py": "ml_engineer",
+        "test_sb3_adapter.py": "ml_engineer",
+        "test_runner.py": "ml_engineer",
+        "test_device.py": "ml_engineer",
+        "test_configuration_wheel.py": "ml_engineer",
+        "test_metric_input_contract.py": "evidence_reporting_engineer",
+        "test_evaluation_pipeline.py": "evidence_reporting_engineer",
+        "test_matched_comparison.py": "evidence_reporting_engineer",
+        "test_bootstrap_drawdown_interval.py": "evidence_reporting_engineer",
+        "test_calibration_ci.py": "evidence_reporting_engineer",
+        "test_position_fill_accounting.py": "quantitative_trading_engineer",
+        "test_trade_setup.py": "quantitative_trading_engineer",
+        "test_strategy_integration.py": "quantitative_trading_engineer",
+        "test_session_levels_integration.py": "data_scientist_engineer",
+        "test_price_grid.py": "data_scientist_engineer",
+        "test_lstm_classifier.py": "ml_engineer",
+        "test_action_schema_contract.py": "ml_engineer",
+        "test_measure_ppo_throughput.py": "ml_engineer",
+        "test_activity.py": "ml_engineer",
+        "test_ablation_oos_smoke.py": "evidence_reporting_engineer",
+        "test_leakage.py": "data_scientist_engineer",
+        "test_scripts_smoke.py": "architect",
+    }
+    excluded_dirs = {"docs/api/usage", "docs/_build", "site"}
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    files: list[dict[str, Any]] = []
+    for path in paths:
+        relative = path.relative_to(root).as_posix()
+        if relative in seen:
+            duplicates.add(relative)
+            continue
+        seen.add(relative)
+        parts = Path(relative).parts
+        generated = any(
+            relative == prefix or relative.startswith(f"{prefix}/") for prefix in excluded_dirs
+        )
+        asset = path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico"}
+        if generated:
+            disposition, reason = "generated", "generated output"
+        elif asset:
+            disposition, reason = "asset", "non-source asset"
+        elif parts[0] == "tests":
+            disposition, reason = "test", None
+        elif path.suffix == ".py":
+            disposition, reason = "production_source", None
+        elif parts[0] == "docs":
+            disposition, reason = "documentation", None
+        elif parts[0] in {"config", "configuration"}:
+            disposition, reason = "configuration", None
+        else:
+            disposition, reason = "project_file", None
+        if parts[0] == "tests":
+            suite = parts[1] if len(parts) > 1 else ""
+            if suite == "unit":
+                owner = test_owners.get(parts[2]) if len(parts) > 2 else "architect"
+            elif suite == "integration":
+                key = parts[2] if len(parts) > 3 else path.name
+                owner = integration_owners.get(key)
+            elif suite == "fixtures" and len(parts) > 2 and parts[2] == "research":
+                owner = "evidence_reporting_engineer"
+            elif suite == "research":
+                owner = "evidence_reporting_engineer"
+            elif suite == "architecture" or len(parts) == 2:
+                owner = "architect"
+            else:
+                owner = None
+        elif parts[0] == "tools" and len(parts) > 1 and parts[1] == "documentation":
+            owner = "evidence_reporting_engineer"
+        elif parts[0] == "tools" and len(parts) > 1 and parts[1] == "check":
+            owner = "ci_operation_engineer"
+        elif parts[0] == "tools" and len(parts) > 1 and parts[1] == "quality":
+            owner = "architect"
+        else:
+            owner = owners.get(parts[0], "architect")
+        eligible = reason is None
+        files.append(
+            {
+                "path": relative,
+                "owner": owner,
+                "disposition": disposition,
+                "eligible": eligible,
+                "exclusion_reason": reason,
+                "exists": path.is_file(),
+            }
+        )
+    missing = sorted(item["path"] for item in files if not item["exists"])
+    return {
+        "eligibility_rule": (
+            "all Git-known tracked or unignored files except generated outputs and non-source assets; "
+            "unmapped test ownership remains unassigned"
+        ),
+        "files": sorted(files, key=lambda item: item["path"]),
+        "duplicate_paths": sorted(duplicates),
+        "missing_paths": missing,
+        "unassigned_paths": sorted(item["path"] for item in files if item["owner"] is None),
+    }
+
+
 def _percent(numerator: int, denominator: int) -> float | None:
     """Convert a numerator and denominator to a percentage when defined."""
     return round(100 * numerator / denominator, 2) if denominator else None
@@ -244,7 +395,8 @@ def _percent(numerator: int, denominator: int) -> float | None:
 
 def build_audit(root: Path = ROOT) -> dict[str, Any]:
     """Return a deterministic snapshot of tracked and unignored repository files."""
-    tracked = _tracked_paths(root)
+    git_paths = _git_paths(root)
+    tracked = [path for path in git_paths if path.is_file()]
     packages = _package_names(root)
     source_paths = [
         path
@@ -272,6 +424,7 @@ def build_audit(root: Path = ROOT) -> dict[str, Any]:
         "head_and_branch": git.stdout.splitlines(),
         "production": audit_sources(root, source_paths),
         "tests": audit_tests(root, test_paths),
+        "file_accountability": _audit_file_accountability(root, git_paths),
         "documentation": {
             "tracked_markdown_pages": len(docs_pages),
             "package_readmes_present": sum(package_readmes.values()),

@@ -164,6 +164,10 @@ costs:
   # keep min_sl_points >= 2 * slippage_points.
   slippage_points: 5.0
   commission_per_lot: 0.0
+  # Account-currency value of one price unit per contract-size unit. Total
+  # P&L multiplies this by price movement, lots, and account.contract_size.
+  # Supply it in account.currency; conversion from another currency is not inferred.
+  point_value: 1.0
   # minimum price increment for converting the CSV integer spread column
   # to price units (e.g. 0.01 for US100 quoted to 2 d.p.)
   point_size: 0.01

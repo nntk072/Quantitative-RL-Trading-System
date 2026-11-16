@@ -7,10 +7,11 @@ serialized schema checks; they do not replace them.
 ## Feature cache
 
 `features.pipeline.feature_cache_identity.FEATURE_CACHE_VERSION` currently
-uses `v44-wilder-adx`, invalidating cached ADX values after switching to
-Wilder smoothing. The feature cache identity also hashes the
-resolved feature configuration, market input indexes and values, optional
-training mask, and other settings that affect feature output.
+uses `v45-close-aligned-mtf-swings`, invalidating cached feature matrices after
+aligning higher-timeframe swing values to their close-available M1 columns. The
+feature cache identity also hashes the resolved feature configuration, market
+input indexes and values, optional training mask, and other settings that affect
+feature output.
 
 Increment the feature cache version when a change alters the feature matrix's
 columns, ordering, dtypes, values, causal timing, or normalization semantics in

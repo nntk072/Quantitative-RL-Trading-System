@@ -163,6 +163,22 @@ def _log_train_survival_status(
         )
 
 
+def _learning_diagnostics_enabled(
+    algo: str, quality_enabled: bool, trade_setup_enabled: bool
+) -> bool:
+    """Return whether PPO-only rollout diagnostics should be attached.
+
+    Args:
+        algo: Resolved learning algorithm name.
+        quality_enabled: Whether quality rollout diagnostics are enabled.
+        trade_setup_enabled: Whether trade-setup diagnostics are enabled.
+
+    Returns:
+        Whether the PPO rollout callback should be attached.
+    """
+    return algo == "ppo" and (quality_enabled or trade_setup_enabled)
+
+
 @dataclass(slots=True)
 class SeedRunContext:
     """Prepared configuration, data, and assets shared by one seed lifecycle."""
@@ -395,9 +411,10 @@ class SeedRunner:
 
         callbacks.append(EpisodeEquityCallback(log_path=seed_model_dir / "episode_equity.csv"))
         trade_setup_diagnostics_enabled = bool(cfg.env.get("trade_setup_actions", False))
-        if (
-            bool(cfg.get("quality_diagnostics", {}).get("enabled", False))
-            or trade_setup_diagnostics_enabled
+        if _learning_diagnostics_enabled(
+            str(args.algo),
+            bool(cfg.get("quality_diagnostics", {}).get("enabled", False)),
+            trade_setup_diagnostics_enabled,
         ):
             callbacks.append(
                 LearningDiagnosticsCallback(log_path=seed_model_dir / "learning_diagnostics.csv")

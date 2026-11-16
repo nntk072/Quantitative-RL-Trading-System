@@ -89,6 +89,52 @@ def _default_cfg() -> dict[str, Any]:
 class TestBuildFeaturesPipeline:
     """End-to-end build_features pipeline tests."""
 
+    def test_h1_swing_distance_uses_close_aligned_levels(
+        self, deterministic_bars: pd.DataFrame, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A forming H1 source bar must not update M1 swing-distance features."""
+        import features.pipeline.feature_matrix_builder as builder
+
+        cutoff = deterministic_bars.index[300]
+        aligned_low = pd.Series(90.0, index=deterministic_bars.index)
+        aligned_low.loc[cutoff:] = 110.0
+        aligned_high = pd.Series(120.0, index=deterministic_bars.index)
+
+        def add_structure(
+            primary: pd.DataFrame,
+            features: pd.DataFrame,
+            **_: Any,
+        ) -> tuple[pd.DataFrame, None, dict[str, pd.DataFrame]]:
+            features["H1_last_swing_low"] = aligned_low
+            features["H1_last_swing_high"] = aligned_high
+            raw_levels = pd.DataFrame(
+                {"last_swing_high": [120.0], "last_swing_low": [110.0]},
+                index=pd.DatetimeIndex([primary.index[0]]),
+            )
+            return features, None, {"H1": raw_levels}
+
+        monkeypatch.setattr(builder, "append_structure_features", add_structure)
+        cfg = cast(
+            DictConfig,
+            OmegaConf.merge(
+                OmegaConf.create(_default_cfg()),
+                OmegaConf.create(
+                    {"features": {"structure": {"enabled": True, "timeframes": ["H1"]}}}
+                ),
+            ),
+        )
+
+        features = build_features(deterministic_bars, cfg=cfg)
+        before_confirmation = cutoff - pd.Timedelta(minutes=1)
+        expected_distance = (
+            deterministic_bars.loc[before_confirmation, "close"] - 90.0
+        ) / features.loc[before_confirmation, "atr_5"]
+
+        assert features.loc[before_confirmation, "H1_last_swing_low"] == 90.0
+        assert features.loc[before_confirmation, "H1_dist_to_swing_low_atr"] == pytest.approx(
+            expected_distance
+        )
+
     def test_survival_overlay_builds_setup_flags_for_all_timeframes(
         self, deterministic_bars: pd.DataFrame
     ) -> None:

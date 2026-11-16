@@ -57,6 +57,59 @@ def test_list_override_rejects_nested_or_non_finite_values(override: str) -> Non
 
 
 @pytest.mark.parametrize(
+    "override",
+    [
+        "ppo.learning_rate=NaN",
+        "ppo.learning_rate=inf",
+        "ppo.learning_rate=0",
+        "ppo.gamma=NaN",
+        "ppo.gamma=-0.01",
+        "ppo.gamma=1.01",
+        "ppo.gae_lambda=inf",
+        "ppo.gae_lambda=-0.01",
+        "ppo.gae_lambda=1.01",
+        "sac.learning_rate=-1",
+        "sac.gamma=NaN",
+        "sac.gamma=1.01",
+        "sac.tau=inf",
+        "sac.tau=-0.01",
+        "sac.tau=1.01",
+    ],
+)
+def test_active_optimizer_overrides_reject_non_finite_or_out_of_domain_values(
+    override: str,
+) -> None:
+    with pytest.raises(ValueError, match="must be"):
+        load_config([override])
+
+
+def test_active_optimizer_overrides_accept_domain_boundaries() -> None:
+    cfg = load_config(
+        [
+            "ppo.learning_rate=0.0001",
+            "ppo.gamma=0",
+            "ppo.gae_lambda=1",
+            "sac.learning_rate=0.0001",
+            "sac.gamma=1",
+            "sac.tau=0",
+        ]
+    )
+
+    assert cfg.ppo.gamma == 0
+    assert cfg.ppo.gae_lambda == 1
+    assert cfg.sac.gamma == 1
+    assert cfg.sac.tau == 0
+
+
+def test_optimizer_yaml_overlay_rejects_non_finite_values(tmp_path: Path) -> None:
+    overlay = tmp_path / "non_finite_optimizer.yaml"
+    overlay.write_text("ppo:\n  gamma: .nan\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"ppo\.gamma must be finite"):
+        load_config(config_path=overlay)
+
+
+@pytest.mark.parametrize(
     ("override", "message"),
     [
         ("ppo.learning_rate=fast", r"expected float at config\.ppo\.learning_rate"),

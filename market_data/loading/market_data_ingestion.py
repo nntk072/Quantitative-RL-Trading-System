@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 from omegaconf import DictConfig
@@ -42,6 +43,99 @@ log = logging.getLogger(__name__)
 
 # The v4 cache uses semantic manifests and atomic parquet publication.
 BAR_CACHE_VERSION = "v4-semantic-manifest"
+
+
+def _load_stable_bars(
+    path: Path,
+    *,
+    expected_sha256: str | None = None,
+    **load_kwargs: Any,
+) -> tuple[pd.DataFrame, str]:
+    """Parse bars only when the source bytes match the cache identity.
+
+    Args:
+        path: Raw bar source to parse.
+        expected_sha256: Optional digest already used to build the cache identity.
+        **load_kwargs: Date bounds forwarded to ``load_bars``.
+
+    Returns:
+        Parsed bars and the digest of the bytes that were parsed.
+    """
+    before = file_sha256(path)
+    if expected_sha256 is not None and before != expected_sha256:
+        raise RuntimeError(f"bar source {path} does not match cache identity")
+    bars = load_bars(path, **load_kwargs)
+    if file_sha256(path) != before:
+        raise RuntimeError(f"bar source {path} changed while being parsed")
+    return bars, before
+
+
+def _preflight_bar_sources(
+    dataset_specs: Sequence[tuple[str, Path, Any, Any, Any, Any]],
+    symbols: Sequence[str],
+    timeframes: Sequence[str],
+    *,
+    end_inclusive: str | None,
+) -> None:
+    """Reject raw chronology conflicts before the run publishes any bar cache.
+
+    Args:
+        dataset_specs: Dataset roots and per-symbol source file mappings.
+        symbols: Symbols selected for this pipeline run.
+        timeframes: Native timeframes selected for this pipeline run.
+        end_inclusive: Optional last local calendar date to include.
+    """
+    source_indices: dict[tuple[str, str], list[pd.Index]] = {}
+    for dataset_name, root, m1_files, timeframe_files, start_date, end_date in dataset_specs:
+        source_start = pd.Timestamp(str(start_date)).normalize() if start_date else None
+        if start_date and end_date and str(start_date) > str(end_date):
+            raise ValueError(
+                f"dataset {dataset_name!r} has start_date after end_date: {start_date} > {end_date}"
+            )
+        source_end_date = end_date
+        if end_inclusive is not None and (
+            source_end_date is None or str(end_inclusive) < str(source_end_date)
+        ):
+            source_end_date = end_inclusive
+        raw_exclusive_end = (
+            pd.Timestamp(str(source_end_date)).normalize() + pd.DateOffset(days=1)
+            if source_end_date is not None
+            else None
+        )
+        for symbol in symbols:
+            configured_m1 = timeframe_files.get("M1", {}).get(symbol)
+            paths = [("M1", root / str(configured_m1 or m1_files[symbol]))]
+            paths.extend(
+                (str(timeframe), root / str(native_file))
+                for timeframe in timeframes
+                if (native_file := timeframe_files.get(str(timeframe), {}).get(symbol))
+            )
+            seen_paths: set[Path] = set()
+            for timeframe, path in paths:
+                if path in seen_paths:
+                    continue
+                seen_paths.add(path)
+                source = load_bars(
+                    path,
+                    start_inclusive=source_start,
+                    end_exclusive=raw_exclusive_end,
+                )
+                diagnostics = source.attrs.get("source_diagnostics", {})
+                if diagnostics.get("out_of_order_rows", 0) or diagnostics.get(
+                    "conflicting_duplicate_timestamps", 0
+                ):
+                    raise ValueError(
+                        f"rejected bar source {path}: chronology/duplicate diagnostics "
+                        f"{diagnostics}"
+                    )
+                key = (symbol, timeframe)
+                previous = source_indices.setdefault(key, [])
+                if any(len(source.index.intersection(index)) for index in previous):
+                    raise ValueError(
+                        f"overlapping {timeframe} rows across configured data splits "
+                        f"for {symbol}; rejected before cache publication"
+                    )
+                previous.append(source.index)
 
 
 def run_pipeline(
@@ -99,6 +193,13 @@ def run_pipeline(
             raise ValueError("only the 'all' dataset is configured")
         dataset_specs = [("all", Path(str(cfg.data.raw_dir)), cfg.data.m1_files, {}, None, None)]
 
+    _preflight_bar_sources(
+        dataset_specs,
+        [str(symbol) for symbol in cfg.data.symbols],
+        [str(timeframe) for timeframe in cfg.data.timeframes],
+        end_inclusive=end_inclusive,
+    )
+
     parts: dict[str, dict[str, list[pd.DataFrame]]] = {
         str(symbol): {str(tf): [] for tf in cfg.data.timeframes} for symbol in cfg.data.symbols
     }
@@ -135,11 +236,17 @@ def run_pipeline(
                 if source_end_date is not None
                 else None
             )
-            m1_raw = quantize_bar_prices(
-                load_bars(m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end),
-                grid_increment,
-            )
-            source_hashes = {} if exclusive_end is not None else {m1_path: file_sha256(m1_path)}
+            if exclusive_end is None:
+                m1_source, m1_source_hash = _load_stable_bars(
+                    m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end
+                )
+            else:
+                m1_source = load_bars(
+                    m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end
+                )
+                m1_source_hash = None
+            m1_raw = quantize_bar_prices(m1_source, grid_increment)
+            source_hashes = {m1_path: m1_source_hash} if m1_source_hash is not None else {}
             if m1_raw.empty:
                 for timeframe in cfg.data.timeframes:
                     parts[str(symbol)][str(timeframe)].append(
@@ -218,14 +325,20 @@ def run_pipeline(
                     if tf == "M1":
                         df = m1_full.copy()
                     elif native_file:
-                        tf_raw = quantize_bar_prices(
-                            load_bars(
+                        if cache_identity is None:
+                            tf_source = load_bars(
                                 source_path,
                                 start_inclusive=source_start,
                                 end_exclusive=raw_exclusive_end,
-                            ),
-                            grid_increment,
-                        )
+                            )
+                        else:
+                            tf_source, _ = _load_stable_bars(
+                                source_path,
+                                expected_sha256=input_hash(source_path),
+                                start_inclusive=source_start,
+                                end_exclusive=raw_exclusive_end,
+                            )
+                        tf_raw = quantize_bar_prices(tf_source, grid_increment)
                         tf_clean = clean(tf_raw, tz=tz)
                         df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
                         df = add_session_id(df)
@@ -252,5 +365,16 @@ def run_pipeline(
             combined = pd.concat(frames).sort_index()
             if combined.index.has_duplicates:
                 raise ValueError(f"overlapping {tf} rows in configured data splits for {symbol}")
+            diagnostic_keys = (
+                "out_of_order_rows",
+                "duplicate_rows",
+                "conflicting_duplicate_timestamps",
+            )
+            combined.attrs["source_diagnostics"] = {
+                key: sum(
+                    int(frame.attrs.get("source_diagnostics", {}).get(key, 0)) for frame in frames
+                )
+                for key in diagnostic_keys
+            }
             result[symbol][tf] = combined
     return result

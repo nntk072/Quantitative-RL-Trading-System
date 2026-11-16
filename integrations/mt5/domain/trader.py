@@ -3,6 +3,11 @@ import pandas as pd
 from loguru import logger
 
 from integrations.mt5.adapters import Trader
+from integrations.mt5.domain.symbol_rules import (
+    filling_type,
+    symbol_allows_open,
+    volume_matches_symbol,
+)
 
 
 class MT5Trader(Trader):
@@ -33,6 +38,21 @@ class MT5Trader(Trader):
         Returns:
             Result of submit a market order and optionally attach stop and target prices.
         """
+        symbol_info = mt5.symbol_info(symbol)
+        if symbol_info is None or not volume_matches_symbol(symbol_info, volume):
+            logger.error(
+                "Refusing order for {}: volume does not match live symbol constraints", symbol
+            )
+            return None
+        if not symbol_allows_open(symbol_info, position_type, sl=sl, tp=tp):
+            logger.error(
+                "Refusing order for {}: live symbol trading rules reject this entry", symbol
+            )
+            return None
+        fill_policy = filling_type(symbol_info)
+        if fill_policy is None:
+            logger.error("Refusing order for {}: no supported market fill policy", symbol)
+            return None
         order = {
             "action": mt5.TRADE_ACTION_DEAL,
             "symbol": symbol,
@@ -41,7 +61,7 @@ class MT5Trader(Trader):
             "magic": magic_number,
             "comment": comment,
             "type_time": mt5.ORDER_TIME_GTC,
-            "type_filling": mt5.ORDER_FILLING_FOK,
+            "type_filling": fill_policy,
         }
 
         # Add optional parameters if they are provided
@@ -62,18 +82,27 @@ class MT5Trader(Trader):
         return result  # type: ignore[no-any-return]
 
     def close_positions(
-        self, robot_name: str, symbol: str | None = None, position_type: int | None = None
+        self,
+        robot_name: str,
+        symbol: str | None = None,
+        position_type: int | None = None,
+        *,
+        magic_number: int,
     ) -> None:
-        """Close matching open positions owned by the named robot.
+        """Close open positions owned by the named robot's magic number.
 
         Args:
             robot_name: Strategy identifier used to filter positions.
             symbol: Optional broker symbol filter.
             position_type: Optional MetaTrader position type filter.
+            magic_number: Broker-stored identifier assigned to this strategy.
         """
         df_open_positions = self.get_all_positions()
 
         if not df_open_positions.empty:
+            if "magic" not in df_open_positions.columns:
+                raise ValueError("cannot verify MT5 position ownership without magic metadata")
+            df_open_positions = df_open_positions[df_open_positions["magic"] == magic_number]
             if not symbol and position_type is None:
                 position_list = df_open_positions["ticket"].unique().tolist()
             elif symbol and position_type is None:
@@ -91,6 +120,18 @@ class MT5Trader(Trader):
                 type_position = df_position["type"].item()
                 symbol_position = df_position["symbol"].item()
                 volume_position = df_position["volume"].item()
+                symbol_info = mt5.symbol_info(symbol_position)
+                if symbol_info is None or not volume_matches_symbol(
+                    symbol_info, float(volume_position)
+                ):
+                    logger.error(
+                        "Cannot close position {}: invalid broker volume metadata", position
+                    )
+                    continue
+                fill_policy = filling_type(symbol_info)
+                if fill_policy is None:
+                    logger.error("Cannot close position {}: no supported fill policy", position)
+                    continue
                 tick = mt5.symbol_info_tick(symbol_position)
                 if tick is None:
                     logger.error("Cannot close position {}: quote unavailable", position)
@@ -105,11 +146,12 @@ class MT5Trader(Trader):
                         "volume": volume_position,
                         "type": mt5.ORDER_TYPE_BUY,
                         "position": position,
+                        "magic": magic_number,
                         "price": price_close,
                         "comment": f"{robot_name} closed position",
-                        "type_filling": mt5.ORDER_FILLING_FOK,
+                        "type_filling": fill_policy,
                     }
-                    mt5.order_send(close_request)
+                    self._log_close_result(position, mt5.order_send(close_request))
 
                 if type_position == mt5.ORDER_TYPE_BUY:
                     # A long position is closed by selling at the bid.
@@ -120,45 +162,50 @@ class MT5Trader(Trader):
                         "volume": volume_position,
                         "type": mt5.ORDER_TYPE_SELL,
                         "position": position,
+                        "magic": magic_number,
                         "price": price_close,
                         "comment": f"{robot_name} closed position",
-                        "type_filling": mt5.ORDER_FILLING_FOK,
+                        "type_filling": fill_policy,
                     }
-                    mt5.order_send(close_request)
+                    self._log_close_result(position, mt5.order_send(close_request))
 
     def get_opened_positions(
-        self, symbol: str | None = None, position_type: int | None = None
+        self,
+        symbol: str | None = None,
+        position_type: int | None = None,
+        *,
+        magic_number: int | None = None,
     ) -> tuple[int, pd.DataFrame]:
         """Return matching open positions and their total volume.
 
         Args:
             symbol: Optional broker symbol filter.
             position_type: Optional MetaTrader position type filter.
+            magic_number: Optional strategy ownership filter.
 
         Returns:
             Pair containing total volume and the filtered position frame.
         """
         try:
             opened_positions = mt5.positions_get()
-            df_opened_positions = pd.DataFrame(
-                list(opened_positions), columns=opened_positions[0]._asdict().keys()
-            )
-            if not symbol and position_type is None:
-                df = df_opened_positions
-            elif symbol and position_type is None:
-                df = df_opened_positions[df_opened_positions["symbol"] == symbol]
-            elif not symbol and position_type is not None:
-                df = df_opened_positions[df_opened_positions["type"] == position_type]
-            else:
-                df = df_opened_positions[
-                    (df_opened_positions["symbol"] == symbol)
-                    & (df_opened_positions["type"] == position_type)
-                ]
-            total_opened_positions = len(df)
-        except Exception:
-            total_opened_positions = 0
-            df = pd.DataFrame()
-        return total_opened_positions, df
+        except Exception as exc:
+            raise RuntimeError("MT5 positions_get failed") from exc
+        if opened_positions is None:
+            last_error = getattr(mt5, "last_error", lambda: "unavailable")()
+            raise RuntimeError(f"MT5 positions_get failed: {last_error}")
+        df = pd.DataFrame.from_records(position._asdict() for position in opened_positions)
+        if df.empty:
+            return 0, df
+        if magic_number is not None:
+            if "magic" not in df.columns:
+                raise ValueError("cannot verify MT5 position ownership without magic metadata")
+            if "magic" in df.columns:
+                df = df[df["magic"] == magic_number]
+        if symbol is not None:
+            df = df[df["symbol"] == symbol]
+        if position_type is not None:
+            df = df[df["type"] == position_type]
+        return len(df), df
 
     def get_all_positions(self) -> pd.DataFrame:
         """Fetch all currently open positions as a data frame.
@@ -223,6 +270,23 @@ class MT5Trader(Trader):
                                 "type_filling": mt5.ORDER_FILLING_IOC,
                             }
                             mt5.order_send(modify_order_request)
+
+    @staticmethod
+    def _log_close_result(position: int, result: object | None) -> None:
+        """Report rejected and partial closes; callers must re-query position state.
+
+        Args:
+            position: Position ticket submitted for close.
+            result: Broker response, or ``None`` if no response was received.
+        """
+        if result is None:
+            logger.error("Close request for position {} returned no broker result", position)
+            return
+        retcode = getattr(result, "retcode", None)
+        if retcode == mt5.TRADE_RETCODE_DONE_PARTIAL:
+            logger.warning("Close request for position {} filled only part of its volume", position)
+        elif retcode != mt5.TRADE_RETCODE_DONE:
+            logger.error("Close request for position {} failed with retcode {}", position, retcode)
 
     def calculate_position_size(self, symbol: str, stop_loss: float, per_to_risk: float) -> float:
         """Calculate lots for a stop distance and risk fraction.

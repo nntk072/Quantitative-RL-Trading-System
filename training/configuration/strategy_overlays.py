@@ -7,9 +7,8 @@ from pathlib import Path
 from omegaconf import DictConfig
 
 from configuration import load_config_overlay, merge_config_overlay
-from configuration.paths import repository_root
 
-_CONFIG_DIR = repository_root(__file__) / "config"
+_CONFIG_DIR = Path(__file__).resolve().parents[2] / "config"
 _STRATEGY_CONFIGS = {
     "po3_ifvg": _CONFIG_DIR / "strategies" / "po3_ifvg.yaml",
     "distribution": _CONFIG_DIR / "strategies" / "distribution.yaml",

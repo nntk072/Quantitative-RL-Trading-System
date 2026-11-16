@@ -30,7 +30,21 @@ This page contains 1 public callable records owned by `market_data.transforms.cl
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L163)
+1. [test fixture: `test_load_bars_records_raw_order_and_conflicting_duplicate_diagnostics`](../../../../tests/integration/test_loader.py#L110)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert bars.attrs["source_diagnostics"] == {
+        "out_of_order_rows": 1,
+        "duplicate_rows": 1,
+        "conflicting_duplicate_timestamps": 1,
+    }
+    assert clean(bars).attrs["source_diagnostics"] == bars.attrs["source_diagnostics"]
+```
+
+2. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L270)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

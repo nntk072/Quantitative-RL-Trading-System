@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 
-from decisioning.contracts import DecisionInput, DecisionProvider, to_policy_action
+from decisioning.contracts import Decision, DecisionInput, DecisionProvider, to_policy_action
 
 
 def make_provider_action_fn(
@@ -17,6 +17,7 @@ def make_provider_action_fn(
     deterministic: bool = True,
     continuous_actions: bool = False,
     strategy_actions: bool = False,
+    decision_callback: Callable[[Decision], None] | None = None,
 ) -> Callable[[dict[str, Any]], int | float | np.ndarray[Any, Any]]:
     """Return the action callable used by generic evaluation rollouts.
 
@@ -29,6 +30,7 @@ def make_provider_action_fn(
         deterministic: Whether to enable or require the deterministic.
         continuous_actions: Whether to enable or require the continuous actions.
         strategy_actions: Whether to enable or require the strategy actions.
+        decision_callback: Optional receiver for the typed result from this inference.
 
     Returns:
         Mapping from ``str`` keys to ``Any]], int | float | np.ndarray[Any, Any]`` values.
@@ -47,6 +49,8 @@ def make_provider_action_fn(
             DecisionInput(observation=observation, schema_version=input_schema_version),
             deterministic=deterministic,
         )
+        if decision_callback is not None:
+            decision_callback(decision)
         action = to_policy_action(decision)
         if strategy_actions:
             return np.asarray(action, dtype=np.float32).reshape(-1)

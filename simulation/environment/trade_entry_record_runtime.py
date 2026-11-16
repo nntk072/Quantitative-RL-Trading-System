@@ -106,6 +106,7 @@ class TradeEntryRecordRuntimeMixin(RuntimeMixinBase):
                 "direction": discrete_action,
                 "cashflow_schema_version": TRADE_CASHFLOW_SCHEMA_VERSION,
                 "contract_size": float(self.broker.contract_size),
+                "point_value": float(self.broker.cost_model.point_value),
                 "commission_per_lot": float(self.broker.cost_model.commission_per_lot),
                 **setup_identity,
                 "primary_idea": selected_setup.idea if selected_setup is not None else "",

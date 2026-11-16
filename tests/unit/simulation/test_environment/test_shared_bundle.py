@@ -62,6 +62,55 @@ def test_completed_htf_history_mode_changes_bundle_identity() -> None:
     assert bundle_key(config, sources) != bundle_key(hidden_history, sources)
 
 
+def test_bundle_identity_includes_column_names_and_labels() -> None:
+    from simulation.environment.shared_bundle import bundle_key
+
+    _, config = _fixture_bundle_inputs()
+    sources = {"bars": {"size": 32}}
+    columns = {"features_num": ["london_high", "london_low"]}
+    labels = {"session": ["asia", "london", "new_york"]}
+
+    base = bundle_key(config, sources, column_names=columns, labels=labels)
+    reordered = bundle_key(
+        config,
+        sources,
+        column_names={"features_num": ["london_low", "london_high"]},
+        labels=labels,
+    )
+    relabeled = bundle_key(
+        config,
+        sources,
+        column_names=columns,
+        labels={"session": ["asia", "london", "ny"]},
+    )
+
+    assert base != reordered
+    assert base != relabeled
+
+
+def test_load_bundle_rejects_interpretation_metadata_mutation(tmp_path: Path) -> None:
+    import json
+
+    from simulation.environment.shared_bundle import build_bundle, load_bundle
+
+    arrays, config = _fixture_bundle_inputs()
+    bundle_path = build_bundle(
+        tmp_path,
+        arrays=arrays,
+        config=config,
+        source_fingerprints={"bars": {"size": 32}},
+        column_names={"features_num": ["london_high", "london_low"]},
+        labels={"session": ["asia", "london", "new_york"]},
+    )
+    manifest_path = bundle_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["labels"]["session"][2] = "ny"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="identity"):
+        load_bundle(bundle_path)
+
+
 def _fixture_bundle_inputs() -> tuple[dict[str, np.ndarray[Any, Any]], dict[str, Any]]:
     """Return deterministic source arrays and an observation-relevant config."""
     bars = _make_deterministic_bars(n=32)
@@ -119,6 +168,40 @@ def test_bundle_round_trip_matches_source(tmp_path: Path) -> None:
         "london_high",
         "london_low",
     ]
+
+
+def test_bundle_load_and_reuse_reject_same_shape_content_tampering(tmp_path: Path) -> None:
+    import json
+
+    from simulation.environment.shared_bundle import build_bundle, load_bundle
+
+    arrays, config = _fixture_bundle_inputs()
+    bundle_path = build_bundle(
+        tmp_path,
+        arrays=arrays,
+        config=config,
+        source_fingerprints={"bars": {"size": 32}},
+    )
+    array_path = bundle_path / "bar_ohlc.npy"
+    corrupted = np.load(array_path, allow_pickle=False)
+    corrupted[0, 0] += 1.0
+    np.save(array_path, corrupted, allow_pickle=False)
+    assert (
+        list(corrupted.shape)
+        == json.loads((bundle_path / "manifest.json").read_text(encoding="utf-8"))["arrays"][
+            "bar_ohlc"
+        ]["shape"]
+    )
+
+    with pytest.raises(ValueError, match="content digest mismatch"):
+        load_bundle(bundle_path)
+    with pytest.raises(ValueError, match="content digest mismatch"):
+        build_bundle(
+            tmp_path,
+            arrays=arrays,
+            config=config,
+            source_fingerprints={"bars": {"size": 32}},
+        )
 
 
 def test_build_is_idempotent(tmp_path: Path) -> None:

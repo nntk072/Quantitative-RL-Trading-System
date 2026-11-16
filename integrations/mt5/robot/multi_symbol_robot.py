@@ -122,9 +122,34 @@ class MultiSymbolRobot:
             if signal_symbol != symbol:
                 logger.warning(f"Strategy returned different symbol: {signal_symbol} vs {symbol}")
 
-                # Process buy signal
+            # Process buy signal.
             if signal == Signal.BUY:
-                total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
+                total_sell, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+                )
+                if total_sell > 0:
+                    logger.info(f"Closing existing sell positions for {symbol}")
+                    if self.paper_trading:
+                        logger.info(f"[PAPER] Would close existing sell positions for {symbol}")
+                    else:
+                        self.trader.close_positions(
+                            self.name,
+                            symbol,
+                            mt5.ORDER_TYPE_SELL,
+                            magic_number=self.magic_number,
+                        )
+                        total_sell, _ = self.trader.get_opened_positions(
+                            symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+                        )
+                        if total_sell > 0:
+                            logger.warning(
+                                f"Refusing to open {symbol}: opposite sell positions remain open"
+                            )
+                            return
+
+                total_buy, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+                )
 
                 if total_buy == 0:
                     if not self.paper_trading and not bool(
@@ -183,23 +208,44 @@ class MultiSymbolRobot:
                             f"Buy position opened for {symbol}: "
                             f"Order #{result.order}, Volume: {result.volume}, Price: {result.price}"
                         )
+                    elif result.retcode == mt5.TRADE_RETCODE_DONE_PARTIAL:
+                        logger.warning(
+                            f"Buy position partially filled for {symbol}: "
+                            f"Order #{result.order}, Volume: {result.volume}, Price: {result.price}"
+                        )
                     else:
                         logger.error(f"Failed to open buy position for {symbol}: {result.retcode}")
                 else:
                     logger.info(f"Buy position already exists for {symbol}")
 
-                    # Close opposite positions
-                total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
-                if total_sell > 0:
-                    logger.info(f"Closing existing sell positions for {symbol}")
-                    if not self.paper_trading:
-                        self.trader.close_positions(self.name, symbol, mt5.ORDER_TYPE_SELL)
-                    else:
-                        logger.info(f"[PAPER] Would close existing sell positions for {symbol}")
-
-                        # Process sell signal
+            # Process sell signal.
             elif signal == Signal.SELL:
-                total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
+                total_buy, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+                )
+                if total_buy > 0:
+                    logger.info(f"Closing existing buy positions for {symbol}")
+                    if self.paper_trading:
+                        logger.info(f"[PAPER] Would close existing buy positions for {symbol}")
+                    else:
+                        self.trader.close_positions(
+                            self.name,
+                            symbol,
+                            mt5.ORDER_TYPE_BUY,
+                            magic_number=self.magic_number,
+                        )
+                        total_buy, _ = self.trader.get_opened_positions(
+                            symbol, mt5.ORDER_TYPE_BUY, magic_number=self.magic_number
+                        )
+                        if total_buy > 0:
+                            logger.warning(
+                                f"Refusing to open {symbol}: opposite buy positions remain open"
+                            )
+                            return
+
+                total_sell, _ = self.trader.get_opened_positions(
+                    symbol, mt5.ORDER_TYPE_SELL, magic_number=self.magic_number
+                )
 
                 if total_sell == 0:
                     if not self.paper_trading and not bool(
@@ -258,21 +304,17 @@ class MultiSymbolRobot:
                             f"Sell position opened for {symbol}: "
                             f"Order #{result.order}, Volume: {result.volume}, Price: {result.price}"
                         )
+                    elif result.retcode == mt5.TRADE_RETCODE_DONE_PARTIAL:
+                        logger.warning(
+                            f"Sell position partially filled for {symbol}: "
+                            f"Order #{result.order}, Volume: {result.volume}, Price: {result.price}"
+                        )
                     else:
                         logger.error(f"Failed to open sell position for {symbol}: {result.retcode}")
                 else:
                     logger.info(f"Sell position already exists for {symbol}")
 
-                    # Close opposite positions
-                total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
-                if total_buy > 0:
-                    logger.info(f"Closing existing buy positions for {symbol}")
-                    if not self.paper_trading:
-                        self.trader.close_positions(self.name, symbol, mt5.ORDER_TYPE_BUY)
-                    else:
-                        logger.info(f"[PAPER] Would close existing buy positions for {symbol}")
-
-                        # No signal
+            # No signal.
             elif signal == Signal.NONE:
                 logger.info(f"No trading signal for {symbol}")
 

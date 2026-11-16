@@ -4,15 +4,27 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping
+from importlib.resources import as_file, files
 from pathlib import Path
 from typing import Any, cast
 
 from omegaconf import DictConfig, OmegaConf
 
-from configuration.paths import repository_root
 from configuration.schema import reject_unknown_keys
 
-_DEFAULT_CFG = repository_root(__file__) / "config" / "base" / "default.yaml"
+
+def _load_default_config() -> DictConfig:
+    """Load the canonical defaults from the checkout or installed package.
+
+    Returns:
+        The merged default configuration.
+    """
+    checkout_default = Path(__file__).resolve().parents[1] / "config" / "base" / "default.yaml"
+    if checkout_default.is_file():
+        return load_config_overlay(checkout_default)
+    packaged_default = files("configuration").joinpath("_resources", "default.yaml")
+    with as_file(packaged_default) as default_path:
+        return load_config_overlay(default_path)
 
 
 def load_config(
@@ -29,9 +41,9 @@ def load_config(
     Returns:
         Merged configuration with the requested overrides applied.
     """
-    cfg_path = Path(config_path) if config_path else _DEFAULT_CFG
-    base = load_config_overlay(_DEFAULT_CFG)
-    extra = load_config_overlay(cfg_path) if config_path else OmegaConf.create()
+    cfg_path = Path(config_path) if config_path else None
+    base = _load_default_config()
+    extra = load_config_overlay(cfg_path) if cfg_path is not None else OmegaConf.create()
     # Merge over default.yaml: works both for Chain B/F variant *fragments*
     # (config/features_*_mtf.yaml only override the features.* keys they set,
     # everything else comes from defaults) and for full standalone configs.
@@ -75,7 +87,9 @@ def merge_config_overlay(base: DictConfig, overlay: Mapping[str, Any] | DictConf
     base_mapping = cast(Mapping[str, Any], base_container)
     overlay_mapping = cast(Mapping[str, Any], overlay_container)
     reject_unknown_keys(overlay_mapping, base_mapping)
-    return cast(DictConfig, OmegaConf.merge(base, overlay_cfg))
+    merged = cast(DictConfig, OmegaConf.merge(base, overlay_cfg))
+    _validate_optimizer_values(merged)
+    return merged
 
 
 def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
@@ -95,6 +109,7 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
         Result of apply ``key=value`` string overrides on top of an already-merged ``cfg``.
     """
     if not overrides:
+        _validate_optimizer_values(cfg)
         return cfg
         # Snapshot the *pre-override* config so keys introduced by a variant merge
         # that already happened are not flagged as typos.
@@ -139,7 +154,7 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
     # ``ppo.learning_rate=fast``). Validate the completed effective config
     # against the same defaults schema used for YAML overlays before callers
     # use it to construct an environment or launch a run.
-    schema_container = OmegaConf.to_container(load_config_overlay(_DEFAULT_CFG), resolve=False)
+    schema_container = OmegaConf.to_container(_load_default_config(), resolve=False)
     config_container = OmegaConf.to_container(cfg, resolve=False)
     if not isinstance(schema_container, Mapping) or not isinstance(config_container, Mapping):
         raise ValueError("configuration schema and effective config roots must be mappings")
@@ -147,7 +162,38 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
         cast(Mapping[str, Any], config_container),
         cast(Mapping[str, Any], schema_container),
     )
+    _validate_optimizer_values(cfg)
     return cfg
+
+
+def _validate_optimizer_values(cfg: DictConfig) -> None:
+    """Reject invalid scalar values passed to the active PPO and SAC optimizers.
+
+    Args:
+        cfg: Effective config after defaults, overlays, and caller overrides.
+    """
+    for section in ("ppo", "sac"):
+        optimizer = cfg.get(section)
+        if not isinstance(optimizer, DictConfig):
+            continue
+        learning_rate = optimizer.get("learning_rate")
+        if (
+            not isinstance(learning_rate, (int, float))
+            or isinstance(learning_rate, bool)
+            or not math.isfinite(learning_rate)
+            or learning_rate <= 0
+        ):
+            raise ValueError(f"{section}.learning_rate must be finite and greater than zero")
+        fields = ("gamma", "gae_lambda") if section == "ppo" else ("gamma", "tau")
+        for key in fields:
+            value = optimizer.get(key)
+            if (
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or not math.isfinite(value)
+                or not 0 <= value <= 1
+            ):
+                raise ValueError(f"{section}.{key} must be finite and within [0, 1]")
 
 
 def _leaf_paths(cfg: DictConfig, prefix: str = "") -> set[str]:

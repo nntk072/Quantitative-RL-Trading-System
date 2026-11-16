@@ -131,7 +131,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Close an open position (or part of it) and return (pnl, fill_price).
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.close_position` · **Source:** [trading/execution/broker.py:202](../../../../trading/execution/broker.py#L202)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.close_position` · **Source:** [trading/execution/broker.py:209](../../../../trading/execution/broker.py#L209)
 
 **Inputs and outputs:**
 
@@ -205,7 +205,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Recompute and record unrealised P&L using the close-side price.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.mark_to_market` · **Source:** [trading/execution/broker.py:245](../../../../trading/execution/broker.py#L245)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.mark_to_market` · **Source:** [trading/execution/broker.py:257](../../../../trading/execution/broker.py#L257)
 
 **Inputs and outputs:**
 
@@ -245,27 +245,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [tutorial example: `execution-fills-costs · code cell 2`](../../../../docs/subjects/C_trading_risk_execution/examples/execution-fills-costs.ipynb)
+2. [test fixture: `test_mark_to_market_uses_account_currency_point_value`](../../../../tests/unit/trading/test_cost_model.py#L155)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-from trading.account.account_state import AccountState
-from trading.execution.broker import Broker
-from trading.execution.costs import CostModel
+# … caller setup omitted …
+    broker = Broker(cost_model=CostModel(point_value=2.0), contract_size=3.0)
+    account = AccountState(initial_balance=1000.0)
+    position = broker.open_position(account, (entry, entry), lots=0.5, direction=direction)
+    assert position is not None
 
-account = AccountState(initial_balance=10_000.0)
-broker = Broker(contract_size=1.0, cost_model=CostModel(commission_per_lot=2.0))
-position = broker.open_position(account, (100.0, 101.0), lots=1.0, direction=1)
-assert position is not None and position.entry_price == 101.0
-assert account.balance == 9_998.0
-marked = broker.mark_to_market(account, position, (103.0, 104.0))
-assert marked == 2.0 and account.equity == 10_000.0
-pnl, fill = broker.close_position(account, position, (105.0, 106.0))
-assert (pnl, fill) == (2.0, 105.0)
-assert position.size == 0.0 and account.balance == 10_000.0
-print({"entry": 101.0, "exit": fill, "realized_close_pnl": pnl, "final_balance": account.balance})
+    unrealized = broker.mark_to_market(account, position, quote)
+
+    assert unrealized == pytest.approx(expected)
+    assert account.equity == pytest.approx(1000.0 + expected)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -278,7 +275,7 @@ print({"entry": 101.0, "exit": fill, "realized_close_pnl": pnl, "final_balance":
 
 **Purpose:** Attempt to open a position.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.open_position` · **Source:** [trading/execution/broker.py:159](../../../../trading/execution/broker.py#L159)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.open_position` · **Source:** [trading/execution/broker.py:166](../../../../trading/execution/broker.py#L166)
 
 **Inputs and outputs:**
 
@@ -351,7 +348,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Calculate margin required to open the requested position.
 
-**Exact API:** {py:obj}`trading.execution.broker.Broker.required_margin` · **Source:** [trading/execution/broker.py:147](../../../../trading/execution/broker.py#L147)
+**Exact API:** {py:obj}`trading.execution.broker.Broker.required_margin` · **Source:** [trading/execution/broker.py:154](../../../../trading/execution/broker.py#L154)
 
 **Inputs and outputs:**
 
@@ -370,7 +367,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `open_position`](../../../../trading/execution/broker.py#L188)
+1. [production caller: `open_position`](../../../../trading/execution/broker.py#L195)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -390,7 +387,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `close_position`](../../../../trading/execution/broker.py#L241)
+2. [production caller: `close_position`](../../../../trading/execution/broker.py#L253)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

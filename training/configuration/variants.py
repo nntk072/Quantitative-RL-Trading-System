@@ -6,16 +6,16 @@ metrics so both entrypoints stay in sync without circular imports.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, cast
 
 from omegaconf import DictConfig, OmegaConf
 
 from configuration import load_config_overlay, merge_config_overlay
-from configuration.paths import repository_root
 from training.configuration.strategy_overlays import merge_strategy_config
 from training.configuration.variant_risk_policy import load_variant_ftmo_config
 
-_PROJECT_ROOT = repository_root(__file__)
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _PD_CONTEXT_CONFIG = _PROJECT_ROOT / "config" / "features" / "pd_context.yaml"
 
 _LADDER_FLAGS: tuple[str, ...] = (

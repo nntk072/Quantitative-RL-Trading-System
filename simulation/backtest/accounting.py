@@ -147,6 +147,7 @@ def stamp_exit(
     record["price"] = float(fill_price)
     record["position_complete"] = bool(pos.size <= 1e-9)
     contract_size = float(settings.contract_size)
+    point_value = float(settings.cost_model.point_value)
     commission_per_lot = float(settings.cost_model.commission_per_lot)
     exit_commission = float(settings.cost_model.total_cost(close_size))
     gross_price_pnl = (
@@ -154,6 +155,7 @@ def stamp_exit(
         * int(pos.direction)
         * close_size
         * contract_size
+        * point_value
     )
     record.update(
         {
@@ -161,6 +163,7 @@ def stamp_exit(
             "direction": int(pos.direction),
             "entry_price": float(pos.entry_price),
             "contract_size": contract_size,
+            "point_value": point_value,
             "commission_per_lot": commission_per_lot,
             "gross_price_pnl": gross_price_pnl,
             "exit_commission": exit_commission,

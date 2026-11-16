@@ -12,7 +12,7 @@ This page contains 13 public callable records owned by `market_data.loading.tick
 
 **Observed usage:**
 
-1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L449)
+1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L453)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -36,7 +36,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending`](../../../../tests/integration/backtest/test_account_transition_parity.py#L572)
+2. [test fixture: `test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending`](../../../../tests/integration/backtest/test_account_transition_parity.py#L576)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -80,7 +80,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L449)
+1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L453)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -104,7 +104,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending`](../../../../tests/integration/backtest/test_account_transition_parity.py#L572)
+2. [test fixture: `test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending`](../../../../tests/integration/backtest/test_account_transition_parity.py#L576)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -486,7 +486,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L536)
+1. [test fixture: `test_environment_and_backtest_match_on_one_shared_tick_execution_trace`](../../../../tests/integration/backtest/test_account_transition_parity.py#L540)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

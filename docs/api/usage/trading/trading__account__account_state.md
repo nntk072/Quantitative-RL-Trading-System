@@ -397,7 +397,7 @@ def _update_loss_from_initial(self) -> None:
         self.max_drawdown = loss
 ```
 
-2. [production caller: `account_state_snapshot`](../../../../trading/account/snapshots.py#L95)
+2. [production caller: `account_state_snapshot`](../../../../trading/account/snapshots.py#L97)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -901,7 +901,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `account_state_snapshot`](../../../../trading/account/snapshots.py#L110)
+1. [production caller: `account_state_snapshot`](../../../../trading/account/snapshots.py#L112)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

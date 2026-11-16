@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `configuration.configurati
 
 **Purpose:** Apply ``key=value`` string overrides on top of an already-merged ``cfg``.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.apply_overrides` · **Source:** [configuration/configuration_loader.py:81](../../../../configuration/configuration_loader.py#L81)
+**Exact API:** {py:obj}`configuration.configuration_loader.apply_overrides` · **Source:** [configuration/configuration_loader.py:95](../../../../configuration/configuration_loader.py#L95)
 
 **Inputs and outputs:**
 
@@ -27,7 +27,7 @@ This page contains 4 public callable records owned by `configuration.configurati
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L39)
+1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L51)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -36,9 +36,9 @@ def load_config(
     overrides: list[str] | None = None,
     config_path: str | Path | None = None,
 ) -> DictConfig:
-    cfg_path = Path(config_path) if config_path else _DEFAULT_CFG
-    base = load_config_overlay(_DEFAULT_CFG)
-    extra = load_config_overlay(cfg_path) if config_path else OmegaConf.create()
+    cfg_path = Path(config_path) if config_path else None
+    base = _load_default_config()
+    extra = load_config_overlay(cfg_path) if cfg_path is not None else OmegaConf.create()
     # Merge over default.yaml: works both for Chain B/F variant *fragments*
     # (config/features_*_mtf.yaml only override the features.* keys they set,
     # everything else comes from defaults) and for full standalone configs.
@@ -57,7 +57,7 @@ def load_config(
 
 **Purpose:** Load config from ``config_path`` (the root config/base/default.yaml when None), then apply overrides.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.load_config` · **Source:** [configuration/configuration_loader.py:18](../../../../configuration/configuration_loader.py#L18)
+**Exact API:** {py:obj}`configuration.configuration_loader.load_config` · **Source:** [configuration/configuration_loader.py:30](../../../../configuration/configuration_loader.py#L30)
 
 **Inputs and outputs:**
 
@@ -134,7 +134,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Load one YAML mapping and reject list/scalar roots before merging.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.load_config_overlay` · **Source:** [configuration/configuration_loader.py:42](../../../../configuration/configuration_loader.py#L42)
+**Exact API:** {py:obj}`configuration.configuration_loader.load_config_overlay` · **Source:** [configuration/configuration_loader.py:54](../../../../configuration/configuration_loader.py#L54)
 
 **Inputs and outputs:**
 
@@ -167,23 +167,18 @@ def test_configuration_overlay_and_override_reject_invalid_roots(tmp_path) -> No
         merge_config_overlay(OmegaConf.create([]), {})  # type: ignore[arg-type]
 ```
 
-2. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L33)
+2. [production caller: `_load_default_config`](../../../../configuration/configuration_loader.py#L24)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def load_config(
-    overrides: list[str] | None = None,
-    config_path: str | Path | None = None,
-) -> DictConfig:
-    cfg_path = Path(config_path) if config_path else _DEFAULT_CFG
-    base = load_config_overlay(_DEFAULT_CFG)
-    extra = load_config_overlay(cfg_path) if config_path else OmegaConf.create()
-    # Merge over default.yaml: works both for Chain B/F variant *fragments*
-    # (config/features_*_mtf.yaml only override the features.* keys they set,
-    # everything else comes from defaults) and for full standalone configs.
-    cfg = merge_config_overlay(base, extra)
-    return apply_overrides(cfg, overrides)
+def _load_default_config() -> DictConfig:
+    checkout_default = Path(__file__).resolve().parents[1] / "config" / "base" / "default.yaml"
+    if checkout_default.is_file():
+        return load_config_overlay(checkout_default)
+    packaged_default = files("configuration").joinpath("_resources", "default.yaml")
+    with as_file(packaged_default) as default_path:
+        return load_config_overlay(default_path)
 ```
 
 **Workflow context:**
@@ -197,7 +192,7 @@ def load_config(
 
 **Purpose:** Validate a partial config against ``base`` and merge it once.
 
-**Exact API:** {py:obj}`configuration.configuration_loader.merge_config_overlay` · **Source:** [configuration/configuration_loader.py:57](../../../../configuration/configuration_loader.py#L57)
+**Exact API:** {py:obj}`configuration.configuration_loader.merge_config_overlay` · **Source:** [configuration/configuration_loader.py:69](../../../../configuration/configuration_loader.py#L69)
 
 **Inputs and outputs:**
 
@@ -231,7 +226,7 @@ def test_configuration_overlay_and_override_reject_invalid_roots(tmp_path) -> No
         merge_config_overlay(OmegaConf.create([]), {})  # type: ignore[arg-type]
 ```
 
-2. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L38)
+2. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L50)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -240,9 +235,9 @@ def load_config(
     overrides: list[str] | None = None,
     config_path: str | Path | None = None,
 ) -> DictConfig:
-    cfg_path = Path(config_path) if config_path else _DEFAULT_CFG
-    base = load_config_overlay(_DEFAULT_CFG)
-    extra = load_config_overlay(cfg_path) if config_path else OmegaConf.create()
+    cfg_path = Path(config_path) if config_path else None
+    base = _load_default_config()
+    extra = load_config_overlay(cfg_path) if cfg_path is not None else OmegaConf.create()
     # Merge over default.yaml: works both for Chain B/F variant *fragments*
     # (config/features_*_mtf.yaml only override the features.* keys they set,
     # everything else comes from defaults) and for full standalone configs.
