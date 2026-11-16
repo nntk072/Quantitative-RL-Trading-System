@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 462 |
-| private implementation | 999 |
+| private implementation | 1001 |
 
 ## Public package exports
 
@@ -446,7 +446,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L117) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
 | `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L153) | stable |
-| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L116) | stable |
+| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L141) | stable |
 | `split_train_test` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L16) | stable |
 | `BAR_CACHE_MANIFEST_SCHEMA_VERSION` | value | [market_data.cache.bars](../../market_data/cache/bars.py#L19) | stable |
 | `BAR_CACHE_TRANSFORM_ID` | value | [market_data.cache.bars](../../market_data/cache/bars.py#L20) | stable |
@@ -477,7 +477,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
 | `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L192) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
-| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L116) | stable |
+| `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L141) | stable |
 | `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L691) | stable |
 | `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L654) | stable |
 | `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L750) | stable |

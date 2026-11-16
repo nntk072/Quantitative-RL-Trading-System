@@ -15406,7 +15406,7 @@
       "name": "run_pipeline",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 116,
+      "source_line": 141,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -15934,7 +15934,7 @@
       "name": "run_pipeline",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 116,
+      "source_line": 141,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -16015,10 +16015,22 @@
       "documented": true,
       "exported_from": "market_data.loading.market_data_ingestion",
       "kind": "function",
-      "name": "_preflight_bar_sources",
+      "name": "_load_stable_bars",
       "numpy_style": false,
       "package": "market_data",
       "source_line": 48,
+      "source_module": "market_data.loading.market_data_ingestion",
+      "source_path": "market_data/loading/market_data_ingestion.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.loading.market_data_ingestion",
+      "kind": "function",
+      "name": "_preflight_bar_sources",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 73,
       "source_module": "market_data.loading.market_data_ingestion",
       "source_path": "market_data/loading/market_data_ingestion.py"
     },
@@ -25645,6 +25657,18 @@
       "source_line": 11,
       "source_module": "training.runner.seed",
       "source_path": "training/runner/seed.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "training.runner.seed_runtime",
+      "kind": "function",
+      "name": "_learning_diagnostics_enabled",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 166,
+      "source_module": "training.runner.seed_runtime",
+      "source_path": "training/runner/seed_runtime.py"
     },
     {
       "classification": "private implementation",

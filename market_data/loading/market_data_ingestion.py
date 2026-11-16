@@ -45,6 +45,31 @@ log = logging.getLogger(__name__)
 BAR_CACHE_VERSION = "v4-semantic-manifest"
 
 
+def _load_stable_bars(
+    path: Path,
+    *,
+    expected_sha256: str | None = None,
+    **load_kwargs: Any,
+) -> tuple[pd.DataFrame, str]:
+    """Parse bars only when the source bytes match the cache identity.
+
+    Args:
+        path: Raw bar source to parse.
+        expected_sha256: Optional digest already used to build the cache identity.
+        **load_kwargs: Date bounds forwarded to ``load_bars``.
+
+    Returns:
+        Parsed bars and the digest of the bytes that were parsed.
+    """
+    before = file_sha256(path)
+    if expected_sha256 is not None and before != expected_sha256:
+        raise RuntimeError(f"bar source {path} does not match cache identity")
+    bars = load_bars(path, **load_kwargs)
+    if file_sha256(path) != before:
+        raise RuntimeError(f"bar source {path} changed while being parsed")
+    return bars, before
+
+
 def _preflight_bar_sources(
     dataset_specs: Sequence[tuple[str, Path, Any, Any, Any, Any]],
     symbols: Sequence[str],
@@ -211,11 +236,17 @@ def run_pipeline(
                 if source_end_date is not None
                 else None
             )
-            m1_raw = quantize_bar_prices(
-                load_bars(m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end),
-                grid_increment,
-            )
-            source_hashes = {} if exclusive_end is not None else {m1_path: file_sha256(m1_path)}
+            if exclusive_end is None:
+                m1_source, m1_source_hash = _load_stable_bars(
+                    m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end
+                )
+            else:
+                m1_source = load_bars(
+                    m1_path, start_inclusive=source_start, end_exclusive=raw_exclusive_end
+                )
+                m1_source_hash = None
+            m1_raw = quantize_bar_prices(m1_source, grid_increment)
+            source_hashes = {m1_path: m1_source_hash} if m1_source_hash is not None else {}
             if m1_raw.empty:
                 for timeframe in cfg.data.timeframes:
                     parts[str(symbol)][str(timeframe)].append(
@@ -294,14 +325,20 @@ def run_pipeline(
                     if tf == "M1":
                         df = m1_full.copy()
                     elif native_file:
-                        tf_raw = quantize_bar_prices(
-                            load_bars(
+                        if cache_identity is None:
+                            tf_source = load_bars(
                                 source_path,
                                 start_inclusive=source_start,
                                 end_exclusive=raw_exclusive_end,
-                            ),
-                            grid_increment,
-                        )
+                            )
+                        else:
+                            tf_source, _ = _load_stable_bars(
+                                source_path,
+                                expected_sha256=input_hash(source_path),
+                                start_inclusive=source_start,
+                                end_exclusive=raw_exclusive_end,
+                            )
+                        tf_raw = quantize_bar_prices(tf_source, grid_increment)
                         tf_clean = clean(tf_raw, tz=tz)
                         df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
                         df = add_session_id(df)

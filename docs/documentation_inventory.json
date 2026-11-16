@@ -2136,9 +2136,9 @@
         "../../../../tests/unit/experiments/test_triton_prebuild_cache.py#L60",
         "../../../../market_data/cache/bars.py#L61",
         "../../../../market_data/cache/bars.py#L23",
-        "../../../../market_data/loading/market_data_ingestion.py#L244",
+        "../../../../market_data/loading/market_data_ingestion.py#L275",
         "../../../../market_data/cache/bars.py#L69",
-        "../../../../market_data/loading/market_data_ingestion.py#L272",
+        "../../../../market_data/loading/market_data_ingestion.py#L303",
         "../../../../market_data/cache/bars.py#L124",
         "../../../../tests/integration/test_bar_cache_manifest.py#L45",
         "../../../../tests/integration/test_bar_cache_manifest.py#L73",
@@ -2247,8 +2247,8 @@
     },
     {
       "links": [
-        "../../../../market_data/loading/market_data_ingestion.py#L116",
-        "../../../../market_data/loading/market_data_ingestion.py#L116"
+        "../../../../market_data/loading/market_data_ingestion.py#L141",
+        "../../../../market_data/loading/market_data_ingestion.py#L141"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/market_data/market_data__loading__market_data_ingestion.md",
@@ -2381,7 +2381,7 @@
       "links": [
         "../../../../market_data/transforms/cleaning.py#L10",
         "../../../../tests/integration/test_loader.py#L110",
-        "../../../../market_data/loading/market_data_ingestion.py#L239"
+        "../../../../market_data/loading/market_data_ingestion.py#L270"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/market_data/market_data__transforms__cleaning.md",
@@ -3875,7 +3875,7 @@
       "links": [
         "../../../../training/reporting/training_curves.py#L738",
         "../../../../tests/unit/training/test_training_curves.py#L153",
-        "../../../../training/runner/seed_runtime.py#L744",
+        "../../../../training/runner/seed_runtime.py#L761",
         "../../../../training/reporting/training_curves.py#L515",
         "../../../../tests/unit/training/test_training_curves.py#L93",
         "../../../../tests/unit/training/test_training_curves.py#L121"
@@ -6514,7 +6514,7 @@
         "../../market_data/splits/definitions.py#L117",
         "../../market_data/loading/bars.py#L74",
         "../../market_data/splits/definitions.py#L153",
-        "../../market_data/loading/market_data_ingestion.py#L116",
+        "../../market_data/loading/market_data_ingestion.py#L141",
         "../../market_data/splits/definitions.py#L16",
         "../../market_data/cache/bars.py#L19",
         "../../market_data/cache/bars.py#L20",
@@ -6545,7 +6545,7 @@
         "../../market_data/loading/tick_book_pipeline.py#L23",
         "../../market_data/loading/bars.py#L192",
         "../../market_data/loading/bars.py#L74",
-        "../../market_data/loading/market_data_ingestion.py#L116",
+        "../../market_data/loading/market_data_ingestion.py#L141",
         "../../market_data/loading/ticks.py#L691",
         "../../market_data/loading/ticks.py#L654",
         "../../market_data/loading/ticks.py#L750",
