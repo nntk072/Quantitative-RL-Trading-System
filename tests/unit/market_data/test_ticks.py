@@ -960,6 +960,49 @@ def test_tick_chunk_parser_yields_only_development_rows(tmp_path: Path) -> None:
     assert chunks[0]["bid"].tolist() == [100.0]
 
 
+def test_build_tick_books_cutoff_skips_future_registered_window(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    csv_path = tmp_path / f"{symbol}.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2026.01.01", "00:00:00.000", 200.0, 200.6),
+        ],
+    )
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "symbols": [symbol],
+                "tz": "UTC",
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(tmp_path),
+                        "tick_files": {symbol: csv_path.name},
+                        "start_date": "2025-12-31",
+                        "end_date": "2025-12-31",
+                    },
+                    "testing": {
+                        "raw_dir": str(tmp_path),
+                        "tick_files": {symbol: csv_path.name},
+                        "start_date": "2026-01-01",
+                        "end_date": "2026-01-01",
+                    },
+                },
+            },
+        }
+    )
+
+    book = build_tick_books(cfg, end_inclusive="2025-12-31")[symbol]
+
+    assert book is not None
+    assert len(book) == 1
+    assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59Z")) == pytest.approx((100.0, 100.6))
+    assert book.quote_at(pd.Timestamp("2026-01-01T00:00:00Z")) is None
+
+
 def test_tick_chunk_parser_continues_until_start_date_across_chunks(tmp_path: Path) -> None:
     csv_path = tmp_path / "start_bounded_ticks.csv"
     _write_tick_csv(
