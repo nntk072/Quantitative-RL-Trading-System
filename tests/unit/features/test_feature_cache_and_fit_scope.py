@@ -12,6 +12,7 @@ import pytest
 from omegaconf import OmegaConf
 
 import features.pipeline.feature_cache_identity as cache_identity
+import features.pipeline.feature_matrix_builder as feature_matrix_builder
 from features import (
     build_features,
     build_walkforward_fold_features,
@@ -272,6 +273,68 @@ def test_feature_cache_hit_and_miss(tmp_path: Path) -> None:
     assert path2 != path
     build_features(bars, cfg=cfg2, cache_path=path2)
     assert path2.exists()
+
+
+def test_failed_feature_cache_rebuild_preserves_published_parquet(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bars = _bars()
+    cfg = _cfg()
+    path = feature_cache_path(tmp_path, "US100", cfg, bars)
+    build_features(bars, cfg=cfg, cache_path=path)
+    original_parquet = path.read_bytes()
+    original_hash = Path(str(path) + ".hash").read_bytes()
+
+    def fail_after_partial_write(
+        _frame: pd.DataFrame, destination: str | Path, **_kwargs: Any
+    ) -> None:
+        Path(destination).write_bytes(b"partial parquet")
+        raise OSError("simulated interrupted cache write")
+
+    monkeypatch.setattr(pd.DataFrame, "to_parquet", fail_after_partial_write)
+    with pytest.raises(OSError, match="simulated interrupted cache write"):
+        build_features(bars, cfg=cfg, cache_path=path, force=True)
+
+    assert path.read_bytes() == original_parquet
+    assert Path(str(path) + ".hash").read_bytes() == original_hash
+    assert list(tmp_path.glob(f".{path.stem}.*{path.suffix}")) == []
+
+
+def test_failed_feature_cache_marker_write_cannot_reuse_replaced_parquet(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bars = _bars()
+    changed_bars = bars.copy()
+    changed_bars["close"] += 250.0
+    cfg = _cfg()
+    path = feature_cache_path(tmp_path, "US100", cfg, bars)
+    original_features = build_features(bars, cfg=cfg, cache_path=path)
+    original_parquet = path.read_bytes()
+
+    def fail_marker_write(*_args: Any, **_kwargs: Any) -> None:
+        raise OSError("simulated marker write failure")
+
+    with monkeypatch.context() as patcher:
+        patcher.setattr(feature_matrix_builder, "write_text_atomic", fail_marker_write)
+        with pytest.raises(OSError, match="simulated marker write failure"):
+            build_features(changed_bars, cfg=cfg, cache_path=path, force=True)
+
+    assert path.read_bytes() != original_parquet
+    assert not Path(str(path) + ".hash").exists()
+
+    read_count = 0
+    read_parquet = pd.read_parquet
+
+    def track_cache_read(*args: Any, **kwargs: Any) -> pd.DataFrame:
+        nonlocal read_count
+        read_count += 1
+        return read_parquet(*args, **kwargs)
+
+    monkeypatch.setattr(pd, "read_parquet", track_cache_read)
+    recovered = build_features(bars, cfg=cfg, cache_path=path)
+
+    assert read_count == 0
+    pd.testing.assert_frame_equal(recovered, original_features, check_freq=False)
 
 
 def test_cache_rebuilds_missing_fit_state_and_reuses_matching_state(tmp_path: Path) -> None:

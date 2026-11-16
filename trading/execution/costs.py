@@ -20,14 +20,25 @@ class CostModel:
     point_size: float = 0.01  # minimum price increment (e.g., 0.01 for US100)
 
     def __post_init__(self) -> None:
-        """Reject point values that cannot support monetary valuation."""
-        if (
-            isinstance(self.point_value, bool)
-            or not isinstance(self.point_value, (int, float))
-            or not isfinite(self.point_value)
-            or self.point_value <= 0.0
-        ):
-            raise ValueError("point_value must be finite and positive")
+        """Reject cost parameters that cannot describe valid quotes and fees."""
+        for name in ("spread_points", "slippage_points", "commission_per_lot"):
+            value = getattr(self, name)
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not isfinite(value)
+                or value < 0.0
+            ):
+                raise ValueError(f"{name} must be finite and non-negative")
+        for name in ("point_value", "point_size"):
+            value = getattr(self, name)
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not isfinite(value)
+                or value <= 0.0
+            ):
+                raise ValueError(f"{name} must be finite and positive")
 
     def total_cost(self, lots: float, direction: int | None = None) -> float:
         """Return the explicit transaction cost for one side of a trade.

@@ -21,6 +21,19 @@ def test_cost_model_rejects_invalid_point_value(point_value: float) -> None:
         CostModel(point_value=point_value)
 
 
+@pytest.mark.parametrize("field", ["spread_points", "slippage_points", "commission_per_lot"])
+@pytest.mark.parametrize("value", [-1.0, float("inf"), float("nan"), True])
+def test_cost_model_rejects_invalid_cost_parameters(field: str, value: float) -> None:
+    with pytest.raises(ValueError, match=f"{field} must be finite and non-negative"):
+        CostModel(**{field: value})
+
+
+@pytest.mark.parametrize("value", [0.0, -1.0, float("inf"), float("nan"), True])
+def test_cost_model_rejects_invalid_point_size(value: float) -> None:
+    with pytest.raises(ValueError, match="point_size must be finite and positive"):
+        CostModel(point_size=value)
+
+
 @pytest.mark.parametrize("contract_size", [True, 0.0, -1.0, float("inf"), float("nan")])
 def test_broker_rejects_invalid_contract_size(contract_size: float) -> None:
     with pytest.raises(ValueError, match="contract_size must be finite and positive"):
