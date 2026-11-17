@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
-import scripts.research.analysis.evaluation.run_baseline_eval as baseline_eval
-from scripts.research.analysis.evaluation.run_baseline_eval import build_strategies
+import research_tools.evaluation.evaluation.run_baseline_eval as baseline_eval
+from research_tools.evaluation.evaluation.run_baseline_eval import build_strategies
 
 
 def test_baseline_catalog_exposes_reusable_macd_and_rsi_arms() -> None:

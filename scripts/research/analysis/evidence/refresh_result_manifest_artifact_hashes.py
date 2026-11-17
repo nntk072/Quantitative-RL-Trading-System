@@ -1,101 +1,25 @@
-#!/usr/bin/env python3
-"""Refresh or verify repository-local hashes in a v2 research result manifest."""
-
 from __future__ import annotations
 
-import argparse
-import hashlib
-import json
-from pathlib import Path
-from typing import Any
+import sys as _sys
+from importlib import import_module as _import_module
+from pathlib import Path as _Path
+from runpy import run_module as _run_module
+from typing import Any as _Any
 
-from scripts.research.analysis.evidence.verify_result_manifest import (
-    DEFAULT_SCHEMA_V2,
-    _artifact_records,
-    _contained_path,
-)
+_ROOT = _Path(__file__).resolve().parents[4]
+if str(_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(_ROOT))
 
-from artifacts.atomic import write_text_atomic
-from configuration.paths import repository_root
-
-ROOT = repository_root(__file__)
-
-
-def _sha256(path: Path) -> str:
-    """Hash one artifact in bounded chunks."""
-    digest = hashlib.sha256()
-    with path.open("rb") as source:
-        for block in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def refresh_repository_artifact_hashes(
-    manifest: dict[str, Any], *, repo_root: Path = ROOT
-) -> tuple[int, list[str]]:
-    """Update local artifact digests while leaving archived assets untouched."""
-    updated = 0
-    issues: list[str] = []
-    root = repo_root.resolve()
-    for artifact in _artifact_records(manifest):
-        if artifact.get("storage_scope", "repository") != "repository":
-            continue
-        relative = artifact["path"]
-        path = _contained_path(relative, root)
-        if path is None:
-            issues.append(f"repository artifact path escapes root: {relative}")
-            continue
-        if not path.is_file():
-            issues.append(f"repository artifact is missing: {relative}")
-            continue
-        digest = _sha256(path)
-        if artifact["sha256"] != digest:
-            artifact["sha256"] = digest
-            updated += 1
-    return updated, issues
-
-
-def main() -> int:
-    """Refresh local hashes with ``--write`` or check them without mutation."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "manifest", type=Path, help="versioned result manifest to verify or refresh"
-    )
-    operation = parser.add_mutually_exclusive_group(required=True)
-    operation.add_argument("--write", action="store_true")
-    operation.add_argument("--check", action="store_true")
-    args = parser.parse_args()
-
-    manifest_path = args.manifest.resolve()
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    schema = json.loads(DEFAULT_SCHEMA_V2.read_text(encoding="utf-8"))
-    from scripts.research.analysis.evidence.verify_result_manifest import (
-        validate_result_manifest,
-    )
-
-    structure_errors = validate_result_manifest(
-        manifest, schema, repo_root=ROOT, verify_artifact_hashes=False
-    )
-    if structure_errors:
-        for error in structure_errors:
-            print(error)
-        return 1
-
-    updated, issues = refresh_repository_artifact_hashes(manifest, repo_root=ROOT)
-    if issues:
-        for issue in issues:
-            print(issue)
-        return 1
-    if args.write:
-        write_text_atomic(manifest_path, json.dumps(manifest, indent=2) + "\n")
-        print(f"Refreshed {updated} repository artifact hashes in {manifest_path}")
-        return 0
-    if updated:
-        print(f"{updated} repository artifact hashes differ in {manifest_path}")
-        return 1
-    print(f"All repository artifact hashes match in {manifest_path}")
-    return 0
-
-
+_TARGET = "research_tools.artifacts.evidence.refresh_result_manifest_artifact_hashes"
 if __name__ == "__main__":
-    raise SystemExit(main())
+    _run_module(_TARGET, run_name="__main__", alter_sys=True)
+else:
+    _module = _import_module(_TARGET)
+    __all__ = [name for name in vars(_module) if not name.startswith("_")]
+    globals().update({name: getattr(_module, name) for name in __all__})
+
+    def __getattr__(name: str) -> _Any:
+        return getattr(_module, name)
+
+    def __dir__() -> list[str]:
+        return sorted(set(globals()) | set(dir(_module)))

@@ -1,138 +1,25 @@
-# mypy: ignore-errors
-"""Compare MVP vs full seed50 policy open rates and action intensity."""
-
 from __future__ import annotations
 
-from pathlib import Path
+import sys as _sys
+from importlib import import_module as _import_module
+from pathlib import Path as _Path
+from runpy import run_module as _run_module
+from typing import Any as _Any
 
-import numpy as np
-from omegaconf import OmegaConf
-from stable_baselines3 import PPO
+_ROOT = _Path(__file__).resolve().parents[4]
+if str(_ROOT) not in _sys.path:
+    _sys.path.insert(0, str(_ROOT))
 
-from configuration import load_config
-from market_data.loading import run_pipeline
-from market_data.splits.definitions import get_split_config, get_train_start_config
-from simulation.environment.env import TradingEnv
-from training.configuration.strategy_overlays import merge_strategy_config
-from training.runner.feature_preparation import build_split_scoped_features
-from training.setup.environments import (
-    guardrail_kwargs,
-    max_loss_per_trade,
-    strategy_from_cfg,
-    strategy_risk_ranges,
-)
-
-MVP = Path("outputs/20260920_205105_rl_train_seed50")
-FULL = Path("outputs/20260920_210733_rl_train_seed50")
-
-
-def make_env(cfg, bars, feat):
-    strategy, strategy_reward, strategy_weight = strategy_from_cfg(cfg)
-    risk_frac_range, rr_ratio_range = strategy_risk_ranges(cfg)
-    return TradingEnv(
-        bars=bars,
-        features=feat,
-        obs_window=cfg.env.obs_window,
-        initial_balance=cfg.account.initial_balance,
-        guardrail_kwargs=guardrail_kwargs(cfg),
-        risk_frac_range=risk_frac_range,
-        rr_ratio_range=rr_ratio_range,
-        swing_buffer_pts=cfg.risk.swing_buffer_pts,
-        contract_size=cfg.account.contract_size,
-        max_loss_per_trade_usd=max_loss_per_trade(cfg),
-        dsr_eta=cfg.env.reward_dsr_eta,
-        episodic=False,
-        continuous_actions=False,
-        strategy=strategy,
-        strategy_actions=bool(cfg.env.get("strategy_actions", False)),
-        strategy_reward=strategy_reward,
-        strategy_weight=strategy_weight,
-        sl_buffer_pts=float(cfg.env.get("sl_buffer_pts", 0.0)),
-        block_overnight=bool(cfg.env.get("block_overnight", True)),
-        eod_risk=dict(cfg.env.get("eod_risk", {})),
-        min_sl_atr_mult=float(cfg.risk.get("min_sl_atr_mult", 0.5)),
-        min_sl_points=float(cfg.risk.get("min_sl_points", 0.0)),
-        max_entries_per_session=int(cfg.env.get("max_entries_per_session", 0)),
-        entry_cooldown_bars=int(cfg.env.get("entry_cooldown_bars", 0)),
-        reward_mode=str(cfg.env.get("reward_mode", "dsr")),
-        max_episode_steps=None,
-    )
-
-
-def probe(run: Path, bars, feat, n_steps=2000):
-    cfg = OmegaConf.load(run / "config.yaml")
-    model = PPO.load(str(run / "model" / "ppo_final"), device="cuda")
-    env = make_env(cfg, bars, feat)
-    obs, _ = env.reset()
-    intensities = []
-    actions_u0 = []
-    for i in range(n_steps):
-        action, _ = model.predict(obs, deterministic=True)
-        a = np.asarray(action, dtype=np.float32).reshape(-1)
-        u = 0.5 * (np.clip(a, -1, 1) + 1)
-        intensities.append(float(u[0]) if u.size else 0.0)
-        actions_u0.append(float(a[0]) if a.size else 0.0)
-        obs, r, done, trunc, info = env.step(action)
-        if done or trunc:
-            break
-    diag = dict(env._entry_diag)
-    opens = sum(1 for t in env.trade_log if t.get("type") == "open")
-    print(f"=== {run.name} ===")
-    print("action_space", model.action_space)
-    print(
-        "raw_a0 mean/std/min/max",
-        float(np.mean(actions_u0)),
-        float(np.std(actions_u0)),
-        float(np.min(actions_u0)),
-        float(np.max(actions_u0)),
-    )
-    print(
-        "intensity mean/std/min/max",
-        float(np.mean(intensities)),
-        float(np.std(intensities)),
-        float(np.min(intensities)),
-        float(np.max(intensities)),
-    )
-    print("frac intensity>=0.25", float(np.mean(np.asarray(intensities) >= 0.25)))
-    print("entry_diag", diag)
-    print("opens_in_probe", opens, "steps", i + 1)
-    print()
-
-
-def main():
-    cfg = load_config(
-        config_path="config/features/full_po3_mtf.yaml",
-        overrides=[
-            "features.include_session_ohlc=true",
-            "features.context.liquidity.enabled=true",
-            "features.po3.state_mtf.enabled=true",
-            "features.ifvg_mtf.enabled=true",
-        ],
-    )
-    cfg = merge_strategy_config(cfg, "po3_ifvg")
-    frames = run_pipeline(cfg, force=False)
-    primary_sym = cfg.data.primary
-    primary_m1 = frames[primary_sym]["M1"]
-    # secondary
-    sec = cfg.data.get("secondary")
-    secondary_m1 = frames[sec]["M1"] if sec else None
-    train_end, _ = get_split_config(cfg)
-    train_start = get_train_start_config(cfg)
-    features = build_split_scoped_features(
-        primary_m1,
-        cfg=cfg,
-        train_end=train_end,
-        train_start=train_start,
-        secondary=secondary_m1,
-        cache_dir=Path(cfg.data.cache_dir),
-        symbol=str(primary_sym),
-    )
-    # short NY slice from train
-    bars = primary_m1.iloc[:5000]
-    feat = features.reindex(bars.index).fillna(0)
-    probe(MVP, bars, feat)
-    probe(FULL, bars, feat)
-
-
+_TARGET = "research_tools.evaluation.evaluation.probe_seed50_opens"
 if __name__ == "__main__":
-    main()
+    _run_module(_TARGET, run_name="__main__", alter_sys=True)
+else:
+    _module = _import_module(_TARGET)
+    __all__ = [name for name in vars(_module) if not name.startswith("_")]
+    globals().update({name: getattr(_module, name) for name in __all__})
+
+    def __getattr__(name: str) -> _Any:
+        return getattr(_module, name)
+
+    def __dir__() -> list[str]:
+        return sorted(set(globals()) | set(dir(_module)))

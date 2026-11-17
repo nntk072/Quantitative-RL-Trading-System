@@ -1,0 +1,100 @@
+module_id: learning
+source_roots: [learning, research_tools/learning]
+api_paths:
+- learning/__init__.py
+- learning/contracts.py
+- learning/rl/__init__.py
+- learning/rl/agent.py
+- learning/rl/auxiliary.py
+- learning/rl/callbacks.py
+- learning/rl/candidate_geometry.py
+- learning/rl/candidate_geometry_policy.py
+- learning/rl/checkpoint.py
+- learning/rl/environment_adapter.py
+- learning/rl/hybrid.py
+- learning/rl/learner.py
+- learning/rl/ppo.py
+- learning/rl/rollout_buffer.py
+- learning/rl/semantic.py
+- learning/rl/stopping.py
+- learning/rl/vae_extractor.py
+- learning/self_supervised/vae_pre_ny.py
+- learning/supervised/reference.py
+caller_paths:
+- evaluation/reanalysis/legacy_sb3.py
+- experiments/runs/checkpoint_lineage.py
+- tests/architecture/test_public_imports.py
+- tests/integration/test_sac_agent_integration.py
+- tests/unit/experiments/test_experiment_run_checkpoint_migration.py
+- tests/unit/learning/test_candidate_geometry_actor.py
+- tests/unit/learning/test_candidate_geometry_agent.py
+- tests/unit/learning/test_candidate_geometry_policy.py
+- tests/unit/learning/test_checkpoint_resume.py
+- tests/unit/learning/test_learning_contracts.py
+- tests/unit/learning/test_learning_supervised_reference.py
+- tests/unit/learning/test_survival_objective_config.py
+- tests/unit/models/test_action_schema_checkpoint.py
+- tests/unit/models/test_action_schema_sb3_roundtrip.py
+- tests/unit/models/test_agent_vector_env.py
+- tests/unit/models/test_hybrid_actor.py
+- tests/unit/models/test_legacy_checkpoint_migration.py
+- tests/unit/models/test_lite_tcn_agent.py
+- tests/unit/models/test_mtf_encoder_registration.py
+- tests/unit/models/test_ppo_log_std.py
+- tests/unit/models/test_rollout_copy.py
+- tests/unit/models/test_sac_agent.py
+- tests/unit/models/test_semantic_actor.py
+- tests/unit/models/test_stop_mode_action_mapping.py
+- tests/unit/models/test_tcn_regime.py
+- tests/unit/models/test_vae_wiring.py
+- tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
+- tests/unit/training/test_auxiliary_training.py
+- tests/unit/training/test_best_checkpoint_callback.py
+- tests/unit/training/test_checkpoint_eval_determinism.py
+- tests/unit/training/test_early_abort.py
+- tests/unit/training/test_equity_gate.py
+- tests/unit/training/test_lagrangian_callback.py
+- tests/unit/training/test_periodic_checkpoint.py
+- tests/unit/training/test_sac_smoke.py
+- tests/unit/training/test_save_checkpoint.py
+- training/runner/data_stage.py
+- training/runner/seed_runtime.py
+- training/runner/seed_stages.py
+- training/runner/walk_forward_validation.py
+- training/setup/callbacks.py
+- training/setup/learner.py
+source_scopes:
+  - {path: learning/rl, study_ids: [learning.ppo_action_probability_contract, learning.sac_action_replay_and_budget, learning.seed_resume_and_fit_identity]}
+  - {path: learning/supervised, study_ids: [learning.auxiliary_target_isolation]}
+  - {path: learning/self_supervised, study_ids: [learning.auxiliary_target_isolation]}
+  - {path: learning/contracts.py, study_ids: [learning.seed_resume_and_fit_identity, learning.auxiliary_target_isolation]}
+  - {path: learning/learner_factory.py, study_ids: [learning.seed_resume_and_fit_identity]}
+  - {path: learning/__init__.py, study_ids: [learning.seed_resume_and_fit_identity]}
+  - {path: research_tools/learning, study_ids: [learning.ppo_action_probability_contract, learning.sac_action_replay_and_budget, learning.seed_resume_and_fit_identity, learning.auxiliary_target_isolation]}
+config_paths: [config/base/default.yaml, config/variant_catalog.yaml, config/quality_experiments.yaml, config/wandb_sweep.yaml]
+test_paths: [tests/unit/learning, tests/unit/training]
+studies:
+  - id: learning.ppo_action_probability_contract
+    type: code_check
+    question: Do PPO samples, stored action probabilities, entropy, returns, and updates use matching action semantics?
+    source_paths: [learning/rl/ppo.py, learning/rl/hybrid.py, learning/rl/rollout_buffer.py]
+    checks: [tests/unit/training/test_training_smoke.py, tests/unit/models/test_ppo_log_std.py]
+    outputs: [ppo_contract_check]
+  - id: learning.sac_action_replay_and_budget
+    type: code_check
+    question: Are SAC action bounds, replay samples, update counts, and training budgets explicit and reproducible?
+    source_paths: [learning/rl/agent.py, learning/rl/learner.py]
+    checks: [tests/unit/training/test_sac_smoke.py, tests/unit/training/test_fit_request.py]
+    outputs: [sac_contract_check]
+  - id: learning.seed_resume_and_fit_identity
+    type: code_check
+    question: Do seeds, devices, fit requests, checkpoints, and resumed optimizer state retain one learning identity?
+    source_paths: [learning/contracts.py, learning/learner_factory.py, learning/rl/checkpoint.py, learning/rl/learner.py]
+    checks: [tests/unit/training/test_seed_reproducibility.py, tests/unit/training/test_save_checkpoint.py]
+    outputs: [learning_reproducibility_check]
+  - id: learning.auxiliary_target_isolation
+    type: code_check
+    question: Are auxiliary targets and supervised reference objectives restricted to their declared training information?
+    source_paths: [learning/rl/auxiliary.py, learning/supervised/reference.py]
+    checks: [tests/unit/training/test_auxiliary_training.py, tests/unit/training/test_feature_fit_scope.py]
+    outputs: [auxiliary_fit_scope_check]

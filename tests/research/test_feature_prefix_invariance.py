@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
 from typing import Any, cast
@@ -8,15 +7,7 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 from omegaconf import OmegaConf
-
-SCRIPT = (
-    Path(__file__).resolve().parents[2]
-    / "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py"
-)
-SPEC = importlib.util.spec_from_file_location("feature_prefix_invariance", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-AUDIT = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(AUDIT)
+from research_tools.features.features import verify_real_market_feature_prefix_invariance as AUDIT
 
 
 def _stub_m1_input_hashes(cfg: Any) -> dict[str, str]:
@@ -536,7 +527,7 @@ def test_source_index_validation_reads_only_date_time_columns(
         read_calls.append((nrows, list(usecols) if usecols is not None else None))
         return cast(pd.DataFrame, read_csv(*args, **kwargs))
 
-    monkeypatch.setattr(AUDIT.pd, "read_csv", track_columns)
+    monkeypatch.setattr(pd, "read_csv", track_columns)
 
     index = AUDIT.load_m1_source_index(source)
 

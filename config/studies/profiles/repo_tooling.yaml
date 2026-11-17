@@ -1,0 +1,241 @@
+module_id: repo_tooling
+source_roots: [tools, scripts, research_tools/studies/handlers/repository.py]
+api_paths:
+- scripts/compute/slurm/node_inventory.py
+- scripts/dev/security/dependency_audit.py
+- scripts/dev/security/secret_scan.py
+- scripts/maintenance/artifacts/inventory_checkpoint_serialized_classes.py
+- scripts/research/analysis/evaluation/audit_gross_realized_loss_counter.py
+- scripts/research/analysis/evaluation/audit_recorded_equity_series.py
+- scripts/research/analysis/evaluation/build_policy_trade_lifecycle_packet.py
+- scripts/research/analysis/evaluation/candidate_outcome_reference.py
+- scripts/research/analysis/evaluation/compare_candidate_limit_fill_packets.py
+- scripts/research/analysis/evaluation/compare_candidate_outcome_replays.py
+- scripts/research/analysis/evaluation/compare_experiment_run_summaries.py
+- scripts/research/analysis/evaluation/compare_quote_coverage_sensitivity.py
+- scripts/research/analysis/evaluation/compare_simulator_local_tick_trace.py
+- scripts/research/analysis/evaluation/plot_stochastic_equity_ensemble.py
+- scripts/research/analysis/evaluation/project_report_context.py
+- scripts/research/analysis/evaluation/project_report_markdown.py
+- scripts/research/analysis/evaluation/report_ablations.py
+- scripts/research/analysis/evaluation/report_g3.py
+- scripts/research/analysis/evaluation/report_variant_details.py
+- scripts/research/analysis/evaluation/run_baseline_eval.py
+- scripts/research/analysis/evaluation/score_rule_baselines.py
+- scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py
+- scripts/research/analysis/evaluation/summarize_ppo_training_dynamics.py
+- scripts/research/analysis/evaluation/summarize_selected_policy_trade_excursions.py
+- scripts/research/analysis/evaluation/summarize_trade_exit_cohorts.py
+- scripts/research/analysis/evaluation/test_oos.py
+- scripts/research/analysis/evaluation/verify_candidate_proposal_outcomes.py
+- scripts/research/analysis/evaluation/verify_matched_setup_baseline_accounting.py
+- scripts/research/analysis/evaluation/verify_simulator_local_tick_trace_set.py
+- scripts/research/analysis/evidence/__init__.py
+- scripts/research/analysis/evidence/analyze_paired_seed_results.py
+- scripts/research/analysis/evidence/analyze_representation_paired_seed_results.py
+- scripts/research/analysis/evidence/audit_checkpoint_frame_bundle_parity.py
+- scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py
+- scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py
+- scripts/research/analysis/evidence/build_experiment_run_evidence_index.py
+- scripts/research/analysis/evidence/build_experiment_run_trial_ledger.py
+- scripts/research/analysis/evidence/build_final_research_outputs.py
+- scripts/research/analysis/evidence/build_function_test_reference_map.py
+- scripts/research/analysis/evidence/build_primary_paired_seed_payload.py
+- scripts/research/analysis/evidence/build_representation_paired_seed_payload.py
+- scripts/research/analysis/evidence/build_survival_launch_plan.py
+- scripts/research/analysis/evidence/compare_deterministic_reanalysis.py
+- scripts/research/analysis/evidence/plan_paired_seed_count.py
+- scripts/research/analysis/evidence/reconcile_experiment_run_attempts.py
+- scripts/research/analysis/evidence/refresh_result_manifest_artifact_hashes.py
+- scripts/research/analysis/evidence/search_archive_trace_members.py
+- scripts/research/analysis/evidence/verify_numerical_report.py
+- scripts/research/analysis/evidence/verify_research_provenance_bytes.py
+- scripts/research/analysis/evidence/verify_result_manifest.py
+- scripts/research/analysis/features/__init__.py
+- scripts/research/analysis/features/audit_observation_warmup_validity_profiles.py
+- scripts/research/analysis/features/build_feature_causality_matrix.py
+- scripts/research/analysis/features/candidate_geometry_support.py
+- scripts/research/analysis/features/count_entry_idea_opportunities.py
+- scripts/research/analysis/features/entry_idea_opportunity_census.py
+- scripts/research/analysis/features/fvg_timeframe_event_ledger.py
+- scripts/research/analysis/features/ifvg_timeframe_collision_ledger.py
+- scripts/research/analysis/features/ifvg_zone_event_ledger.py
+- scripts/research/analysis/features/merge_real_market_feature_prefix_shards.py
+- scripts/research/analysis/features/order_block_zone_event_ledger.py
+- scripts/research/analysis/features/plot_entry_idea_opportunity_census.py
+- scripts/research/analysis/features/plot_feature_availability_example.py
+- scripts/research/analysis/features/plot_synthetic_entry_timing_examples.py
+- scripts/research/analysis/features/reconcile_observation_validity_semantics.py
+- scripts/research/analysis/features/standard_deviation_swing_ledger.py
+- scripts/research/analysis/features/summarize_observation_validity.py
+- scripts/research/analysis/features/training_context.py
+- scripts/research/analysis/features/verify_feature_profile_prefix_invariance.py
+- scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py
+- scripts/research/analysis/market_data/__init__.py
+- scripts/research/analysis/market_data/analyze_fill_quote_source_alignment.py
+- scripts/research/analysis/market_data/build_reconstructed_quote_coverage.py
+- scripts/research/analysis/market_data/compare_configured_timeframe_bars.py
+- scripts/research/analysis/market_data/hash_local_data_inventory.py
+- scripts/research/analysis/market_data/plot_market_data_quality_profile.py
+- scripts/research/analysis/market_data/quote_quality_scans.py
+- scripts/research/analysis/models/inspect_observation_action_artifacts.py
+- scripts/research/analysis/regime_attribution.py
+- scripts/research/audits/audit_tick_cache_timeline.py
+- scripts/research/audits/build_research_release_bundle.py
+- scripts/research/audits/pretraining_parallel_readiness.py
+- scripts/research/audits/pretraining_readiness_plan.py
+- scripts/research/audits/pretraining_scientific_readiness.py
+- scripts/research/audits/run_survival_correctness_smoke.py
+- scripts/research/audits/verify_final_research_outputs.py
+- scripts/research/audits/verify_metrics_contract.py
+- scripts/research/audits/verify_portfolio_hard_risk.py
+- scripts/research/audits/verify_pretraining_research_contract.py
+- scripts/research/audits/verify_survival_learning_signal_reachability.py
+- scripts/research/benchmarks/build_training_compute_contract.py
+- scripts/research/benchmarks/compare_encoders.py
+- scripts/research/benchmarks/plan_survival_compute_budget.py
+- scripts/research/experiment_runs/analyze_experiment_run_runtime_scaling.py
+- scripts/research/experiment_runs/audit_experiment_run_source_fidelity.py
+- tools/documentation/api_usage.py
+- tools/documentation/check_docs.py
+- tools/documentation/check_notebooks.py
+- tools/documentation/configuration_reference.py
+- tools/documentation/coverage.py
+- tools/documentation/figures.py
+- tools/documentation/function_docstrings.py
+- tools/documentation/inventory.py
+- tools/documentation/package_dependency_model.py
+- tools/documentation/public_api_inventory.py
+- tools/quality/coverage_report.py
+- tools/quality/repository_audit.py
+- tools/quality/research_script_migration.py
+- tools/quality/test_overlap.py
+caller_paths:
+- tests/architecture/test_documentation_contracts.py
+- tests/integration/backtest/test_local_tick_action_trace.py
+- tests/integration/evaluation/test_matched_setup_baselines.py
+- tests/integration/test_ablation_oos_smoke.py
+- tests/integration/test_scripts_smoke.py
+- tests/research/test_archive_trace_member_search.py
+- tests/research/test_candidate_event_cardinality_register.py
+- tests/research/test_candidate_geometry_support.py
+- tests/research/test_candidate_outcome_independent_arithmetic.py
+- tests/research/test_configured_timeframe_parity.py
+- tests/research/test_experiment_run_summary_comparison.py
+- tests/research/test_feature_availability_example.py
+- tests/research/test_feature_causality_matrix.py
+- tests/research/test_fill_quote_source_alignment.py
+- tests/research/test_function_test_reference_map.py
+- tests/research/test_fvg_timeframe_event_ledger.py
+- tests/research/test_ifvg_timeframe_collision_ledger.py
+- tests/research/test_ifvg_zone_event_ledger.py
+- tests/research/test_market_data_inventory_hashing.py
+- tests/research/test_market_data_quality_plot.py
+- tests/research/test_matched_setup_baseline_accounting_audit.py
+- tests/research/test_model_observation_action_artifact_inventory.py
+- tests/research/test_observation_validity_semantics.py
+- tests/research/test_observation_validity_summary.py
+- tests/research/test_observation_warmup_validity_profiles.py
+- tests/research/test_order_block_zone_event_ledger.py
+- tests/research/test_plot_trade_setup_opportunity_census.py
+- tests/research/test_po3_setup_lifecycle_ledger.py
+- tests/research/test_quote_coverage_sensitivity.py
+- tests/research/test_quote_quality_scans.py
+- tests/research/test_real_market_feature_prefix_shards.py
+- tests/research/test_regime_attribution.py
+- tests/research/test_research_provenance_byte_verification.py
+- tests/research/test_score_rule_baselines_period_scope.py
+- tests/research/test_selected_checkpoint_recoverability.py
+- tests/research/test_simulator_local_tick_trace_verifier.py
+- tests/research/test_standard_deviation_swing_ledger.py
+- tests/research/test_tick_cache_timeline_audit.py
+- tests/research/test_trade_setup_opportunity_census.py
+- tests/unit/artifacts/test_checkpoint_serialized_class_inventory.py
+- tests/unit/compute/test_node_inventory.py
+- tests/unit/experiments/test_experiment_run_runtime_scaling.py
+- tests/unit/experiments/test_experiment_run_source_fidelity.py
+- tests/unit/features/test_entry_idea_opportunity_count.py
+- tests/unit/features/test_synthetic_entry_timing_examples.py
+- tests/unit/research/test_candidate_limit_fill_packet_comparison.py
+- tests/unit/research/test_candidate_outcome_replay_comparison.py
+- tests/unit/research/test_checkpoint_bundle_parity.py
+- tests/unit/research/test_deterministic_reanalysis.py
+- tests/unit/research/test_experiment_evidence_index.py
+- tests/unit/research/test_experiment_run_reconciliation.py
+- tests/unit/research/test_experiment_trial_ledger.py
+- tests/unit/research/test_feature_profile_prefix_invariance.py
+- tests/unit/research/test_final_research_outputs.py
+- tests/unit/research/test_gross_realized_loss_counter_audit.py
+- tests/unit/research/test_legacy_run_report.py
+- tests/unit/research/test_metrics_contract.py
+- tests/unit/research/test_numerical_report_verifier.py
+- tests/unit/research/test_observation_warmup_validity_audit.py
+- tests/unit/research/test_paired_seed_count_plan.py
+- tests/unit/research/test_paired_seed_statistics.py
+- tests/unit/research/test_policy_trade_lifecycle_packet.py
+- tests/unit/research/test_policy_trade_lifecycle_summary.py
+- tests/unit/research/test_portfolio_hard_risk.py
+- tests/unit/research/test_ppo_training_dynamics.py
+- tests/unit/research/test_pretraining_parallel_readiness.py
+- tests/unit/research/test_pretraining_research_contract.py
+- tests/unit/research/test_pretraining_scientific_readiness.py
+- tests/unit/research/test_primary_paired_seed_payload.py
+- tests/unit/research/test_project_report_context.py
+- tests/unit/research/test_recorded_equity_series_audit.py
+- tests/unit/research/test_refresh_result_manifest_artifact_hashes.py
+- tests/unit/research/test_representation_paired_seed_payload.py
+- tests/unit/research/test_research_release_bundle.py
+- tests/unit/research/test_result_manifest_v2.py
+- tests/unit/research/test_result_manifest_verifier.py
+- tests/unit/research/test_selected_policy_trade_excursions.py
+- tests/unit/research/test_stochastic_equity_ensemble.py
+- tests/unit/research/test_survival_compute_budget.py
+- tests/unit/research/test_survival_correctness_smoke.py
+- tests/unit/research/test_survival_launch_plan.py
+- tests/unit/research/test_survival_learning_signal_reachability.py
+- tests/unit/research/test_trade_exit_cohorts.py
+- tests/unit/research/test_training_compute_contract.py
+- tests/unit/research/test_variant_details_report.py
+- tests/unit/tooling/test_configuration_reference.py
+- tests/unit/tooling/test_coverage_report.py
+- tests/unit/tooling/test_dependency_security_gate.py
+- tests/unit/tooling/test_documentation_api_usage.py
+- tests/unit/tooling/test_documentation_inventory.py
+- tests/unit/tooling/test_public_api.py
+- tests/unit/tooling/test_repository_audit.py
+- tests/unit/tooling/test_research_script_migration.py
+- tests/unit/tooling/test_test_overlap.py
+source_scopes:
+  - {path: tools/agent, study_ids: [repo_tooling.architecture_and_documentation_contracts]}
+  - {path: tools/documentation, study_ids: [repo_tooling.package_cli_and_dependency_surface, repo_tooling.architecture_and_documentation_contracts]}
+  - {path: tools/quality, study_ids: [repo_tooling.architecture_and_documentation_contracts]}
+  - {path: scripts/research, study_ids: [repo_tooling.script_inputs_and_output_provenance]}
+  - {path: scripts/compute, study_ids: [repo_tooling.script_inputs_and_output_provenance]}
+  - {path: scripts/dev, study_ids: [repo_tooling.package_cli_and_dependency_surface]}
+  - {path: scripts/maintenance, study_ids: [repo_tooling.script_inputs_and_output_provenance]}
+  - {path: tools/quality/research_script_migration.py, study_ids: [repo_tooling.script_inputs_and_output_provenance]}
+  - {path: research_tools/studies/handlers/repository.py, study_ids: [repo_tooling.script_inputs_and_output_provenance]}
+  - {path: tools/research_tools, study_ids: [repo_tooling.script_inputs_and_output_provenance, repo_tooling.package_cli_and_dependency_surface, repo_tooling.architecture_and_documentation_contracts]}
+config_paths: [pyproject.toml, config/studies/default.yaml, config/studies/script_migrations.yaml]
+config_globs: [config/studies/profiles/*.yaml]
+test_paths: [tests/unit/tooling, tests/architecture]
+studies:
+  - id: repo_tooling.script_inputs_and_output_provenance
+    type: audit
+    question: Do research and maintenance commands validate inputs, state outputs, and retain source and config provenance?
+    audit_tool: repo_tooling.script_inputs_and_output_provenance
+    source_paths: [scripts/research/analysis/features/build_feature_configuration_inventory.py, scripts/research/analysis/evidence/verify_result_manifest.py, tools/quality/research_script_migration.py, research_tools/studies/handlers/repository.py]
+    checks: [tests/unit/research/test_feature_profile_prefix_invariance.py, tests/unit/research/test_result_manifest_verifier.py, tests/unit/tooling/test_research_script_migration.py]
+    outputs: [script_contract_inventory]
+  - id: repo_tooling.package_cli_and_dependency_surface
+    type: code_check
+    question: Do installed package contents, CLI entry points, and dependencies match the supported interface?
+    source_paths: [tools/documentation/public_api.py, tools/documentation/package_dependency_model.py]
+    checks: [tests/unit/tooling/test_public_api.py, tests/unit/tooling/test_documentation_inventory.py]
+    outputs: [package_and_cli_check]
+  - id: repo_tooling.architecture_and_documentation_contracts
+    type: code_check
+    question: Do package boundaries, schemas, docs, and validation routing describe the current implementation?
+    source_paths: [tools/agent/validate-rules, tools/agent/validate-profiles]
+    checks: [tests/architecture/test_dependency_rules.py, tests/unit/tooling/test_documentation_inventory.py]
+    outputs: [architecture_and_documentation_check]

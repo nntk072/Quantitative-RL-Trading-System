@@ -17,6 +17,7 @@ their full values into prose.
 | `data_modes/` | Data-source and cache mode selection |
 | `experiment_runs/` | Declarative run selections and operational run inputs |
 | `research/` | Research-specific settings kept separate from global defaults |
+| `studies/` | Master switches and module-owned study definitions for code checks and registered research questions |
 
 ## Resolution rules
 

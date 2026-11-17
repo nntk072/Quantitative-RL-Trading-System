@@ -65,7 +65,7 @@ def test_summarize_arm_reconciles_fills_and_bounds_entry_timestamp_tie(tmp_path)
         _bid = np.asarray([100.0, 98.0, 103.0, 104.0], dtype=np.float64)
         _ask = np.asarray([100.5, 98.5, 103.5, 104.5], dtype=np.float64)
 
-    result = summarize_arm("a4a", positions_path, fills_path, TickBookFixture())  # type: ignore[arg-type]
+    result = summarize_arm("a4a", positions_path, fills_path, TickBookFixture())
 
     assert len(result) == 1
     row = result.iloc[0]

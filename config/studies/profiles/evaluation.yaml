@@ -1,0 +1,264 @@
+module_id: evaluation
+source_roots: [evaluation, research_tools/evaluation]
+api_paths:
+- evaluation/__init__.py
+- evaluation/candidate_eligibility.py
+- evaluation/candidate_execution.py
+- evaluation/candidate_outcomes.py
+- evaluation/candidate_proposals.py
+- evaluation/candidate_quote_coverage.py
+- evaluation/contracts.py
+- evaluation/metrics/__init__.py
+- evaluation/metrics/bootstrap.py
+- evaluation/metrics/decision_diversity.py
+- evaluation/metrics/deflated_sharpe.py
+- evaluation/metrics/distributions.py
+- evaluation/metrics/leakage.py
+- evaluation/metrics/limit_execution_sensitivity.py
+- evaluation/metrics/matched_comparison.py
+- evaluation/metrics/performance.py
+- evaluation/metrics/reward_attribution.py
+- evaluation/metrics/trade_diagnostics.py
+- evaluation/metrics/trade_excursions.py
+- evaluation/metrics/trade_setup_policy.py
+- evaluation/metrics/trades.py
+- evaluation/plotting/__init__.py
+- evaluation/plotting/chart_indicators.py
+- evaluation/plotting/chart_levels.py
+- evaluation/plotting/chart_overlays.py
+- evaluation/plotting/data_plots.py
+- evaluation/plotting/defense_plots.py
+- evaluation/plotting/distribution_plots.py
+- evaluation/plotting/order_chart.py
+- evaluation/plotting/order_chart_data.py
+- evaluation/plotting/order_chart_renderers.py
+- evaluation/plotting/order_window.py
+- evaluation/plotting/orders.py
+- evaluation/plotting/overlay_events.py
+- evaluation/plotting/plot_series.py
+- evaluation/plotting/plots.py
+- evaluation/plotting/plots_interactive.py
+- evaluation/plotting/po3_plots.py
+- evaluation/plotting/trade_plots.py
+- evaluation/reanalysis/__init__.py
+- evaluation/reanalysis/checkpoint_reanalysis.py
+- evaluation/reanalysis/datasets.py
+- evaluation/reanalysis/provenance.py
+- evaluation/reanalysis/validation.py
+- evaluation/reporting/__init__.py
+- evaluation/reporting/account_state_trace_reconciliation.py
+- evaluation/reporting/box_table.py
+- evaluation/reporting/cost_decomposition.py
+- evaluation/reporting/dataset_renderers.py
+- evaluation/reporting/diagnostics.py
+- evaluation/reporting/diversity_artifacts.py
+- evaluation/reporting/diversity_table.py
+- evaluation/reporting/evaluation_manifest.py
+- evaluation/reporting/geometry.py
+- evaluation/reporting/matched_setup_baseline_bundle.py
+- evaluation/reporting/order_chart_regeneration.py
+- evaluation/reporting/policy_decision_reconciliation.py
+- evaluation/reporting/run_artifact_writer.py
+- evaluation/reporting/run_manifest.py
+- evaluation/reporting/run_summary.py
+- evaluation/reporting/trade_event_export.py
+- evaluation/reporting/trade_note.py
+- evaluation/reporting/trade_setup_plots.py
+- evaluation/rollout/baseline_signal_actions.py
+- evaluation/rollout/episode_rollout.py
+- evaluation/rollout/matched_setup_baselines.py
+- evaluation/rollout/provider.py
+- evaluation/rollout/random_eligible_setup.py
+- evaluation/rollout/structure_priority_setup.py
+- evaluation/rollout/trained_policy_rollout.py
+caller_paths:
+- experiments/variants/variant_ablation_runner.py
+- tests/integration/backtest/test_account_transition_parity.py
+- tests/integration/backtest/test_agent_selected_entry_execution.py
+- tests/integration/backtest/test_entry_levels.py
+- tests/integration/backtest/test_risk_lifecycle_characterization.py
+- tests/integration/backtest/test_setup_mask_backtest_boundary.py
+- tests/integration/evaluation/test_matched_setup_baselines.py
+- tests/integration/evaluation/test_random_eligible_setup_rollout.py
+- tests/integration/test_bootstrap_drawdown_interval.py
+- tests/integration/test_calibration_ci.py
+- tests/integration/test_evaluation_pipeline.py
+- tests/integration/test_leakage.py
+- tests/integration/test_matched_comparison.py
+- tests/integration/test_metric_input_contract.py
+- tests/integration/test_position_fill_accounting.py
+- tests/integration/test_runner.py
+- tests/unit/evaluation/test_account_state_trace_reconciliation.py
+- tests/unit/evaluation/test_active_prior.py
+- tests/unit/evaluation/test_baseline_signal_actions.py
+- tests/unit/evaluation/test_candidate_eligibility.py
+- tests/unit/evaluation/test_candidate_execution.py
+- tests/unit/evaluation/test_candidate_outcomes.py
+- tests/unit/evaluation/test_candidate_proposals.py
+- tests/unit/evaluation/test_candidate_quote_coverage.py
+- tests/unit/evaluation/test_chart_overlays.py
+- tests/unit/evaluation/test_cost_decomposition.py
+- tests/unit/evaluation/test_data_plots.py
+- tests/unit/evaluation/test_decision_diversity.py
+- tests/unit/evaluation/test_decision_provider_rollout.py
+- tests/unit/evaluation/test_defense_plots.py
+- tests/unit/evaluation/test_deflated_sharpe.py
+- tests/unit/evaluation/test_distribution_metrics.py
+- tests/unit/evaluation/test_distribution_plots.py
+- tests/unit/evaluation/test_eval_diagnostics.py
+- tests/unit/evaluation/test_eval_run_provenance.py
+- tests/unit/evaluation/test_evaluate_metrics_contract.py
+- tests/unit/evaluation/test_evaluation_manifest.py
+- tests/unit/evaluation/test_evaluation_report_dataset.py
+- tests/unit/evaluation/test_initial_balance_contract.py
+- tests/unit/evaluation/test_limit_execution_sensitivity.py
+- tests/unit/evaluation/test_matched_comparison.py
+- tests/unit/evaluation/test_matched_setup_baseline_cli.py
+- tests/unit/evaluation/test_metrics.py
+- tests/unit/evaluation/test_order_chart.py
+- tests/unit/evaluation/test_order_chart_regeneration.py
+- tests/unit/evaluation/test_plots_export.py
+- tests/unit/evaluation/test_po3_plots.py
+- tests/unit/evaluation/test_policy_decision_reconciliation.py
+- tests/unit/evaluation/test_random_eligible_setup.py
+- tests/unit/evaluation/test_reward_attribution.py
+- tests/unit/evaluation/test_rollout.py
+- tests/unit/evaluation/test_run_artifact_writer_limits.py
+- tests/unit/evaluation/test_run_manifest.py
+- tests/unit/evaluation/test_run_summary.py
+- tests/unit/evaluation/test_structure_priority_setup.py
+- tests/unit/evaluation/test_temporal_distributions.py
+- tests/unit/evaluation/test_trade_excursions.py
+- tests/unit/evaluation/test_trade_metrics.py
+- tests/unit/evaluation/test_trade_note.py
+- tests/unit/evaluation/test_trade_plots.py
+- tests/unit/evaluation/test_trade_setup_plots.py
+- tests/unit/evaluation/test_trade_setup_policy_diagnostics.py
+- tests/unit/features/test_build_pipeline.py
+- tests/unit/learning/test_learning_supervised_reference.py
+- tests/unit/models/test_legacy_checkpoint_migration.py
+- tests/unit/research/test_numerical_report_verifier.py
+- tests/unit/research/test_paired_seed_statistics.py
+- tests/unit/simulation/test_environment/test_bundle_eval.py
+- tests/unit/simulation/test_environment/test_eligibility_wiring.py
+- tests/unit/training/test_dashboard.py
+- tests/unit/training/test_survival_gate.py
+- tests/unit/training/test_train_rl_decomposition.py
+- training/artifacts/evaluation_result_writer.py
+- training/artifacts/manifests.py
+- training/callbacks/dashboard.py
+- training/configuration/survival_gate.py
+- training/runner/backtest.py
+- training/runner/baselines.py
+- training/runner/data_stage.py
+- training/runner/lstm_baseline.py
+- training/runner/seed_runtime.py
+- training/runner/survival_campaign.py
+- training/runner/training.py
+- training/runner/walk_forward_validation.py
+- training/setup/environments.py
+source_scopes:
+  - {path: evaluation/metrics, study_ids: [evaluation.metrics_and_inference, evaluation.cohorts_and_baseline_matching, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}
+  - {path: evaluation/rollout, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}
+  - {path: evaluation/reporting, study_ids: [evaluation.provenance_and_checkpoint_reanalysis, evaluation.reporting_and_exports]}
+  - {path: evaluation/plotting, study_ids: [evaluation.reporting_and_exports]}
+  - {path: evaluation/reanalysis, study_ids: [evaluation.provenance_and_checkpoint_reanalysis]}
+  - {path: evaluation/candidate_eligibility.py, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value]}
+  - {path: evaluation/candidate_execution.py, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value]}
+  - {path: evaluation/candidate_outcomes.py, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value]}
+  - {path: evaluation/candidate_proposals.py, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value]}
+  - {path: evaluation/candidate_quote_coverage.py, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value]}
+  - {path: evaluation/contracts.py, study_ids: [evaluation.metrics_and_inference]}
+  - {path: evaluation/cli.py, study_ids: [evaluation.reporting_and_exports]}
+  - {path: evaluation/__init__.py, study_ids: [evaluation.metrics_and_inference]}
+  - {path: research_tools/evaluation, study_ids: [evaluation.metrics_and_inference, evaluation.cohorts_and_baseline_matching, evaluation.provenance_and_checkpoint_reanalysis, evaluation.reporting_and_exports, evaluation.candidate_geometry_value, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}
+config_paths: [config/base/default.yaml, config/research/research_output_contract.yaml, config/research/representation_study.yaml]
+test_paths: [tests/unit/evaluation, tests/integration/evaluation]
+studies:
+  - id: evaluation.metrics_and_inference
+    type: code_check
+    question: Are metric sources, estimands, pairing, uncertainty, multiplicity, and valid outcome states explicit?
+    source_paths: [evaluation/metrics/performance.py, evaluation/metrics/matched_comparison.py, evaluation/metrics/bootstrap.py]
+    checks: [tests/unit/evaluation/test_metrics.py, tests/unit/evaluation/test_matched_comparison.py]
+    outputs: [metric_and_inference_check]
+  - id: evaluation.cohorts_and_baseline_matching
+    type: code_check
+    question: Do baselines and treatments use the same timestamps, candidate cohort, execution model, and account limits?
+    source_paths: [evaluation/rollout/episode_rollout.py, evaluation/rollout/trained_policy_rollout.py]
+    checks: [tests/unit/evaluation/test_rollout.py, tests/unit/evaluation/test_baseline_eval_strategy_catalog.py]
+    outputs: [cohort_and_baseline_check]
+  - id: evaluation.provenance_and_checkpoint_reanalysis
+    type: code_check
+    question: Can results be rebuilt from immutable run identity, saved config, source data, checkpoint, and evaluation inputs?
+    source_paths: [evaluation/reporting/run_manifest.py, evaluation/reporting/evaluation_manifest.py, evaluation/reanalysis/checkpoint_reanalysis.py]
+    checks: [tests/unit/evaluation/test_run_manifest.py, tests/unit/evaluation/test_evaluation_manifest.py]
+    outputs: [evaluation_provenance_check]
+  - id: evaluation.reporting_and_exports
+    type: code_check
+    question: Do tables, trade exports, plots, and outcome labels derive from verified result artifacts and preserve missing evidence?
+    source_paths: [evaluation/reporting/run_artifact_writer.py, evaluation/reporting/trade_event_export.py, evaluation/reporting/box_table.py]
+    checks: [tests/unit/evaluation/test_run_artifact_writer_limits.py, tests/unit/evaluation/test_evaluation_report_dataset.py]
+    outputs: [report_and_export_check]
+  - id: evaluation.candidate_geometry_value
+    type: empirical
+    question: After candidate proposal, outcome, censoring, quote-coverage, and purge contracts pass, does explicit price geometry add decision value beyond the existing setup-class representation?
+    acceptance: Candidate proposals and outcomes are causal, censoring and local quote gaps remain explicit, and the matched control and treatment complete the registered paths; any positive claim requires a pre-outcome multiplicity rule and a paired interval whose lower bound exceeds zero, otherwise report no demonstrated value.
+    source_paths: [evaluation/candidate_proposals.py, evaluation/candidate_outcomes.py, evaluation/candidate_quote_coverage.py, scripts/research/analysis/features/candidate_geometry_support.py, scripts/research/analysis/evidence/analyze_paired_seed_results.py]
+    checks: [tests/research/test_candidate_geometry_support.py, tests/research/test_candidate_event_cardinality_register.py, tests/unit/evaluation/test_rollout.py]
+    outputs: [candidate_support_and_coverage, proposal_outcome_censoring_ledger, matched_geometry_comparison]
+    prerequisites: [market_data.raw_data_quality_and_coverage, features.prefix_causality_and_fit_scope, simulation.tick_execution_accounting_parity, training.full_path_survival_qualification]
+    claim_role: exploratory_secondary
+    replication: {seeds: [42, 43, 44, 45, 46, 47], minimum_valid_pairs: 6}
+    arms:
+      - id: setup_class_control
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
+        factors: [policy_distribution=trade_setup_conditioned_v1, candidate_geometry_actions=false]
+      - id: candidate_geometry_treatment
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_candidate_geometry.yaml]
+        factors: [policy_distribution=trade_setup_candidate_geometry_v1, candidate_geometry_actions=true]
+  - id: evaluation.primary_value_vs_no_trade
+    type: empirical
+    question: After survival qualification, does the frozen treatment improve development full-path net return on initial operating equity over always-no-trade?
+    acceptance: Every treatment path passes the hard-risk gate, the one-sided paired sign-flip test rejects at alpha 0.05, and the paired 95 percent bootstrap lower bound exceeds zero; otherwise no policy has demonstrated economic superiority.
+    source_paths: [evaluation/metrics/matched_comparison.py, scripts/research/analysis/evidence/build_primary_paired_seed_payload.py, scripts/research/analysis/evidence/analyze_paired_seed_results.py]
+    checks: [tests/unit/evaluation/test_matched_comparison.py, tests/unit/evaluation/test_account_state_trace_reconciliation.py, tests/unit/research/test_primary_paired_seed_payload.py, tests/unit/research/test_paired_seed_statistics.py]
+    outputs: [six_seed_matched_pair_payload, survival_gate, sign_flip_result, paired_bootstrap_interval]
+    prerequisites: [training.full_path_survival_qualification]
+    replication: {seeds: [42, 43, 44, 45, 46, 47], minimum_valid_pairs: 6}
+    periods: {selection: development, exposed_report_period_selectable: false}
+    inference: {primary_unit: independent_seed_pair, alternative: greater, alpha: 0.05, bootstrap_samples: 10000, rng_seed: 42}
+    arms:
+      - id: always_no_trade_control
+        policy_id: always_no_trade_v1
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml]
+        factors: [policy=always_no_trade_v1, zero_trades, retain_initial_operating_equity]
+      - id: qualified_policy_treatment
+        policy_id: qualified_setup_conditioned_policy
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
+        factors: [policy=survival_qualified_checkpoint, development_only, matched_seed_pairs]
+  - id: evaluation.secondary_matched_comparisons
+    type: empirical
+    question: How do the registered random, deterministic-rule, and completed-HTF representation controls compare on the same development cohort after qualification gates pass?
+    acceptance: All registered pairs use the same source, split, decision cohort, execution, risk, cost, and seed identity; report every attempted result and uncertainty, retain this comparison as exploratory unless a multiplicity procedure was frozen before outcomes, and make no claim from the exposed report period.
+    source_paths: [evaluation/metrics/matched_comparison.py, evaluation/rollout/trained_policy_rollout.py, scripts/research/analysis/evidence/build_representation_paired_seed_payload.py, scripts/research/analysis/evidence/analyze_representation_paired_seed_results.py]
+    checks: [tests/unit/evaluation/test_matched_comparison.py, tests/unit/evaluation/test_rollout.py, tests/unit/research/test_representation_paired_seed_payload.py]
+    outputs: [matched_secondary_pair_ledgers, uncertainty_and_multiplicity_disposition]
+    prerequisites: [training.full_path_survival_qualification]
+    claim_role: exploratory_secondary
+    replication: {seeds: [42, 43, 44, 45, 46, 47], minimum_valid_pairs: 6}
+    arms:
+      - id: random_eligible_setup_control
+        policy_id: random_eligible_trade_setup_v1
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
+        factors: [policy=random_eligible_trade_setup_v1, seed_matched, same_eligible_setup_mask]
+      - id: deterministic_structure_rule_control
+        policy_id: structure_priority
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
+        factors: [policy=structure_priority, fixed_rule_order, same_decision_contract]
+      - id: masked_history_control_b
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/representation_study.yaml, config/research/mtf_shared_opportunities_m1_history.yaml]
+        factors: [representation=masked_history, arm=B]
+      - id: completed_htf_treatment_c
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/representation_study.yaml, config/research/mtf_shared_opportunities_with_history.yaml]
+        factors: [representation=completed_htf, arm=C]
+    unregistered_controls: {supervised_reference: must_be_registered_before_use}

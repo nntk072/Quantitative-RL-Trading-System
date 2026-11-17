@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import pytest
-
-SCRIPT = (
-    Path(__file__).resolve().parents[2] / "scripts/research/audits/audit_replacement_m1_quality.py"
-)
-SPEC = importlib.util.spec_from_file_location("replacement_m1_quality_audit", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-AUDIT = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(AUDIT)
+from research_tools.market_data.audits import audit_replacement_m1_quality as AUDIT
 
 
 def _row(date: str, time: str, *, low: float = 1.0, close: float = 1.5) -> dict[str, Any]:

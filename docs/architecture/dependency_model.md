@@ -12,6 +12,11 @@ backend boundaries, and acyclicity. Regenerate with
 `python tools/documentation/package_dependency_model.py --write`; check with
 `--check`.
 
+Cross-domain diagnostics live in the bundled `research_tools` package. They may
+compose public APIs from several production packages, but production packages
+must not import them; they are excluded from the runtime dependency graph and
+public production API inventory.
+
 <!-- GENERATED PACKAGE IMPORT GRAPH: START -->
 
 ```mermaid

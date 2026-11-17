@@ -17,6 +17,7 @@ the current activity; platform profiles point to these shared rules.
 | [context-management.md](context-management.md) | Source loading, shared facts, and handoffs |
 | [validation-routing.md](validation-routing.md) | Scoped and commit validation |
 | [research-integrity.md](research-integrity.md) | Research, runs, evidence, and claims |
+| [study-planning.md](study-planning.md) | Full study coverage, representative examples, and implementation scope |
 | [testing-rules.md](testing-rules.md) | Test design and assertions |
 | [python-coding-standards.md](python-coding-standards.md) | Python edits |
 | [security-rules.md](security-rules.md) | Security-sensitive changes and commit review |

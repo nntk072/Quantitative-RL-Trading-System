@@ -1,0 +1,49 @@
+module_id: compute
+source_roots: [compute, research_tools/compute]
+api_paths:
+- compute/contracts.py
+- compute/environment/__init__.py
+- compute/environment/capabilities.py
+- compute/environment/device.py
+- compute/environment/precision.py
+- compute/slurm/__init__.py
+- compute/slurm/continuation.py
+- compute/slurm/resources.py
+- compute/slurm/worker_dispatch.py
+- compute/slurm/worker_resources.py
+caller_paths:
+- experiments/runs/execution.py
+- experiments/runs/preflight_migration.py
+- learning/rl/agent.py
+- tests/integration/test_device.py
+- tests/unit/compute/test_compute_contracts.py
+- tests/unit/compute/test_triton_resource_sampler.py
+- tests/unit/compute/test_worker_resources.py
+- tests/unit/experiments/test_experiment_run_artifacts.py
+- tests/unit/experiments/test_triton_experiment_run_continuation.py
+- tests/unit/experiments/test_triton_experiment_run_worker_dispatch.py
+- training/runner/configuration_stage.py
+- training/runner/lstm_baseline.py
+- training/runner/vae.py
+source_scopes:
+  - {path: compute/environment, study_ids: [compute.device_and_precision_selection]}
+  - {path: compute/slurm, study_ids: [compute.resource_and_worker_contract]}
+  - {path: compute/contracts.py, study_ids: [compute.resource_and_worker_contract]}
+  - {path: compute/cli.py, study_ids: [compute.device_and_precision_selection]}
+  - {path: compute/__init__.py, study_ids: [compute.device_and_precision_selection]}
+  - {path: research_tools/compute, study_ids: [compute.device_and_precision_selection, compute.resource_and_worker_contract]}
+config_paths: [config/base/default.yaml]
+test_paths: [tests/unit/compute, tests/integration/test_device.py]
+studies:
+  - id: compute.device_and_precision_selection
+    type: code_check
+    question: Does device discovery choose only supported precision and execution capabilities?
+    source_paths: [compute/environment/device.py, compute/environment/capabilities.py, compute/environment/precision.py]
+    checks: [tests/integration/test_device.py]
+    outputs: [device_capability_check]
+  - id: compute.resource_and_worker_contract
+    type: code_check
+    question: Are CPU, RAM, GPU, worker, and thread limits derived from current resource contracts?
+    source_paths: [compute/slurm/resources.py, compute/slurm/worker_resources.py]
+    checks: [tests/unit/compute/test_worker_resources.py]
+    outputs: [worker_resource_check]

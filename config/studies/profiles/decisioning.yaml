@@ -1,0 +1,154 @@
+module_id: decisioning
+source_roots: [decisioning, research_tools/decisioning]
+api_paths:
+- decisioning/actions.py
+- decisioning/adapters/rule_based.py
+- decisioning/adapters/sb3.py
+- decisioning/contracts.py
+- decisioning/observation_state.py
+- decisioning/observations.py
+- decisioning/regime_observations.py
+- decisioning/trade_setup.py
+caller_paths:
+- evaluation/candidate_proposals.py
+- evaluation/contracts.py
+- evaluation/metrics/trade_setup_policy.py
+- evaluation/reanalysis/checkpoint_reanalysis.py
+- evaluation/reporting/policy_decision_reconciliation.py
+- evaluation/reporting/run_artifact_writer.py
+- evaluation/reporting/trade_setup_plots.py
+- evaluation/rollout/baseline_signal_actions.py
+- evaluation/rollout/matched_setup_baselines.py
+- evaluation/rollout/provider.py
+- evaluation/rollout/random_eligible_setup.py
+- evaluation/rollout/structure_priority_setup.py
+- evaluation/rollout/trained_policy_rollout.py
+- features/context/entry_ideas.py
+- features/context/trade_setup_candidates.py
+- learning/rl/agent.py
+- learning/rl/callbacks.py
+- learning/rl/candidate_geometry.py
+- learning/rl/candidate_geometry_policy.py
+- learning/rl/hybrid.py
+- learning/rl/ppo.py
+- learning/supervised/reference.py
+- live/runtime/strategy.py
+- models/encoders/sequence_encoder_components.py
+- models/encoders/tcn_regime.py
+- simulation/backtest/event_driven_backtest.py
+- simulation/backtest/policy_actions.py
+- simulation/entry_state.py
+- simulation/environment/action_diagnostics.py
+- simulation/environment/action_episode_initialization.py
+- simulation/environment/action_runtime.py
+- simulation/environment/candidate_geometry_observation.py
+- simulation/environment/env.py
+- simulation/environment/episode_runtime.py
+- simulation/environment/episode_spaces_initialization.py
+- simulation/environment/observation_arrays_initialization.py
+- simulation/environment/observation_runtime.py
+- simulation/environment/observations.py
+- simulation/environment/risk_entry_initialization.py
+- simulation/environment/step_end_runtime.py
+- simulation/environment/strategy_initialization.py
+- simulation/environment/trading_environment_factory.py
+- simulation/environment/worker.py
+- tests/integration/backtest/test_agent_selected_entry_execution.py
+- tests/integration/backtest/test_entry_levels.py
+- tests/integration/backtest/test_setup_mask_backtest_boundary.py
+- tests/integration/evaluation/test_matched_setup_baselines.py
+- tests/integration/evaluation/test_random_eligible_setup_rollout.py
+- tests/integration/test_action_schema_contract.py
+- tests/integration/test_sb3_adapter.py
+- tests/integration/test_trade_setup.py
+- tests/research/test_candidate_event_cardinality_register.py
+- tests/research/test_candidate_geometry_support.py
+- tests/research/test_trade_setup_opportunity_census.py
+- tests/unit/decisioning/test_action_schema_config.py
+- tests/unit/decisioning/test_candidate_geometry_contract.py
+- tests/unit/decisioning/test_candidate_geometry_schema_validation.py
+- tests/unit/decisioning/test_contracts.py
+- tests/unit/decisioning/test_observations.py
+- tests/unit/decisioning/test_trade_setup_contract.py
+- tests/unit/decisioning/test_trade_setup_properties.py
+- tests/unit/evaluation/test_baseline_signal_actions.py
+- tests/unit/evaluation/test_candidate_proposals.py
+- tests/unit/evaluation/test_decision_provider_rollout.py
+- tests/unit/evaluation/test_eval_run_provenance.py
+- tests/unit/evaluation/test_evaluation_report_dataset.py
+- tests/unit/evaluation/test_matched_setup_baseline_cli.py
+- tests/unit/evaluation/test_policy_decision_reconciliation.py
+- tests/unit/evaluation/test_random_eligible_setup.py
+- tests/unit/evaluation/test_rollout.py
+- tests/unit/evaluation/test_run_artifact_writer_limits.py
+- tests/unit/evaluation/test_structure_priority_setup.py
+- tests/unit/evaluation/test_trade_setup_policy_diagnostics.py
+- tests/unit/features/test_build_pipeline.py
+- tests/unit/features/test_entry_ideas.py
+- tests/unit/features/test_stage_a_observation.py
+- tests/unit/features/test_trade_setup_candidate_events.py
+- tests/unit/features/test_trade_setup_event_validity.py
+- tests/unit/learning/test_candidate_geometry_agent.py
+- tests/unit/learning/test_candidate_geometry_policy.py
+- tests/unit/learning/test_learning_supervised_reference.py
+- tests/unit/live/test_rl_bridge.py
+- tests/unit/live/test_rl_robot.py
+- tests/unit/models/test_action_schema_checkpoint.py
+- tests/unit/models/test_action_schema_contract.py
+- tests/unit/models/test_action_schema_sb3_roundtrip.py
+- tests/unit/models/test_hybrid_actor.py
+- tests/unit/models/test_legacy_checkpoint_migration.py
+- tests/unit/models/test_lite_tcn_agent.py
+- tests/unit/models/test_mtf_encoder_registration.py
+- tests/unit/models/test_ppo_log_std.py
+- tests/unit/models/test_semantic_actor.py
+- tests/unit/models/test_tcn_regime.py
+- tests/unit/models/test_trade_setup_observation_schema.py
+- tests/unit/research/test_representation_paired_seed_payload.py
+- tests/unit/research/test_survival_correctness_smoke.py
+- tests/unit/simulation/test_environment/test_baseline_regression.py
+- tests/unit/simulation/test_environment/test_candidate_geometry_observation.py
+- tests/unit/simulation/test_environment/test_decision_correlation.py
+- tests/unit/simulation/test_environment/test_entry_state_machine.py
+- tests/unit/simulation/test_environment/test_observation_schema.py
+- tests/unit/simulation/test_environment/test_regime_observation.py
+- tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
+- tests/unit/simulation/test_environment/test_trade_setup_observation.py
+- tests/unit/trading/test_repeated_payout_policy.py
+- tests/unit/training/test_dashboard.py
+- tests/unit/training/test_sac_smoke.py
+- tests/unit/training/test_survival_gate.py
+- training/configuration/survival_gate.py
+- training/runner/seed_runtime.py
+- training/setup/environments.py
+source_scopes:
+  - {path: decisioning/observations.py, study_ids: [decisioning.observation_contract]}
+  - {path: decisioning/observation_state.py, study_ids: [decisioning.observation_contract]}
+  - {path: decisioning/actions.py, study_ids: [decisioning.action_and_legal_mask_contract]}
+  - {path: decisioning/trade_setup.py, study_ids: [decisioning.action_and_legal_mask_contract]}
+  - {path: decisioning/adapters, study_ids: [decisioning.provider_adapter_parity]}
+  - {path: decisioning/contracts.py, study_ids: [decisioning.provider_adapter_parity]}
+  - {path: decisioning/regime_observations.py, study_ids: [decisioning.observation_contract]}
+  - {path: decisioning/__init__.py, study_ids: [decisioning.provider_adapter_parity]}
+  - {path: research_tools/decisioning, study_ids: [decisioning.observation_contract, decisioning.action_and_legal_mask_contract, decisioning.provider_adapter_parity]}
+config_paths: [config/base/default.yaml]
+test_paths: [tests/unit/decisioning, tests/unit/evaluation]
+studies:
+  - id: decisioning.observation_contract
+    type: code_check
+    question: Do observation fields, ordering, widths, masks, and availability match the declared schema?
+    source_paths: [decisioning/observations.py, decisioning/observation_state.py]
+    checks: [tests/unit/decisioning/test_observations.py]
+    outputs: [observation_contract_check]
+  - id: decisioning.action_and_legal_mask_contract
+    type: code_check
+    question: Are action coordinates, legal choices, decoding, and invalid-action handling consistent across callers?
+    source_paths: [decisioning/actions.py]
+    checks: [tests/unit/decisioning/test_action_schema_config.py, tests/unit/decisioning/test_trade_setup_contract.py]
+    outputs: [action_contract_check]
+  - id: decisioning.provider_adapter_parity
+    type: code_check
+    question: Do rule-based and learned providers return the same typed decision contract without duplicate inference?
+    source_paths: [decisioning/contracts.py, decisioning/adapters/sb3.py, decisioning/adapters/rule_based.py]
+    checks: [tests/unit/evaluation/test_decision_provider_rollout.py]
+    outputs: [provider_contract_check]

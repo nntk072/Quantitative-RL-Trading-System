@@ -823,4 +823,5 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `qrl-data` | `market_data.cli:main` | [market_data/cli.py](../../market_data/cli.py) |
 | `qrl-evaluate` | `evaluation.cli:main` | [evaluation/cli.py](../../evaluation/cli.py) |
 | `qrl-experiment` | `experiments.cli:main` | [experiments/cli.py](../../experiments/cli.py) |
+| `qrl-study` | `research_tools.studies.study_cli:main` | [pyproject.toml](../../pyproject.toml) |
 | `qrl-train` | `training.cli:main` | [training/cli.py](../../training/cli.py) |

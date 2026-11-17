@@ -6866,6 +6866,7 @@
         "../../market_data/cli.py",
         "../../evaluation/cli.py",
         "../../experiments/cli.py",
+        "../../pyproject.toml",
         "../../training/cli.py"
       ],
       "orphan_status": "in toctree",

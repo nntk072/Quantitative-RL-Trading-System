@@ -22,6 +22,7 @@ NUMPY_SECTION = re.compile(
 PUBLIC_KINDS = {"class", "function", "method"}
 PUBLIC_CLASSIFICATIONS = {"stable", "experimental", "compatibility-only"}
 COMPATIBILITY_MODULES = {"models.encoders.core"}
+INTERNAL_WHEEL_PACKAGES = {"research_tools"}
 
 
 @dataclass(frozen=True)
@@ -53,10 +54,10 @@ class ApiEntry:
 
 
 def _production_roots(root: Path) -> tuple[str, ...]:
-    """Read package roots from the wheel configuration."""
+    """Read public production roots, excluding bundled internal research tools."""
     document = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
     roots = document["tool"]["hatch"]["build"]["targets"]["wheel"]["packages"]
-    return tuple(str(item) for item in roots)
+    return tuple(str(item) for item in roots if str(item) not in INTERNAL_WHEEL_PACKAGES)
 
 
 def _module_name(path: Path, root: Path) -> str:

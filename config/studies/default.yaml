@@ -1,0 +1,43 @@
+schema_version: 1
+profile_dir: profiles
+project:
+  name: Quantitative RL Trading System
+  description: Repository study catalog and workflow switches
+  version: 1
+runtime:
+  config: config/base/default.yaml
+script_migrations: config/studies/script_migrations.yaml
+evidence_index: config/studies/evidence_index.yaml
+workflow:
+  data: {enabled: true, modules: [market_data]}
+  preprocessing: {enabled: true, modules: [configuration, features]}
+  model: {enabled: true, modules: [decisioning, models, learning]}
+  training: {enabled: true, modules: [training]}
+  execution: {enabled: true, modules: [trading, simulation]}
+  testing: {enabled: true, modules: [repo_tooling]}
+  evaluation: {enabled: true, modules: [evaluation]}
+  experiments: {enabled: true, modules: [experiments]}
+  compute: {enabled: true, modules: [compute]}
+  reporting: {enabled: true, modules: [artifacts, orchestra]}
+  integrations: {enabled: true, modules: [live, integrations]}
+study_defaults:
+  code_check: "Every listed focused check passes, with no uncovered source or config inputs."
+  audit: "Every registered input has a provenance-backed disposition, and limits are stated."
+modules:
+  artifacts: {enabled: true}
+  configuration: {enabled: true}
+  market_data: {enabled: true}
+  features: {enabled: true}
+  decisioning: {enabled: true}
+  trading: {enabled: true}
+  simulation: {enabled: true}
+  models: {enabled: true}
+  learning: {enabled: true}
+  training: {enabled: true}
+  evaluation: {enabled: true}
+  experiments: {enabled: true}
+  compute: {enabled: true}
+  orchestra: {enabled: true}
+  live: {enabled: true}
+  integrations: {enabled: true}
+  repo_tooling: {enabled: true}

@@ -1,0 +1,40 @@
+module_id: integrations
+source_roots: [integrations]
+api_paths:
+- integrations/mt5/adapters/__init__.py
+- integrations/mt5/adapters/data.py
+- integrations/mt5/cli/__init__.py
+- integrations/mt5/domain/__init__.py
+- integrations/mt5/domain/risk_manager.py
+- integrations/mt5/domain/signal.py
+- integrations/mt5/domain/trader.py
+- integrations/mt5/robot/__init__.py
+- integrations/mt5/robot/cross_over_robot.py
+- integrations/mt5/robot/multi_symbol_robot.py
+- integrations/mt5/robot/rl_robot.py
+caller_paths:
+- tests/unit/live/test_crossover_robot.py
+- tests/unit/live/test_mt5_cli_applications.py
+- tests/unit/live/test_mt5_trader_quotes.py
+- tests/unit/live/test_multi_symbol_risk_stops.py
+- tests/unit/live/test_risk_manager.py
+- tests/unit/live/test_rl_bridge.py
+- tests/unit/live/test_rl_robot.py
+source_scopes:
+  - {path: integrations/mt5, study_ids: [integrations.broker_contract_conversion, integrations.symbol_and_order_constraints]}
+  - {path: integrations/__init__.py, study_ids: [integrations.broker_contract_conversion]}
+config_paths: [config/base/default.yaml]
+test_paths: [tests/unit/live]
+studies:
+  - id: integrations.broker_contract_conversion
+    type: code_check
+    question: Do vendor data, order, position, and account values map to broker-neutral contracts without unit loss?
+    source_paths: [integrations/mt5/domain/trader.py, integrations/mt5/adapters/trader.py, integrations/mt5/adapters/data.py]
+    checks: [tests/unit/live/test_mt5_trader_quotes.py, tests/unit/live/test_rl_bridge.py]
+    outputs: [broker_adapter_contract_check]
+  - id: integrations.symbol_and_order_constraints
+    type: code_check
+    question: Are broker symbol, volume step, price precision, order rules, and monetary limits checked before requests?
+    source_paths: [integrations/mt5/domain/risk_manager.py, integrations/mt5/risk_configuration.py]
+    checks: [tests/unit/live/test_risk_manager.py, tests/unit/live/test_multi_symbol_risk_stops.py]
+    outputs: [broker_constraint_check]
