@@ -94,6 +94,10 @@ items:
     kind: evidence_storage_policy
     status: guidance
     study_ids: [artifacts.identity_and_atomic_storage, market_data.raw_data_quality_and_coverage]
+  - path: evidence/research/data_quality/raw_market_data_quality_profile_20261116.json
+    kind: raw_market_data_quality_profile
+    status: descriptive_audit_not_experiment_result
+    study_ids: [market_data.raw_data_quality_and_coverage]
   - path: evidence/research/data_identity/raw_data_manifest.json
     kind: raw_data_identity_manifest
     status: identity_registered_source_files_not_rehashed_by_inventory

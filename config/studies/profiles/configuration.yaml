@@ -66,15 +66,11 @@ caller_paths:
 - training/configuration/quality.py
 - training/configuration/strategy_overlays.py
 - training/configuration/survival_gate.py
-- training/configuration/variant_resolution.py
-- training/configuration/variant_risk_policy.py
 - training/configuration/variants.py
 - training/runner/backtest.py
 - training/runner/baselines.py
 - training/runner/data_stage.py
-- training/runner/lstm_baseline.py
 - training/runner/seed_runtime.py
-- training/runner/survival_campaign.py
 - training/runner/walk_forward_validation.py
 source_scopes:
   - {path: configuration/schema.py, study_ids: [configuration.schema_and_domain_validation]}

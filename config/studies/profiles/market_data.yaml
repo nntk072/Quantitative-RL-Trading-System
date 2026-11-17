@@ -17,6 +17,7 @@ api_paths:
 - market_data/transforms/__init__.py
 - market_data/transforms/activity.py
 - market_data/transforms/align.py
+- market_data/transforms/cleaning.py
 - market_data/transforms/price_grid.py
 - market_data/transforms/resample.py
 - market_data/transforms/session_schedule.py
@@ -103,6 +104,7 @@ caller_paths:
 - tests/unit/learning/test_learning_supervised_reference.py
 - tests/unit/market_data/test_data_split.py
 - tests/unit/market_data/test_dataset_source_contract.py
+- tests/unit/market_data/test_market_data_ingestion.py
 - tests/unit/market_data/test_mt5_server_protective_fills.py
 - tests/unit/market_data/test_quality_audit.py
 - tests/unit/market_data/test_session_schedule.py

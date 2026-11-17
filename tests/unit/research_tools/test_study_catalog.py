@@ -97,7 +97,7 @@ def test_repository_inventory_lists_source_symbols_config_keys_tests_and_evidenc
     assert all("value" not in key for key in runtime_settings["keys"])
     assert "docs/research/validation_protocol.md" in evidence_paths
     assert "evidence/research/data_identity/raw_data_manifest.json" in evidence_paths
-    assert inventory["evidence"]["file_count"] == 25
+    assert inventory["evidence"]["file_count"] == 26
     assert inventory["tests"]["file_count"] > 0
 
 
