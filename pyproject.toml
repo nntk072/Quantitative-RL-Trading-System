@@ -14,7 +14,7 @@ dependencies = [
     "numpy==2.2.6",
     "pandas==2.3.2",
     "plotly==5.18.0",
-    "python-dotenv==1.2.2",
+    "python-dotenv==1.2.4",
     "pyyaml==6.0.3",
     "yfinance>=0.2.66",
     # RL training and environment dependencies.
