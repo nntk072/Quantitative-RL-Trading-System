@@ -2210,7 +2210,7 @@
         "../../../../market_data/cache/ticks.py#L23",
         "../../../../market_data/cache/ticks.py#L99",
         "../../../../market_data/cache/ticks.py#L125",
-        "../../../../tests/unit/market_data/test_ticks.py#L1301",
+        "../../../../tests/unit/market_data/test_ticks.py#L1344",
         "../../../../market_data/loading/ticks.py#L1168"
       ],
       "orphan_status": "in toctree",
@@ -2230,7 +2230,7 @@
         "../../../../tests/integration/test_loader.py#L35",
         "../../../../market_data/loading/bars.py#L192",
         "../../../../tests/unit/market_data/test_ticks.py#L956",
-        "../../../../tests/unit/market_data/test_ticks.py#L974",
+        "../../../../tests/unit/market_data/test_ticks.py#L1017",
         "../../../../market_data/loading/bars.py#L74",
         "../../../../tests/integration/test_loader.py#L20",
         "../../../../tests/integration/test_loader.py#L35"
@@ -2287,7 +2287,7 @@
         "../../../../tests/unit/market_data/test_ticks.py#L104",
         "../../../../tests/unit/market_data/test_ticks.py#L671",
         "../../../../market_data/loading/ticks.py#L691",
-        "../../../../tests/unit/market_data/test_ticks.py#L1205",
+        "../../../../tests/unit/market_data/test_ticks.py#L1248",
         "../../../../market_data/loading/ticks.py#L654",
         "../../../../tests/unit/market_data/test_ticks.py#L63",
         "../../../../tests/unit/market_data/test_ticks.py#L929",
@@ -2308,7 +2308,7 @@
         "../../../../tests/unit/market_data/test_ticks.py#L107",
         "../../../../tests/unit/market_data/test_ticks.py#L132",
         "../../../../market_data/loading/ticks.py#L814",
-        "../../../../market_data/loading/tick_book_pipeline.py#L173",
+        "../../../../market_data/loading/tick_book_pipeline.py#L184",
         "../../../../market_data/loading/ticks.py#L850"
       ],
       "orphan_status": "in toctree",
