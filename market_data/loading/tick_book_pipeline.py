@@ -127,6 +127,13 @@ def build_tick_books(
                     source_end_date is None or str(end_inclusive) < str(source_end_date)
                 ):
                     source_end_date = end_inclusive
+                if (
+                    start_date is not None
+                    and source_end_date is not None
+                    and pd.Timestamp(str(start_date)).normalize()
+                    > pd.Timestamp(str(source_end_date)).normalize()
+                ):
+                    continue
                 source_end = (
                     inclusive_date_exclusive_end(str(source_end_date), str(cfg.data.tz))
                     if source_end_date is not None
@@ -155,7 +162,11 @@ def build_tick_books(
                 books = []
                 break
         if books:
-            if any(books[i]._ts[-1] >= books[i + 1]._ts[0] for i in range(len(books) - 1)):
+            nonempty_books = [book for book in books if len(book) > 0]
+            if any(
+                nonempty_books[i]._ts[-1] >= nonempty_books[i + 1]._ts[0]
+                for i in range(len(nonempty_books) - 1)
+            ):
                 raise ValueError(
                     f"configured tick partitions overlap or are out of order for {sym}"
                 )

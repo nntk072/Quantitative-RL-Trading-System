@@ -1,0 +1,75 @@
+module_id: models
+source_roots: [models, research_tools/models]
+api_paths:
+- models/architecture_ids.py
+- models/auxiliary/heads.py
+- models/auxiliary/vae.py
+- models/encoders/__init__.py
+- models/encoders/mtf_m1_htf_lite_reasoning.py
+- models/encoders/mtf_m1_htf_snapshot_reasoning.py
+- models/encoders/mtf_reasoning.py
+- models/encoders/mtf_shared_tcn_reasoning.py
+- models/factory/__init__.py
+- models/factory/encoder_registry.py
+- models/runtime/__init__.py
+- models/runtime/precision.py
+caller_paths:
+- experiments/variants/catalog.py
+- learning/rl/agent.py
+- learning/rl/auxiliary.py
+- learning/rl/checkpoint.py
+- learning/rl/vae_extractor.py
+- learning/self_supervised/vae_pre_ny.py
+- tests/architecture/test_public_imports.py
+- tests/integration/test_device.py
+- tests/integration/test_sac_agent_integration.py
+- tests/unit/experiments/test_model_variant_catalog.py
+- tests/unit/features/test_causal_features.py
+- tests/unit/models/test_auxiliary.py
+- tests/unit/models/test_encoders.py
+- tests/unit/models/test_hybrid_actor.py
+- tests/unit/models/test_legacy_checkpoint_migration.py
+- tests/unit/models/test_lite_tcn_agent.py
+- tests/unit/models/test_mtf_efficient_encoders.py
+- tests/unit/models/test_mtf_encoder_registration.py
+- tests/unit/models/test_sac_agent.py
+- tests/unit/models/test_semantic_actor.py
+- tests/unit/models/test_tcn_regime.py
+- tests/unit/models/test_vae.py
+- tests/unit/models/test_vae_wiring.py
+- tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
+- tests/unit/simulation/test_environment/test_trade_setup_observation.py
+- tests/unit/training/test_auxiliary_training.py
+- tests/unit/training/test_training_smoke.py
+- training/configuration/variant_resolution.py
+- training/runner/vae.py
+source_scopes:
+  - {path: models/encoders, study_ids: [models.registered_architecture_inputs, models.sequence_masks_and_timeframe_alignment]}
+  - {path: models/factory, study_ids: [models.registered_architecture_inputs]}
+  - {path: models/auxiliary, study_ids: [models.precision_checkpoint_and_auxiliary_paths]}
+  - {path: models/runtime, study_ids: [models.precision_checkpoint_and_auxiliary_paths]}
+  - {path: models/architecture_ids.py, study_ids: [models.registered_architecture_inputs]}
+  - {path: models/__init__.py, study_ids: [models.registered_architecture_inputs]}
+  - {path: research_tools/models, study_ids: [models.registered_architecture_inputs, models.sequence_masks_and_timeframe_alignment, models.precision_checkpoint_and_auxiliary_paths]}
+config_paths: [config/base/default.yaml, config/variant_catalog.yaml, config/vae.yaml]
+test_paths: [tests/unit/models]
+studies:
+  - id: models.registered_architecture_inputs
+    type: code_check
+    question: Does every registered architecture accept the observation schemas and produce the required output shape?
+    source_paths: [models/factory/encoder_registry.py, models/architecture_ids.py, models/encoders/__init__.py]
+    config_globs: [config/studies/arms/model_architectures/*.yaml]
+    checks: [tests/unit/models/test_mtf_encoder_registration.py, tests/unit/models/test_action_schema_contract.py]
+    outputs: [architecture_input_output_check]
+  - id: models.sequence_masks_and_timeframe_alignment
+    type: code_check
+    question: Do sequence lengths, empty streams, masks, causal padding, and timeframe alignment preserve valid information only?
+    source_paths: [models/encoders/sequence_encoder_components.py, models/encoders/mtf_efficiency_components.py, models/encoders/transformer.py]
+    checks: [tests/unit/models/test_encoders.py, tests/unit/models/test_mtf_efficient_encoders.py]
+    outputs: [encoder_mask_and_alignment_check]
+  - id: models.precision_checkpoint_and_auxiliary_paths
+    type: code_check
+    question: Are precision policy, checkpoint representation, auxiliary heads, and VAE paths reproducible and compatible?
+    source_paths: [models/runtime/precision.py, models/auxiliary/heads.py, models/auxiliary/vae.py, models/encoders/core.py]
+    checks: [tests/unit/training/test_vae_admission.py, tests/unit/training/test_auxiliary_training.py]
+    outputs: [model_runtime_and_auxiliary_check]

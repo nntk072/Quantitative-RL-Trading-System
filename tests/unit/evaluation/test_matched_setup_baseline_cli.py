@@ -4,8 +4,8 @@ from typing import Any
 
 import pandas as pd
 import pytest
-from scripts.research.analysis.evaluation import run_matched_setup_baselines as matched_baselines
-from scripts.research.analysis.evaluation.run_matched_setup_baselines import (
+from research_tools.trading.evaluation import run_matched_setup_baselines as matched_baselines
+from research_tools.trading.evaluation.run_matched_setup_baselines import (
     _additional_policies,
     _clip_frames_to_development_end,
     parse_args,

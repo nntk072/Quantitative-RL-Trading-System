@@ -1,0 +1,220 @@
+module_id: simulation
+source_roots: [simulation, research_tools/simulation, research_tools/studies/handlers/simulation.py]
+api_paths:
+- simulation/backtest/__init__.py
+- simulation/backtest/accounting.py
+- simulation/backtest/cross_validation/backtrader_runner.py
+- simulation/backtest/cross_validation/main.py
+- simulation/backtest/cross_validation/run.py
+- simulation/backtest/event_driven_backtest.py
+- simulation/backtest/protective_events.py
+- simulation/backtest/runtime.py
+- simulation/contracts/__init__.py
+- simulation/environment/__init__.py
+- simulation/environment/action_diagnostics.py
+- simulation/environment/bundles.py
+- simulation/environment/candidate_geometry_observation.py
+- simulation/environment/diagnostics.py
+- simulation/environment/distribution_reward.py
+- simulation/environment/entry_diagnostics.py
+- simulation/environment/entry_state.py
+- simulation/environment/env.py
+- simulation/environment/episode_equity.py
+- simulation/environment/market_view.py
+- simulation/environment/observations.py
+- simulation/environment/po3_reward.py
+- simulation/environment/rewards.py
+- simulation/environment/shared_bundle.py
+- simulation/environment/spec.py
+- simulation/environment/sweep_reward.py
+- simulation/environment/timebase.py
+- simulation/environment/trading_environment_factory.py
+- simulation/environment/worker.py
+caller_paths:
+- evaluation/metrics/trade_setup_policy.py
+- evaluation/reanalysis/checkpoint_reanalysis.py
+- evaluation/rollout/matched_setup_baselines.py
+- evaluation/rollout/trained_policy_rollout.py
+- tests/architecture/test_public_imports.py
+- tests/integration/backtest/test_account_transition_parity.py
+- tests/integration/backtest/test_agent_selected_entry_execution.py
+- tests/integration/backtest/test_broker_fill_accounting.py
+- tests/integration/backtest/test_engine_backtrader_signal_parity.py
+- tests/integration/backtest/test_engine_cross_validation.py
+- tests/integration/backtest/test_engine_execution_contract.py
+- tests/integration/backtest/test_entry_levels.py
+- tests/integration/backtest/test_multi_target_protective_lifecycle.py
+- tests/integration/backtest/test_no_action_account_parity.py
+- tests/integration/backtest/test_repeated_payout_backtest.py
+- tests/integration/backtest/test_risk_lifecycle_characterization.py
+- tests/integration/backtest/test_setup_mask_backtest_boundary.py
+- tests/integration/evaluation/test_random_eligible_setup_rollout.py
+- tests/integration/test_action_schema_contract.py
+- tests/integration/test_evaluation_pipeline.py
+- tests/integration/test_position_fill_accounting.py
+- tests/integration/test_sac_agent_integration.py
+- tests/integration/test_strategy_integration.py
+- tests/unit/evaluation/test_evaluate_metrics_contract.py
+- tests/unit/evaluation/test_order_chart.py
+- tests/unit/evaluation/test_plots_export.py
+- tests/unit/evaluation/test_rollout.py
+- tests/unit/features/test_entry_ideas.py
+- tests/unit/features/test_pd_context.py
+- tests/unit/features/test_stage_a_observation.py
+- tests/unit/live/test_rl_bridge.py
+- tests/unit/models/test_ppo_log_std.py
+- tests/unit/models/test_sac_agent.py
+- tests/unit/simulation/test_backtest_management_modes.py
+- tests/unit/simulation/test_environment/_tp_mode_fixtures.py
+- tests/unit/simulation/test_environment/test_account_normalization.py
+- tests/unit/simulation/test_environment/test_baseline_regression.py
+- tests/unit/simulation/test_environment/test_bundle_env_equivalence.py
+- tests/unit/simulation/test_environment/test_bundle_eval.py
+- tests/unit/simulation/test_environment/test_bundle_worker.py
+- tests/unit/simulation/test_environment/test_candidate_geometry_observation.py
+- tests/unit/simulation/test_environment/test_continuous_actions.py
+- tests/unit/simulation/test_environment/test_decision_correlation.py
+- tests/unit/simulation/test_environment/test_distribution_reward.py
+- tests/unit/simulation/test_environment/test_eligibility_wiring.py
+- tests/unit/simulation/test_environment/test_entry_rejection_counters.py
+- tests/unit/simulation/test_environment/test_entry_state_machine.py
+- tests/unit/simulation/test_environment/test_env_bundle_builder.py
+- tests/unit/simulation/test_environment/test_equity_delta_reward.py
+- tests/unit/simulation/test_environment/test_equity_log_growth_reward.py
+- tests/unit/simulation/test_environment/test_fixed_risk_sizing.py
+- tests/unit/simulation/test_environment/test_merged_overlay.py
+- tests/unit/simulation/test_environment/test_mtf_windows.py
+- tests/unit/simulation/test_environment/test_ny_steps_eod.py
+- tests/unit/simulation/test_environment/test_observation_schema.py
+- tests/unit/simulation/test_environment/test_po3_reward.py
+- tests/unit/simulation/test_environment/test_protective_level_runtime.py
+- tests/unit/simulation/test_environment/test_regime_observation.py
+- tests/unit/simulation/test_environment/test_risk_alignment.py
+- tests/unit/simulation/test_environment/test_shared_bundle.py
+- tests/unit/simulation/test_environment/test_simulation_transition_contract.py
+- tests/unit/simulation/test_environment/test_sl_tp_fill.py
+- tests/unit/simulation/test_environment/test_strategy_env.py
+- tests/unit/simulation/test_environment/test_sweep_reward.py
+- tests/unit/simulation/test_environment/test_swing_trailing_stop.py
+- tests/unit/simulation/test_environment/test_take_profit_level_ordering.py
+- tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
+- tests/unit/simulation/test_environment/test_tp_action_decode.py
+- tests/unit/simulation/test_environment/test_tp_execution.py
+- tests/unit/simulation/test_environment/test_tp_mode_state.py
+- tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
+- tests/unit/simulation/test_environment/test_trade_setup_observation.py
+- tests/unit/simulation/test_environment/test_trader_actions.py
+- tests/unit/simulation/test_environment/test_trading_env_decomposition.py
+- tests/unit/simulation/test_environment/test_trading_env_golden_traces.py
+- tests/unit/simulation/test_environment/test_trailing_stop_causality.py
+- tests/unit/simulation/test_environment/test_year_episode_survival.py
+- tests/unit/simulation/test_reward.py
+- tests/unit/trading/test_macd_baseline.py
+- tests/unit/trading/test_repeated_payout_policy.py
+- tests/unit/training/test_auxiliary_training.py
+- tests/unit/training/test_backtest_runner_policy.py
+- tests/unit/training/test_best_checkpoint_callback.py
+- tests/unit/training/test_dashboard.py
+- tests/unit/training/test_sac_smoke.py
+- tests/unit/training/test_seed_reproducibility.py
+- tests/unit/training/test_train_rl_decomposition.py
+- tests/unit/training/test_training_smoke.py
+- training/artifacts/manifests.py
+- training/callbacks/dashboard.py
+- training/callbacks/debug_trace.py
+- training/callbacks/equity.py
+- training/runner/backtest.py
+- training/runner/baselines.py
+- training/runner/lstm_baseline.py
+- training/runner/run_assets_stage.py
+- training/runner/seed_runtime.py
+- training/setup/environments.py
+- training/setup/observation_memmap.py
+source_scopes:
+  - {path: simulation/environment, study_ids: [simulation.transition_and_episode_contract, simulation.tick_fills_and_protective_orders, simulation.accounting_reward_and_telemetry, simulation.bar_decisions_with_tick_fills, simulation.limit_entry_price_bound_and_expiry, simulation.accounting_reward_and_cost_attribution, simulation.episode_end_and_session_liquidation, simulation.vectorized_environment_parity, simulation.protective_order_priority_and_ties]}
+  - {path: simulation/contracts, study_ids: [simulation.transition_and_episode_contract]}
+  - {path: simulation/backtest, study_ids: [simulation.backtest_and_cross_validation_parity, simulation.tick_execution_accounting_parity, simulation.accounting_reward_and_cost_attribution, simulation.episode_end_and_session_liquidation, simulation.backtest_engine_and_fold_parity, simulation.protective_order_priority_and_ties]}
+  - {path: simulation/entry_evidence.py, study_ids: [simulation.transition_and_episode_contract]}
+  - {path: simulation/entry_state.py, study_ids: [simulation.transition_and_episode_contract]}
+  - {path: simulation/__init__.py, study_ids: [simulation.transition_and_episode_contract]}
+  - {path: research_tools/studies/handlers/simulation.py, study_ids: [simulation.tick_execution_accounting_parity]}
+  - {path: research_tools/simulation, study_ids: [simulation.transition_and_episode_contract, simulation.tick_fills_and_protective_orders, simulation.accounting_reward_and_telemetry, simulation.backtest_and_cross_validation_parity, simulation.tick_execution_accounting_parity]}
+config_paths: [config/base/default.yaml]
+test_paths: [tests/unit/simulation]
+studies:
+  - id: simulation.transition_and_episode_contract
+    type: code_check
+    question: Do action, observation, account, reward, episode, truncation, and breach transitions follow one explicit order?
+    source_paths: [simulation/environment/env.py, simulation/contracts/transition.py, simulation/environment/step_runtime.py, simulation/environment/step_end_runtime.py]
+    checks: [tests/unit/simulation/test_environment/test_simulation_transition_contract.py, tests/unit/simulation/test_environment/test_trading_env_golden_traces.py]
+    outputs: [transition_and_episode_check]
+  - id: simulation.tick_fills_and_protective_orders
+    type: code_check
+    question: Do tick fills resolve executable quotes, intrabar crossings, stop-target collisions, and missing-tick behavior as configured?
+    source_paths: [simulation/environment/tick_quote_runtime.py, simulation/environment/fill_quote_runtime.py, simulation/environment/protective_level_runtime.py]
+    checks: [tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py, tests/unit/simulation/test_environment/test_sl_tp_fill.py, tests/unit/simulation/test_environment/test_tp_execution.py]
+    outputs: [tick_execution_check]
+  - id: simulation.accounting_reward_and_telemetry
+    type: code_check
+    question: Do realized PnL, reward attribution, guardrail state, and transition telemetry reconstruct from the same events?
+    source_paths: [simulation/environment/step_accounting_runtime.py, simulation/environment/trade_accounting_runtime.py, simulation/environment/step_info_runtime.py]
+    checks: [tests/unit/simulation/test_reward.py, tests/unit/simulation/test_environment/test_sweep_reward.py, tests/unit/simulation/test_environment/test_account_normalization.py]
+    outputs: [accounting_reward_and_telemetry_check]
+  - id: simulation.backtest_and_cross_validation_parity
+    type: code_check
+    question: Do event replay, fold boundaries, account state, and fill records agree between backtest and evaluation paths?
+    source_paths: [simulation/backtest/event_driven_backtest.py, simulation/backtest/accounting.py, simulation/backtest/cross_validation/backtrader_runner.py]
+    checks: [tests/integration/backtest/test_engine_cross_validation.py, tests/integration/backtest/test_engine_execution_contract.py]
+    outputs: [backtest_parity_check]
+  - id: simulation.tick_execution_accounting_parity
+    type: audit
+    question: On shared tick and quote inputs, do environment and event-backtest decisions, fills, costs, account balances, risk state, and terminal outcomes reconcile?
+    acceptance: Inputs and decision cohorts match; tick-derived execution records reconcile through account state, and every remaining difference has a source-backed disposition; unresolved fill, quote, or breach-state differences block dependent policy claims.
+    audit_tool: simulation.tick_execution_accounting_parity
+    config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml]
+    source_paths: [simulation/environment, simulation/backtest/event_driven_backtest.py, evaluation/reporting/account_state_trace_reconciliation.py, research_tools/studies/handlers/simulation.py]
+    checks: [tests/integration/backtest/test_account_transition_parity.py, tests/integration/backtest/test_local_tick_action_trace.py, tests/unit/evaluation/test_account_state_trace_reconciliation.py]
+    outputs: [matched_decision_and_fill_ledger, account_state_reconciliation, discrepancy_register]
+    prerequisites: [market_data.raw_data_quality_and_coverage, features.prefix_causality_and_fit_scope]
+  - id: simulation.bar_decisions_with_tick_fills
+    type: code_check
+    question: Can a policy decide on completed bars while every entry and protective fill is resolved from source-ordered ticks available after that decision?
+    source_paths: [simulation/environment/market_access.py, simulation/environment/tick_quote_runtime.py, simulation/environment/step_action_execution.py]
+    checks: [tests/integration/backtest/test_local_tick_action_trace.py, tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py]
+    outputs: [bar_decision_tick_fill_contract_check]
+  - id: simulation.protective_order_priority_and_ties
+    type: code_check
+    question: When stop, target, and terminal events are reachable in one interval, is the fill chosen by the declared source-order and tie policy?
+    source_paths: [simulation/backtest/protective_events.py, simulation/environment/protective_level_runtime.py, simulation/environment/fill_quote_runtime.py]
+    checks: [tests/unit/simulation/test_environment/test_sl_tp_fill.py, tests/integration/backtest/test_multi_target_protective_lifecycle.py, tests/unit/simulation/test_environment/test_take_profit_level_ordering.py]
+    outputs: [protective_order_priority_and_tie_check]
+  - id: simulation.limit_entry_price_bound_and_expiry
+    type: code_check
+    question: Do limit entries respect their submitted price bound, expiry, fill delay, and equal-touch versus trade-through configuration?
+    source_paths: [simulation/environment/entry_order_runtime.py, simulation/environment/entry_execution_runtime.py, trading/orders/entry_execution.py]
+    checks: [tests/unit/simulation/test_environment/test_entry_state_machine.py, tests/integration/backtest/test_agent_selected_entry_execution.py, tests/unit/trading/test_entry_execution_orders.py]
+    outputs: [limit_entry_bound_and_expiry_check]
+  - id: simulation.accounting_reward_and_cost_attribution
+    type: code_check
+    question: Do fill cashflows, realized equity, reward values, and cost telemetry reconcile exactly once for open, partial, closed, and rejected positions?
+    source_paths: [simulation/environment/step_accounting_runtime.py, simulation/environment/trade_accounting_runtime.py, simulation/environment/rewards.py, simulation/backtest/accounting.py]
+    checks: [tests/unit/simulation/test_environment/test_equity_delta_reward.py, tests/unit/simulation/test_reward.py, tests/unit/evaluation/test_reward_attribution.py, tests/integration/backtest/test_broker_fill_accounting.py]
+    outputs: [accounting_reward_and_cost_attribution_check]
+  - id: simulation.episode_end_and_session_liquidation
+    type: code_check
+    question: Are termination, truncation, session close, forced liquidation, and overnight blocking distinguishable and applied at the configured boundary?
+    source_paths: [simulation/environment/episode_runtime.py, simulation/environment/step_end_runtime.py, simulation/backtest/event_driven_backtest.py]
+    checks: [tests/unit/simulation/test_environment/test_ny_steps_eod.py, tests/unit/simulation/test_environment/test_year_episode_survival.py, tests/integration/backtest/test_engine_execution_contract.py]
+    outputs: [episode_end_and_session_liquidation_check]
+  - id: simulation.vectorized_environment_parity
+    type: code_check
+    question: Do scalar, worker, and shared-bundle execution produce equivalent observations, transitions, fills, and terminal states for the same seed and input?
+    source_paths: [simulation/environment/bundles.py, simulation/environment/shared_bundle.py, simulation/environment/worker.py]
+    checks: [tests/unit/simulation/test_environment/test_bundle_env_equivalence.py, tests/unit/simulation/test_environment/test_bundle_worker.py, tests/unit/simulation/test_environment/test_shared_bundle.py]
+    outputs: [vectorized_environment_parity_check]
+  - id: simulation.backtest_engine_and_fold_parity
+    type: code_check
+    question: Do the event-driven and cross-validation backtest paths preserve the same policy actions, account transitions, and fold boundaries?
+    source_paths: [simulation/backtest/event_driven_backtest.py, simulation/backtest/cross_validation/run.py, simulation/backtest/cross_validation/backtrader_runner.py]
+    checks: [tests/integration/backtest/test_engine_backtrader_signal_parity.py, tests/integration/backtest/test_engine_cross_validation.py, tests/integration/backtest/test_account_transition_parity.py]
+    outputs: [backtest_engine_and_fold_parity_check]

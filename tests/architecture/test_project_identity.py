@@ -20,6 +20,7 @@ def test_distribution_and_command_names_are_project_oriented() -> None:
         "evaluate": "evaluation.cli:main",
         "experiment": "experiments.cli:main",
         "compute": "compute.cli:main",
+        "study": "research_tools.studies.study_cli:main",
     }
     for command, target in expected.items():
         assert scripts[f"qrl-{command}"] == target

@@ -7,7 +7,7 @@ import gymnasium as gym
 import numpy as np
 import pytest
 from omegaconf import OmegaConf
-from scripts.research.benchmarks.measure_ppo_throughput import (
+from research_tools.learning.benchmarks.measure_ppo_throughput import (
     _apply_profile_overrides,
     _json_default,
     _prepare_bundle,
@@ -19,6 +19,9 @@ from scripts.research.benchmarks.measure_ppo_throughput import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FPS_PROBE_SCRIPT = REPO_ROOT / "scripts" / "research" / "benchmarks" / "run_fps_probe.sh"
+FPS_PROBE_IMPLEMENTATION = (
+    REPO_ROOT / "research_tools" / "compute" / "benchmarks" / "run_fps_probe.sh"
+)
 
 
 def test_profile_overrides_are_explicit_and_preserve_production_defaults() -> None:
@@ -79,7 +82,7 @@ def test_exact_quality_geometry_is_preserved_during_probe_scaling(monkeypatch) -
             cfg.ppo.n_steps = 8192
 
     monkeypatch.setattr(
-        "scripts.research.benchmarks.measure_ppo_throughput.scale_training_cfg",
+        "research_tools.learning.benchmarks.measure_ppo_throughput.scale_training_cfg",
         fake_scale,
     )
     _scale_profile_config(cfg, "cuda", "mtf_reasoning")
@@ -180,19 +183,29 @@ def test_cd_standalone_configs_resolve_through_production_loader(
 
 
 def test_fps_probe_launcher_is_repo_relative_and_architecture_aware() -> None:
-    result = subprocess.run(
+    wrapper_result = subprocess.run(
         ["bash", "-n", str(FPS_PROBE_SCRIPT)],
         check=False,
         capture_output=True,
         text=True,
     )
-    source = FPS_PROBE_SCRIPT.read_text(encoding="utf-8")
+    implementation_result = subprocess.run(
+        ["bash", "-n", str(FPS_PROBE_IMPLEMENTATION)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    wrapper = FPS_PROBE_SCRIPT.read_text(encoding="utf-8")
+    source = FPS_PROBE_IMPLEMENTATION.read_text(encoding="utf-8")
 
-    assert result.returncode == 0, result.stderr
+    assert wrapper_result.returncode == 0, wrapper_result.stderr
+    assert implementation_result.returncode == 0, implementation_result.stderr
+    assert "../../../research_tools/compute/benchmarks/run_fps_probe.sh" in wrapper
     assert 'dirname "${BASH_SOURCE[0]}")/../../..' in source
     assert 'export TRITON_REPO="$REPO_ROOT"' in source
     assert 'source "$REPO_ROOT/scripts/compute/slurm/activate_venv.sh"' in source
     assert '"$VIRTUAL_ENV/bin/python"' in source
+    assert '"$REPO_ROOT/research_tools/learning/benchmarks/measure_ppo_throughput.py"' in source
     assert '--config "$CONFIG_PATH"' in source
     assert 'PROFILE_ARGS+=(--n-envs "$N_ENVS")' in source
     assert "--n-envs 64" not in source

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 from pathlib import Path
 from typing import Any, cast
@@ -8,15 +7,7 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 from omegaconf import OmegaConf
-
-SCRIPT = (
-    Path(__file__).resolve().parents[2]
-    / "scripts/research/analysis/features/verify_real_market_feature_prefix_invariance.py"
-)
-SPEC = importlib.util.spec_from_file_location("feature_prefix_invariance", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-AUDIT = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(AUDIT)
+from research_tools.features.features import verify_real_market_feature_prefix_invariance as AUDIT
 
 
 def _stub_m1_input_hashes(cfg: Any) -> dict[str, str]:
@@ -434,6 +425,89 @@ def test_load_all_market_bars_applies_timezone_aware_inclusive_cutoff_to_both_sp
     assert 9_999.5 not in preprocessed_closes
 
 
+def test_load_all_market_bars_slices_shared_source_by_dataset_dates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    shared_source = AUDIT.ROOT / "data" / "shared.csv"
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "tz": "UTC",
+                "split": {
+                    "train_start": "2025-12-31",
+                    "train_end": "2025-12-31",
+                    "test_start": "2026-01-01",
+                    "test_end": "2026-01-01",
+                },
+                "datasets": {
+                    "training": {
+                        "raw_dir": "data",
+                        "m1_files": {"US100.cash": "shared.csv"},
+                        "start_date": "2025-12-31",
+                        "end_date": "2025-12-31",
+                    },
+                    "testing": {
+                        "raw_dir": "data",
+                        "m1_files": {"US100.cash": "shared.csv"},
+                        "start_date": "2026-01-01",
+                        "end_date": "2026-01-01",
+                    },
+                },
+            },
+            "session": {"end": "23:00"},
+        }
+    )
+    index = pd.DatetimeIndex(
+        [
+            "2025-12-30 23:59:00",
+            "2025-12-31 23:58:00",
+            "2025-12-31 23:59:00",
+            "2026-01-01 00:00:00",
+            "2026-01-01 00:01:00",
+            "2026-01-02 00:00:00",
+        ]
+    )
+    raw = pd.DataFrame(
+        {
+            "open": [99.0, 100.0, 101.0, 200.0, 201.0, 299.0],
+            "high": [100.0, 101.0, 102.0, 201.0, 202.0, 300.0],
+            "low": [98.0, 99.0, 100.0, 199.0, 200.0, 298.0],
+            "close": [99.5, 100.5, 101.5, 200.5, 201.5, 299.5],
+        },
+        index=index,
+    )
+    load_calls = 0
+
+    def load(_path: Path, **_bounds: Any) -> pd.DataFrame:
+        nonlocal load_calls
+        load_calls += 1
+        return raw.copy()
+
+    monkeypatch.setattr(AUDIT, "configured_price_grid_increment", lambda _cfg: None)
+    monkeypatch.setattr(
+        AUDIT,
+        "configured_m1_path",
+        lambda _cfg, _symbol, _dataset_name="training": shared_source,
+    )
+    monkeypatch.setattr(AUDIT, "load_bars", load)
+
+    bars, paths, splits = AUDIT.load_all_market_bars(
+        cfg,
+        "US100.cash",
+        raw_cache={},
+        preprocessed_cache={},
+    )
+
+    assert paths == [shared_source, shared_source]
+    assert bars["close"].tolist() == [100.5, 101.5, 200.5, 201.5]
+    assert bars.index.is_unique and bars.index.is_monotonic_increasing
+    assert [(part["dataset"], part["rows"]) for part in splits] == [
+        ("training", 2),
+        ("testing", 2),
+    ]
+    assert load_calls == 1
+
+
 def test_source_index_validation_reads_only_date_time_columns(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
@@ -453,7 +527,7 @@ def test_source_index_validation_reads_only_date_time_columns(
         read_calls.append((nrows, list(usecols) if usecols is not None else None))
         return cast(pd.DataFrame, read_csv(*args, **kwargs))
 
-    monkeypatch.setattr(AUDIT.pd, "read_csv", track_columns)
+    monkeypatch.setattr(pd, "read_csv", track_columns)
 
     index = AUDIT.load_m1_source_index(source)
 

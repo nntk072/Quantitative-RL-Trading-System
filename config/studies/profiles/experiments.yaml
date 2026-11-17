@@ -1,0 +1,82 @@
+module_id: experiments
+source_roots: [experiments, research_tools/experiments, research_tools/studies/study_audit_tools.py, research_tools/studies/study_audits.py, research_tools/studies/study_catalog.py, research_tools/studies/study_cli.py, research_tools/studies/study_inventory.py, research_tools/studies/study_plan.py, research_tools/studies/study_runner.py]
+api_paths:
+- experiments/cli.py
+- experiments/orchestration/weekly.py
+- experiments/runs/__init__.py
+- experiments/runs/baseline_cache_rebuild.py
+- experiments/runs/cache_failure_recovery.py
+- experiments/runs/execution.py
+- experiments/runs/named_cache_rebuild.py
+- experiments/runs/orchestration.py
+- experiments/runs/preflight_migration.py
+- experiments/runs/reporting.py
+- experiments/runs/source_snapshot.py
+- experiments/runs/state_store.py
+- experiments/runs/status.py
+- experiments/runs/variant_worker.py
+- experiments/variants/__init__.py
+- experiments/variants/variant_ablation_runner.py
+caller_paths:
+- scripts/maintenance/data-and-cache/rebuild_named_prebuilt_feature_caches.py
+- scripts/maintenance/data-and-cache/rebuild_prebuilt_baseline_cache.py
+- scripts/maintenance/migrations/migrate_preflight_experiment_run.py
+- tests/integration/test_ablation_oos_smoke.py
+- tests/unit/experiments/test_command_boundaries.py
+- tests/unit/experiments/test_experiment_run_artifacts.py
+- tests/unit/experiments/test_experiment_run_policy_overrides.py
+- tests/unit/experiments/test_experiment_run_results_summary.py
+- tests/unit/experiments/test_experiment_run_state_store.py
+- tests/unit/experiments/test_matrix_experiment_run_controller.py
+- tests/unit/experiments/test_model_variant_catalog.py
+- tests/unit/experiments/test_orchestration_weekly.py
+- tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py
+- tests/unit/experiments/test_triton_experiment_run_recovery.py
+- tests/unit/experiments/test_triton_report_experiment_run_status.py
+- tests/unit/experiments/test_weekly_orchestration_cli.py
+- tests/unit/training/test_variant_resolver.py
+source_scopes:
+  - {path: experiments/runs, study_ids: [experiments.run_identity_retry_and_resume, experiments.checkpoint_and_artifact_completion]}
+  - {path: experiments/variants, study_ids: [experiments.registered_families_and_variants]}
+  - {path: experiments/orchestration, study_ids: [experiments.run_identity_retry_and_resume]}
+  - {path: experiments/provenance, study_ids: [experiments.checkpoint_and_artifact_completion]}
+  - {path: experiments/cli.py, study_ids: [experiments.registered_research_configs]}
+  - {path: experiments/__init__.py, study_ids: [experiments.run_identity_retry_and_resume]}
+  - {path: research_tools/studies/study_catalog.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/studies/study_inventory.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/studies/study_cli.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/studies/study_plan.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/studies/study_runner.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/studies/study_audits.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/studies/study_audit_tools.py, study_ids: [experiments.registered_research_configs]}
+  - {path: research_tools/experiments, study_ids: [experiments.registered_families_and_variants, experiments.run_identity_retry_and_resume, experiments.checkpoint_and_artifact_completion, experiments.registered_research_configs]}
+config_paths: [config/experiments.yaml, config/variant_catalog.yaml, config/quality_experiments.yaml, config/experiment_runs/variant_list.txt]
+config_globs: [config/research/*.yaml, config/variants/*.yaml]
+test_paths: [tests/unit/experiments, tests/unit/research_tools]
+studies:
+  - id: experiments.registered_families_and_variants
+    type: code_check
+    question: Does each registered experiment family declare its exact question, controls, factors, and supported variants?
+    source_paths: [experiments/variants/catalog.py, experiments/variants/variant_ablation_runner.py]
+    checks: [tests/unit/experiments/test_model_variant_catalog.py, tests/unit/experiments/test_matrix_experiment_run_controller.py]
+    outputs: [variant_registration_check]
+  - id: experiments.run_identity_retry_and_resume
+    type: code_check
+    question: Are run creation, retry, cache recovery, and resume idempotent and bound to source and config identity?
+    source_paths: [experiments/runs/execution.py, experiments/runs/state_store.py, experiments/runs/cache_failure_recovery.py]
+    checks: [tests/unit/experiments/test_experiment_run_state_store.py, tests/unit/experiments/test_triton_experiment_run_recovery.py]
+    outputs: [run_lifecycle_check]
+  - id: experiments.checkpoint_and_artifact_completion
+    type: code_check
+    question: Are source snapshots, checkpoint lineage, and output bytes verified before a run is called complete?
+    source_paths: [experiments/runs/source_snapshot.py, experiments/runs/checkpoint_lineage.py, experiments/runs/artifact_validation.py]
+    checks: [tests/unit/experiments/test_experiment_run_artifacts.py]
+    outputs: [run_provenance_and_completion_check]
+  - id: experiments.registered_research_configs
+    type: audit
+    question: Does every research YAML have a declared role, parent question, and explicit disposition without generating unregistered combinations?
+    audit_tool: experiments.registered_research_configs
+    source_paths: [research_tools/studies/study_catalog.py, research_tools/studies/study_plan.py, research_tools/studies/study_inventory.py, research_tools/studies/study_runner.py, research_tools/studies/study_audits.py, research_tools/studies/study_audit_tools.py]
+    checks: [tests/unit/research_tools/test_study_catalog.py, tests/unit/research_tools/test_study_runner.py]
+    outputs: [research_config_disposition_table]
+    config_globs: [config/research/*.yaml]

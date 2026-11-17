@@ -13,7 +13,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from scripts.research.experiment_runs import audit_experiment_run_checkpoint_loads
+from research_tools.experiments.experiment_runs import audit_experiment_run_checkpoint_loads
 
 MODULE_PATH = Path(__file__).resolve().parents[3] / "experiments/runs/execution.py"
 SPEC = importlib.util.spec_from_file_location("experiment_run_controller", MODULE_PATH)

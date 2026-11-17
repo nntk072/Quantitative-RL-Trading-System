@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
+INTERNAL_TOOL_PACKAGES = {"research_tools"}
 GOOGLE_SECTION = re.compile(
     r"^\s*(?:Args|Arguments|Attributes|Examples?|Keyword Args|Keyword Arguments|"
     r"Other Parameters|Raises|Receives|References|Returns|See Also|Yields|Warnings?):\s*$",
@@ -401,7 +402,12 @@ def build_audit(root: Path = ROOT) -> dict[str, Any]:
     source_paths = [
         path
         for path in tracked
-        if path.suffix == ".py" and any(path.is_relative_to(root / package) for package in packages)
+        if path.suffix == ".py"
+        and any(
+            path.is_relative_to(root / package)
+            for package in packages
+            if package not in INTERNAL_TOOL_PACKAGES
+        )
     ]
     test_paths = [
         path for path in tracked if path.suffix == ".py" and "tests" in path.relative_to(root).parts

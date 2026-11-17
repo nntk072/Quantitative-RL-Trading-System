@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
-
-SCRIPT = (
-    Path(__file__).resolve().parents[2]
-    / "scripts/research/audits/audit_replacement_partition_integrity.py"
-)
-SPEC = importlib.util.spec_from_file_location("replacement_partition_integrity", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-AUDIT = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(AUDIT)
+from research_tools.market_data.audits import audit_replacement_partition_integrity as AUDIT
 
 
 def _write(path: Path, rows: list[tuple[str, str]]) -> None:
@@ -77,7 +69,7 @@ def test_layout_audit_accepts_one_source_and_rejects_split_copies(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(AUDIT, "ROOT", tmp_path)
-    monkeypatch.setattr(AUDIT.subprocess, "check_output", lambda *_args, **_kwargs: "source-sha")
+    monkeypatch.setattr(subprocess, "check_output", lambda *_args, **_kwargs: "source-sha")
     for symbol in AUDIT.SYMBOLS:
         source = tmp_path / "data" / f"{symbol}_M1_fixture.csv"
         _write(source, [("2024.12.30", "01:05:00"), ("2026.10.16", "23:49:00")])

@@ -1,0 +1,52 @@
+module_id: orchestra
+source_roots: [orchestra, research_tools/orchestra]
+api_paths:
+- orchestra/agent_output.py
+- orchestra/agent_runner.py
+- orchestra/backup.py
+- orchestra/ci_gate.py
+- orchestra/cli.py
+- orchestra/cost.py
+- orchestra/failures.py
+- orchestra/handoff.py
+- orchestra/health.py
+- orchestra/model_provider_registry.py
+- orchestra/parse.py
+- orchestra/prompts/__init__.py
+- orchestra/router.py
+- orchestra/routing.py
+- orchestra/sessions.py
+- orchestra/task_orchestration.py
+- orchestra/task_state_store.py
+caller_paths:
+- tests/unit/orchestra/test_agent_output.py
+- tests/unit/orchestra/test_backup.py
+- tests/unit/orchestra/test_ci_gate.py
+- tests/unit/orchestra/test_cli_composition.py
+- tests/unit/orchestra/test_cost_tracking_persistence.py
+- tests/unit/orchestra/test_handoff.py
+- tests/unit/orchestra/test_health.py
+- tests/unit/orchestra/test_parse.py
+- tests/unit/orchestra/test_pipeline.py
+- tests/unit/orchestra/test_router.py
+- tests/unit/orchestra/test_routing.py
+- tests/unit/orchestra/test_sessions.py
+- tests/unit/orchestra/test_task_state_persistence.py
+source_scopes:
+  - {path: orchestra, study_ids: [orchestra.phase_routing_and_handoffs, orchestra.retry_quota_and_reporting]}
+  - {path: research_tools/orchestra, study_ids: [orchestra.phase_routing_and_handoffs, orchestra.retry_quota_and_reporting]}
+config_paths: []
+test_paths: [tests/unit/orchestra]
+studies:
+  - id: orchestra.phase_routing_and_handoffs
+    type: code_check
+    question: Do task phases, role routing, handoffs, and state transitions preserve ownership and task identity?
+    source_paths: [orchestra/task_orchestration.py, orchestra/handoff.py]
+    checks: [tests/unit/orchestra/test_handoff.py, tests/unit/orchestra/test_pipeline.py]
+    outputs: [orchestration_contract_check]
+  - id: orchestra.retry_quota_and_reporting
+    type: code_check
+    question: Are retries, quotas, status derivation, and final reporting bounded and truthful?
+    source_paths: [orchestra/phase_verification.py, orchestra/phase_reporting.py, orchestra/task_state_store.py]
+    checks: [tests/unit/orchestra/test_task_state_persistence.py, tests/unit/orchestra/test_sessions.py]
+    outputs: [orchestration_state_check]

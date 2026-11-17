@@ -1,0 +1,147 @@
+module_id: training
+source_roots: [training, research_tools/training]
+api_paths:
+- training/artifacts/__init__.py
+- training/artifacts/aggregation.py
+- training/artifacts/manifests.py
+- training/artifacts/walk_forward.py
+- training/callbacks/activity.py
+- training/callbacks/dashboard.py
+- training/callbacks/debug_trace.py
+- training/callbacks/equity.py
+- training/cli.py
+- training/configuration/__init__.py
+- training/configuration/cli.py
+- training/configuration/quality.py
+- training/configuration/representation_study.py
+- training/configuration/research_protocol.py
+- training/configuration/survival_gate.py
+- training/configuration/variant_resolution.py
+- training/configuration/variant_risk_policy.py
+- training/configuration/variants.py
+- training/reporting/training_curves.py
+- training/runner/__init__.py
+- training/runner/backtest.py
+- training/runner/baselines.py
+- training/runner/data_stage.py
+- training/runner/feature_csv_validation.py
+- training/runner/lstm_baseline.py
+- training/runner/reporting_runtime.py
+- training/runner/run_assets_stage.py
+- training/runner/seed.py
+- training/runner/seed_runtime.py
+- training/runner/stages.py
+- training/runner/survival_campaign.py
+- training/runner/training.py
+- training/runner/vae.py
+- training/setup/__init__.py
+- training/setup/callbacks.py
+- training/setup/environments.py
+- training/setup/learner.py
+- training/setup/model_state.py
+- training/setup/policy_diagnostics.py
+caller_paths:
+- experiments/runs/baseline_cache_rebuild.py
+- experiments/runs/named_cache_rebuild.py
+- experiments/runs/variant_worker.py
+- experiments/variants/catalog.py
+- experiments/variants/variant_ablation_runner.py
+- tests/architecture/test_public_imports.py
+- tests/integration/test_ablation_oos_smoke.py
+- tests/integration/test_action_schema_contract.py
+- tests/integration/test_scripts_smoke.py
+- tests/unit/experiments/test_model_variant_catalog.py
+- tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py
+- tests/unit/models/test_mtf_encoder_registration.py
+- tests/unit/models/test_ppo_log_std.py
+- tests/unit/models/test_trade_setup_observation_schema.py
+- tests/unit/research/test_representation_paired_seed_payload.py
+- tests/unit/research/test_survival_launch_plan.py
+- tests/unit/research/test_survival_launch_readiness.py
+- tests/unit/simulation/test_environment/test_bundle_env_equivalence.py
+- tests/unit/simulation/test_environment/test_bundle_worker.py
+- tests/unit/simulation/test_environment/test_eligibility_wiring.py
+- tests/unit/simulation/test_environment/test_entry_rejection_counters.py
+- tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
+- tests/unit/simulation/test_environment/test_year_episode_survival.py
+- tests/unit/trading/test_repeated_payout_policy.py
+- tests/unit/training/test_backtest_runner_policy.py
+- tests/unit/training/test_baseline_policies.py
+- tests/unit/training/test_checkpoint_eval_determinism.py
+- tests/unit/training/test_config_snapshot.py
+- tests/unit/training/test_dashboard.py
+- tests/unit/training/test_debug_trace.py
+- tests/unit/training/test_equity_gate.py
+- tests/unit/training/test_feature_fit_scope.py
+- tests/unit/training/test_fit_request.py
+- tests/unit/training/test_lagrangian_callback.py
+- tests/unit/training/test_learning_diagnostics_selection.py
+- tests/unit/training/test_mtf_benchmark_configs.py
+- tests/unit/training/test_periodic_checkpoint.py
+- tests/unit/training/test_quality_registry.py
+- tests/unit/training/test_representation_study.py
+- tests/unit/training/test_research_protocol.py
+- tests/unit/training/test_run_log.py
+- tests/unit/training/test_sac_smoke.py
+- tests/unit/training/test_survival_campaign_resume.py
+- tests/unit/training/test_survival_gate.py
+- tests/unit/training/test_sustainable_growth_variant_resolution.py
+- tests/unit/training/test_train_rl_decomposition.py
+- tests/unit/training/test_training_activity_gate.py
+- tests/unit/training/test_training_curves.py
+- tests/unit/training/test_training_main.py
+- tests/unit/training/test_training_smoke.py
+- tests/unit/training/test_vae_admission.py
+- tests/unit/training/test_variant_overrides_match_legacy.py
+- tests/unit/training/test_variant_resolver.py
+source_scopes:
+  - {path: training/configuration, study_ids: [training.survival_admission_and_locked_data, training.full_path_survival_qualification]}
+  - {path: training/runner, study_ids: [training.configuration_and_data_preparation, training.seed_fold_checkpoint_and_resume]}
+  - {path: training/setup, study_ids: [training.configuration_and_data_preparation]}
+  - {path: training/callbacks, study_ids: [training.seed_fold_checkpoint_and_resume]}
+  - {path: training/artifacts, study_ids: [training.run_artifacts_and_cli, training.seed_fold_checkpoint_and_resume]}
+  - {path: training/reporting, study_ids: [training.run_artifacts_and_cli]}
+  - {path: training/cli.py, study_ids: [training.run_artifacts_and_cli]}
+  - {path: training/cli_arguments.py, study_ids: [training.run_artifacts_and_cli]}
+  - {path: training/__init__.py, study_ids: [training.configuration_and_data_preparation]}
+  - {path: research_tools/training, study_ids: [training.configuration_and_data_preparation, training.survival_admission_and_locked_data, training.seed_fold_checkpoint_and_resume, training.run_artifacts_and_cli, training.full_path_survival_qualification]}
+config_paths: [config/base/default.yaml, config/research/survival_qualification.yaml, config/research/prospective_research_protocol.yaml]
+test_paths: [tests/unit/training]
+studies:
+  - id: training.configuration_and_data_preparation
+    type: code_check
+    question: Does training resolve the selected configuration, source data, features, splits, and run assets before fitting?
+    source_paths: [training/runner/configuration_stage.py, training/runner/data_stage.py, training/runner/setup_runtime.py]
+    checks: [tests/unit/training/test_training_main.py, tests/unit/training/test_train_rl_decomposition.py]
+    outputs: [training_preparation_check]
+  - id: training.survival_admission_and_locked_data
+    type: code_check
+    question: Does portfolio learning require the correct qualified checkpoint and reject report-only data for selection?
+    source_paths: [training/configuration/survival_gate.py, training/runner/walk_forward_validation.py]
+    checks: [tests/unit/training/test_survival_gate.py, tests/unit/training/test_research_protocol.py]
+    outputs: [training_admission_check]
+  - id: training.seed_fold_checkpoint_and_resume
+    type: code_check
+    question: Are seed and fold inputs, callbacks, checkpoints, and resume state tied to the effective run identity?
+    source_paths: [training/runner/seed_runtime.py, training/runner/seed_stages.py, training/callbacks/equity.py]
+    checks: [tests/unit/training/test_seed_reproducibility.py, tests/unit/training/test_survival_campaign_resume.py, tests/unit/training/test_periodic_checkpoint.py]
+    outputs: [seed_fold_and_resume_check]
+  - id: training.run_artifacts_and_cli
+    type: code_check
+    question: Do training entry points and artifacts report the requested and realized run settings without bypassing admission?
+    source_paths: [training/cli.py, training/artifacts/snapshots.py, training/artifacts/manifests.py]
+    checks: [tests/unit/training/test_config_snapshot.py, tests/unit/training/test_training_smoke.py]
+    outputs: [training_cli_and_artifact_check]
+  - id: training.full_path_survival_qualification
+    type: empirical
+    question: Does the frozen setup-conditioned policy complete every prospectively registered development and walk-forward path without a hard account breach?
+    acceptance: All six registered independent seeds complete the full development path and all five walk-forward paths with zero hard account breaches and no post-breach trading; any failed or incomplete path makes the candidate ineligible for portfolio optimization.
+    source_paths: [training/runner/survival_campaign.py, scripts/research/analysis/evidence/build_survival_launch_plan.py]
+    checks: [tests/unit/training/test_survival_gate.py, tests/unit/training/test_survival_campaign_resume.py, tests/unit/training/test_research_protocol.py]
+    outputs: [per_seed_path_ledger, hard_risk_qualification, incomplete_and_breached_outcome_register]
+    prerequisites: [market_data.raw_data_quality_and_coverage, features.prefix_causality_and_fit_scope, simulation.tick_execution_accounting_parity]
+    replication: {seeds: [42, 43, 44, 45, 46, 47], walk_forward_splits: 5, minimum_unique_seeds: 6}
+    arms:
+      - id: setup_conditioned_survival_policy
+        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
+        factors: [policy=trade_setup_conditioned_v1, reward=survival, full_development_and_walk_forward_paths]

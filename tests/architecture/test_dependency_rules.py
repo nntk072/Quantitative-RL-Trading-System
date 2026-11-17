@@ -106,6 +106,16 @@ def test_production_never_imports_scripts() -> None:
     assert not violations, "production imports scripts:\n" + "\n".join(violations)
 
 
+def test_production_does_not_import_cross_domain_research_tools() -> None:
+    violations = [
+        f"{path.relative_to(ROOT)} -> {name}"
+        for path in _production_files()
+        for name in _imports(path)
+        if name == "research_tools" or name.startswith("research_tools.")
+    ]
+    assert not violations, "production imports research tooling:\n" + "\n".join(violations)
+
+
 def test_production_import_graph_is_acyclic() -> None:
     graph: dict[str, set[str]] = {package: set() for package in PRODUCTION}
     for package in PRODUCTION:

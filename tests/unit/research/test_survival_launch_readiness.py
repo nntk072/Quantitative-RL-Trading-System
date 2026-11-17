@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from scripts.research.analysis.evidence.build_survival_launch_plan import build_launch_plan
+from research_tools.training.evidence.build_survival_launch_plan import build_launch_plan
 
 from training.configuration.research_protocol import load_research_protocol
 

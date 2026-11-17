@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 
 import pytest
 from omegaconf import OmegaConf
-
-SCRIPT = (
-    Path(__file__).resolve().parents[2] / "scripts/research/audits/audit_replacement_fold_fit.py"
-)
-SPEC = importlib.util.spec_from_file_location("replacement_fold_fit_audit", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-AUDIT = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(AUDIT)
+from research_tools.features.audits import audit_replacement_fold_fit as AUDIT
 
 
 def test_profile_key_tracks_source_clock_model() -> None:

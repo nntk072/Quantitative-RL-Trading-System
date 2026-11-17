@@ -297,7 +297,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]
+packages = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra", "research_tools"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "config/base/default.yaml" = "configuration/_resources/default.yaml"
@@ -310,3 +310,4 @@ qrl-train = "training.cli:main"
 qrl-evaluate = "evaluation.cli:main"
 qrl-experiment = "experiments.cli:main"
 qrl-compute = "compute.cli:main"
+qrl-study = "research_tools.studies.study_cli:main"

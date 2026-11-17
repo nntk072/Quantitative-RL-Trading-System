@@ -1,0 +1,90 @@
+module_id: artifacts
+source_roots: [artifacts, research_tools/artifacts]
+api_paths:
+- artifacts/__init__.py
+- artifacts/atomic.py
+- artifacts/config_snapshot.py
+- artifacts/contracts.py
+- artifacts/identity.py
+- artifacts/layout.py
+- artifacts/manifest.py
+caller_paths:
+- compute/slurm/continuation.py
+- compute/slurm/worker_dispatch.py
+- evaluation/reanalysis/checkpoint_reanalysis.py
+- evaluation/reanalysis/datasets.py
+- evaluation/reanalysis/provenance.py
+- evaluation/reanalysis/validation.py
+- evaluation/reporting/diagnostics.py
+- evaluation/reporting/evaluation_manifest.py
+- evaluation/reporting/matched_setup_baseline_bundle.py
+- evaluation/reporting/run_artifact_writer.py
+- evaluation/reporting/run_manifest.py
+- evaluation/reporting/run_summary.py
+- experiments/orchestration/weekly.py
+- experiments/runs/baseline_cache_rebuild.py
+- experiments/runs/cache_failure_recovery.py
+- experiments/runs/checkpoint_lineage.py
+- experiments/runs/execution.py
+- experiments/runs/preflight_migration.py
+- experiments/runs/reporting.py
+- experiments/runs/state_store.py
+- experiments/runs/status.py
+- experiments/runs/variant_worker.py
+- features/pipeline/feature_matrix_builder.py
+- learning/contracts.py
+- learning/rl/learner.py
+- learning/supervised/reference.py
+- market_data/cache/__init__.py
+- market_data/cache/identity.py
+- market_data/cache/storage.py
+- market_data/loading/market_data_ingestion.py
+- market_data/loading/ticks.py
+- market_data/quality_audit.py
+- orchestra/cost.py
+- orchestra/health.py
+- orchestra/router.py
+- orchestra/task_state_store.py
+- scripts/maintenance/artifacts/inventory_checkpoint_serialized_classes.py
+- tests/unit/artifacts/test_artifact_lifecycle.py
+- tests/unit/artifacts/test_artifact_promotion.py
+- tests/unit/evaluation/test_evaluation_manifest.py
+- tests/unit/learning/test_learning_contracts.py
+- tests/unit/research/test_representation_paired_seed_payload.py
+- training/artifacts/aggregation.py
+- training/artifacts/evaluation_result_writer.py
+- training/artifacts/snapshots.py
+- training/artifacts/walk_forward.py
+- training/configuration/survival_gate.py
+- training/configuration/variant_resolution.py
+- training/runner/reporting_runtime.py
+- training/runner/run_assets_stage.py
+- training/runner/seed_runtime.py
+- training/runner/survival_campaign.py
+- training/runner/walk_forward_validation.py
+source_scopes:
+  - {path: artifacts/atomic.py, study_ids: [artifacts.identity_and_atomic_storage]}
+  - {path: artifacts/identity.py, study_ids: [artifacts.identity_and_atomic_storage]}
+  - {path: artifacts/layout.py, study_ids: [artifacts.identity_and_atomic_storage]}
+  - {path: artifacts/retention.py, study_ids: [artifacts.identity_and_atomic_storage]}
+  - {path: artifacts/contracts.py, study_ids: [artifacts.manifest_and_promotion]}
+  - {path: artifacts/manifest.py, study_ids: [artifacts.manifest_and_promotion]}
+  - {path: artifacts/promotion.py, study_ids: [artifacts.manifest_and_promotion]}
+  - {path: artifacts/config_snapshot.py, study_ids: [artifacts.manifest_and_promotion]}
+  - {path: artifacts/__init__.py, study_ids: [artifacts.identity_and_atomic_storage, artifacts.manifest_and_promotion]}
+  - {path: research_tools/artifacts, study_ids: [artifacts.identity_and_atomic_storage, artifacts.manifest_and_promotion]}
+config_paths: []
+test_paths: [tests/unit/artifacts]
+studies:
+  - id: artifacts.identity_and_atomic_storage
+    type: code_check
+    question: Do logical identities, content hashes, and atomic writes preserve the artifact contract?
+    source_paths: [artifacts/identity.py, artifacts/atomic.py, artifacts/layout.py]
+    checks: [tests/unit/artifacts/test_artifact_lifecycle.py]
+    outputs: [identity_and_atomic_storage_check]
+  - id: artifacts.manifest_and_promotion
+    type: code_check
+    question: Do manifests bind artifacts to source and run identity, and does promotion require explicit lineage?
+    source_paths: [artifacts/contracts.py, artifacts/manifest.py, artifacts/promotion.py]
+    checks: [tests/unit/artifacts/test_artifact_promotion.py]
+    outputs: [manifest_and_promotion_check]

@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from omegaconf import OmegaConf
-from scripts.research.analysis.features.build_feature_configuration_inventory import (
+from research_tools.features.features.build_feature_configuration_inventory import (
     build_inventory,
     load_profile_config,
 )
@@ -27,7 +27,7 @@ def test_feature_configuration_inventory_covers_runtime_profile_sources(
     profile_ids = {profile["profile_id"] for profile in inventory["profiles"]}
 
     assert inventory["generator"]["path"] == (
-        "scripts/research/analysis/features/build_feature_configuration_inventory.py"
+        "research_tools/features/features/build_feature_configuration_inventory.py"
     )
     assert inventory["generator"]["sha256"]
     assert inventory["resolver_sources"]

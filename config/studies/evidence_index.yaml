@@ -1,0 +1,112 @@
+schema_version: 1
+roots:
+  - docs/research
+  - docs/reproduce
+  - docs/security/evidence
+  - docs/architecture/migrations
+  - evidence
+items:
+  - path: docs/research/README.md
+    kind: research_method_index
+    status: guidance
+    study_ids: [repo_tooling.architecture_and_documentation_contracts, experiments.registered_research_configs]
+  - path: docs/research/candidate_geometry_feature_contract.md
+    kind: feature_contract
+    status: design_reference
+    study_ids: [features.candidate_geometry_and_proposal_preflight, evaluation.candidate_geometry_value]
+  - path: docs/research/evaluation_methodology.md
+    kind: evaluation_method
+    status: guidance
+    study_ids: [evaluation.metrics_and_inference, evaluation.cohorts_and_baseline_matching, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]
+  - path: docs/research/feature_causality_and_availability.md
+    kind: feature_contract
+    status: design_reference
+    study_ids: [features.causal_availability, features.prefix_causality_and_fit_scope]
+  - path: docs/research/findings_register.md
+    kind: findings_register
+    status: requires_current_source_and_artifact_verification
+    study_ids: [training.full_path_survival_qualification, evaluation.primary_value_vs_no_trade, trading.frozen_finalist_robustness]
+  - path: docs/research/limitations.md
+    kind: evidence_limitations
+    status: guidance
+    study_ids: [evaluation.metrics_and_inference, training.full_path_survival_qualification]
+  - path: docs/research/mt5_ftmo_execution_fidelity.md
+    kind: execution_contract
+    status: design_reference
+    study_ids: [integrations.symbol_and_order_constraints, trading.account_cashflow_and_limits, simulation.accounting_reward_and_telemetry]
+  - path: docs/research/multitimeframe_data_alignment.md
+    kind: data_alignment_contract
+    status: design_reference
+    study_ids: [market_data.time_sessions_and_timeframes, features.causal_availability]
+  - path: docs/research/references.md
+    kind: research_references
+    status: bibliography
+    study_ids: [repo_tooling.architecture_and_documentation_contracts, evaluation.metrics_and_inference]
+  - path: docs/research/research_evidence_report.md
+    kind: evidence_status_summary
+    status: summary_not_release_approval
+    study_ids: [artifacts.manifest_and_promotion, evaluation.provenance_and_checkpoint_reanalysis]
+  - path: docs/research/result_identity_and_evidence.md
+    kind: result_identity_contract
+    status: design_reference
+    study_ids: [artifacts.identity_and_atomic_storage, experiments.run_identity_retry_and_resume]
+  - path: docs/research/validation_protocol.md
+    kind: validation_protocol
+    status: protocol_reference
+    study_ids: [experiments.registered_research_configs, training.survival_admission_and_locked_data, training.full_path_survival_qualification]
+  - path: docs/reproduce/result_registry.md
+    kind: result_registry
+    status: procedure_not_result_approval
+    study_ids: [artifacts.identity_and_atomic_storage, experiments.registered_research_configs, evaluation.provenance_and_checkpoint_reanalysis]
+  - path: docs/reproduce/evidence_audit.md
+    kind: evidence_audit_method
+    status: procedure_not_audit_result
+    study_ids: [artifacts.manifest_and_promotion, repo_tooling.script_inputs_and_output_provenance]
+  - path: docs/security/evidence/pip_audit_locked_linux_dev_20261021.json
+    kind: dependency_audit_artifact
+    status: dated_environment_specific_security_evidence
+    study_ids: [repo_tooling.package_cli_and_dependency_surface]
+  - path: docs/architecture/migrations/config_identity_migration_20261031.json
+    kind: configuration_migration_record
+    status: historical_migration_evidence
+    study_ids: [configuration.resolved_identity, artifacts.identity_and_atomic_storage]
+  - path: docs/architecture/migrations/README.md
+    kind: compatibility_policy
+    status: current_runtime_guidance
+    study_ids: [configuration.resolved_identity, artifacts.identity_and_atomic_storage]
+  - path: docs/reproduce/environment_trace.ipynb
+    kind: deterministic_environment_trace
+    status: software_trace_not_research_result
+    study_ids: [simulation.accounting_reward_and_telemetry, features.causal_availability]
+  - path: docs/reproduce/how_to_read_a_run.md
+    kind: run_evidence_interpretation_guide
+    status: current_guidance
+    study_ids: [evaluation.provenance_and_checkpoint_reanalysis, artifacts.manifest_and_promotion]
+  - path: docs/reproduce/index.md
+    kind: reproduction_level_index
+    status: current_guidance
+    study_ids: [experiments.registered_research_configs, evaluation.provenance_and_checkpoint_reanalysis]
+  - path: evidence/README.md
+    kind: evidence_storage_policy
+    status: guidance
+    study_ids: [artifacts.manifest_and_promotion]
+  - path: evidence/research/README.md
+    kind: evidence_storage_policy
+    status: guidance
+    study_ids: [artifacts.identity_and_atomic_storage, market_data.raw_data_quality_and_coverage]
+  - path: evidence/research/data_quality/raw_market_data_quality_profile_20261116.json
+    kind: raw_market_data_quality_profile
+    status: descriptive_audit_not_experiment_result
+    study_ids: [market_data.raw_data_quality_and_coverage]
+  - path: evidence/research/data_identity/raw_data_manifest.json
+    kind: raw_data_identity_manifest
+    status: identity_registered_source_files_not_rehashed_by_inventory
+    study_ids: [market_data.raw_data_quality_and_coverage]
+  - path: evidence/research/data_identity/raw_data_manifest_partitioned_20261115.json
+    kind: raw_data_partition_manifest
+    status: identity_registered_source_files_not_rehashed_by_inventory
+    study_ids: [market_data.raw_data_quality_and_coverage]
+  - path: evidence/research/data_identity/raw_source_inventory.json
+    kind: raw_source_inventory
+    status: inventory_not_quality_approval
+    study_ids: [market_data.raw_data_quality_and_coverage]

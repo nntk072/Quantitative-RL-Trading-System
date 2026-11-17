@@ -238,7 +238,7 @@ def tick_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1301)
+1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1344)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

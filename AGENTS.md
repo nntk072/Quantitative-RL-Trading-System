@@ -75,6 +75,7 @@ navigation aids, not authoritative behavior.
 | Python changes | [python-coding-standards.md](.agents/rules/python-coding-standards.md) |
 | Security-sensitive work | [security-rules.md](.agents/rules/security-rules.md) |
 | Research and evidence | [research-integrity.md](.agents/rules/research-integrity.md) |
+| Study planning and implementation from study plans | [study-planning.md](.agents/rules/study-planning.md) |
 | Commit or push | [ci-verification.md](.agents/rules/ci-verification.md), [git-commit-rules.md](.agents/rules/git-commit-rules.md) |
 | Triton, CPU/GPU allocations, or long polling | [triton-slurm.md](.agents/rules/triton-slurm.md) |
 

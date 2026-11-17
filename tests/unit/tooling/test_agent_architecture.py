@@ -109,3 +109,14 @@ def test_routing_rules_cover_known_unknown_and_sequential_work() -> None:
     assert "Persistent tmux session cleanup" in resources
     assert "shell prompt alone does not prove" in resources
     assert "active allocations" in resources and "no child processes" in resources
+
+
+def test_study_planning_rule_treats_examples_as_general_and_freezes_implementation_scope() -> None:
+    agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    rule = ROOT / ".agents/rules/study-planning.md"
+    assert ".agents/rules/study-planning.md" in agents
+    assert rule.is_file()
+    text = rule.read_text(encoding="utf-8")
+    assert "Examples illustrate a category" in text
+    assert "do not reopen scope" in text
+    assert "source_paths" in text

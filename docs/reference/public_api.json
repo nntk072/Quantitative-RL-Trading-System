@@ -32,6 +32,12 @@
     },
     {
       "classification": "stable",
+      "name": "qrl-study",
+      "source_path": "pyproject.toml",
+      "target": "research_tools.studies.study_cli:main"
+    },
+    {
+      "classification": "stable",
       "name": "qrl-train",
       "source_path": "training/cli.py",
       "target": "training.cli:main"

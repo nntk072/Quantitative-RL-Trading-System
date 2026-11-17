@@ -1,0 +1,29 @@
+module_id: live
+source_roots: [live]
+api_paths:
+- live/runtime/contracts.py
+- live/runtime/strategy.py
+caller_paths:
+- integrations/mt5/robot/rl_robot.py
+- tests/unit/features/test_stage_a_observation.py
+- tests/unit/live/test_rl_bridge.py
+- tests/unit/live/test_rl_robot.py
+source_scopes:
+  - {path: live/runtime, study_ids: [live.provider_and_execution_boundary, live.risk_authorization_and_state]}
+  - {path: live/paper, study_ids: [live.risk_authorization_and_state]}
+  - {path: live/__init__.py, study_ids: [live.provider_and_execution_boundary]}
+config_paths: [config/base/default.yaml]
+test_paths: [tests/unit/live]
+studies:
+  - id: live.provider_and_execution_boundary
+    type: code_check
+    question: Does live inference consume the same typed observation and action contract as offline evaluation?
+    source_paths: [live/runtime/strategy.py]
+    checks: [tests/unit/live/test_rl_bridge.py]
+    outputs: [live_provider_boundary_check]
+  - id: live.risk_authorization_and_state
+    type: code_check
+    question: Do paper defaults, explicit authorization, hard risk limits, reconnect, and shutdown preserve safe live state?
+    source_paths: [live/runtime/contracts.py, live/runtime/strategy.py]
+    checks: [tests/unit/live/test_live_entrypoint.py, tests/unit/live/test_rl_bridge.py]
+    outputs: [live_safety_contract_check]
