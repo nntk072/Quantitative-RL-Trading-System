@@ -105,7 +105,7 @@ source_scopes:
   - {path: training/cli_arguments.py, study_ids: [training.run_artifacts_and_cli]}
   - {path: training/__init__.py, study_ids: [training.configuration_and_data_preparation]}
   - {path: research_tools/training, study_ids: [training.configuration_and_data_preparation, training.survival_admission_and_locked_data, training.seed_fold_checkpoint_and_resume, training.run_artifacts_and_cli, training.full_path_survival_qualification]}
-config_paths: [config/base/default.yaml, config/research/survival_qualification.yaml, config/research/prospective_research_protocol.yaml, config/wandb_sweep.yaml]
+config_paths: [config/base/default.yaml, config/research/survival_qualification.yaml, config/research/prospective_research_protocol.yaml]
 test_paths: [tests/unit/training]
 studies:
   - id: training.configuration_and_data_preparation

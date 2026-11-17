@@ -71,7 +71,7 @@ source_scopes:
   - {path: learning/learner_factory.py, study_ids: [learning.seed_resume_and_fit_identity]}
   - {path: learning/__init__.py, study_ids: [learning.seed_resume_and_fit_identity]}
   - {path: research_tools/learning, study_ids: [learning.ppo_action_probability_contract, learning.sac_action_replay_and_budget, learning.seed_resume_and_fit_identity, learning.auxiliary_target_isolation]}
-config_paths: [config/base/default.yaml, config/variant_catalog.yaml, config/quality_experiments.yaml, config/wandb_sweep.yaml]
+config_paths: [config/base/default.yaml, config/variant_catalog.yaml, config/quality_experiments.yaml]
 test_paths: [tests/unit/learning, tests/unit/training]
 studies:
   - id: learning.ppo_action_probability_contract
