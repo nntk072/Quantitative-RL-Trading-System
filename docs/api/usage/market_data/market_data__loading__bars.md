@@ -120,7 +120,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert chunks[0]["bid"].tolist() == [100.0]
 ```
 
-2. [test fixture: `test_tick_chunk_parser_continues_until_start_date_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L974)
+2. [test fixture: `test_tick_chunk_parser_continues_until_start_date_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L1017)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

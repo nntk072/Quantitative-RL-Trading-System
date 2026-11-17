@@ -249,7 +249,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L1205)
+1. [test fixture: `test_build_tick_book_filters_nonfinite_nonpositive_and_crossed_quotes`](../../../../tests/unit/market_data/test_ticks.py#L1248)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -798,7 +798,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `build_tick_books`](../../../../market_data/loading/tick_book_pipeline.py#L173)
+1. [production caller: `build_tick_books`](../../../../market_data/loading/tick_book_pipeline.py#L184)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
