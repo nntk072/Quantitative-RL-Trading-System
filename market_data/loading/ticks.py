@@ -11,6 +11,7 @@ Typical use
     tick_book = build_tick_book(
         path,
         tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
         cache_path=f"cache/US100.cash_ticks_{TICK_CACHE_VERSION}.parquet",
     )
     train_ticks = tick_book.slice(pd.Timestamp("2025-01-01", tz="Etc/GMT-3"),
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -33,9 +35,10 @@ from artifacts.identity import file_sha256
 from market_data.cache.ticks import build_tick_cache_identity, load_tick_cache, write_tick_cache
 from market_data.loading.bars import iter_ticks_chunks
 from market_data.transforms.price_grid import price_grid_identity, quantize_prices
+from market_data.transforms.sessions import session_reference_index
 
 log = logging.getLogger(__name__)
-TICK_CACHE_VERSION = "v7-source-precision-quotes"
+TICK_CACHE_VERSION = "v8-source-clock-quotes"
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,7 +104,7 @@ def tick_price_reaches_level(price: float, level: float, *, direction: int) -> b
     """
     if direction not in (-1, 1):
         raise ValueError("direction must be -1 or +1")
-    boundary = float(np.nextafter(float(level), -np.inf if direction == 1 else np.inf))
+    boundary = math.nextafter(float(level), -math.inf if direction == 1 else math.inf)
     return float(price) >= boundary if direction == 1 else float(price) <= boundary
 
 
@@ -688,6 +691,25 @@ class TickBook:
         i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
         return i0 < len(self._ts) and int(self._ts[i0]) < end_ns
 
+    def bar_quote_ns(
+        self, bar_start: pd.Timestamp, bar_minutes: int = 1
+    ) -> Iterator[tuple[int, float, float]]:
+        """Yield (UTC ns, bid, ask) for the same quotes as ``bar_quotes``, without Timestamps.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+
+        Yields:
+            Quote nanoseconds (UTC), bid and ask, in the same order as ``bar_quotes``.
+        """
+        start_ns = pd.Timestamp(bar_start).value
+        end_ns = start_ns + int(pd.Timedelta(minutes=bar_minutes).value)
+        i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
+        i1 = int(np.searchsorted(self._ts, end_ns, side="left"))
+        for idx in range(i0, i1):
+            yield (int(self._ts[idx]), float(self._bid[idx]), float(self._ask[idx]))
+
     def bar_quotes(
         self, bar_start: pd.Timestamp, bar_minutes: int = 1
     ) -> Iterator[tuple[pd.Timestamp, float, float]]:
@@ -830,7 +852,12 @@ class TickBook:
         )
 
 
-def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None:
+def ticks_covering(
+    book: TickBook | None,
+    bars: pd.DataFrame,
+    *,
+    source_clock_model: str = "native",
+) -> TickBook | None:
     """Slice *book* to the bars, plus one extra minute for the fill delay.
 
     An empty slice means this window has no tape, so the caller keeps the
@@ -839,6 +866,7 @@ def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None
     Args:
         book: Book used by the operation described above.
         bars: Market bars to process.
+        source_clock_model: Interpretation of source bar wall times before slicing the UTC tick book.
 
     Returns:
         Result of slice *book* to the bars, plus one extra minute for the fill delay.
@@ -847,6 +875,9 @@ def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None
         return None
     start = pd.Timestamp(bars.index[0])
     end = pd.Timestamp(bars.index[-1]) + pd.Timedelta(minutes=2)
+    if source_clock_model != "native":
+        converted = session_reference_index(pd.DatetimeIndex([start, end]), source_clock_model)
+        start, end = converted[0], converted[1]
     sliced = book.slice(start, end)
     if len(sliced) == 0:
         return None
@@ -892,6 +923,7 @@ def tick_execution_coverage(
             "unavailable_count": 0,
             "coverage_fraction": 1.0,
             "first_unavailable_order_time": None,
+            "unavailable_order_times_utc": [],
         }
 
     covered = np.zeros(order_ns.size, dtype=bool)
@@ -913,12 +945,16 @@ def tick_execution_coverage(
         if unavailable.size == 0
         else pd.Timestamp(int(order_ns[unavailable[0]]), unit="ns", tz="UTC").isoformat()
     )
+    unavailable_times = [
+        pd.Timestamp(int(order_ns[pos]), unit="ns", tz="UTC").isoformat() for pos in unavailable
+    ]
     return {
         "order_count": int(order_ns.size),
         "covered_count": int(covered.sum()),
         "unavailable_count": int(unavailable.size),
         "coverage_fraction": float(covered.mean()),
         "first_unavailable_order_time": first_missing,
+        "unavailable_order_times_utc": unavailable_times,
     }
 
 
@@ -936,6 +972,7 @@ def build_tick_book(
     end_exclusive: pd.Timestamp | None = None,
     end_date_inclusive: str | None = None,
     end_inclusive: str | None = None,
+    source_clock_model: str | None = None,
 ) -> TickBook:
     """Load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
 
@@ -970,6 +1007,7 @@ def build_tick_book(
     Args:
         path: Path to the input file or directory.
         tz: Text or path value identifying the tz.
+        source_clock_model: Optional interpretation of source wall-clock labels.
         session_start: Session start used by the operation described above.
         session_end: Session end used by the operation described above.
         cache_path: Path or filename identifying the cache.
@@ -988,19 +1026,37 @@ def build_tick_book(
     path = Path(path)
     cache_identity: dict[str, Any] | None = None
     cutoff_end = end_exclusive
-    start_date = pd.Timestamp(start_inclusive).normalize() if start_inclusive else None
+    source_clock = source_clock_model or "native"
+
+    def source_timestamp(value: pd.Timestamp | str) -> pd.Timestamp:
+        """Interpret naive bounds in the source clock and preserve aware instants.
+
+        Args:
+            value: Timestamp bound from the caller.
+
+        Returns:
+            Timestamp represented in the configured source clock.
+        """
+        timestamp = pd.Timestamp(value)
+        if timestamp.tzinfo is not None:
+            return timestamp
+        carrier_index = pd.DatetimeIndex([timestamp.tz_localize(tz)])
+        return session_reference_index(carrier_index, source_clock)[0]
+
+    start_date = (
+        source_timestamp(pd.Timestamp(start_inclusive).normalize()) if start_inclusive else None
+    )
     end_date = end_date_inclusive
     if end_inclusive is not None:
         end_date = end_inclusive
-        configured_end = pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
-        configured_end = configured_end.tz_localize(tz)
+        configured_end = source_timestamp(
+            pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
+        )
         if cutoff_end is None or configured_end < cutoff_end:
             cutoff_end = configured_end
         cache_path = None
-    if start_date is not None:
-        start_date = start_date.tz_localize(tz)
     if cutoff_end is not None and cutoff_end.tzinfo is None:
-        cutoff_end = cutoff_end.tz_localize(tz)
+        cutoff_end = source_timestamp(cutoff_end)
     if cache_path:
         if diagnostics is not None:
             raise ValueError("pass cache_path=None when collecting TickBook build diagnostics")
@@ -1009,6 +1065,7 @@ def build_tick_book(
             source_path=path,
             source_sha256=file_sha256(path),
             timezone=tz,
+            source_clock_model=source_clock_model,
             session_start=session_start,
             session_end=session_end,
             price_grid_identity=price_grid_identity(price_grid_increment),
@@ -1042,15 +1099,13 @@ def build_tick_book(
     n_rows_kept = 0
 
     for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize, end_exclusive=cutoff_end):
-        # Chunk-local datetime parse (bounded memory) — Etc/GMT-3 etc. are
-        # fixed-offset zones (no DST), so tz_localize here is unambiguous
-        # regardless of how the file happens to be chunked.  MT5 tick time
-        # includes milliseconds (HH:MM:SS.fff), unlike bar files.
+        # MT5 tick time includes milliseconds, unlike bar files. Interpret the
+        # wall labels with the same source-clock model used for bar timestamps.
         dt = pd.to_datetime(
             raw_chunk["date"].to_numpy() + " " + raw_chunk["time"].to_numpy(),
             format="%Y.%m.%d %H:%M:%S.%f",
         )
-        dt = dt.tz_localize(tz)
+        dt = session_reference_index(dt.tz_localize(tz), source_clock)
 
         n_rows_total += len(raw_chunk)
         if diagnostics is not None:
@@ -1070,7 +1125,7 @@ def build_tick_book(
         dt = dt[mask]
         bid = raw_chunk["bid"].to_numpy(dtype=np.float64, copy=True)[mask]
         ask = raw_chunk["ask"].to_numpy(dtype=np.float64, copy=True)[mask]
-        ts_ns = dt.values.astype("int64")
+        ts_ns: np.ndarray[Any, np.dtype[np.int64]] = dt.values.astype("int64")
 
         raw_bid_valid = np.isfinite(bid) & (bid > 0.0)
         raw_ask_valid = np.isfinite(ask) & (ask > 0.0)

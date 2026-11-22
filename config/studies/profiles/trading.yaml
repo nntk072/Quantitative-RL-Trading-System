@@ -36,6 +36,11 @@ api_paths:
 - trading/strategies/po3_ifvg.py
 - trading/strategies/strategy_contract.py
 caller_paths:
+- tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
+- tests/integration/backtest/test_market_entry_fill_event_parity.py
+- tests/integration/backtest/test_market_order_quote_wait_contract.py
+- tests/integration/backtest/test_market_order_rejection_parity.py
+- tests/integration/backtest/test_pending_limit_rejection_parity.py
 - evaluation/candidate_execution.py
 - evaluation/plotting/chart_levels.py
 - evaluation/plotting/order_chart_data.py
@@ -89,6 +94,7 @@ caller_paths:
 - tests/integration/backtest/test_no_action_account_parity.py
 - tests/integration/backtest/test_repeated_payout_backtest.py
 - tests/integration/backtest/test_risk_lifecycle_characterization.py
+- tests/integration/backtest/test_action_tape_replay.py
 - tests/integration/backtest/test_setup_mask_backtest_boundary.py
 - tests/integration/backtest/test_target_reference_contract.py
 - tests/integration/test_evaluation_pipeline.py

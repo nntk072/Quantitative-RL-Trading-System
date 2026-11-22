@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import logging
+import subprocess
 from datetime import date
+from pathlib import Path
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from configuration import apply_overrides, load_config
 from training.cli_arguments import build_train_parser
-from training.configuration.research_protocol import EXPECTED_EXPOSED
+from training.configuration.research_protocol import (
+    EXPECTED_EXPOSED,
+    EXPECTED_SEEDS,
+    load_research_protocol,
+)
 from training.configuration.strategy_overlays import (
     merge_strategy_config,
     strategy_overlay_path,
@@ -18,6 +26,92 @@ from training.configuration.strategy_overlays import (
 from training.configuration.variant_resolution import resolve_variant
 
 log = logging.getLogger(__name__)
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def _validate_confirmatory_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Fail closed unless a confirmatory launch matches its registered protocol arm.
+
+    Args:
+        parser: Parser used to report invalid launch arguments.
+        args: Parsed arguments for the requested training launch.
+    """
+    if not args.confirmatory:
+        if (
+            args.confirmatory_arm is not None
+            or args.expected_config_sha256 is not None
+            or args.expected_resolved_config_sha256 is not None
+            or args.expected_source_commit is not None
+        ):
+            parser.error("confirmatory arm and config hash require --confirmatory")
+        return
+
+    if tuple(args.seeds or ()) != EXPECTED_SEEDS:
+        parser.error("confirmatory work requires protocol seeds 42..47 in order")
+    if (
+        args.config is None
+        or args.confirmatory_arm is None
+        or args.expected_config_sha256 is None
+        or args.expected_resolved_config_sha256 is None
+        or args.expected_source_commit is None
+        or args.variant is not None
+        or args.quality_variant is not None
+        or args.overrides
+        or args.mvp
+        or args.allow_locked_oos_for_selection
+        or args.use_vae
+        or args.algo != "ppo"
+        or args.reward != "dsr"
+        or args.strategy != "baseline"
+        or not args.walk_forward
+    ):
+        parser.error("confirmatory launch requires a frozen registered arm without overrides")
+
+    protocol = load_research_protocol(ROOT / "config/research/prospective_research_protocol.yaml")
+    policy = protocol["policy"]
+    arm_configs = {
+        "q0_control": policy["control_config"],
+        "q0_canonical": policy["canonical_survival_config"],
+        "q0_price_geometry": policy["price_geometry_config"],
+        "representation_a": policy["gate_ii_ablation_configs"]["A"],
+        "representation_b": policy["gate_ii_ablation_configs"]["B"],
+        "representation_c": policy["gate_ii_ablation_configs"]["C"],
+    }
+    expected_config = (ROOT / arm_configs[args.confirmatory_arm]).resolve()
+    supplied_config = Path(args.config).expanduser()
+    supplied_config = (
+        supplied_config if supplied_config.is_absolute() else ROOT / supplied_config
+    ).resolve()
+    if supplied_config != expected_config:
+        parser.error("confirmatory arm config does not match the registered protocol config")
+    if hashlib.sha256(expected_config.read_bytes()).hexdigest() != args.expected_config_sha256:
+        parser.error("confirmatory config SHA-256 differs from the frozen launch plan")
+    current_source = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    dirty_source = subprocess.check_output(
+        ["git", "status", "--porcelain"], cwd=ROOT, text=True
+    ).strip()
+    if current_source != args.expected_source_commit or dirty_source:
+        parser.error("confirmatory work requires the frozen, clean source commit")
+
+    walk_forward = protocol["replication"]["walk_forward"]
+    config = load_config(config_path=expected_config)
+    resolved_config = OmegaConf.to_container(config, resolve=True)
+    resolved_json = json.dumps(resolved_config, sort_keys=True, separators=(",", ":"), default=str)
+    if (
+        hashlib.sha256(resolved_json.encode("utf-8")).hexdigest()
+        != args.expected_resolved_config_sha256
+    ):
+        parser.error("confirmatory resolved config SHA-256 differs from the frozen launch plan")
+    if (
+        args.arch != str(config.agent.arch)
+        or args.wf_splits != int(walk_forward["splits"])
+        or args.purge_bars != int(walk_forward["purge_bars"])
+        or args.embargo_bars != int(walk_forward["embargo_bars"])
+        or (args.wf_steps is not None and args.wf_steps != int(config.ppo.total_timesteps))
+    ):
+        parser.error("confirmatory architecture or walk-forward budget differs from protocol")
 
 
 def parse_train_args() -> argparse.Namespace:
@@ -28,12 +122,14 @@ def parse_train_args() -> argparse.Namespace:
     """
     parser = build_train_parser()
     args = parser.parse_args()
+    _validate_confirmatory_args(parser, args)
     campaign_phase = args.survival_campaign_phase
     if (args.survival_campaign_dir is None) != (campaign_phase is None):
         parser.error("--survival-campaign-dir and --survival-campaign-phase must be used together")
+    if campaign_phase is not None:
+        if tuple(args.seeds or ()) != EXPECTED_SEEDS:
+            parser.error("bounded confirmatory work requires protocol seeds 42..47 in order")
     if campaign_phase in {"train_seed", "walk_forward_fold"}:
-        if not args.seeds or len(args.seeds) < 6 or len(set(args.seeds)) != len(args.seeds):
-            parser.error("bounded survival work requires the full set of unique --seeds")
         if args.survival_campaign_seed is None:
             parser.error(f"{campaign_phase} requires --survival-campaign-seed")
     elif args.survival_campaign_seed is not None:

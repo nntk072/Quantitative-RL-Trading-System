@@ -30,10 +30,8 @@ api_paths:
 - scripts/research/analysis/evaluation/verify_candidate_proposal_outcomes.py
 - scripts/research/analysis/evaluation/verify_matched_setup_baseline_accounting.py
 - scripts/research/analysis/evaluation/verify_simulator_local_tick_trace_set.py
-- scripts/research/analysis/evidence/__init__.py
 - scripts/research/analysis/evidence/analyze_paired_seed_results.py
 - scripts/research/analysis/evidence/analyze_representation_paired_seed_results.py
-- scripts/research/analysis/evidence/audit_checkpoint_frame_bundle_parity.py
 - scripts/research/analysis/evidence/audit_selected_checkpoint_recoverability.py
 - scripts/research/analysis/evidence/build_candidate_event_cardinality_register.py
 - scripts/research/analysis/evidence/build_experiment_run_evidence_index.py
@@ -158,7 +156,6 @@ caller_paths:
 - tests/unit/features/test_synthetic_entry_timing_examples.py
 - tests/unit/research/test_candidate_limit_fill_packet_comparison.py
 - tests/unit/research/test_candidate_outcome_replay_comparison.py
-- tests/unit/research/test_checkpoint_bundle_parity.py
 - tests/unit/research/test_deterministic_reanalysis.py
 - tests/unit/research/test_experiment_evidence_index.py
 - tests/unit/research/test_experiment_run_reconciliation.py

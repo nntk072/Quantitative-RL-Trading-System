@@ -160,10 +160,13 @@ def _summarize_stream(
 def build_audit(config_path: Path, output_dir: Path, cache_dir: Path) -> dict[str, Any]:
     """Build the configured training-only feature matrix and audit its model inputs."""
     cfg = load_config(config_path=str(config_path))
+    regeneration_script = (
+        ROOT / "scripts/research/analysis/features/audit_observation_warmup_validity.py"
+    )
     regeneration_command = shlex.join(
         [
             ".venv-arm/bin/python",
-            str(Path(__file__).relative_to(ROOT)),
+            str(regeneration_script.relative_to(ROOT)),
             "--config",
             str(config_path.relative_to(ROOT)),
             "--output-dir",
@@ -226,6 +229,8 @@ def build_audit_from_config(
         schedule_path=schedule_path,
         session_start=str(cfg.session.start),
         session_end=str(cfg.session.end),
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
     raw_columns = tuple(str(value) for value in cfg.strategy.get("raw_columns", []))
     observation_frame = attach_reachable_r(
@@ -233,6 +238,8 @@ def build_audit_from_config(
         bars,
         features,
         include_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
     observation_values = observation_frame.to_numpy(dtype=np.float32, copy=True)
     names = [str(column) for column in observation_frame.columns]

@@ -73,8 +73,11 @@ def prepare_observation_feature_channels(
     array = np.asarray(values, dtype=np.float32)
     if array.ndim != 2:
         raise ValueError("observation feature values must be a two-dimensional array")
-    validity = np.isfinite(array).astype(np.float32)
-    finite_values = sanitize_observation_values(array)
+    finite_mask = np.isfinite(array)
+    validity = finite_mask.astype(np.float32)
+    # Same values as sanitize_observation_values (nan/inf -> 0), one mask and no
+    # nan_to_num call overhead per observation channel.
+    finite_values = np.where(finite_mask, array, np.float32(0.0)).astype(np.float32, copy=False)
     if not include_validity:
         return finite_values
     return cast(np.ndarray[Any, Any], np.concatenate((finite_values, validity), axis=1))
@@ -162,6 +165,92 @@ def timeframe_starts(
     starts = index.searchsorted(pd.DatetimeIndex(closes), side="left")
     valid_starts = starts[starts < len(index)]
     return np.asarray(np.unique(valid_starts), dtype=np.int64)
+
+
+def closed_window_raw(
+    block: np.ndarray[Any, Any],
+    starts: np.ndarray[Any, Any],
+    end: int,
+    length: int,
+    columns: np.ndarray[Any, Any] | None = None,
+) -> np.ndarray[Any, Any]:
+    """Raw float32 rows of ``closed_window`` before sanitizing and padding.
+
+    Same rows and shapes as ``closed_window`` uses internally, so that
+    ``pad(prepare(closed_window_raw(...)))`` equals ``closed_window(...)``.
+
+    Args:
+        block: Feature block to gather from.
+        starts: Starts of each closed run.
+        end: Decision row.
+        length: Window length in runs.
+        columns: Selected columns, or None for all.
+
+    Returns:
+        Raw values with shape ``(rows, width)`` (or ``(0, 1)`` for a block without columns).
+    """
+    if block.ndim != 2:
+        return np.zeros((0, 1), dtype=np.float32)
+    selected_columns = None if columns is None else np.asarray(columns, dtype=np.int64)
+    width = int(block.shape[1]) if selected_columns is None else int(selected_columns.size)
+    if width == 0:
+        return np.zeros((0, 1), dtype=np.float32)
+    decision = int(end)
+    if decision < 0 or starts.size == 0:
+        return np.zeros((0, width), dtype=np.float32)
+    visible_end = int(np.searchsorted(starts, decision, side="right"))
+    if visible_end == 0:
+        return np.zeros((0, width), dtype=np.float32)
+    first_visible = max(0, visible_end - int(length))
+    visible = starts[first_visible:visible_end]
+    rows = np.empty(visible.size, dtype=np.int64)
+    rows[:-1] = visible[1:] - 1
+    rows[-1] = decision
+    return np.asarray(
+        block[rows] if selected_columns is None else block[np.ix_(rows, selected_columns)],
+        dtype=np.float32,
+    )
+
+
+def prepare_observation_feature_channels_many(
+    values_list: list[np.ndarray[Any, Any]],
+    *,
+    include_validity: bool,
+) -> list[np.ndarray[Any, Any]]:
+    """``prepare_observation_feature_channels`` for several windows in one pass.
+
+    Sanitizing and the finite mask are elementwise, so they are computed once over
+    the concatenated values and split back per window. The result equals calling
+    ``prepare_observation_feature_channels`` on each window separately.
+
+    Args:
+        values_list: Two-dimensional raw windows.
+        include_validity: Whether to append per-feature finite-value channels.
+
+    Returns:
+        Prepared windows, one per input, in order.
+    """
+    arrays = [np.asarray(values, dtype=np.float32) for values in values_list]
+    for array in arrays:
+        if array.ndim != 2:
+            raise ValueError("observation feature values must be a two-dimensional array")
+    if not arrays:
+        return []
+    flat = np.concatenate([array.ravel() for array in arrays])
+    finite_mask = np.isfinite(flat)
+    clean = np.where(finite_mask, flat, np.float32(0.0)).astype(np.float32, copy=False)
+    outputs: list[np.ndarray[Any, Any]] = []
+    offset = 0
+    for array in arrays:
+        size = array.size
+        values = clean[offset : offset + size].reshape(array.shape)
+        if include_validity:
+            validity = finite_mask[offset : offset + size].reshape(array.shape).astype(np.float32)
+            outputs.append(np.concatenate((values, validity), axis=1))
+        else:
+            outputs.append(values)
+        offset += size
+    return outputs
 
 
 def closed_window(

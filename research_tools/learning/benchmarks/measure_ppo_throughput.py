@@ -59,7 +59,7 @@ from simulation.environment.spec import EnvSpec
 from simulation.environment.worker import make_bundle_env
 from training.configuration.cli import load_merged_config
 from training.runner.seed import _setup_rngs
-from training.setup.environments import strategy_from_cfg
+from training.setup.environments import _training_episodic, strategy_from_cfg
 
 
 class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
@@ -393,6 +393,7 @@ def _train_probe(
         reward=str(cfg.env.get("reward_mode", "dsr")),
         arch=arch,
         bundle_dir=str(bundle_path),
+        episodic=_training_episodic(cfg),
     )
     cfg_text = OmegaConf.to_yaml(cfg, resolve=True)
     config_sha256 = hashlib.sha256(cfg_text.encode("utf-8")).hexdigest()
@@ -421,7 +422,9 @@ def _train_probe(
     env_fn: Callable[[], gym.Env[Any, Any]] = partial(make_bundle_env, spec)
     if measure_env_steps:
         env_fn = partial(_timed_env_from_factory, env_fn)
-    model = build_agent(parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn)
+    model = build_agent(
+        parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn, seed=seed
+    )
     vec_env = model.get_env()
     compile_warmup_seconds = 0.0
     if torch_compile_mode is not None:
@@ -606,6 +609,8 @@ def _train_probe(
         "arch": arch,
         "algo": algo,
         "seed": seed,
+        "model_seed": model.seed,
+        "episodic": spec.episodic,
         "n_envs": int(model.n_envs),
         "vector_backend": vector_backend,
         "rollout_buffer_class": type(model.rollout_buffer).__name__,

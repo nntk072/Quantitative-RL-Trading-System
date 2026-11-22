@@ -1,9 +1,9 @@
 """Tests for CT-anchored session OHLC levels, prior-period high/low,
 range quadrants and raw VWAP level (features.context.session_levels).
 
-The session windows are defined in America/Chicago wall-clock time. Native
-fixed-offset tests preserve legacy behavior; the FTMO server-clock regression
-uses the documented GMT+2/GMT+3 US-DST model to check the production mapping.
+The session windows are defined in America/Chicago wall-clock time. Helsinki
+chart time is the production source model; FTMO server-clock tests preserve
+explicit legacy compatibility.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from omegaconf import DictConfig, OmegaConf
+from pytz.exceptions import AmbiguousTimeError  # type: ignore[import-untyped]
 
 from features.context.session_levels import (
     prev_ny_high_low,
@@ -261,6 +262,40 @@ def test_ftmo_server_clock_maps_winter_and_summer_to_same_ct_session() -> None:
         False,
     ]
     assert ftmo.index.equals(idx)
+
+
+@pytest.mark.unit
+def test_helsinki_source_clock_tracks_ny_open_during_dst_mismatch() -> None:
+    """Helsinki 15:30 is NY 09:30 after US DST starts but before EU DST."""
+    idx = pd.DatetimeIndex(
+        ["2025-03-10 15:29", "2025-03-10 15:30", "2025-03-10 15:31", "2025-03-10 15:32"],
+        tz=DATA_TZ,
+    )
+
+    mask = session_mask(
+        idx,
+        "08:30",
+        "08:32",
+        SESSION_TZ,
+        source_clock_model="europe_helsinki",
+    )
+
+    assert mask.tolist() == [False, True, True, False]
+
+
+@pytest.mark.unit
+def test_helsinki_source_clock_rejects_ambiguous_fall_back_wall_time() -> None:
+    """The source row has no fold marker for Helsinki's repeated local hour."""
+    idx = pd.DatetimeIndex(["2025-10-26 03:30"], tz=DATA_TZ)
+
+    with pytest.raises(AmbiguousTimeError, match="ambiguous"):
+        session_mask(
+            idx,
+            "08:30",
+            "15:00",
+            SESSION_TZ,
+            source_clock_model="europe_helsinki",
+        )
 
 
 @pytest.mark.unit
@@ -790,7 +825,7 @@ def test_ftmo_ct_session_features_are_prefix_invariant_across_dst() -> None:
 def test_default_config_carries_sessions_block() -> None:
     """default.yaml ships the sessions block, flag off by default."""
     cfg = OmegaConf.load("config/base/default.yaml")
-    assert cfg.data.timestamp_clock == "ftmo_mt5_us_dst"
+    assert cfg.data.timestamp_clock == "europe_helsinki"
     assert cfg.features.include_session_ohlc is False
     assert cfg.features.sessions.tz == "America/Chicago"
     assert cfg.features.sessions.asian.start == "19:00"

@@ -27,9 +27,9 @@ def test_build_audit_regeneration_command_supports_external_output_paths(
         captured.update(kwargs)
         return {"status": "captured"}
 
-    monkeypatch.setattr(audit, "load_config", fake_load_config)
-    monkeypatch.setattr(audit, "_sha256", lambda _: "a" * 64)
-    monkeypatch.setattr(audit, "build_audit_from_config", fake_build_audit_from_config)
+    monkeypatch.setattr(audit._module, "load_config", fake_load_config)
+    monkeypatch.setattr(audit._module, "_sha256", lambda _: "a" * 64)
+    monkeypatch.setattr(audit._module, "build_audit_from_config", fake_build_audit_from_config)
 
     result = audit.build_audit(config_path, output_dir, cache_dir)
 
@@ -74,8 +74,8 @@ def test_observation_audit_clips_later_rows_before_feature_inputs(
         observed["tick_cutoff"] = kwargs.get("end_inclusive")
         return {"US100": tickbook}
 
-    monkeypatch.setattr(audit, "run_pipeline", fake_run_pipeline)
-    monkeypatch.setattr(audit, "build_tick_books", fake_tick_books)
+    monkeypatch.setattr(audit._module, "run_pipeline", fake_run_pipeline)
+    monkeypatch.setattr(audit._module, "build_tick_books", fake_tick_books)
 
     datasets, ticks = audit._load_training_inputs(cfg)
 

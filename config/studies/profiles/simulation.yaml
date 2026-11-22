@@ -21,6 +21,7 @@ api_paths:
 - simulation/environment/env.py
 - simulation/environment/episode_equity.py
 - simulation/environment/market_view.py
+- simulation/environment/market_access.py
 - simulation/environment/observations.py
 - simulation/environment/po3_reward.py
 - simulation/environment/rewards.py
@@ -31,6 +32,14 @@ api_paths:
 - simulation/environment/trading_environment_factory.py
 - simulation/environment/worker.py
 caller_paths:
+- tests/unit/training/test_observation_memmap.py
+- tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
+- tests/integration/backtest/test_market_entry_fill_event_parity.py
+- tests/integration/backtest/test_market_order_quote_wait_contract.py
+- tests/integration/backtest/test_market_order_rejection_parity.py
+- tests/integration/backtest/test_pending_limit_rejection_parity.py
+- tests/unit/simulation/test_backtest_valuation_time.py
+- tests/unit/simulation/test_environment/test_helsinki_bar_time.py
 - evaluation/metrics/trade_setup_policy.py
 - evaluation/reanalysis/checkpoint_reanalysis.py
 - evaluation/rollout/matched_setup_baselines.py
@@ -96,7 +105,9 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_strategy_env.py
 - tests/unit/simulation/test_environment/test_sweep_reward.py
 - tests/unit/simulation/test_environment/test_swing_trailing_stop.py
+- tests/unit/simulation/test_environment/test_swing_buffer_wiring.py
 - tests/unit/simulation/test_environment/test_take_profit_level_ordering.py
+- tests/unit/simulation/test_environment/test_env_step_tick_golden_trace.py
 - tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
 - tests/unit/simulation/test_environment/test_tp_action_decode.py
 - tests/unit/simulation/test_environment/test_tp_execution.py

@@ -51,7 +51,6 @@ def test_evaluate_model_accepts_bundle_environment(tmp_path: Path) -> None:
         obs_window=10,
         target_timeframes=("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"),
         scheduled_session_closes={},
-        session_start="16:30",
     )
     bundle_env = TradingEnv.from_bundle(path, obs_window=10, episodic=False)
     bundle_result = evaluate_model(
@@ -61,7 +60,6 @@ def test_evaluate_model_accepts_bundle_environment(tmp_path: Path) -> None:
         obs_window=10,
         target_timeframes=("M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"),
         scheduled_session_closes={},
-        session_start="16:30",
         env=bundle_env,
     )
     np.testing.assert_array_equal(frames_result["equity"], bundle_result["equity"])

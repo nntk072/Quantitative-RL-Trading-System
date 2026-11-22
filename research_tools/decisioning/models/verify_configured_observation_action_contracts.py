@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -11,15 +12,17 @@ from typing import Any, cast
 
 ROOT = Path(__file__).resolve().parents[3]
 PACKET = ROOT / "evidence/research/model_observation_and_action_semantics"
-OUTPUT = PACKET / "current_109_action_audit"
-CONTRACTS = (
-    PACKET / "configured_trade_setup_mtf_contract.json",
-    PACKET / "configured_trade_setup_mtf_conditioned_contract.json",
-)
-SUPPORT_CSV = ROOT / "evidence/research/trade_setup_opportunity_census/candidate_support_review.csv"
 HISTORY_TEST = ROOT / "tests/unit/models/test_encoders.py"
 MASK_TEST = ROOT / "tests/unit/models/test_hybrid_actor.py"
-TRACE_INVENTORY = PACKET / "decision_trace_availability_inventory.json"
+GENERATOR = "scripts/research/analysis/models/verify_configured_observation_action_contracts.py"
+
+
+def display_path(path: Path) -> str:
+    """Return a repository-relative path when available, otherwise an absolute path."""
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def sha256(path: Path) -> str:
@@ -90,7 +93,7 @@ def contract_record(
         raise ValueError(f"Unexpected economic output in {path.name}")
 
     return {
-        "path": path.relative_to(ROOT).as_posix(),
+        "path": display_path(path),
         "sha256": sha256(path),
         "config": scope["config"],
         "resolved_config_sha256": identity["resolved_config_sha256"],
@@ -106,15 +109,34 @@ def contract_record(
     }
 
 
-def main() -> None:
-    reports = [load_json(path) for path in CONTRACTS]
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--control-contract", type=Path, required=True)
+    parser.add_argument("--conditioned-contract", type=Path, required=True)
+    parser.add_argument("--support-review", type=Path, required=True)
+    parser.add_argument("--trace-inventory", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    args = parser.parse_args(argv)
+
+    control_contract = args.control_contract.resolve()
+    conditioned_contract = args.conditioned_contract.resolve()
+    support_csv = args.support_review.resolve()
+    trace_inventory = args.trace_inventory.resolve()
+    output_dir = args.output_dir.resolve()
+    input_paths = (control_contract, conditioned_contract, support_csv, trace_inventory)
+    for path in input_paths:
+        if not path.is_file():
+            parser.error(f"required input does not exist: {path}")
+
+    contracts = (control_contract, conditioned_contract)
+    reports = [load_json(path) for path in contracts]
     source_paths = sorted(
         {item["path"] for report in reports for item in report["identity"]["source_files"]}
     )
     current_input_hashes = {relative: sha256(ROOT / relative) for relative in source_paths}
     records = [
         contract_record(path, report, current_input_hashes)
-        for path, report in zip(CONTRACTS, reports, strict=True)
+        for path, report in zip(contracts, reports, strict=True)
     ]
     if records[0]["action_schema"] != records[1]["action_schema"]:
         raise ValueError("Matched control and conditioned action schemas differ")
@@ -132,7 +154,7 @@ def main() -> None:
     if not records[1]["policy_configuration"]["setup_conditioned_execution"]:
         raise ValueError("Conditioned variant does not condition execution on setup ID")
 
-    support = read_csv(SUPPORT_CSV)
+    support = read_csv(support_csv)
     support_counts: dict[str, int] = {}
     for row in support:
         status = row["support_review_status"]
@@ -145,14 +167,14 @@ def main() -> None:
             f"Expected 24 config-supported candidate tuples, found {configured_supported}"
         )
 
-    trace = load_json(TRACE_INVENTORY)
-    if trace["artifact_count"] != 276:
-        raise ValueError("Scoped artifact scan count changed; review this verifier's fixed scope")
-    if any(
-        item["per_decision_setup_trace"] or item["per_decision_price_geometry_trace"]
-        for item in trace["artifacts"]
-    ):
-        raise ValueError("The scoped trace inventory now contains a qualifying decision trace")
+    trace = load_json(trace_inventory)
+    trace_artifacts = trace.get("artifacts")
+    if not isinstance(trace_artifacts, list) or trace.get("artifact_count") != len(trace_artifacts):
+        raise ValueError("Trace inventory artifact_count does not match its artifacts")
+    setup_trace_paths = trace.get("per_decision_setup_trace_paths", [])
+    geometry_trace_paths = trace.get("per_decision_price_geometry_trace_paths", [])
+    if not isinstance(setup_trace_paths, list) or not isinstance(geometry_trace_paths, list):
+        raise ValueError("Trace inventory paths must be lists")
 
     report = {
         "schema_version": 1,
@@ -173,8 +195,8 @@ def main() -> None:
             "catalog_entries": len(support),
             "configured_supported_entries": configured_supported,
             "support_review_status_counts": support_counts,
-            "input_path": SUPPORT_CSV.relative_to(ROOT).as_posix(),
-            "input_sha256": sha256(SUPPORT_CSV),
+            "input_path": display_path(support_csv),
+            "input_sha256": sha256(support_csv),
         },
         "source_history_test_reference": {
             "path": HISTORY_TEST.relative_to(ROOT).as_posix(),
@@ -195,12 +217,15 @@ def main() -> None:
             },
         ],
         "trace_inventory": {
-            "path": TRACE_INVENTORY.relative_to(ROOT).as_posix(),
-            "sha256": sha256(TRACE_INVENTORY),
+            "path": display_path(trace_inventory),
+            "sha256": sha256(trace_inventory),
             "scanned_artifacts": trace["artifact_count"],
+            "roots": trace.get("roots", []),
             "scope_limitation": "Four supplied roots; directory symlinks were not followed; not global absence proof.",
-            "qualifying_setup_decision_trace": False,
-            "qualifying_price_geometry_trace": False,
+            "qualifying_setup_decision_trace": bool(setup_trace_paths),
+            "setup_trace_paths": setup_trace_paths,
+            "qualifying_price_geometry_trace": bool(geometry_trace_paths),
+            "price_geometry_trace_paths": geometry_trace_paths,
         },
         "limitations": [
             "The configured contract reports verify reset shapes without taking policy actions or stepping the environment.",
@@ -208,11 +233,11 @@ def main() -> None:
             "Class-ID conditioning is not proposed entry/stop/target/TTL price geometry.",
             "Current configured shapes are not claimed to be shapes of every historical checkpoint.",
         ],
-        "generator": "scripts/research/analysis/models/verify_configured_observation_action_contracts.py",
+        "generator": GENERATOR,
     }
     report["generator_sha256"] = sha256(Path(__file__).resolve())
-    OUTPUT.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT / "verification.json"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "verification.json"
     output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     readme = """# Current 109-choice model contract audit
 
@@ -227,9 +252,10 @@ report-period rows.
 
 The support review covers all 108 catalog entries: 24 are enabled by the
 selected configuration and 84 are unsupported there. Source-test references
-cover use of earlier valid history and valid-candidate masking. The scoped
-276-artifact scan found no qualifying historical per-decision setup or
-candidate price-geometry trace; this is not global absence proof.
+cover use of earlier valid history and valid-candidate masking. The supplied
+trace inventory records its scan roots, artifact count, and any per-decision
+setup or price-geometry traces it found. Its scope is limited to those roots;
+it is not global absence proof.
 
 This audit distinguishes categorical setup-ID conditioning from candidate
 price geometry. It does not verify every historical checkpoint's tensor
@@ -240,20 +266,23 @@ is maintained in the market-data quality packet.
 Regenerate with:
 
 ```bash
-PYTHONPATH=. .venv-arm/bin/python scripts/research/analysis/models/verify_configured_observation_action_contracts.py
+python scripts/research/analysis/models/verify_configured_observation_action_contracts.py \
+  --control-contract <control-contract.json> \
+  --conditioned-contract <conditioned-contract.json> \
+  --support-review <support-review.csv> \
+  --trace-inventory <trace-inventory.json> \
+  --output-dir <output-directory>
 ```
 """
-    (OUTPUT / "README.md").write_text(readme, encoding="utf-8")
+    (output_dir / "README.md").write_text(readme, encoding="utf-8")
     output_files = ["README.md", "verification.json"]
-    output_prefix = OUTPUT.relative_to(ROOT).as_posix()
-    sums = [f"{sha256(OUTPUT / name)}  {output_prefix}/{name}" for name in output_files]
-    sums.append(
-        f"{report['generator_sha256']}  {Path(__file__).resolve().relative_to(ROOT).as_posix()}"
-    )
-    (OUTPUT / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8")
+    output_prefix = display_path(output_dir)
+    sums = [f"{sha256(output_dir / name)}  {output_prefix}/{name}" for name in output_files]
+    sums.append(f"{report['generator_sha256']}  {display_path(Path(__file__).resolve())}")
+    (output_dir / "SHA256SUMS").write_text("\n".join(sums) + "\n", encoding="utf-8")
     print(
         f"verified 2 matched contracts, {sum(r['implementation_source_count'] for r in records)} source references, "
-        f"{configured_supported}/108 configured candidates; wrote {output_path.relative_to(ROOT)}"
+        f"{configured_supported}/108 configured candidates; wrote {display_path(output_path)}"
     )
 
 

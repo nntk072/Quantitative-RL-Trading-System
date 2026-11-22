@@ -223,6 +223,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
     from market_data.transforms import scheduled_session_close_map
 
     session = _block(cfg, "session")
+    data = _block(cfg, "data")
     return TradingEnv.from_bundle(
         spec.bundle_dir,
         obs_window=int(env.get("obs_window", 60)),
@@ -324,6 +325,9 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
             str(value) for value in risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
         scheduled_session_closes=scheduled_session_close_map(OmegaConf.create(cfg)),
-        session_start=str(session.get("start", "16:30")),
+        session_start=str(session.get("start", "08:30")),
+        session_end=str(session.get("end", "15:00")),
+        session_timezone=str(session.get("tz", "America/Chicago")),
+        source_clock_model=str(data.get("timestamp_clock", "native")),
         trading_policy=policy.to_dict(),
     )

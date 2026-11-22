@@ -23,6 +23,11 @@ api_paths:
 - market_data/transforms/session_schedule.py
 - market_data/transforms/sessions.py
 caller_paths:
+- tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
+- tests/integration/backtest/test_market_entry_fill_event_parity.py
+- tests/integration/backtest/test_market_order_quote_wait_contract.py
+- tests/integration/backtest/test_pending_limit_rejection_parity.py
+- tests/unit/training/test_tick_execution_preflight.py
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
 - evaluation/contracts.py
@@ -60,10 +65,12 @@ caller_paths:
 - simulation/backtest/protective_events.py
 - simulation/backtest/runtime.py
 - simulation/environment/bundles.py
+- simulation/environment/candidate_geometry_observation.py
 - simulation/environment/entry_runtime.py
 - simulation/environment/env.py
 - simulation/environment/episode_runtime.py
 - simulation/environment/execution_controls_initialization.py
+- simulation/environment/market_source_initialization.py
 - simulation/environment/observations.py
 - simulation/environment/protective_level_runtime.py
 - simulation/environment/step_action_execution.py
@@ -76,6 +83,7 @@ caller_paths:
 - tests/integration/backtest/test_agent_selected_entry_execution.py
 - tests/integration/backtest/test_engine_execution_contract.py
 - tests/integration/backtest/test_local_tick_action_trace.py
+- tests/integration/backtest/test_local_trace_source_clock.py
 - tests/integration/backtest/test_multi_target_protective_lifecycle.py
 - tests/integration/backtest/test_no_action_account_parity.py
 - tests/integration/backtest/test_risk_lifecycle_characterization.py
@@ -104,6 +112,7 @@ caller_paths:
 - tests/unit/learning/test_learning_supervised_reference.py
 - tests/unit/market_data/test_data_split.py
 - tests/unit/market_data/test_dataset_source_contract.py
+- tests/unit/market_data/test_helsinki_ny_sessions.py
 - tests/unit/market_data/test_market_data_ingestion.py
 - tests/unit/market_data/test_mt5_server_protective_fills.py
 - tests/unit/market_data/test_quality_audit.py
@@ -115,6 +124,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_env_bundle_builder.py
 - tests/unit/simulation/test_environment/test_ny_steps_eod.py
 - tests/unit/simulation/test_environment/test_sl_tp_fill.py
+- tests/unit/simulation/test_environment/test_env_step_tick_golden_trace.py
 - tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
 - tests/unit/simulation/test_environment/test_tp_execution.py
 - tests/unit/simulation/test_environment/test_trade_setup_factory_config.py

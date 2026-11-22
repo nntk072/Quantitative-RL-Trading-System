@@ -52,24 +52,19 @@ def _git_state() -> tuple[str, list[str]]:
     return sha, dirty.splitlines()
 
 
-def _inside_repository(path: Path) -> bool:
-    """Return whether ``path`` resolves inside the repository.
-
-    Args:
-        path: Candidate output path.
-
-    Returns:
-        Whether the path resolves under the repository root.
-    """
-    try:
-        path.resolve().relative_to(ROOT.resolve())
-    except ValueError:
-        return False
-    return True
+def _is_ignored_path(path: Path) -> bool:
+    """Return whether Git ignores the candidate output path."""
+    relative = path.relative_to(ROOT.resolve())
+    return (
+        subprocess.run(
+            ["git", "check-ignore", "-q", str(relative)], cwd=ROOT, check=False
+        ).returncode
+        == 0
+    )
 
 
 def _validate_run_root(run_root: Path) -> Path:
-    """Require a fresh absolute output directory outside the checkout.
+    """Require a fresh leaf below the canonical ignored execution output tree.
 
     Args:
         run_root: Requested evidence output root.
@@ -81,17 +76,30 @@ def _validate_run_root(run_root: Path) -> Path:
     if not requested.is_absolute():
         requested = Path.cwd() / requested
     requested = Path(os.path.abspath(requested))
+    root = ROOT.resolve()
     try:
-        requested.relative_to(ROOT.resolve())
-    except ValueError:
-        pass
-    else:
-        raise ValueError("--run-root must be outside the repository")
-    resolved = requested.resolve()
+        relative = requested.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("--run-root must use the canonical execution output tree") from exc
+    if (
+        len(relative.parts) != 5
+        or relative.parts[:2] != ("outputs", "pre_experiment_readiness")
+        or relative.parts[3] != "execution"
+        or any(part in {"", ".", ".."} for part in relative.parts)
+    ):
+        raise ValueError("--run-root must use the canonical execution output tree")
+    for depth in range(1, len(relative.parts) + 1):
+        if (root.joinpath(*relative.parts[:depth])).is_symlink():
+            raise ValueError("--run-root must not traverse symlinks")
+    resolved = requested.resolve(strict=False)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError("--run-root must use the canonical execution output tree") from exc
+    if not _is_ignored_path(requested):
+        raise ValueError("--run-root must be Git-ignored")
     if resolved.exists():
         raise ValueError("--run-root must not already exist")
-    if _inside_repository(resolved):
-        raise ValueError("--run-root must be outside the repository")
     return resolved
 
 
@@ -273,6 +281,7 @@ def run_plan(
     if not tasks:
         raise ValueError("no readiness tasks selected")
 
+    output_root = _validate_run_root(output_root)
     output_root.mkdir(parents=True, exist_ok=False)
     results = _execute_tasks(tasks, output_root, max_workers)
 

@@ -19,6 +19,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
     """Apply eligibility and risk constraints before executing a step action."""
 
     _decision_action: dict[str, float]
+    _entry_rejection_order_id: str | None
     _pending_entry_order: dict[str, Any] | None
     _current_decision_id: str
 
@@ -247,6 +248,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                     ),
                 )
                 if not self._opened_this_step and pending.get("order_id") is not None:
+                    self._entry_rejection_order_id = str(pending["order_id"])
                     selected = pending.get("selected", {})
                     selected_setup = selected.get("_selected_trade_setup")
                     self.trade_log.append(
@@ -255,6 +257,7 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                             "order_id": pending["order_id"],
                             "decision_id": pending_decision_id,
                             "order_type": pending.get("order_type", "market"),
+                            "direction": int(pending["direction"]),
                             "reason": (
                                 "entry_rejected_at_limit_fill"
                                 if is_limit_order
@@ -303,6 +306,43 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                             else pd.Timestamp(entry_fill_time),
                         }
                     )
+                    if self._entry_rejection_reason:
+                        self.trade_log.append(
+                            {
+                                "type": "reject",
+                                "decision_id": pending_decision_id,
+                                "entry_rejection_reason": self._entry_rejection_reason,
+                                "order_id": pending["order_id"],
+                                "order_type": pending.get("order_type", "market"),
+                                "direction": int(pending["direction"]),
+                                "bar": self.step_idx,
+                                "time": (
+                                    pd.Timestamp(quote.tick_time)
+                                    if quote is not None
+                                    else pd.Timestamp(entry_fill_time)
+                                ),
+                                "decision_bar_time": pending["decision_bar_time"],
+                                "decision_time": pending["decision_time"],
+                                "order_submission_time": pending["order_submission_time"],
+                                **(
+                                    {
+                                        "expiry_time": pending["expiry_time"],
+                                        "limit_price": float(pending["limit_price"]),
+                                    }
+                                    if is_limit_order
+                                    else {}
+                                ),
+                                "trade_setup_candidate_id": (
+                                    None
+                                    if selected_setup is None
+                                    else int(selected_setup.candidate_id)
+                                ),
+                                **trade_setup_event_identity_record(
+                                    selected.get("_selected_trade_setup_event_identity")
+                                ),
+                                **pending["decision_action"],
+                            }
+                        )
                 elif pending.get("order_id") is not None:
                     open_index = next(
                         (

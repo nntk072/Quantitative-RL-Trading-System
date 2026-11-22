@@ -26,6 +26,7 @@ from market_data.loading.ticks import (
     resolve_tick_exit,
     resolve_tick_limit_execution,
     tick_execution_coverage,
+    ticks_covering,
 )
 from market_data.transforms.price_grid import tick_cache_filename
 
@@ -53,6 +54,31 @@ def test_quote_at_exact_tick():
     bid, ask = quote
     assert bid == pytest.approx(100.5)
     assert ask == pytest.approx(101.1)
+
+
+@pytest.mark.parametrize(
+    ("source_wall_time", "expected_tick_utc"),
+    (
+        ("2025-12-31 22:49:00", "2025-12-31 20:50:30+00:00"),
+        ("2025-07-01 22:49:00", "2025-07-01 19:50:30+00:00"),
+    ),
+)
+def test_ticks_covering_interprets_helsinki_source_clock_for_dst(
+    source_wall_time: str, expected_tick_utc: str
+) -> None:
+    bar_time = pd.Timestamp(source_wall_time, tz="Etc/GMT-3")
+    tick_time = pd.Timestamp(expected_tick_utc)
+    book = TickBook(
+        np.array([tick_time.value], dtype=np.int64),
+        np.array([100.0]),
+        np.array([100.5]),
+    )
+    bars = pd.DataFrame({"close": [100.0]}, index=pd.DatetimeIndex([bar_time]))
+
+    sliced = ticks_covering(book, bars, source_clock_model="europe_helsinki")
+
+    assert sliced is not None
+    assert sliced.content_sha256() == book.content_sha256()
 
 
 def test_tickbook_content_hash_includes_stable_quote_order() -> None:
@@ -765,6 +791,48 @@ def test_tick_cache_identity_tracks_source_timezone_and_session_filter(tmp_path:
     )
 
 
+def test_tick_book_honors_helsinki_source_clock_and_cache_identity(tmp_path: Path) -> None:
+    csv_path = tmp_path / "helsinki_clock_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.01.06", "16:30:00.000", 100.0, 100.6),
+            ("2025.01.06", "23:30:00.000", 100.5, 101.1),
+            ("2025.07.07", "16:30:00.000", 101.0, 101.6),
+        ],
+    )
+    cache_path = tmp_path / "tick_cache.parquet"
+
+    helsinki = build_tick_book(
+        csv_path,
+        tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
+        cache_path=cache_path,
+    )
+    fixed_carrier = build_tick_book(csv_path, tz="Etc/GMT-3", cache_path=cache_path)
+
+    expected_helsinki = pd.DatetimeIndex(
+        ["2025-01-06 16:30", "2025-01-06 23:30", "2025-07-07 16:30"],
+        tz="Europe/Helsinki",
+    ).tz_convert("UTC")
+    expected_fixed = pd.DatetimeIndex(
+        ["2025-01-06 16:30", "2025-01-06 23:30", "2025-07-07 16:30"],
+        tz="Etc/GMT-3",
+    ).tz_convert("UTC")
+    expected_helsinki_ns = expected_helsinki.to_numpy(dtype="datetime64[ns]").view(np.int64)
+    expected_fixed_ns = expected_fixed.to_numpy(dtype="datetime64[ns]").view(np.int64)
+    assert np.array_equal(helsinki._ts, expected_helsinki_ns)
+    assert np.array_equal(fixed_carrier._ts, expected_fixed_ns)
+
+    winter_day = build_tick_book(
+        csv_path,
+        tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
+        end_inclusive="2025-01-06",
+    )
+    assert np.array_equal(winter_day._ts, expected_helsinki_ns[:2])
+
+
 def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) -> None:
     symbol = "US100.cash"
     csv_path = tmp_path / f"{symbol}.csv"
@@ -782,6 +850,7 @@ def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) ->
                 "tick_files": {symbol: csv_path.name},
                 "symbols": [symbol],
                 "tz": "Etc/GMT-3",
+                "timestamp_clock": "europe_helsinki",
                 "price_discretization": {
                     "enabled": True,
                     "increment": 0.25,
@@ -796,7 +865,7 @@ def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) ->
     assert (cache_dir / tick_cache_filename(symbol, 0.25, TICK_CACHE_VERSION)).is_file()
     book = books[symbol]
     assert book is not None
-    quote = book.quote_at(pd.Timestamp("2025-01-06 16:30:00", tz="Etc/GMT-3"))
+    quote = book.quote_at(pd.Timestamp("2025-01-06T14:30:00Z"))
     assert quote == pytest.approx((25633.75, 25634.0))
 
 
@@ -817,7 +886,8 @@ def test_build_tick_books_selects_registered_windows_from_one_source(tmp_path: P
             "data": {
                 "cache_dir": str(tmp_path / "cache"),
                 "symbols": [symbol],
-                "tz": "UTC",
+                "tz": "Etc/GMT-3",
+                "timestamp_clock": "europe_helsinki",
                 "datasets": {
                     "training": {
                         "raw_dir": str(tmp_path),
@@ -841,9 +911,9 @@ def test_build_tick_books_selects_registered_windows_from_one_source(tmp_path: P
     book = books[symbol]
     assert book is not None
     assert len(book) == 2
-    assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59Z")) == pytest.approx((100.0, 100.6))
-    assert book.quote_at(pd.Timestamp("2026-01-01T00:00:00Z")) == pytest.approx((200.0, 200.6))
-    assert book.quote_at(pd.Timestamp("2026-01-02T00:00:00Z")) is None
+    assert book.quote_at(pd.Timestamp("2025-12-31T21:59:59Z")) == pytest.approx((100.0, 100.6))
+    assert book.quote_at(pd.Timestamp("2025-12-31T22:00:00Z")) == pytest.approx((200.0, 200.6))
+    assert book.quote_at(pd.Timestamp("2026-01-01T22:00:00Z")) is None
     for dataset, start, end in (
         ("training", "2025-12-31", "2025-12-31"),
         ("testing", "2026-01-01", "2026-01-01"),

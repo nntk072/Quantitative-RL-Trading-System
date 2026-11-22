@@ -46,18 +46,19 @@ def write_packet(report: dict[str, Any], output: Path) -> None:
     )
 
 
-def run(root: Path, output: Path, chunksize: int) -> None:
-    profile_path = root / PROFILE
+def run(root: Path, output: Path, chunksize: int, profile_path: Path | None = None) -> None:
+    profile_path = profile_path or root / PROFILE
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     if not profile.get("all_inputs_present") or not profile.get("all_input_hashes_match"):
         raise ValueError("existing quality profile does not verify all local input hashes")
     config_path = root / CONFIG
     config = OmegaConf.load(config_path)
     timezone = str(config.data.tz)
+    source_clock_model = str(config.data.get("timestamp_clock", "native"))
     grid_increment = configured_price_grid_increment(config)
     tick_inputs = [record for record in profile["inputs"] if record.get("kind") == "tick"]
-    if len(tick_inputs) != 4:
-        raise ValueError(f"expected four role/instrument tick inputs, found {len(tick_inputs)}")
+    if not tick_inputs:
+        raise ValueError("quality profile does not register any tick inputs")
 
     records: list[dict[str, Any]] = []
     for item in sorted(tick_inputs, key=lambda record: (record["role"], record["instrument"])):
@@ -71,6 +72,7 @@ def run(root: Path, output: Path, chunksize: int) -> None:
         book = build_tick_book(
             source,
             tz=timezone,
+            source_clock_model=source_clock_model,
             session_start=None,
             session_end=None,
             cache_path=None,
@@ -124,6 +126,7 @@ def run(root: Path, output: Path, chunksize: int) -> None:
             "configuration": {
                 "path": str(CONFIG),
                 "timezone_carrier": timezone,
+                "source_clock_model": source_clock_model,
                 "session_start": None,
                 "session_end": None,
                 "price_grid_increment": grid_increment,
@@ -208,13 +211,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument("--profile", type=Path, default=None)
     parser.add_argument("--chunksize", type=int, default=2_000_000)
     args = parser.parse_args()
     if args.chunksize <= 0:
         raise ValueError("chunksize must be positive")
     root = args.root.resolve()
     output = args.output if args.output.is_absolute() else root / args.output
-    run(root, output, args.chunksize)
+    profile = None if args.profile is None else args.profile.expanduser().resolve()
+    run(root, output, args.chunksize, profile)
 
 
 if __name__ == "__main__":

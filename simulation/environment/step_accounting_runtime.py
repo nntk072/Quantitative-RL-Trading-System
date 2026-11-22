@@ -117,8 +117,7 @@ class StepAccountingRuntimeMixin(RuntimeMixinBase):
                 if event_timestamp.tzinfo is None:
                     event_timestamp = event_timestamp.tz_localize("UTC")
                 event_timestamp = event_timestamp.tz_convert(BAR_TIME_TZ)
-                if event_timestamp > valuation_time:
-                    valuation_time = event_timestamp
+                valuation_time = event_timestamp
         self.equity_curve.append(self.account.equity)
         self.equity_times.append(valuation_time)
         pnl_step = (

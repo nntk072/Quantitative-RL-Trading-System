@@ -115,3 +115,41 @@ def test_candidate_age_rejects_future_and_expired_source_timestamps(
     assert geometry._candidate_age_fraction(env, {}, 1, 0) is None
     event.source_event_times_ns = (("source", decision_time.value - 600_000_000_000),)
     assert geometry._candidate_age_fraction(env, {}, 1, 0) is None
+
+
+def test_session_remaining_uses_regular_close_when_no_special_schedule_exists() -> None:
+    env = SimpleNamespace(
+        _bar_time=lambda _index: pd.Timestamp("2025-11-26 17:30", tz="Europe/Helsinki"),
+        _minutes_per_step=1.0,
+        _session_start="08:30",
+        _session_end="15:00",
+        _session_timezone="America/Chicago",
+        _source_clock_model="europe_helsinki",
+        _scheduled_session_closes={},
+    )
+
+    remaining = geometry._session_remaining(env, 0)
+
+    assert isinstance(remaining, tuple)
+    bars, fraction = remaining
+    assert bars == 329
+    assert fraction == pytest.approx(329.0 / 390.0)
+
+
+def test_session_remaining_converts_special_close_from_source_clock() -> None:
+    env = SimpleNamespace(
+        _bar_time=lambda _index: pd.Timestamp("2025-11-28 17:00", tz="Europe/Helsinki"),
+        _minutes_per_step=1.0,
+        _session_start="08:30",
+        _session_end="15:00",
+        _session_timezone="America/Chicago",
+        _source_clock_model="europe_helsinki",
+        _scheduled_session_closes={"2025-11-28": "20:15"},
+    )
+
+    remaining = geometry._session_remaining(env, 0)
+
+    assert isinstance(remaining, tuple)
+    bars, fraction = remaining
+    assert bars == 194
+    assert fraction == pytest.approx(194.0 / 225.0)

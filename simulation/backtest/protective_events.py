@@ -602,44 +602,8 @@ def process_protective_and_account_events(
             spread_price,
             settings.cost_model,
         )
-    if (
-        (settings.tick_execution_required or settings.randomized_fill_latency_ms > 0)
-        and position is not None
-        and (tick_hit is None or multi_target_tick_fill)
-        and full_bar_available_after_entry
-    ):
-        sl_touched = position.sl_price is not None and (
-            exit_low <= position.sl_price
-            if position.direction == 1
-            else exit_high >= position.sl_price
-        )
-        active_targets = (
-            [getattr(position, f"tp{slot}_price") for slot in _active_target_slots(position)]
-            if multi_target_position
-            else [position.tp_price]
-        )
-        tp_touched = any(
-            target is not None
-            and (
-                (position.direction == 1 and exit_high >= target)
-                or (position.direction == -1 and exit_low <= target)
-            )
-            for target in active_targets
-        )
-        if sl_touched or tp_touched:
-            target_text = ", ".join(
-                f"tp{slot}={getattr(position, f'tp{slot}_price')}" for slot in (1, 2, 3)
-            )
-            raise TickExecutionUnavailable(
-                "OHLC indicates a protective level was reached, but no matching "
-                "tick trigger was found; candle fallback is disabled "
-                f"(bar_idx={i}, bar_time={bar_time.isoformat()}, "
-                f"direction={position.direction}, open={row['open']}, "
-                f"high={row['high']}, low={row['low']}, close={row['close']}, "
-                f"exit_low={exit_low}, exit_high={exit_high}, "
-                f"sl={position.sl_price}, {target_text})"
-            )
-
+    # Candle OHLC and a bar-level spread estimate are not executable quote
+    # evidence; only a crossing bid/ask tick can trigger a tick-mode exit.
     position = state.position
     if (
         position is not None

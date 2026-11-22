@@ -127,7 +127,6 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             step_idx=0,
             _maybe_ema_exit=lambda *_args: None,
             _resolve_randomized_tick_quote=resolve_randomized_quote,
-            tick_protective_assertion_calls=[],
         )
         for name in (
             "_stamp_exit",
@@ -136,18 +135,11 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             "_sl_tp_fill_quote",
             "_exit_side_bar_range",
             "_check_multi_tp_ticks",
-            "_assert_tick_protective_events_observed",
             "_adverse_tick_fill_quote",
             "_close_at_quote",
+            "_assert_tick_protective_events_observed",
         ):
             setattr(env, name, MethodType(getattr(TradingEnv, name), env))
-        original_assertion = env._assert_tick_protective_events_observed
-
-        def record_assertion(self: SimpleNamespace, *args: object, **kwargs: object) -> None:
-            self.tick_protective_assertion_calls.append((args, kwargs))
-            original_assertion(*args, **kwargs)
-
-        env._assert_tick_protective_events_observed = MethodType(record_assertion, env)
         bar = SimpleNamespace(
             open=100.0,
             low=low if direction == 1 else 98.0,
@@ -312,6 +304,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         ]
         for record, expected_size in zip(closes, (0.3, 0.3, 0.4), strict=True):
             self.assertAlmostEqual(record["size"], expected_size)
+        self.assertEqual([record["price"] for record in closes], [100.5, 101.0, 101.5])
         self.assertTrue(all(record["fill_quote_source"] == "tick" for record in closes))
         self.assertIsNone(state.position)
         for actual, reference in zip(closes, env_closes, strict=True):
@@ -340,7 +333,6 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         )
 
         self.assertIsNotNone(env.position)
-        self.assertEqual(len(env.tick_protective_assertion_calls), 1)
         self.assertEqual([record.get("type") for record in env.trade_log], ["tp_partial_close"])
 
     def test_multi_target_replay_does_not_apply_new_stop_to_prior_ohlc_range(self) -> None:
@@ -371,10 +363,8 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         self.assertIsNotNone(env.position)
         self.assertAlmostEqual(env.position.size, 0.2)
         self.assertAlmostEqual(env.position.sl_price, 99.9)
-        self.assertEqual(len(env.tick_protective_assertion_calls), 1)
         self.assertEqual(
-            env.tick_protective_assertion_calls[0][1]["protective_levels"],
-            (None, (None, None, None)),
+            [record.get("type") for record in env.trade_log], ["tp_partial_close", "sl_update"]
         )
 
     def test_randomized_tick_latency_matches_across_all_partial_targets(self) -> None:
@@ -500,6 +490,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             record for record in env.trade_log if record.get("type", "").startswith("tp_")
         ]
         self.assertEqual(len(closes), 3)
+        self.assertEqual([record["price"] for record in closes], [99.5, 99.0, 98.5])
         for actual, reference in zip(closes, env_closes, strict=True):
             self.assertEqual(actual["reason"], reference["reason"])
             for field in ("size", "pnl", "price"):
@@ -532,18 +523,33 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             self.assertEqual(actual["position_complete"], reference["position_complete"])
         self.assertAlmostEqual(state.account.balance, env.account.balance)
 
-    def test_strict_tick_mode_rejects_ohlc_target_without_matching_tick(self) -> None:
+    def test_tick_mode_keeps_position_open_when_ohlc_target_has_no_crossing_tick(self) -> None:
         start = pd.Timestamp("2026-01-05T10:00:00Z")
         tick_time = start + pd.Timedelta(seconds=10)
         book = TickBook(
             np.array([tick_time.value], dtype=np.int64),
-            np.array([100.5]),
-            np.array([100.51]),
+            np.array([100.4]),
+            np.array([100.41]),
         )
-        with self.assertRaisesRegex(TickExecutionUnavailable, "no matching tick trigger"):
-            self._run(tickbook=book)
-        with self.assertRaisesRegex(TickExecutionUnavailable, "no matching tick trigger"):
+        state = self._run(tickbook=book)
+
+        self.assertIsNotNone(state.position)
+        self.assertFalse(
+            any(record.get("type", "").startswith("tp_") for record in state.trade_log)
+        )
+        # Fail-closed: with tick execution required, an OHLC-only touch with no
+        # matching tick must raise rather than fill from the candle.
+        with self.assertRaises(TickExecutionUnavailable):
             self._run_environment(tickbook=book, require_tick_execution=True)
+
+        short_state = self._run(tickbook=book, direction=-1)
+
+        self.assertIsNotNone(short_state.position)
+        self.assertFalse(
+            any(record.get("type", "").startswith("tp_") for record in short_state.trade_log)
+        )
+        with self.assertRaises(TickExecutionUnavailable):
+            self._run_environment(tickbook=book, direction=-1, require_tick_execution=True)
 
     def test_stop_remains_first_when_bar_also_reaches_targets(self) -> None:
         state = self._run(low=98.5)

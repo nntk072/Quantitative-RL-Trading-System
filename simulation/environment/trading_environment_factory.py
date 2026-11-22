@@ -346,7 +346,10 @@ def build_eval_common(
             str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
         "scheduled_session_closes": scheduled_session_closes(cfg),
-        "session_start": str(cfg.session.get("start", "16:30")),
+        "session_start": str(cfg.session.get("start", "08:30")),
+        "session_end": str(cfg.session.get("end", "15:00")),
+        "session_timezone": str(cfg.session.get("tz", "America/Chicago")),
+        "source_clock_model": str(cfg.data.get("timestamp_clock", "native")),
         "trading_policy": policy.to_dict(),
         "fill_latency_bars": fill_latency_bars(cfg),
         "limit_order_max_offset_atr": float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),
@@ -694,7 +697,10 @@ def make_env(
             str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
         scheduled_session_closes=scheduled_session_closes(cfg),
-        session_start=str(cfg.session.get("start", "16:30")),
+        session_start=str(cfg.session.get("start", "08:30")),
+        session_end=str(cfg.session.get("end", "15:00")),
+        session_timezone=str(cfg.session.get("tz", "America/Chicago")),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         trading_policy=policy.to_dict(),
         fill_latency_bars=fill_latency_bars(cfg),
         limit_order_max_offset_atr=float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),

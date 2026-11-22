@@ -37,10 +37,14 @@ def build_packet(packet_dir: Path, partitions: tuple[str, ...] = PARTITIONS) -> 
             continue
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        expected_script = manifest.get("analysis_script", {}).get("sha256")
-        actual_script = _sha256(
-            REPO_ROOT / "scripts/research/analysis/evaluation/summarize_policy_trade_lifecycle.py"
+        expected_script_path = (
+            "research_tools/trading/evaluation/summarize_policy_trade_lifecycle.py"
         )
+        analysis_script = manifest.get("analysis_script", {})
+        expected_script = analysis_script.get("sha256")
+        if analysis_script.get("path") != expected_script_path:
+            failures.append({"partition": partition, "reason": "analysis_script_path_mismatch"})
+        actual_script = _sha256(REPO_ROOT / expected_script_path)
         if expected_script != actual_script:
             failures.append({"partition": partition, "reason": "analysis_script_hash_mismatch"})
 

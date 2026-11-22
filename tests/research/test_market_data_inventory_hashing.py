@@ -122,7 +122,7 @@ def test_manifest_uses_semantic_selected_campaign_match_fields(
         encoding="utf-8",
     )
     output_path = tmp_path / "manifest.json"
-    monkeypatch.setattr(hash_local_data_inventory, "ROOT", source_root)
+    monkeypatch.setattr(hash_local_data_inventory._module, "ROOT", source_root)
     monkeypatch.setattr(
         "sys.argv",
         [
@@ -171,7 +171,7 @@ def test_raw_data_identity_manifest_does_not_require_old_campaign_evidence(
         encoding="utf-8",
     )
     output_path = tmp_path / "data_identity" / "raw_data_manifest.json"
-    monkeypatch.setattr(hash_local_data_inventory, "ROOT", source_root)
+    monkeypatch.setattr(hash_local_data_inventory._module, "ROOT", source_root)
     monkeypatch.setattr(
         "sys.argv",
         [

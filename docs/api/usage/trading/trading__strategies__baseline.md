@@ -10,19 +10,49 @@ This page contains 4 public callable records owned by `trading.strategies.baseli
 
 **Exact API:** {py:obj}`trading.strategies.baseline.BaselineStrategy` · **Source:** [trading/strategies/baseline.py:11](../../../../trading/strategies/baseline.py#L11)
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_rejected_market_order_has_matching_terminal_event_and_fill_context`](../../../../tests/integration/backtest/test_market_order_rejection_parity.py#L108)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = BaselineStrategy(...)
+# … caller setup omitted …
+        "max_loss_per_trade_usd": 100.0,
+        "block_overnight": False,
+        "strategy_actions": True,
+        "trade_setup_actions": True,
+        "fill_latency_bars": 0,
+        "strategy": BaselineStrategy(),
+        "open_manipulation_bars": 0,
+    }
+    backtest_kwargs = {
+        "obs_window": 1,
+        "initial_balance": 100_000.0,
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** Control-group strategy without structure-specific entry constraints.
+2. [test fixture: `test_rejected_pending_limit_has_matching_cancel_reject_and_account_context`](../../../../tests/integration/backtest/test_pending_limit_rejection_parity.py#L121)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        "block_overnight": False,
+        "strategy_actions": True,
+        "trade_setup_actions": True,
+        "agent_entry_execution": True,
+        "tickbook": tickbook,
+        "strategy": BaselineStrategy(),
+        "open_manipulation_bars": 0,
+    }
+    backtest_kwargs = {
+        "obs_window": 1,
+        "initial_balance": 100_000.0,
+# … caller assertions omitted …
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

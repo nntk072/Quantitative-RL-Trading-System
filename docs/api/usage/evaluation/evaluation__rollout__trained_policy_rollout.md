@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1202](../../../../evaluation/rollout/trained_policy_rollout.py#L1202)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1211](../../../../evaluation/rollout/trained_policy_rollout.py#L1211)
 
 **Inputs and outputs:**
 
@@ -29,7 +29,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L388)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L390)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -193,6 +193,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   target_timeframes: Items supplied for the target timeframes, in input order.
   scheduled_session_closes: Key-value data used for the scheduled session closes.
   session_start: Text or path value identifying the session start.
+  session_end: Session close in the configured session timezone.
+  session_timezone: IANA timezone used for session boundaries.
+  source_clock_model: Interpretation of raw chart-index wall labels.
   env: Environment whose state is read or updated.
   legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
   sequence_columns_override: Exact saved input coordinates for a bounded replay.
@@ -281,7 +284,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1202](../../../../evaluation/rollout/trained_policy_rollout.py#L1202)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1211](../../../../evaluation/rollout/trained_policy_rollout.py#L1211)
 
 **Inputs and outputs:**
 
@@ -302,7 +305,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L388)
+1. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L390)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -386,7 +389,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_evaluation_rollout_routes_providers_through_semantic_adapter`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L167)
+1. [test fixture: `test_evaluation_rollout_routes_providers_through_semantic_adapter`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L185)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

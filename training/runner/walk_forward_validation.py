@@ -170,6 +170,8 @@ def run_walk_forward_validation(
             schedule_path=schedule_path,
             session_start=str(cfg.session.start),
             session_end=str(cfg.session.end),
+            session_tz=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         )
         fold_test_feat = attach_policy_market_context(
             fold_test_bars,
@@ -178,6 +180,8 @@ def run_walk_forward_validation(
             schedule_path=schedule_path,
             session_start=str(cfg.session.start),
             session_end=str(cfg.session.end),
+            session_tz=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         )
         if list(fold_train_feat.columns) != feature_columns:
             raise RuntimeError(f"Walk-forward fold {split.fold} changed feature schema")
@@ -205,7 +209,11 @@ def run_walk_forward_validation(
             vae=env_vae,
             pre_ny_by_date=pre_ny_by_date,
             obs_features_mmap=fold_mmap,
-            tickbook=ticks_covering(primary_ticks, fold_train_bars),
+            tickbook=ticks_covering(
+                primary_ticks,
+                fold_train_bars,
+                source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+            ),
             arch=args.arch,
         )
         fold_model = build_agent(
@@ -227,7 +235,11 @@ def run_walk_forward_validation(
                 vae=env_vae,
                 pre_ny_by_date=pre_ny_by_date,
                 obs_features_mmap=fold_mmap,
-                tickbook=ticks_covering(primary_ticks, fold_train_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    fold_train_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 arch=args.arch,
             ),
             seed=int(seed),
@@ -295,7 +307,11 @@ def run_walk_forward_validation(
             ema_runner_fraction=float(cfg.env.get("ema_runner_fraction", 0.0)),
             allow_simplex=bool(cfg.env.get("allow_simplex", True)),
             tp_breakeven_alpha=float(cfg.env.get("tp_breakeven_alpha", 0.5)),
-            tickbook=ticks_covering(primary_ticks, fold_test_bars),
+            tickbook=ticks_covering(
+                primary_ticks,
+                fold_test_bars,
+                source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+            ),
             fill_delay_ms=fill_delay_ms(cfg),
             deterministic=deterministic_eval,
         )

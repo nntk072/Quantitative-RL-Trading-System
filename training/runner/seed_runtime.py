@@ -278,7 +278,11 @@ class SeedRunner:
                 vae=env_vae,
                 pre_ny_by_date=pre_ny_by_date,
                 obs_features_mmap=obs_mmap,
-                tickbook=ticks_covering(primary_ticks, train_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    train_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 arch=args.arch,
             )
             env_factory = partial(
@@ -292,7 +296,11 @@ class SeedRunner:
                 vae=env_vae,
                 pre_ny_by_date=pre_ny_by_date,
                 obs_features_mmap=obs_mmap,
-                tickbook=ticks_covering(primary_ticks, train_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    train_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 arch=args.arch,
             )
 
@@ -494,7 +502,11 @@ class SeedRunner:
                 cfg,
                 raw_columns=list(strategy_from_cfg(cfg)[0].raw_columns),
                 feature_config_hash=feat_cache.stem,
-                tickbook=ticks_covering(primary_ticks, short_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    short_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 pre_ny_by_date=None,
             )
             best_eval_spec = EnvSpec.from_cfg(
@@ -519,7 +531,11 @@ class SeedRunner:
                 use_vae=args.use_vae,
                 vae=env_vae,
                 pre_ny_by_date=pre_ny_by_date,
-                tickbook=ticks_covering(primary_ticks, short_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    short_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 arch=args.arch,
             )
 
@@ -545,7 +561,11 @@ class SeedRunner:
                 vae=env_vae,
                 pre_ny_by_date=pre_ny_by_date,
                 obs_features_mmap=obs_mmap,
-                tickbook=ticks_covering(primary_ticks, train_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    train_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 arch=args.arch,
             )
 
@@ -600,7 +620,11 @@ class SeedRunner:
                     features=dash_feat,
                     max_episode_steps=None,
                     deterministic=False,
-                    tickbook=ticks_covering(primary_ticks, dash_bars),
+                    tickbook=ticks_covering(
+                        primary_ticks,
+                        dash_bars,
+                        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                    ),
                     **eval_common,
                 )
                 metrics = calculate_metrics(
@@ -805,7 +829,11 @@ class SeedRunner:
             test_eval_env = None
             empty_bars = test_bars
             empty_features = test_feat
-            test_ticks = ticks_covering(primary_ticks, test_bars)
+            test_ticks = ticks_covering(
+                primary_ticks,
+                test_bars,
+                source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+            )
         test_result = _evaluate_final_split(
             provider,
             bars=empty_bars,
@@ -896,7 +924,11 @@ class SeedRunner:
             train_eval_env = None
             empty_bars = train_bars
             empty_features = train_feat
-            train_ticks = ticks_covering(primary_ticks, train_bars)
+            train_ticks = ticks_covering(
+                primary_ticks,
+                train_bars,
+                source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+            )
         _setup_rngs(seed)
         train_result = _evaluate_final_split(
             provider,

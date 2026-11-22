@@ -149,7 +149,7 @@ is read by every listed package.
 | `data.split.train_start` | `string` | `"2024-12-30"` | `market_data/configuration` |
 | `data.symbols` | `array` | `["US100.cash","US500.cash"]` | `market_data/configuration` |
 | `data.timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `market_data/configuration` |
-| `data.timestamp_clock` | `string` | `"ftmo_mt5_us_dst"` | `market_data/configuration` |
+| `data.timestamp_clock` | `string` | `"europe_helsinki"` | `market_data/configuration` |
 | `data.tz` | `string` | `"Etc/GMT-3"` | `market_data/configuration` |
 | `device` | `string` | `"auto"` | `compute/environment` |
 | `encoder.windows.d1` | `integer` | `5` | `models/encoders` |
@@ -245,6 +245,8 @@ is read by every listed package.
 | `evaluation.trade_idea_plots.standard_deviation.levels` | `string` | `"${features.entry_ideas.levels}"` | `evaluation` |
 | `evaluation.trade_idea_plots.standard_deviation.max_chart_range_fraction` | `number` | `0.15` | `evaluation` |
 | `evaluation.trade_idea_plots.standard_deviation.timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `evaluation` |
+| `execution.approved_no_fill_quote_anchors.US100.cash` | `array` | `[]` | `trading/execution and simulation` |
+| `execution.approved_no_fill_quote_anchors.US500.cash` | `array` | `[]` | `trading/execution and simulation` |
 | `execution.fill_delay_ms` | `integer` | `0` | `trading/execution and simulation` |
 | `execution.fill_latency_bars` | `integer` | `0` | `trading/execution and simulation` |
 | `execution.limit_order_max_offset_atr` | `number` | `1.0` | `trading/execution and simulation` |
@@ -395,9 +397,9 @@ is read by every listed package.
 | `sac.tau` | `number` | `0.005` | `learning/rl` |
 | `sac.train_freq` | `integer` | `1` | `learning/rl` |
 | `session.dst_flag` | `boolean` | `true` | `market_data and features` |
-| `session.end` | `string` | `"23:00"` | `market_data and features` |
-| `session.start` | `string` | `"16:30"` | `market_data and features` |
-| `session.tz` | `string` | `"Etc/GMT-3"` | `market_data and features` |
+| `session.end` | `string` | `"15:00"` | `market_data and features` |
+| `session.start` | `string` | `"08:30"` | `market_data and features` |
+| `session.tz` | `string` | `"America/Chicago"` | `market_data and features` |
 | `strategy.batch_windows` | `integer` | `256` | `trading/strategies` |
 | `strategy.entry.enforce_gate` | `boolean` | `false` | `trading/strategies` |
 | `strategy.entry.mode` | `string` | `"legacy"` | `trading/strategies` |
@@ -426,7 +428,7 @@ is read by every listed package.
 | `strategy.risk.sl_mode` | `string` | `"fixed"` | `trading/strategies` |
 | `strategy.risk.tp_mode` | `string` | `"fixed"` | `trading/strategies` |
 | `strategy.risk.tp_reference` | `string` | `"structural"` | `trading/strategies` |
-| `strategy.session.timezone` | `string` | `"Etc/GMT-3"` | `trading/strategies` |
+| `strategy.session.timezone` | `string` | `"America/Chicago"` | `trading/strategies` |
 | `strategy.tp.allowed_targets` | `array` | `["rr","buyside_liquidity","sellside_liquidity","previous_day_high_low"]` | `trading/strategies` |
 | `strategy.tp.invalid_target_policy` | `string` | `"rr_fallback"` | `trading/strategies` |
 | `strategy.tp.mode` | `string` | `"agent"` | `trading/strategies` |

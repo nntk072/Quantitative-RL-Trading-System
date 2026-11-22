@@ -185,6 +185,7 @@ def test_environment_and_backtest_apply_same_bar_protection_before_account_guard
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         block_overnight=False,
     )
@@ -260,6 +261,7 @@ def test_environment_and_backtest_share_planned_risk_aware_adverse_close() -> No
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         eod_risk=eod_risk,
         block_overnight=False,
@@ -781,6 +783,7 @@ def test_environment_and_backtest_resolve_target_before_adverse_cutoff() -> None
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         eod_risk=eod_risk,
         block_overnight=False,

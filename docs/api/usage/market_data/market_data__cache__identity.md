@@ -29,7 +29,7 @@ This page contains 1 public callable records owned by `market_data.cache.identit
 
 **Observed usage:**
 
-1. [production caller: `build_bar_cache_identity`](../../../../market_data/cache/bars.py#L114)
+1. [production caller: `build_bar_cache_identity`](../../../../market_data/cache/bars.py#L120)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -50,7 +50,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     }
 ```
 
-2. [production caller: `build_tick_cache_identity`](../../../../market_data/cache/ticks.py#L78)
+2. [production caller: `build_tick_cache_identity`](../../../../market_data/cache/ticks.py#L81)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

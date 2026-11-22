@@ -106,6 +106,7 @@ def test_prague_midnight_resets_flat_account_without_session_transition() -> Non
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         hold_on_zero=True,
         block_overnight=False,
@@ -302,7 +303,8 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
     assert result["account_state_trace_complete"] is True
     assert len(account_trace) == len(result["equity"])
     assert account_trace["schema_version"].eq("account_state_trace.v3").all()
-    assert account_trace["state_phase"].eq("pre_action_valuation").all()
+    assert account_trace["state_phase"].iloc[:-1].eq("post_action_valuation").all()
+    assert account_trace["state_phase"].iloc[-1] == "pre_action_valuation"
     env_account_trace = pd.DataFrame.from_records(env_account_trace_rows)
     assert len(env_account_trace) == len(actions)
     assert env_account_trace["state_phase"].eq("post_action_valuation").all()
@@ -324,9 +326,12 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
         atol=1e-9,
         err_msg="cross-engine equity marks differ at the shared synthetic boundaries",
     )
-    assert np.any(
-        env_account_trace["balance"].to_numpy(dtype=float)
-        != backtest_shared_marks["balance"].to_numpy(dtype=float)
+    np.testing.assert_allclose(
+        env_account_trace["balance"].to_numpy(dtype=float),
+        backtest_shared_marks["balance"].to_numpy(dtype=float),
+        rtol=0.0,
+        atol=1e-9,
+        err_msg="cross-engine balance marks differ at the shared synthetic boundaries",
     )
     for trace in (env_account_trace, backtest_shared_marks):
         np.testing.assert_allclose(
@@ -477,6 +482,23 @@ def test_environment_and_backtest_match_on_one_shared_tick_execution_trace(
     )
     env.reset(seed=7)
     env.step(env_action)
+    env_open = next(event for event in env.trade_log if event["type"] == "open")
+    assert env.position is not None
+    expected_open_price = 100.2 + tick_slippage if direction == 1 else 100.0 - tick_slippage
+    expected_mark_price = 100.0 if direction == 1 else 100.2
+    expected_entry_equity = (
+        50_000.0
+        - cost_model.total_cost(float(env.position.size))
+        + (
+            (expected_mark_price - expected_open_price)
+            * direction
+            * float(env.position.size)
+            * env.contract_size
+            * cost_model.point_value
+        )
+    )
+    assert env.position.mark_price == pytest.approx(expected_mark_price)
+    assert env.account.equity == pytest.approx(expected_entry_equity)
     env.step(19)
 
     actions = iter((direction, 19))
@@ -509,13 +531,13 @@ def test_environment_and_backtest_match_on_one_shared_tick_execution_trace(
         contract_size=1.0,
     )
 
-    env_open = next(event for event in env.trade_log if event["type"] == "open")
     env_close = next(event for event in env.trade_log if event["type"] == "close")
     backtest_open = result["trades"].loc[result["trades"]["type"] == "open"].iloc[0]
     backtest_close = result["trades"].loc[result["trades"]["type"] == "close"].iloc[0]
-    expected_open_price = 100.2 + tick_slippage if direction == 1 else 100.0 - tick_slippage
     expected_close_price = 99.5 - tick_slippage if direction == 1 else 99.7 + tick_slippage
     assert env_open["price"] == pytest.approx(expected_open_price)
+    assert env_open["equity"] == pytest.approx(expected_entry_equity)
+    assert backtest_open["equity"] == pytest.approx(expected_entry_equity)
     assert env_close["price"] == pytest.approx(expected_close_price)
 
     for env_event, backtest_event in (
@@ -991,6 +1013,7 @@ def test_environment_and_backtest_size_to_the_same_trade_risk_cap(
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         block_overnight=False,
     )

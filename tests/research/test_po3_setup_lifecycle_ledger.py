@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -38,8 +39,9 @@ def test_training_input_hashes_require_current_local_manifest_match(
         manifest_files.append({"path": relative, "size_bytes": len(contents), "sha256": digest})
     manifest_path = tmp_path / "raw_manifest.json"
     manifest_path.write_text(json.dumps({"files": manifest_files}), encoding="utf-8")
-    monkeypatch.setattr(packet, "ROOT", tmp_path)
-    monkeypatch.setattr(packet, "RAW_MANIFEST", manifest_path)
+    implementation = sys.modules[packet._training_input_hashes.__module__]
+    monkeypatch.setattr(implementation, "ROOT", tmp_path)
+    monkeypatch.setattr(implementation, "RAW_MANIFEST", manifest_path)
     cfg = OmegaConf.create(
         {
             "data": {
@@ -89,8 +91,9 @@ def test_training_input_hashes_reject_content_outside_manifest(
         encoding="utf-8",
     )
     (tmp_path / "data/training/US500.cash_M1.csv").write_bytes(b"")
-    monkeypatch.setattr(packet, "ROOT", tmp_path)
-    monkeypatch.setattr(packet, "RAW_MANIFEST", manifest_path)
+    implementation = sys.modules[packet._training_input_hashes.__module__]
+    monkeypatch.setattr(implementation, "ROOT", tmp_path)
+    monkeypatch.setattr(implementation, "RAW_MANIFEST", manifest_path)
     cfg = OmegaConf.create(
         {
             "data": {

@@ -278,7 +278,9 @@ def _candidate_files(roots: list[Path]) -> tuple[list[tuple[Path, Path]], list[t
         # can make a single artifact appear under arbitrarily repeated paths.
         # The supplied roots are the intended physical scan boundary.
         for directory, dirnames, filenames in os.walk(resolved_root, followlinks=False):
-            dirnames[:] = sorted(name for name in dirnames if name not in {".git", "__pycache__"})
+            dirnames[:] = sorted(
+                name for name in dirnames if name not in {".git", "__pycache__", "tmp"}
+            )
             for name in sorted(filenames):
                 path = Path(directory, name)
                 resolved = path.resolve()

@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Any
 
 from omegaconf import OmegaConf
+from research_tools.compute.audits.pretraining_readiness_plan import (
+    load_plan as load_execution_plan,
+)
 from research_tools.training.audits.record_pretraining_scientific_gate import file_sha256
 
 from artifacts.atomic import write_json_atomic
@@ -21,6 +24,8 @@ ROOT = repository_root(__file__)
 DEFAULT_PLAN = ROOT / "config/research/pretraining_scientific_readiness.yaml"
 GATE_SCHEMA = "pretraining-scientific-gate-review-v1"
 OUTPUT_SCHEMA = "pretraining-scientific-readiness-v1"
+BARRIER_COMPATIBILITY = {"B4_IMPLEMENTATION_RELEASE": "COMMON_IMPLEMENTATION_RELEASE"}
+EXECUTION_PLAN = ROOT / "config/research/pretraining_parallel_readiness.yaml"
 
 
 def _load_object(path: Path) -> dict[str, Any]:
@@ -34,13 +39,24 @@ def load_plan(path: Path) -> dict[str, Any]:
     value = OmegaConf.to_container(OmegaConf.load(path), resolve=True)
     if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
         raise ValueError("scientific-readiness plan must be a mapping")
-    if value.get("schema_version") != "pretraining-scientific-readiness-plan-v1":
+    if value.get("schema_version") not in {
+        "pretraining-scientific-readiness-plan-v1",
+        "pretraining-scientific-readiness-plan-v2",
+    }:
         raise ValueError("unsupported scientific-readiness plan schema")
-    for key in ("common_gates", "price_gates", "required_execution_barriers"):
+    if value.get("schema_version") == "pretraining-scientific-readiness-plan-v1":
+        value["common_execution_barriers"] = list(value.get("required_execution_barriers", []))
+        value["price_execution_barriers"] = []
+    for key in (
+        "common_gates",
+        "price_gates",
+        "common_execution_barriers",
+        "price_execution_barriers",
+    ):
         rows = value.get(key)
         if (
             not isinstance(rows, list)
-            or not rows
+            or (not rows and key != "price_execution_barriers")
             or not all(isinstance(x, str) and x for x in rows)
         ):
             raise ValueError(f"{key} must be a non-empty string list")
@@ -48,6 +64,8 @@ def load_plan(path: Path) -> dict[str, Any]:
             raise ValueError(f"{key} contains duplicates")
     if set(value["common_gates"]) & set(value["price_gates"]):
         raise ValueError("common and PRICE gate IDs must be disjoint")
+    if set(value["common_execution_barriers"]) & set(value["price_execution_barriers"]):
+        raise ValueError("common and PRICE execution barriers must be disjoint")
     return {str(key): item for key, item in value.items()}
 
 
@@ -57,8 +75,24 @@ def git_state() -> tuple[str, bool]:
     return sha, not dirty
 
 
+def execution_barrier_requirements() -> dict[str, tuple[str, ...]]:
+    """Load the current implementation barrier dependencies from the execution DAG."""
+    plan = load_execution_plan(EXECUTION_PLAN)
+    return {barrier.barrier_id: barrier.requires for barrier in plan.barriers}
+
+
+def execution_task_ids() -> set[str]:
+    """Load the task IDs allowed by the current implementation DAG."""
+    return {task.task_id for task in load_execution_plan(EXECUTION_PLAN).tasks}
+
+
 def execution_errors(
-    manifest: Mapping[str, Any], *, source_commit: str, required_barriers: list[str]
+    manifest: Mapping[str, Any],
+    *,
+    source_commit: str,
+    required_barriers: list[str],
+    expected_barriers: Mapping[str, tuple[str, ...]] | None = None,
+    expected_task_ids: set[str] | None = None,
 ) -> list[str]:
     errors: list[str] = []
     if manifest.get("schema_version") != "pretraining-parallel-readiness-run-v1":
@@ -67,8 +101,8 @@ def execution_errors(
         errors.append("execution manifest source_commit mismatch")
     if manifest.get("source_dirty_at_start") is not False:
         errors.append("execution manifest did not start from a clean source")
-    if manifest.get("execution_status") != "pass":
-        errors.append("execution manifest status is not pass")
+    if manifest.get("execution_status") not in {"pass", "fail"}:
+        errors.append("execution manifest status is invalid")
     if manifest.get("scientific_training_authorized") is not False:
         errors.append("execution manifest illegally claims scientific authorization")
     if manifest.get("price_training_authorized") is not False:
@@ -87,9 +121,53 @@ def execution_errors(
                 errors.append("execution task IDs must be unique non-empty strings")
                 continue
             task_by_id[task_id] = row
-            if row.get("status") != "pass" or row.get("return_code") != 0:
-                errors.append(f"execution task did not pass: {task_id}")
-            log_path_text, log_digest = row.get("log_path"), row.get("log_sha256")
+            if row.get("status") not in {"pass", "fail", "blocked"}:
+                errors.append(f"execution task status is invalid: {task_id}")
+    if expected_task_ids is not None:
+        unknown_tasks = set(task_by_id) - expected_task_ids
+        if unknown_tasks:
+            errors.append(f"execution manifest has unknown tasks: {sorted(unknown_tasks)}")
+    barrier_status: dict[str, Any] = {}
+    barriers = manifest.get("barriers")
+    if isinstance(barriers, list):
+        for row in barriers:
+            if isinstance(row, dict):
+                barrier_id = BARRIER_COMPATIBILITY.get(
+                    str(row.get("barrier_id", "")), str(row.get("barrier_id", ""))
+                )
+                if not barrier_id or barrier_id in barrier_status:
+                    errors.append("execution barrier IDs must be unique non-empty strings")
+                barrier_status[barrier_id] = row
+    for barrier in required_barriers:
+        canonical_barrier = BARRIER_COMPATIBILITY.get(barrier, barrier)
+        row = barrier_status.get(canonical_barrier)
+        if not isinstance(row, dict) or row.get("status") != "pass":
+            errors.append(f"required execution barrier did not pass: {canonical_barrier}")
+            continue
+        required_tasks = row.get("requires")
+        if not isinstance(required_tasks, list) or not required_tasks:
+            errors.append(
+                f"required execution barrier has no task dependencies: {canonical_barrier}"
+            )
+            continue
+        if expected_barriers is not None:
+            expected_tasks = expected_barriers.get(canonical_barrier)
+            if (
+                expected_tasks is None
+                or not all(isinstance(task_id, str) for task_id in required_tasks)
+                or len(required_tasks) != len(set(required_tasks))
+            ):
+                errors.append(f"execution barrier dependencies are invalid: {canonical_barrier}")
+            elif set(required_tasks) != set(expected_tasks):
+                errors.append(f"execution barrier dependencies were changed: {canonical_barrier}")
+        for task_id in required_tasks:
+            if not isinstance(task_id, str) or task_id not in task_by_id:
+                errors.append(f"required execution barrier has a missing task: {canonical_barrier}")
+                continue
+            task = task_by_id[task_id]
+            if task.get("status") != "pass" or task.get("return_code") != 0:
+                errors.append(f"required execution task did not pass: {task_id}")
+            log_path_text, log_digest = task.get("log_path"), task.get("log_sha256")
             if not isinstance(log_path_text, str) or not isinstance(log_digest, str):
                 errors.append(f"execution task log identity is missing: {task_id}")
             else:
@@ -102,9 +180,9 @@ def execution_errors(
                 except (OSError, json.JSONDecodeError):
                     errors.append(f"execution task result is missing or invalid: {task_id}")
                 else:
-                    if saved_result != row:
+                    if saved_result != task:
                         errors.append(f"execution task result differs from manifest: {task_id}")
-            artifacts = row.get("artifact_sha256")
+            artifacts = task.get("artifact_sha256")
             if not isinstance(artifacts, dict):
                 errors.append(f"execution artifact hashes are missing: {task_id}")
             else:
@@ -114,30 +192,6 @@ def execution_errors(
                         errors.append(f"execution artifact is missing: {path}")
                     elif file_sha256(path) != digest:
                         errors.append(f"execution artifact hash mismatch: {path}")
-    barrier_status: dict[str, Any] = {}
-    barriers = manifest.get("barriers")
-    if isinstance(barriers, list):
-        for row in barriers:
-            if isinstance(row, dict):
-                barrier_id = str(row.get("barrier_id", ""))
-                if not barrier_id or barrier_id in barrier_status:
-                    errors.append("execution barrier IDs must be unique non-empty strings")
-                barrier_status[barrier_id] = row
-    for barrier in required_barriers:
-        row = barrier_status.get(barrier)
-        if not isinstance(row, dict) or row.get("status") != "pass":
-            errors.append(f"required execution barrier did not pass: {barrier}")
-            continue
-        required_tasks = row.get("requires")
-        if not isinstance(required_tasks, list) or not required_tasks:
-            errors.append(f"required execution barrier has no task dependencies: {barrier}")
-        elif any(
-            not isinstance(task_id, str)
-            or task_id not in task_by_id
-            or task_by_id[task_id].get("status") != "pass"
-            for task_id in required_tasks
-        ):
-            errors.append(f"required execution barrier has a missing or failed task: {barrier}")
     return errors
 
 
@@ -201,10 +255,13 @@ def build_readiness(
     gate_records: dict[str, dict[str, Any]],
     source_commit: str,
     source_clean: bool,
+    expected_barriers: Mapping[str, tuple[str, ...]] | None = None,
+    expected_task_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     common = [str(x) for x in plan["common_gates"]]
     price = [str(x) for x in plan["price_gates"]]
-    barriers = [str(x) for x in plan["required_execution_barriers"]]
+    common_barriers = [str(x) for x in plan["common_execution_barriers"]]
+    price_barriers = [str(x) for x in plan["price_execution_barriers"]]
     required = common + price
     errors: list[str] = []
     if not source_clean:
@@ -215,10 +272,20 @@ def build_readiness(
         errors.append(f"unknown gate records: {sorted(unknown)}")
     if missing:
         errors.append(f"missing gate records: {sorted(missing)}")
-    exec_errors = execution_errors(
-        execution_manifest, source_commit=source_commit, required_barriers=barriers
+    common_exec_errors = execution_errors(
+        execution_manifest,
+        source_commit=source_commit,
+        required_barriers=common_barriers,
+        expected_barriers=expected_barriers,
+        expected_task_ids=expected_task_ids,
     )
-    errors.extend(exec_errors)
+    price_exec_errors = execution_errors(
+        execution_manifest,
+        source_commit=source_commit,
+        required_barriers=common_barriers + price_barriers,
+        expected_barriers=expected_barriers,
+        expected_task_ids=expected_task_ids,
+    )
     gate_results: dict[str, dict[str, Any]] = {}
     for gate_id in required:
         record = gate_records.get(gate_id)
@@ -234,10 +301,14 @@ def build_readiness(
         }
     common_ready = (
         source_clean
-        and not exec_errors
+        and not common_exec_errors
         and all(gate_results[g]["status"] == "pass" for g in common)
     )
-    price_ready = common_ready and all(gate_results[g]["status"] == "pass" for g in price)
+    price_ready = (
+        common_ready
+        and not price_exec_errors
+        and all(gate_results[g]["status"] == "pass" for g in price)
+    )
     if not common_ready:
         errors.append("one or more common scientific gates did not pass")
     return {
@@ -249,10 +320,12 @@ def build_readiness(
         "price_training_authorized": price_ready,
         "common_gate_ids": common,
         "price_gate_ids": price,
-        "required_execution_barriers": barriers,
+        "common_execution_barriers": common_barriers,
+        "price_execution_barriers": price_barriers,
         "execution_manifest": execution_manifest,
         "gate_results": gate_results,
-        "errors": errors,
+        "errors": errors + common_exec_errors,
+        "price_errors": price_exec_errors,
         "interpretation": (
             "C/D authorization requires all common gates. PRICE additionally requires all "
             "PRICE-specific gates. This manifest does not start training or authorize use of "
@@ -287,6 +360,8 @@ def main() -> int:
         gate_records=records,
         source_commit=source_commit,
         source_clean=source_clean,
+        expected_barriers=execution_barrier_requirements(),
+        expected_task_ids=execution_task_ids(),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(args.output, result)

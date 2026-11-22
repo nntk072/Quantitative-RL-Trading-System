@@ -25,7 +25,7 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
         guardrail_kwargs: dict[str, Any] | None,
         risk_frac_range: tuple[float, float],
         rr_ratio_range: tuple[float, float],
-        sl_buffer_pts: float,
+        swing_buffer_pts: float,
         sl_mode: str,
         tp_mode: str,
         tp_reference: str,
@@ -48,7 +48,7 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
             guardrail_kwargs: Key-value data used for the guardrail kwargs.
             risk_frac_range: Items supplied for the risk frac range, in input order.
             rr_ratio_range: Items supplied for the rr ratio range, in input order.
-            sl_buffer_pts: Numeric value used for the sl buffer pts.
+            swing_buffer_pts: Points added beyond the structural swing stop.
             sl_mode: Text or path value identifying the sl mode.
             tp_mode: Text or path value identifying the tp mode.
             tp_reference: Text or path value identifying the tp reference.
@@ -102,7 +102,7 @@ class AccountPolicyInitializationMixin(RuntimeMixinBase):
             else risk_frac_range
         )
         self.rr_ratio_range = rr_ratio_range
-        self.swing_buffer_pts = float(sl_buffer_pts)
+        self.swing_buffer_pts = float(swing_buffer_pts)
         self.sl_mode = str(sl_mode or "fixed").lower()
         if self.sl_mode not in _SL_MODE_RANK:
             raise ValueError(f"Unknown sl_mode: {self.sl_mode!r}")

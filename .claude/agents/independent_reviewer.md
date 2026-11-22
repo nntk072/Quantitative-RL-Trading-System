@@ -2,6 +2,7 @@
 name: independent_reviewer
 description: Performs read-only independent review of correctness, architecture, security, and regression risks.
 model: inherit
+tools: Read, Glob, Grep
 ---
 
 # independent_reviewer

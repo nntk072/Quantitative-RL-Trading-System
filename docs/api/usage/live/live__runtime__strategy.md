@@ -12,7 +12,7 @@ This page contains 5 public callable records owned by `live.runtime.strategy`. S
 
 **Observed usage:**
 
-1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L120)
+1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L153)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -157,7 +157,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L130)
+1. [test fixture: `test_train_live_observation_parity`](../../../../tests/unit/features/test_stage_a_observation.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

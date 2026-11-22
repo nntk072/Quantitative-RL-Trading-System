@@ -17,6 +17,7 @@ from decisioning.trade_setup import (
 )
 from features.context.entry_ideas import entry_idea_context
 from features.context.trade_setup_candidates import trade_setup_candidate_event_identities
+from market_data.transforms.sessions import session_reference_index
 from trading.orders import limit_price_from_atr_offset, place_strategy_order
 
 _FEATURE_INDEX = {name: index for index, name in enumerate(CANDIDATE_GEOMETRY_FEATURE_NAMES)}
@@ -132,14 +133,65 @@ def _session_remaining(env: Any, index: int) -> tuple[int, float] | None:
         Remaining bar count and normalized session time, or ``None`` if closed.
     """
     now = pd.Timestamp(env._bar_time(index))
+    source_date = now.date().isoformat()
+    session_timezone = getattr(env, "_session_timezone", None)
+    source_clock_model = str(getattr(env, "_source_clock_model", "native"))
+
+    def source_clock_time(wall_time: str) -> pd.Timestamp:
+        """Convert a scheduled close to the configured session timezone.
+
+        Args:
+            wall_time: Scheduled close as a source-clock ``HH:MM`` value.
+
+        Returns:
+            The scheduled close represented in the configured session zone.
+        """
+        wall = pd.Timestamp(f"{source_date} {wall_time}")
+        if source_clock_model == "native":
+            source_tz = now.tz or session_timezone
+            if source_tz is None:
+                return wall
+            return wall.tz_localize(source_tz).tz_convert(session_timezone or source_tz)
+        source = pd.DatetimeIndex([wall])
+        if source_clock_model == "ftmo_mt5_us_dst":
+            if now.tz is None:
+                raise ValueError("legacy FTMO source clock requires timezone-aware timestamps")
+            source = source.tz_localize(now.tz)
+        source_instant = session_reference_index(source, source_clock_model)[0]
+        return source_instant.tz_convert(session_timezone) if session_timezone else source_instant
+
     closes = getattr(env, "_scheduled_session_closes", {})
-    close_text = closes.get(now.date().isoformat()) if isinstance(closes, dict) else None
-    if not isinstance(close_text, str) or not close_text.strip():
-        return None
+    close_text = closes.get(source_date) if isinstance(closes, dict) else None
     try:
-        close = pd.Timestamp(f"{now.date().isoformat()} {close_text}").tz_localize(now.tz)
+        if source_clock_model != "native":
+            now_source = pd.DatetimeIndex([now])
+            if source_clock_model == "ftmo_mt5_us_dst" and now_source.tz is None:
+                return None
+            now = session_reference_index(now_source, source_clock_model)[0]
+        if session_timezone is not None:
+            now = now.tz_convert(session_timezone)
+        scheduled_close = isinstance(close_text, str) and bool(close_text.strip())
+        if not scheduled_close:
+            close_text = str(getattr(env, "_session_end", ""))
+        if not close_text:
+            return None
+        if scheduled_close:
+            close = source_clock_time(close_text)
+        elif session_timezone is not None:
+            close = pd.Timestamp(f"{source_date} {close_text}").tz_localize(session_timezone)
+        elif now.tz is not None:
+            close = pd.Timestamp(f"{source_date} {close_text}").tz_localize(now.tz)
+        else:
+            close = pd.Timestamp(f"{source_date} {close_text}")
         start_text = str(getattr(env, "_session_start", ""))
-        session_start = pd.Timestamp(f"{now.date().isoformat()} {start_text}").tz_localize(now.tz)
+        if session_timezone is not None:
+            session_start = pd.Timestamp(f"{source_date} {start_text}").tz_localize(
+                session_timezone
+            )
+        elif now.tz is not None:
+            session_start = pd.Timestamp(f"{source_date} {start_text}").tz_localize(now.tz)
+        else:
+            session_start = pd.Timestamp(f"{source_date} {start_text}")
     except (TypeError, ValueError):
         return None
     decision_time = now + pd.Timedelta(minutes=float(env._minutes_per_step))

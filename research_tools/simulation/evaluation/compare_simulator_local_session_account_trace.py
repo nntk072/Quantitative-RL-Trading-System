@@ -19,11 +19,12 @@ import pandas as pd
 
 from artifacts.atomic import write_json_atomic
 from artifacts.identity import file_sha256
+from configuration import load_config
 from configuration.paths import repository_root
 from market_data.loading.bars import load_bars
 from market_data.loading.ticks import TickBook, build_tick_book
 from market_data.transforms.cleaning import clean
-from market_data.transforms.sessions import add_session_id, add_session_labels
+from market_data.transforms.sessions import add_session_id, ny_session_mask, session_reference_index
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import COST_US100
@@ -83,10 +84,26 @@ def _event_record(event: Any) -> dict[str, Any]:
     return output
 
 
+def _same_instant(left: str | None, right: str | None) -> bool:
+    """Compare timezone-aware event timestamps by their UTC instant."""
+    if left is None or right is None:
+        return False
+    try:
+        left_time = pd.Timestamp(left)
+        right_time = pd.Timestamp(right)
+    except (TypeError, ValueError):
+        return False
+    if pd.isna(left_time) or pd.isna(right_time):
+        return False
+    if left_time.tzinfo is None or right_time.tzinfo is None:
+        return False
+    return left_time.tz_convert("UTC") == right_time.tz_convert("UTC")
+
+
 def build_report(
     bars_path: Path,
     *,
-    timezone: str = "Etc/GMT-3",
+    timezone: str | None = None,
     ticks_path: Path | None = None,
     scenario: str = "account_transition",
     prebuilt_tickbook: TickBook | None = None,
@@ -99,12 +116,24 @@ def build_report(
         "max_loss_terminal",
     }:
         raise ValueError(f"unsupported account trace scenario: {scenario!r}")
-    bars = clean(load_bars(bars_path), tz=timezone)
-    bars = add_session_labels(bars, tz=timezone)
+    cfg = load_config()
+    source_timezone = timezone or str(cfg.data.tz)
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
+    session_timezone = str(cfg.session.tz)
+    bars = clean(load_bars(bars_path), tz=source_timezone)
+    bars.index = session_reference_index(
+        pd.DatetimeIndex(bars.index), source_clock_model
+    ).tz_convert(session_timezone)
     bars = add_session_id(bars)
     bars = bars.loc[(bars.index >= "2024-12-30") & (bars.index < "2026-01-01")]
+    ny_minutes = ny_session_mask(
+        pd.DatetimeIndex(bars.index),
+        start=str(cfg.session.start),
+        end=str(cfg.session.end),
+        session_tz=session_timezone,
+    )
     eligible: list[tuple[int, pd.DataFrame]] = []
-    for session_id, group in bars.loc[bars["session"] == "ny"].groupby("session_id", sort=True):
+    for session_id, group in bars.loc[ny_minutes].groupby("session_id", sort=True):
         if len(group) >= 8:
             eligible.append((int(cast(int, session_id)), group.iloc[:8].copy()))
         if len(eligible) == 2:
@@ -115,6 +144,7 @@ def build_report(
         )
 
     trace_bars = pd.concat([group for _, group in eligible]).copy()
+    trace_bars["session"] = "ny"
     trace_index = pd.DatetimeIndex(trace_bars.index)
     if trace_bars.index.has_duplicates:
         raise ValueError("selected local session bars have duplicate timestamps")
@@ -122,10 +152,9 @@ def build_report(
     if ticks_path is not None and tickbook is None:
         tickbook = build_tick_book(
             ticks_path,
-            tz=timezone,
-            session_start="16:00",
-            session_end="23:59",
+            tz=source_timezone,
             price_grid_increment=0.25,
+            source_clock_model=source_clock_model,
         )
     # These wide, current-row-relative references keep protective levels out
     # of the deliberately short controlled entry/exit path. They are not
@@ -168,6 +197,7 @@ def build_report(
     }
     tick_mode = tickbook is not None
     randomized_fill_latency_ms = 30.0 if tick_mode else 0.0
+    swing_buffer_pts = 0.0
     env = TradingEnv(
         bars=trace_bars,
         features=features,
@@ -180,6 +210,7 @@ def build_report(
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=swing_buffer_pts,
         max_loss_per_trade_usd=1_000.0,
         episodic=scenario == "max_loss_terminal",
         reward_mode="pnl",
@@ -187,6 +218,8 @@ def build_report(
         tickbook=tickbook,
         tick_execution_required=tick_mode,
         randomized_fill_latency_ms=randomized_fill_latency_ms,
+        session_timezone=session_timezone,
+        source_clock_model="native",
     )
     env.reset(seed=7)
     env_terminated = False
@@ -225,7 +258,7 @@ def build_report(
         risk_frac=0.001,
         rr_ratio=1.0,
         use_structure_sl_tp=True,
-        swing_buffer_pts=0.0,
+        swing_buffer_pts=swing_buffer_pts,
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
@@ -237,6 +270,8 @@ def build_report(
         tick_execution_required=tick_mode,
         randomized_fill_latency_ms=randomized_fill_latency_ms,
         execution_seed=7,
+        session_timezone=session_timezone,
+        source_clock_model="native",
     )
 
     env_events = [_event_record(event) for event in env.trade_log]
@@ -337,8 +372,7 @@ def build_report(
             {
                 "type": env_event["type"],
                 "same_session_id": event_session(env_event) == event_session(backtest_event),
-                "same_fill_time": event_time(env_event) is not None
-                and event_time(env_event) == event_time(backtest_event),
+                "same_fill_time": _same_instant(event_time(env_event), event_time(backtest_event)),
                 "same_direction": env_event.get("direction") == backtest_event.get("direction"),
                 "price_delta": float(env_event["price"]) - float(backtest_event["price"]),
                 "same_price": bool(
@@ -364,9 +398,7 @@ def build_report(
 
     close_comparisons = []
     for env_close, backtest_close in zip(env_closes, backtest_closes, strict=True):
-        close_time_equal = event_time(env_close) is not None and event_time(
-            env_close
-        ) == event_time(backtest_close)
+        close_time_equal = _same_instant(event_time(env_close), event_time(backtest_close))
         close_comparisons.append(
             {
                 "same_session_id": event_session(env_close) == event_session(backtest_close),
@@ -578,6 +610,7 @@ def build_report(
         "scenario": scenario,
         "execution_mode": "tick_required" if tick_mode else "bar_fallback",
         "randomized_fill_latency_ms": randomized_fill_latency_ms,
+        "matched_execution_parameters": {"swing_buffer_pts": swing_buffer_pts},
         "session_reset_check_applicable": session_reset_check_applicable,
         "interpretation": "Controlled account-transition comparison on local training bars; not a learned-policy replay or economic performance estimate.",
         "execution_timing_contracts": {
@@ -589,8 +622,10 @@ def build_report(
             else "next-market-bar open quote and timestamp",
             "source_basis": "current engine implementations and the bar-open parity regression",
         },
-        "session_source": "local M1 bar dates and the repository's date-derived session_id; local NY labels select the rows, with no external calendar claim",
-        "timezone_label": timezone,
+        "session_source": "Date-derived session IDs and configured NY cash clock minutes",
+        "timezone_label": session_timezone,
+        "source_timezone_carrier": source_timezone,
+        "source_clock_model": source_clock_model,
         "input_bars": str(bars_path.resolve().relative_to(ROOT)),
         "input_bars_sha256": input_bars_sha256 or file_sha256(bars_path),
         "input_ticks": None if ticks_path is None else str(ticks_path.resolve().relative_to(ROOT)),
@@ -672,7 +707,7 @@ def build_report(
         "limitations": [
             "Two selected local date-derived sessions and two controlled positions are not comprehensive execution coverage.",
             "The action schedule is prescribed and does not estimate policy quality or economic value.",
-            "Local broker-time session IDs are used as supplied; no external clock or schedule authority is asserted.",
+            "Selection uses the regular NY cash clock window without date-specific holiday or early-close adjustments.",
             "This does not establish broker-connected or restart-safe live account parity.",
         ],
     }
@@ -682,7 +717,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bars-csv", type=Path, default=ROOT / DEFAULT_BARS)
     parser.add_argument("--ticks-csv", type=Path)
-    parser.add_argument("--timezone", default="Etc/GMT-3")
+    parser.add_argument("--timezone", help="source wall-clock carrier override (default: data.tz)")
     parser.add_argument("--out", type=Path)
     parser.add_argument(
         "--scenario",
@@ -709,12 +744,12 @@ def main() -> None:
     input_ticks_hash = file_sha256(args.ticks_csv) if args.ticks_csv is not None else None
     shared_tickbook = None
     if args.ticks_csv is not None and len(scenarios) > 1:
+        cfg = load_config()
         shared_tickbook = build_tick_book(
             args.ticks_csv,
-            tz=args.timezone,
-            session_start="16:00",
-            session_end="23:59",
+            tz=args.timezone or str(cfg.data.tz),
             price_grid_increment=0.25,
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         )
     reports: list[tuple[Path, dict[str, Any]]] = []
     for scenario in scenarios:

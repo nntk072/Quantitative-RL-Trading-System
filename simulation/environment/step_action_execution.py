@@ -25,6 +25,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
     """Apply decoded actions to exits, pending entries, and execution."""
 
     position: Position | None
+    _entry_rejection_order_id: str | None
     _pending_entry_order: dict[str, Any] | None
 
     def _submit_limit_entry_order(
@@ -490,15 +491,19 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                             None,
                         )
                         if open_index is None:
+                            self._entry_rejection_order_id = order_id
                             self.trade_log.append(
                                 {
                                     "type": "order_cancel",
                                     "order_id": order_id,
                                     "order_type": "market",
+                                    "direction": int(discrete_action),
                                     "decision_id": self._current_decision_id,
                                     "session_id": int(session_id),
                                     "reason": "entry_rejected_at_market_fill",
                                     **market_setup_identity,
+                                    "decision_bar_time": bar_time,
+                                    "decision_time": order_submission_time,
                                     "order_submission_time": order_submission_time,
                                     "trigger_quote_time": pd.Timestamp(entry_fill_time),
                                     "trigger_quote_bid": float(entry_fill_bid),

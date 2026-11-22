@@ -135,6 +135,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                     bars,
                     features,
                     include_validity_mask=self._reachable_r_validity_mask,
+                    session_tz=self._session_timezone,
+                    source_clock_model=self._source_clock_model,
                 ).loc[:, list(sequence_columns_override)]
             else:
                 select_columns = (
@@ -147,6 +149,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                     bars,
                     features,
                     include_validity_mask=self._reachable_r_validity_mask,
+                    session_tz=self._session_timezone,
+                    source_clock_model=self._source_clock_model,
                 )
             if trade_setup_actions:
                 self._obs_features = self._obs_features.drop(

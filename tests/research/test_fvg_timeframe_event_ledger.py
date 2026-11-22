@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -102,10 +103,7 @@ def test_input_identity_keeps_dotted_symbol_keys_and_validates_manifest(
             }
         }
     )
-    module = __import__(
-        "scripts.research.analysis.features.fvg_timeframe_event_ledger",
-        fromlist=["RAW_MANIFEST", "ROOT"],
-    )
+    module = sys.modules[_input_identity.__module__]
     monkeypatch.setattr(module, "RAW_MANIFEST", manifest_path)
     monkeypatch.setattr(module, "ROOT", tmp_path)
 

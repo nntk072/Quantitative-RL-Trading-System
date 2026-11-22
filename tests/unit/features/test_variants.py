@@ -155,6 +155,39 @@ def test_fvg_retest_holds_and_a_fill_ends_the_zone():
     assert feats["fvg_retest_bull"].iloc[7] == 0.0
 
 
+def test_fvg_retest_origin_persists_only_while_its_zone_is_active() -> None:
+    idx = pd.date_range("2025-01-06 17:00", periods=9, freq="1min", tz="Etc/GMT-3")
+    rows = [
+        (100.0, 98.0, 99.0),
+        (100.0, 99.0, 99.5),
+        (103.0, 99.8, 102.0),
+        (104.0, 101.0, 103.0),
+        (105.0, 102.0, 104.0),
+        (103.0, 100.4, 101.2),
+        (103.3, 99.5, 103.2),
+        (103.3, 99.5, 103.2),
+        (103.3, 99.5, 103.2),
+    ]
+    bars = pd.DataFrame(
+        {
+            "open": [99.0, 99.0, 99.5, 102.0, 103.0, 102.5, 101.2, 103.2, 103.2],
+            "high": [row[0] for row in rows],
+            "low": [row[1] for row in rows],
+            "close": [row[2] for row in rows],
+        },
+        index=idx,
+    )
+
+    features = build_fvg_zone_features(bars, max_zone_bars=4)
+
+    assert features["fvg_retest_bull"].iloc[6] == 1.0
+    assert pd.isna(features["fvg_bull_retest_confirmed_at_time_ns"].iloc[7])
+    assert features["fvg_bull_active"].iloc[7] == 1.0
+    assert features["fvg_bull_retest_origin_time_ns"].iloc[7] == idx[3].value
+    assert features["fvg_bull_active"].iloc[8] == 0.0
+    assert pd.isna(features["fvg_bull_retest_origin_time_ns"].iloc[8])
+
+
 def test_same_bar_fvg_retests_identify_the_last_selected_zone() -> None:
     idx = pd.date_range("2025-01-06 17:00", periods=7, freq="1min", tz="Etc/GMT-3")
     bars = pd.DataFrame(

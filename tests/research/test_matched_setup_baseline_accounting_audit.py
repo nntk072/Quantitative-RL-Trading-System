@@ -169,6 +169,57 @@ def _build_bundle(root: Path, *, open_candidate_eligible: bool = True) -> Path:
     return bundle
 
 
+def _refresh_manifest_hashes(bundle: Path) -> None:
+    manifest_path = bundle / "result_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for run in manifest["runs"]:
+        for artifact in run["artifacts"]:
+            path = bundle.parent / artifact["path"]
+            artifact["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    _write_json(manifest_path, manifest)
+
+
+def _make_breached_prefix_bundle(bundle: Path) -> None:
+    control_dir = bundle / "always_no_trade"
+    control_rows = list(csv.DictReader((control_dir / "decisions.csv").open()))
+    control_row = control_rows[0]
+    for step in (2, 3):
+        next_row = dict(control_row)
+        next_row["decision_id"] = f"episode:d{step}"
+        next_row["decision_time"] = f"2025-01-01T00:0{step - 1}:00+00:00"
+        control_rows.append(next_row)
+    _write_csv(control_dir / "decisions.csv", list(control_row), control_rows)
+    _write_csv(
+        control_dir / "equity.csv",
+        ["time", "equity"],
+        [{"time": f"t{step}", "equity": 100_000.0} for step in range(4)],
+    )
+    _write_json(
+        control_dir / "evaluation.json",
+        {
+            "n_steps": 3,
+            "breach_events": [],
+            "completed_data_split": True,
+            "episode_end_reason": "data_end_survived",
+        },
+    )
+
+    trade_dir = bundle / "one_trade"
+    trade_metrics = json.loads((trade_dir / "metrics.json").read_text(encoding="utf-8"))
+    trade_metrics["breach_count"] = 1
+    _write_json(trade_dir / "metrics.json", trade_metrics)
+    _write_json(
+        trade_dir / "evaluation.json",
+        {
+            "n_steps": 1,
+            "breach_events": [{"reason": "daily_loss", "time": "2025-01-01T00:01:00+00:00"}],
+            "completed_data_split": False,
+            "episode_end_reason": "risk_breach",
+        },
+    )
+    _refresh_manifest_hashes(bundle)
+
+
 def test_audit_reconciles_matched_decisions_and_account_cashflows(tmp_path: Path) -> None:
     bundle = _build_bundle(tmp_path)
 
@@ -189,3 +240,124 @@ def test_audit_fails_when_open_candidate_was_not_eligible(tmp_path: Path) -> Non
     assert report["status"] == "failed"
     trade_arm = report["arms"][1]
     assert "opened_candidate_not_in_decision_eligibility_set" in trade_arm["failures"]
+
+
+def test_audit_accepts_exact_prefix_ending_on_verified_risk_breach(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "passed"
+    assert [arm["status"] for arm in report["arms"]] == ["passed", "passed"]
+    assert report["arms"][1]["episode_end_reason"] == "risk_breach"
+    assert report["arms"][1]["decision_count"] == 1
+
+
+def test_audit_rejects_decision_mismatch_inside_breach_prefix(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+    trade_dir = bundle / "one_trade"
+    decisions_path = trade_dir / "decisions.csv"
+    trade_rows = list(csv.DictReader(decisions_path.open()))
+    trade_rows[0]["decision_id"] = "episode:other"
+    _write_csv(decisions_path, list(trade_rows[0]), trade_rows)
+    ledger_path = trade_dir / "trade_fill_event_ledger.csv"
+    ledger_rows = list(csv.DictReader(ledger_path.open()))
+    ledger_rows[0]["decision_id"] = "episode:other"
+    _write_csv(ledger_path, list(ledger_rows[0]), ledger_rows)
+    _refresh_manifest_hashes(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "failed"
+    assert "decision_sequence_differs_from_matched_arms" in report["arms"][1]["failures"]
+
+
+def test_audit_rejects_decision_time_mismatch_inside_breach_prefix(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+    trade_dir = bundle / "one_trade"
+    decisions_path = trade_dir / "decisions.csv"
+    trade_rows = list(csv.DictReader(decisions_path.open()))
+    trade_rows[0]["decision_time"] = "2025-01-01T00:05:00+00:00"
+    _write_csv(decisions_path, list(trade_rows[0]), trade_rows)
+    _refresh_manifest_hashes(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "failed"
+    assert "decision_sequence_differs_from_matched_arms" in report["arms"][1]["failures"]
+
+
+def test_audit_rejects_short_arm_without_risk_breach_terminal_metadata(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+    trade_dir = bundle / "one_trade"
+    _write_json(
+        trade_dir / "evaluation.json",
+        {
+            "n_steps": 1,
+            "breach_events": [],
+            "completed_data_split": False,
+            "episode_end_reason": "truncated",
+        },
+    )
+    metrics = json.loads((trade_dir / "metrics.json").read_text(encoding="utf-8"))
+    metrics["breach_count"] = 0
+    _write_json(trade_dir / "metrics.json", metrics)
+    _refresh_manifest_hashes(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "failed"
+    assert "short_decision_sequence_without_verified_risk_breach" in report["arms"][1]["failures"]
+
+
+def test_audit_rejects_breach_terminal_with_mismatched_step_count(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+    trade_dir = bundle / "one_trade"
+    evaluation = json.loads((trade_dir / "evaluation.json").read_text(encoding="utf-8"))
+    evaluation["n_steps"] = 2
+    _write_json(trade_dir / "evaluation.json", evaluation)
+    _refresh_manifest_hashes(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "failed"
+    assert "decision_or_equity_rows_differ_from_evaluation_steps" in report["arms"][1]["failures"]
+
+
+def test_audit_rejects_breach_terminal_with_mismatched_breach_count(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+    trade_dir = bundle / "one_trade"
+    metrics = json.loads((trade_dir / "metrics.json").read_text(encoding="utf-8"))
+    metrics["breach_count"] = 0
+    _write_json(trade_dir / "metrics.json", metrics)
+    _refresh_manifest_hashes(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "failed"
+    failures = report["arms"][1]["failures"]
+    assert "breach_events_do_not_match_metrics_count" in failures
+    assert "short_decision_sequence_without_verified_risk_breach" in failures
+
+
+def test_audit_rejects_breach_terminal_without_timestamped_breach_event(tmp_path: Path) -> None:
+    bundle = _build_bundle(tmp_path)
+    _make_breached_prefix_bundle(bundle)
+    trade_dir = bundle / "one_trade"
+    evaluation = json.loads((trade_dir / "evaluation.json").read_text(encoding="utf-8"))
+    evaluation["breach_events"] = [{"reason": "daily_loss"}]
+    _write_json(trade_dir / "evaluation.json", evaluation)
+    _refresh_manifest_hashes(bundle)
+
+    report = audit_bundle(bundle)
+
+    assert report["status"] == "failed"
+    failures = report["arms"][1]["failures"]
+    assert "breach_event_metadata_invalid" in failures
+    assert "short_decision_sequence_without_verified_risk_breach" in failures

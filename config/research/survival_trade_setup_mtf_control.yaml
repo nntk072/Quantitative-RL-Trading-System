@@ -14,6 +14,17 @@ evaluation:
 data:
   timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
 
+execution:
+  # Frozen Task 8 development gaps: orders remain unfilled; no quote is synthesized.
+  approved_no_fill_quote_anchors:
+    US100.cash:
+      - "2025-12-02T14:31:00+00:00"
+      - "2025-12-02T15:29:00+00:00"
+      - "2025-12-02T15:32:00+00:00"
+      - "2025-12-02T15:35:00+00:00"
+      - "2025-12-02T15:37:00+00:00"
+      - "2025-12-04T17:19:00+00:00"
+
 features:
   include_strategy_state: true
   htf_timeframes: [M3, M5, M10, M15, M30, H1, H4, D1]

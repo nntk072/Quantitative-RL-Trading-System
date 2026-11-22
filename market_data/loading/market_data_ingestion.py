@@ -41,8 +41,8 @@ from market_data.transforms.sessions import add_session_id, add_session_labels
 
 log = logging.getLogger(__name__)
 
-# The v4 cache uses semantic manifests and atomic parquet publication.
-BAR_CACHE_VERSION = "v4-semantic-manifest"
+# The v5 cache includes exchange-clock session labels and source-clock identity.
+BAR_CACHE_VERSION = "v5-exchange-session-clock"
 
 
 def _load_stable_bars(
@@ -159,6 +159,8 @@ def run_pipeline(
     """
     cache_dir = Path(cfg.data.cache_dir)
     tz = str(cfg.data.tz)
+    session_tz = str(cfg.session.get("tz", tz))
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
     ny_end = str(cfg.session.end)
     require_native_timeframes = bool(cfg.data.get("require_native_timeframes", False))
     derived_timeframes = cfg.data.get("derived_timeframes", {})
@@ -268,8 +270,15 @@ def run_pipeline(
                 return source_hashes[path]
 
             m1_clean = clean(m1_raw, tz=tz)
-            m1_full = add_session_labels(m1_clean, tz=tz, ny_end=ny_end)
-            m1_full = add_session_id(m1_full)
+            m1_full = add_session_labels(
+                m1_clean,
+                tz=session_tz,
+                ny_end=ny_end,
+                source_clock_model=source_clock_model,
+            )
+            m1_full = add_session_id(
+                m1_full, session_tz=session_tz, source_clock_model=source_clock_model
+            )
             for tf in cfg.data.timeframes:
                 tf = str(tf)
                 cp = bar_cache_path(part_cache, str(symbol), tf, BAR_CACHE_VERSION)
@@ -306,6 +315,8 @@ def run_pipeline(
                         timeframe=tf,
                         source_identity=source_identity,
                         timezone=tz,
+                        session_timezone=session_tz,
+                        source_clock_model=source_clock_model,
                         ny_session_end=ny_end,
                         timestamp_convention=timestamp_convention,
                         start_inclusive=str(start_date) if start_date else None,
@@ -340,16 +351,30 @@ def run_pipeline(
                             )
                         tf_raw = quantize_bar_prices(tf_source, grid_increment)
                         tf_clean = clean(tf_raw, tz=tz)
-                        df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
-                        df = add_session_id(df)
+                        df = add_session_labels(
+                            tf_clean,
+                            tz=session_tz,
+                            ny_end=ny_end,
+                            source_clock_model=source_clock_model,
+                        )
+                        df = add_session_id(
+                            df, session_tz=session_tz, source_clock_model=source_clock_model
+                        )
                     else:
                         # Explicitly absent timeframe sources may be represented
                         # by a derived M1 aggregation. A configured source is
                         # never silently replaced when missing.
                         tf_bars = resample(m1_full, tf)  # type: ignore[arg-type]
                         tf_clean = clean(tf_bars, tz=tz)
-                        df = add_session_labels(tf_clean, tz=tz, ny_end=ny_end)
-                        df = add_session_id(df)
+                        df = add_session_labels(
+                            tf_clean,
+                            tz=session_tz,
+                            ny_end=ny_end,
+                            source_clock_model=source_clock_model,
+                        )
+                        df = add_session_id(
+                            df, session_tz=session_tz, source_clock_model=source_clock_model
+                        )
                     if end_inclusive is None:
                         if cache_identity is None:
                             raise AssertionError("full-span bar processing requires cache identity")

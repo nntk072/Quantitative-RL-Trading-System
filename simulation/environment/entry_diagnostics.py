@@ -68,6 +68,7 @@ _REJECTION_COUNTERS: dict[str, str] = {
     "insufficient_margin": "rejected_entry_execution",
     "limit_entry_source_identity_unavailable": "rejected_entry_execution",
     "limit_entry_source_setup_unavailable": "rejected_entry_execution",
+    "limit_entry_requires_flat_account": "rejected_entry_execution",
     "trade_setup_inactive": "rejected_trade_setup_inactive",
 }
 

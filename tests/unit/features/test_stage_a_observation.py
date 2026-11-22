@@ -15,6 +15,7 @@ from features import (
     ensure_london_atr_distances,
     select_obs_columns,
 )
+from features.context.reachability import max_tp_distance
 from features.technical.indicators import ny_session_clock
 from live.runtime.strategy import RLStrategyAdapter
 from simulation.environment.env import TradingEnv
@@ -78,6 +79,38 @@ def test_session_clock_clips_outside_the_session() -> None:
     assert clock["ny_minutes_to_close"].iloc[2] == 0.0
     assert clock["ny_minutes_to_close"].iloc[3] == 0.0
     assert clock["ny_session_sin"].iloc[1] == 0.0
+
+
+def test_session_clock_converts_helsinki_chart_labels_to_chicago_time() -> None:
+    index = pd.DatetimeIndex(
+        ["2025-03-10 15:30", "2025-03-10 22:00", "2025-04-07 16:30", "2025-04-07 23:00"]
+    ).tz_localize("Etc/GMT-3")
+
+    clock = ny_session_clock(
+        index,
+        "08:30",
+        "15:00",
+        session_tz="America/Chicago",
+        source_clock_model="europe_helsinki",
+    )
+
+    assert clock["ny_session_sin"].iloc[np.array([0, 2])].tolist() == [0.0, 0.0]
+    assert clock["ny_minutes_to_close"].tolist() == [1.0, 0.0, 1.0, 0.0]
+
+
+def test_session_clock_localizes_naive_native_index_to_session_timezone() -> None:
+    index = pd.DatetimeIndex(["2025-02-03 08:30", "2025-02-03 15:00"])
+
+    clock = ny_session_clock(
+        index,
+        "08:30",
+        "15:00",
+        session_tz="America/Chicago",
+        source_clock_model="native",
+    )
+
+    assert clock.index.equals(index)
+    assert clock["ny_minutes_to_close"].tolist() == [1.0, 0.0]
 
 
 def test_train_live_observation_parity() -> None:
@@ -222,3 +255,26 @@ def test_reachable_r_validity_separates_unknown_from_valid_zero() -> None:
     assert with_validity["reachable_r"].eq(0.0).all()
     assert with_validity["reachable_r_valid"].iloc[:4].eq(0.0).all()
     assert with_validity["reachable_r_valid"].iloc[4:].eq(1.0).all()
+
+
+def test_reachability_uses_dst_aware_new_york_session_window() -> None:
+    # On 2025-03-10 New York is already on daylight time while Helsinki is
+    # still on standard time: 08:30 Chicago is therefore 15:30 Helsinki.
+    idx = pd.date_range("2025-03-10 15:30+03:00", periods=4, freq="1min").append(
+        pd.date_range("2025-03-11 15:30+03:00", periods=4, freq="1min")
+    )
+    close = pd.Series(100.0, index=idx)
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 5.0, "low": close - 5.0, "close": close}, index=idx
+    )
+    atr = pd.Series(1.0, index=idx)
+
+    distances = max_tp_distance(
+        bars,
+        atr,
+        session_tz="America/Chicago",
+        source_clock_model="europe_helsinki",
+    )
+
+    assert distances.iloc[:4].isna().all()
+    assert distances.iloc[4:].eq(10.0).all()

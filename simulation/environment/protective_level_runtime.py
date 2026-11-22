@@ -71,14 +71,24 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
         )
         if protective_levels is None and not any(target is not None for target in target_levels):
             target_levels = (position.tp_price,)
+        # Same one-ULP tolerance as the tick helper, so a candle-side value a float
+        # step short of a level is not treated as a touch.
         stop_touched = sl_price is not None and (
-            exit_low <= sl_price if position.direction == 1 else exit_high >= sl_price
+            tick_price_reaches_level(exit_low, sl_price, direction=-1)
+            if position.direction == 1
+            else tick_price_reaches_level(exit_high, sl_price, direction=1)
         )
         target_touched = any(
             target is not None
             and (
-                (position.direction == 1 and exit_high >= target)
-                or (position.direction == -1 and exit_low <= target)
+                (
+                    position.direction == 1
+                    and tick_price_reaches_level(exit_high, target, direction=1)
+                )
+                or (
+                    position.direction == -1
+                    and tick_price_reaches_level(exit_low, target, direction=-1)
+                )
             )
             for target in target_levels
         )
@@ -429,21 +439,26 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
         last_fill_ns = -1
         randomized_by_trigger: dict[int, tuple[Any, dict[str, Any]]] = {}
         bar_minutes = max(1, int(round(getattr(self, "_minutes_per_step", 1.0))))
-        for tick_time, bid, ask in book.bar_quotes(bar_time, bar_minutes=bar_minutes):
+        # Entry time is fixed for this position, so convert it once, not per tick.
+        entry_ts = (
+            None if pos.entry_timestamp is None else pd.Timestamp(cast(Any, pos.entry_timestamp))
+        )
+        for tick_ns, bid, ask in book.bar_quote_ns(bar_time, bar_minutes=bar_minutes):
             if self.position is not pos or pos.size <= 0:
                 break
-            if tick_time.value < last_fill_ns:
+            if tick_ns < last_fill_ns:
                 continue
-            if pos.entry_timestamp is not None and tick_time < pd.Timestamp(
-                cast(Any, pos.entry_timestamp)
-            ):
+            if entry_ts is not None and tick_ns < entry_ts.value:
                 continue
+            # Timestamps are built only on a hit; the tick itself is raw nanoseconds.
+            tick_time: pd.Timestamp | None = None
             exit_side = bid if pos.direction == 1 else ask
             sl = pos.sl_price
             stop_hit = sl is not None and (
                 tick_price_reaches_level(exit_side, sl, direction=-int(pos.direction))
             )
             if stop_hit:
+                tick_time = pd.Timestamp(tick_ns, unit="ns", tz="UTC")
                 execution_meta: dict[str, Any] = {}
                 if getattr(self, "server_side_protective_orders", False):
                     execution_time = tick_time
@@ -521,6 +536,8 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 )
                 if not target_hit:
                     continue
+                if tick_time is None:
+                    tick_time = pd.Timestamp(tick_ns, unit="ns", tz="UTC")
                 execution_meta = {}
                 if getattr(self, "server_side_protective_orders", False):
                     execution_time = tick_time

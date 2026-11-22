@@ -17,11 +17,11 @@ class MarketAccessMixin(RuntimeMixinBase):
     def _bar_time(self, idx: int) -> pd.Timestamp:
         """Return bar ``idx`` as a tz-aware Timestamp in the broker timezone.
 
-        Frames mode stores tz-aware Timestamps; bundle mode stores a naive
-        ``datetime64[ns]`` array whose values are the UTC epoch of each bar, so
-        the naive value is localised to UTC and converted to the broker
-        timezone. This keeps the two data paths emitting identical (value +
-        timezone) timestamps for the equity curve and trade log.
+        Frame-mode Helsinki source labels may carry the fixed ``Etc/GMT-3``
+        chart carrier; interpret those wall labels with the DST-aware Helsinki
+        zone. Bundle mode stores UTC epoch values in a naive ``datetime64[ns]``
+        array, which must be localized to UTC. Already-aware frame instants are
+        preserved. All paths return the broker timezone representation.
 
         Args:
             idx: Numeric value used for the idx.
@@ -31,7 +31,14 @@ class MarketAccessMixin(RuntimeMixinBase):
         """
         value = self._bar_times[idx]
         ts = pd.Timestamp(value)
-        if ts.tzinfo is None:
+        source_is_helsinki_wall = (
+            self._bundle_arrays is None
+            and self._source_clock_model == "europe_helsinki"
+            and (ts.tzinfo is None or str(ts.tz) == "Etc/GMT-3")
+        )
+        if source_is_helsinki_wall:
+            ts = ts.tz_localize(None).tz_localize("Europe/Helsinki")
+        elif ts.tzinfo is None:
             ts = ts.tz_localize("UTC")
         return ts.tz_convert(BAR_TIME_TZ)
 

@@ -68,6 +68,23 @@ def _two_day_bars() -> pd.DataFrame:
     return out
 
 
+def test_pd_context_uses_helsinki_chart_clock_for_ny_routing() -> None:
+    index = pd.DatetimeIndex(
+        ["2025-03-10 15:29", "2025-03-10 15:30", "2025-03-10 17:00"]
+    ).tz_localize("Etc/GMT-3")
+    bars = pd.DataFrame({"open": 100.0, "high": 101.0, "low": 99.0, "close": 100.0}, index=index)
+
+    context = build_pd_context_features(
+        bars,
+        pd.Series(1.0, index=index),
+        tz="America/Chicago",
+        ny_end="15:00",
+        source_clock_model="europe_helsinki",
+    )
+
+    assert context["active_session_ny"].tolist() == [0.0, 1.0, 1.0]
+
+
 @pytest.fixture
 def bars() -> pd.DataFrame:
     return _two_day_bars()

@@ -165,6 +165,8 @@ class EntryExecutionRuntimeMixin(
             )
             if self.position is None:
                 self._reject("insufficient_margin")
+            else:
+                self.broker.mark_to_market(self.account, self.position, (fill_bid, fill_ask))
         else:
             self.position = None
             self._reject("sl_already_hit")

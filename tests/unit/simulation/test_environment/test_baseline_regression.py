@@ -224,7 +224,7 @@ class TestBaselineSLTP:
         """When a long fills in baseline mode, SL must come from last_swing_low,
         NOT from BaselineStrategy.sl_reference (which returns None).
         """
-        env = TradingEnv(bars, features, obs_window=20)
+        env = TradingEnv(bars, features, obs_window=20, swing_buffer_pts=0.0)
         env.reset()
         for _ in range(len(bars) - 20):
             _, _, done, trunc, _ = env.step(1)

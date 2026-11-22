@@ -297,6 +297,8 @@ def _prepare_inputs(
         schedule_path=schedule_path,
         session_start=str(cfg.session.start),
         session_end=str(cfg.session.end),
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
     selected_bars, selected_features = select_period(primary, features, cfg, period_role)
     return (

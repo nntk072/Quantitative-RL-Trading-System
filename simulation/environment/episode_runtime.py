@@ -37,6 +37,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
     _previous_ftmo_day: date | None
     position: Position | None
     _selected_trade_setup: TradeSetupCandidate | None
+    _entry_rejection_order_id: str | None
     _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
     _last_action_trade_setup_candidate_id: int | None
     _last_action_trade_setup_eligible: bool | None
@@ -136,6 +137,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         self._decision_action = _empty_decision()
         self._entry_rejection_reason = ""
         self._entry_rejection_decision_id = ""
+        self._entry_rejection_order_id = None
         self._ep_start_equity = float(self.initial_balance)
         self._ep_reward_sum = 0.0
         self._entry_diag = _empty_entry_diag(self.entry_state_machine is not None)
@@ -713,7 +715,13 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         if "session" in bars.columns:
             mask = bars["session"].eq("ny").to_numpy()
         else:
-            mask = ny_session_mask(pd.DatetimeIndex(bars.index)).to_numpy()
+            mask = ny_session_mask(
+                pd.DatetimeIndex(bars.index),
+                self._session_start,
+                self._session_end,
+                session_tz=self._session_timezone,
+                source_clock_model=self._source_clock_model,
+            ).to_numpy()
         ny = np.flatnonzero(mask)
         if ny.size == 0:
             if self.strict_research_eligibility:
@@ -731,6 +739,24 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
             # The final eligible bar is also the end of the available session.
             return bool(len(self._ny_indices))
         return int(self._ny_indices[self._ny_pos + 1]) > int(self.step_idx) + 1
+
+    def _next_observation_rebuilds(self) -> bool:
+        """Predict whether ``_advance_ny_step`` leaves a bar to observe.
+
+        Mirrors the advance: at the last NY bar ``step_idx`` becomes ``cur + 1``,
+        otherwise the next NY bar index. The step end then rebuilds the
+        observation exactly when that next position is still inside the data.
+
+        Returns:
+            True when the post-advance observation will be rebuilt.
+        """
+        next_pos = int(self._ny_pos) + 1
+        n_ny = len(self._ny_indices)
+        if next_pos >= n_ny:
+            next_step = int(self.step_idx) + 1
+        else:
+            next_step = int(self._ny_indices[next_pos])
+        return next_pos < n_ny and next_step < self._n_bars
 
     def _advance_ny_step(self) -> None:
         """Move to the next NY bar, replaying skipped bars on an overnight hold."""

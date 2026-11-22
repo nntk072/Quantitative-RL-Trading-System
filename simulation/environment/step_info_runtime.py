@@ -24,6 +24,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
     _decision_action: dict[str, float]
     _previous_constraint_ratios: dict[str, float]
     _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
+    _entry_rejection_order_id: str | None
     _last_action_trade_setup_candidate_id: int | None
     _last_action_trade_setup_eligible: bool | None
     _position_direction_at_decision: int
@@ -44,7 +45,7 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         entry_state_for_action: str | None,
         action: int,
         done: bool,
-    ) -> tuple[dict[str, np.ndarray[Any, Any]], str, dict[str, Any]]:
+    ) -> tuple[dict[str, np.ndarray[Any, Any]] | None, str, dict[str, Any]]:
         """Build step info.
 
         Args:
@@ -62,7 +63,9 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
         Returns:
             Mapping from ``str`` keys to ``np.ndarray[Any, Any]], str, dict[str, Any]`` values.
         """
-        obs = self._get_observation()
+        # The pre-advance observation is only returned when the post-advance
+        # rebuild in _resolve_step_end will not run; otherwise it is discarded.
+        obs = None if self._next_observation_rebuilds() else self._get_observation()
         close_reason = ""
         if self.trade_log:
             last_trade = self.trade_log[-1]
@@ -72,16 +75,35 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                 "sl_update",
             ):
                 close_reason = str(last_trade.get("reason") or "")
-        if self._entry_rejection_reason and not self._opened_this_step:
+        decision_time = pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
+        # Same boolean as a full scan; the matching rejection is normally recent,
+        # so search from the end and stop at the first match.
+        pending_rejection_already_logged = self._entry_rejection_order_id is not None and any(
+            event.get("type") == "reject"
+            and event.get("order_id") == self._entry_rejection_order_id
+            for event in reversed(self.trade_log)
+        )
+        if (
+            self._entry_rejection_reason
+            and not self._opened_this_step
+            and not pending_rejection_already_logged
+        ):
             selected_setup = self._selected_trade_setup if self.trade_setup_actions else None
             self.trade_log.append(
                 {
                     "type": "reject",
                     "decision_id": self._entry_rejection_decision_id or self._current_decision_id,
                     "entry_rejection_reason": self._entry_rejection_reason,
+                    **(
+                        {"order_id": self._entry_rejection_order_id}
+                        if self._entry_rejection_order_id is not None
+                        else {}
+                    ),
                     "direction": int(action),
                     "bar": self.step_idx,
                     "time": bar_time,
+                    "decision_bar_time": bar_time,
+                    "decision_time": decision_time,
                     **(
                         {
                             "trade_setup_candidate_id": int(selected_setup.candidate_id),
@@ -101,7 +123,6 @@ class StepInfoRuntimeMixin(RuntimeMixinBase):
                     **self._decision_action,
                 }
             )
-        decision_time = pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
         info: dict[str, Any] = {
             "decision_id": self._current_decision_id,
             "decision_time": decision_time,

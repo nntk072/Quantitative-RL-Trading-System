@@ -62,6 +62,20 @@ def test_completed_htf_history_mode_changes_bundle_identity() -> None:
     assert bundle_key(config, sources) != bundle_key(hidden_history, sources)
 
 
+def test_source_clock_model_changes_bundle_identity() -> None:
+    from simulation.environment.shared_bundle import bundle_key
+
+    _, config = _fixture_bundle_inputs()
+    sources = {"bars": {"size": 32}}
+    fixed_carrier = {**config, "data": {**config["data"], "timestamp_clock": "native"}}
+    helsinki_clock = {
+        **config,
+        "data": {**config["data"], "timestamp_clock": "europe_helsinki"},
+    }
+
+    assert bundle_key(fixed_carrier, sources) != bundle_key(helsinki_clock, sources)
+
+
 def test_bundle_identity_includes_column_names_and_labels() -> None:
     from simulation.environment.shared_bundle import bundle_key
 

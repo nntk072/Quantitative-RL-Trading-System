@@ -8,8 +8,9 @@ import numpy as np
 import pandas as pd
 
 from market_data.loading.ticks import TickBook
+from market_data.transforms.sessions import session_reference_index
 
-POLICY_MARKET_CONTEXT_VERSION = "m1-calendar-and-tick-context-v1"
+POLICY_MARKET_CONTEXT_VERSION = "m1-calendar-and-tick-context-v2"
 
 
 def build_policy_market_context(
@@ -20,6 +21,8 @@ def build_policy_market_context(
     schedule_path: str | Path,
     session_start: str = "16:30",
     session_end: str = "23:00",
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
     bar_minutes: int = 1,
 ) -> pd.DataFrame:
     """Return model inputs using schedule-known and completed-bar quote data.
@@ -36,6 +39,8 @@ def build_policy_market_context(
         schedule_path: Path or filename identifying the schedule.
         session_start: Text or path value identifying the session start.
         session_end: Text or path value identifying the session end.
+        session_tz: IANA timezone for NY schedule features; ``None`` keeps legacy behavior.
+        source_clock_model: Interpretation of source-index wall labels.
         bar_minutes: Numeric value used for the bar minutes.
 
     Returns:
@@ -61,18 +66,37 @@ def build_policy_market_context(
 
     start_minute = _minute_of_day(session_start)
     default_close_minute = _minute_of_day(session_end)
-    close_by_date = {
-        str(row.session_date): _minute_of_day(str(row.scheduled_ny_close_broker_time))
-        for row in schedule.itertuples(index=False)
-    }
+    index = pd.DatetimeIndex(bars.index)
+    close_by_date: dict[str, int]
+    if session_tz is None:
+        clock_index = index
+        close_by_date = {
+            str(row.session_date): _minute_of_day(str(row.scheduled_ny_close_broker_time))
+            for row in schedule.itertuples(index=False)
+        }
+    else:
+        clock_index = session_reference_index(index, source_clock_model)
+        if clock_index.tz is None:
+            clock_index = clock_index.tz_localize(session_tz)
+        clock_index = clock_index.tz_convert(session_tz)
+        close_by_date = {}
+        for row in schedule.itertuples(index=False):
+            date = str(row.session_date)
+            raw_close = pd.Timestamp(f"{date} {str(row.scheduled_ny_close_broker_time)}")
+            if raw_close.tzinfo is None and index.tz is not None:
+                raw_close = raw_close.tz_localize(index.tz)
+            close_index = session_reference_index(pd.DatetimeIndex([raw_close]), source_clock_model)
+            if close_index.tz is None:
+                close_index = close_index.tz_localize(session_tz)
+            close_local = close_index.tz_convert(session_tz)[0]
+            close_by_date[date] = close_local.hour * 60 + close_local.minute
     short_by_date = {
         str(row.session_date): str(row.scheduled_short).lower() in {"1", "true", "yes"}
         for row in schedule.itertuples(index=False)
     }
 
-    index = pd.DatetimeIndex(bars.index)
-    dates = np.asarray(index.strftime("%Y-%m-%d"), dtype=object)
-    minute_of_day = np.asarray(index.hour * 60 + index.minute, dtype=np.float64)
+    dates = np.asarray(clock_index.strftime("%Y-%m-%d"), dtype=object)
+    minute_of_day = np.asarray(clock_index.hour * 60 + clock_index.minute, dtype=np.float64)
     close_minutes = np.fromiter(
         (close_by_date.get(date, default_close_minute) for date in dates),
         dtype=np.float64,
@@ -135,6 +159,8 @@ def attach_policy_market_context(
     schedule_path: str | Path,
     session_start: str = "16:30",
     session_end: str = "23:00",
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
 ) -> pd.DataFrame:
     """Attach policy-session context derived from bars and the tick schedule.
 
@@ -145,6 +171,8 @@ def attach_policy_market_context(
         schedule_path: Session schedule used to resolve policy windows.
         session_start: Local session start time in HH:MM form.
         session_end: Local session end time in HH:MM form.
+        session_tz: IANA timezone for NY schedule features.
+        source_clock_model: Interpretation of source-index wall labels.
 
     Returns:
         Feature frame with policy-market context columns appended.
@@ -156,6 +184,8 @@ def attach_policy_market_context(
         schedule_path=schedule_path,
         session_start=session_start,
         session_end=session_end,
+        session_tz=session_tz,
+        source_clock_model=source_clock_model,
     )
     collisions = set(context.columns).intersection(features.columns)
     if collisions:

@@ -193,7 +193,10 @@ class HybridBoxDistribution(SB3Distribution):
                     raise ValueError(
                         f"{name} categorical distribution requires its eligibility mask"
                     )
-                mask = masks[name].to(device=values.device) > 0.0
+                mask_values = masks[name].to(device=values.device)
+                if not bool(torch.isfinite(mask_values).all()):
+                    raise ValueError(f"{name} eligibility mask must contain only finite values")
+                mask = mask_values > 0.0
                 if mask.shape != values.shape or not bool(mask.any(dim=1).all()):
                     raise ValueError(
                         f"{name} eligibility mask must match logits and allow a category"
@@ -739,7 +742,10 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         self.log_std = log_std
         if masks is None or self.setup_coordinate not in masks:
             raise ValueError("setup-conditioned distribution requires its eligibility mask")
-        mask = masks[self.setup_coordinate].to(device=trade_setup_logits.device) > 0.0
+        mask_values = masks[self.setup_coordinate].to(device=trade_setup_logits.device)
+        if not bool(torch.isfinite(mask_values).all()):
+            raise ValueError("setup eligibility mask must contain only finite values")
+        mask = mask_values > 0.0
         if mask.shape != trade_setup_logits.shape or not bool(mask.any(dim=1).all()):
             raise ValueError("setup eligibility mask must match logits and allow a category")
         self.mask = mask

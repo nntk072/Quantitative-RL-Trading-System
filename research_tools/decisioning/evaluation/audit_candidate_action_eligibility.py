@@ -57,7 +57,13 @@ def audit_training_eligibility(
     session_start = str(cfg.session.start)
     session_end = str(cfg.session.end)
     bar_index = pd.DatetimeIndex(bars.index)
-    ny_mask = ny_session_mask(bar_index, start=session_start, end=session_end)
+    ny_mask = ny_session_mask(
+        bar_index,
+        start=session_start,
+        end=session_end,
+        session_tz=str(cfg.session.get("tz", "America/Chicago")),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+    )
     labels = pd.Series("closed", index=bars.index, dtype=str)
     labels.loc[ny_mask] = "ny"
     session_ids = pd.Series(

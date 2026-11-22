@@ -100,11 +100,16 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags(tmp_path: P
 
     assert summary["schema_version"] == 2
     assert summary["public_feature_function_count"] == 99
-    assert summary["upstream_time_session_function_count"] == 11
+    assert summary["upstream_time_session_function_count"] == 12
     assert summary["setup_entry_idea_flag_count"] == 108
     assert summary["supported_setup_entry_idea_flag_count"] == 24
     assert len(function_rows) == 99
-    assert len(upstream_rows) == 11
+    assert len(upstream_rows) == 12
+    assert any(
+        row["source_path"] == "market_data/transforms/sessions.py"
+        and row["function"] == "session_reference_index"
+        for row in upstream_rows
+    )
     assert len(flag_rows) == 108
     assert len({row["feature_or_flag"] for row in flag_rows}) == 108
     assert all(set(row) == set(FIELDS) for row in rows)
@@ -219,6 +224,7 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags(tmp_path: P
         ("features/technical/swings.py", "retained_swing_levels"),
         ("features/technical/swings.py", "recent_unswept_swing_candidates"),
         ("features/technical/swings.py", "swing_history"),
+        ("market_data/transforms/sessions.py", "session_reference_index"),
         ("market_data/transforms/sessions.py", "get_session"),
         ("market_data/transforms/sessions.py", "ny_session_mask"),
         ("market_data/transforms/sessions.py", "add_session_labels"),
@@ -234,7 +240,7 @@ def test_generated_matrix_lists_public_functions_and_all_setup_flags(tmp_path: P
         ("market_data/transforms/resample.py", "resample"),
         ("market_data/transforms/resample.py", "build_all_timeframes"),
     }
-    assert summary["reviewed_function_metadata_count"] == 110
+    assert summary["reviewed_function_metadata_count"] == 111
     assert summary["unassessed_function_metadata_count"] == 0
     reachability_adapter = reviewed[("features/context/reachability.py", "attach_reachable_r")]
     assert "optional reachable_r_valid" in reachability_adapter["output_features"]

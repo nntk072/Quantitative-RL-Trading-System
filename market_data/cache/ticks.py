@@ -17,7 +17,7 @@ from market_data.cache.storage import (
 )
 
 TICK_CACHE_MANIFEST_SCHEMA_VERSION = 1
-TICK_CACHE_TRANSFORM_ID = "mt5-tick-csv-to-book-v1"
+TICK_CACHE_TRANSFORM_ID = "mt5-tick-csv-to-book-v2-clock-model"
 
 
 def tick_cache_manifest_path(cache_path: str | Path) -> Path:
@@ -37,6 +37,7 @@ def build_tick_cache_identity(
     source_path: str | Path,
     source_sha256: str,
     timezone: str,
+    source_clock_model: str | None = None,
     session_start: str | None,
     session_end: str | None,
     price_grid_identity: str,
@@ -50,6 +51,7 @@ def build_tick_cache_identity(
         source_path: Path or filename identifying the source.
         source_sha256: Text or path value identifying the source sha256.
         timezone: Text or path value identifying the timezone.
+        source_clock_model: Optional source-wall-clock interpretation model.
         session_start: Session start used by the operation described above.
         session_end: Session end used by the operation described above.
         price_grid_identity: Text or path value identifying the price grid identity.
@@ -65,6 +67,7 @@ def build_tick_cache_identity(
         "source_path": resolved_source_path,
         "source_sha256": source_sha256,
         "timezone": timezone,
+        "source_clock_model": source_clock_model,
         "session_start": session_start,
         "session_end": session_end,
         "price_grid_identity": price_grid_identity,

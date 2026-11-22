@@ -2,12 +2,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import replace
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
 import pytest
+from gymnasium import spaces
 
+from decisioning.adapters.sb3 import SB3DecisionProvider
+from decisioning.contracts import (
+    ActionSchemaRef,
+)
 from decisioning.trade_setup import (
     NO_TRADE_ID,
     TradeSetupActionSchema,
@@ -18,10 +24,12 @@ from decisioning.trade_setup import (
 from evaluation.metrics.limit_execution_sensitivity import compare_limit_execution_sensitivity
 from evaluation.reporting.account_state_trace_reconciliation import reconcile_account_state_trace
 from evaluation.reporting.policy_decision_reconciliation import reconcile_policy_decisions
+from evaluation.rollout.provider import make_provider_action_fn
 from features.context.trade_setup_candidates import (
     trade_setup_candidate_event_time_fields,
     trade_setup_candidate_feature_columns,
 )
+from learning.rl.agent import validate_model_action_schema
 from market_data.loading.ticks import TickBook, TickExecutionUnavailable
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
@@ -171,10 +179,142 @@ def test_event_backtest_limit_order_fills_only_from_executable_tick_quote() -> N
     assert filled["price"] == filled["ask"]
     assert opened["fill_quote_source"] == "tick"
     assert opened["fill_time"] == tick_time
+    assert opened["actual_tick_time"] == tick_time
+    assert submitted["time"] == submitted["order_submission_time"]
+    entry_boundary = tick_time.floor("min") + pd.Timedelta(minutes=1)
+    trace = result["account_state_trace"]
+    at_entry_boundary = pd.to_datetime(trace["decision_time"], utc=True) == entry_boundary
+    entry_state = trace.loc[at_entry_boundary].iloc[0]
+    assert pd.to_datetime(entry_state["valuation_time"], utc=True) == tick_time
+    assert entry_state["position_direction"] == 1
+    assert pd.isna(entry_state["pending_order_id"])
+    assert entry_state["equity"] == pytest.approx(opened["equity"])
     assert opened["order_submission_time"] == submitted["order_submission_time"]
     assert opened["order_id"] == submitted["order_id"]
     assert opened["price"] == filled["price"]
     assert opened["price"] <= filled["limit_price"]
+
+
+def test_versioned_provider_action_keeps_one_contract_through_env_and_backtest() -> None:
+    bars, features, _, schema, candidate_id, limit_action = _backtest_inputs()
+    features["last_swing_low"] = 19_990.0
+    features["last_swing_high"] = 20_010.0
+    tick_time = bars.index[2] + pd.Timedelta(seconds=30)
+    tickbook = TickBook(
+        np.asarray([tick_time.value], dtype=np.int64),
+        np.asarray([19_999.5]),
+        np.asarray([19_999.75]),
+    )
+    action_schema_ref = ActionSchemaRef(
+        version=schema.version,
+        key=schema.key,
+        coordinates=schema.names,
+        kind="continuous",
+    )
+    checkpoint = SimpleNamespace(
+        action_space=spaces.Box(-1.0, 1.0, (schema.width,), dtype=np.float32),
+        policy=SimpleNamespace(),
+        _action_schema_version=schema.version,
+        _action_layout_key=schema.key,
+        _action_schema=schema.to_dict(),
+        predict=lambda _observation, *, deterministic: (limit_action, None),
+    )
+    validate_model_action_schema(checkpoint, schema)
+    assert checkpoint._action_schema == schema.to_dict() | {"checkpoint_metadata": "versioned"}
+    provider = SB3DecisionProvider(checkpoint, input_schema_version="trade-setup-observation-v2")
+    assert provider.metadata.action_schema == action_schema_ref
+    policy_action = make_provider_action_fn(
+        provider,
+        input_schema_version="trade-setup-observation-v2",
+        strategy_actions=True,
+    )
+    serialized_action = policy_action({})
+    np.testing.assert_array_equal(serialized_action, limit_action)
+
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=1,
+        strategy_actions=True,
+        trade_setup_actions=True,
+        agent_entry_execution=True,
+        tickbook=tickbook,
+        cost_model=CostModel(spread_points=0.0, point_size=0.25, commission_per_lot=0.0),
+        tick_execution_required=True,
+        open_manipulation_bars=0,
+        block_overnight=False,
+        max_episode_steps=4,
+        strategy=_SwingGeometryStrategy(),
+    )
+    env.reset(seed=13)
+    env.step_idx = 1
+    env._ny_pos = int(np.searchsorted(env._ny_indices, env.step_idx))
+    env.step(serialized_action)
+    env_submit = next(event for event in env.trade_log if event.get("type") == "order_submit")
+    assert env_submit["trade_setup_candidate_id"] == candidate_id
+    assert env_submit["order_type"] == "limit"
+    _, _, _, _, fill_info = env.step(_action(schema, candidate_id=NO_TRADE_ID, limit=False))
+    env_open = next(event for event in env.trade_log if event.get("type") == "open")
+    assert env_open["fill_time"] == tick_time
+    assert (
+        pd.to_datetime(fill_info["account_state_snapshot"]["valuation_time"], utc=True) == tick_time
+    )
+
+    result = run_backtest(
+        bars,
+        features,
+        cast(Any, policy_action),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.25, commission_per_lot=0.0),
+        hold_on_zero=True,
+        block_overnight=False,
+        trade_setup_actions=True,
+        trade_setup_action_schema=schema,
+        tickbook=tickbook,
+        trade_setup_geometry=False,
+        strategy=_SwingGeometryStrategy(),
+    )
+    backtest_submit = next(
+        event
+        for event in result["trades"].to_dict("records")
+        if event.get("type") == "order_submit"
+    )
+    assert backtest_submit["trade_setup_candidate_id"] == candidate_id
+    assert backtest_submit["order_type"] == env_submit["order_type"]
+    assert result["policy_decisions"].iloc[0]["trade_setup_candidate_id"] == candidate_id
+
+
+def test_event_backtest_rejects_new_entry_during_configured_open_blackout() -> None:
+    bars, features, tickbook, schema, candidate_id, limit_action = _backtest_inputs()
+    bars.loc[bars.index[0], "session"] = "pre_ny"
+
+    result = run_backtest(
+        bars,
+        features,
+        lambda _observation: limit_action,
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.25, commission_per_lot=0.0),
+        hold_on_zero=True,
+        block_overnight=False,
+        trade_setup_actions=True,
+        trade_setup_action_schema=schema,
+        trade_setup_geometry=False,
+        tickbook=tickbook,
+        open_manipulation_bars=2,
+    )
+
+    records = result["trades"].to_dict("records")
+    blackout_rejects = [event for event in records if event.get("reason") == "open_blackout"]
+    submission = next(event for event in records if event.get("type") == "order_submit")
+
+    assert [event["decision_bar"] for event in blackout_rejects] == [1, 2]
+    assert [event["decision_bar_time"] for event in blackout_rejects] == [
+        bars.index[1],
+        bars.index[2],
+    ]
+    assert all(event["trade_setup_candidate_id"] == candidate_id for event in blackout_rejects)
+    assert submission["decision_bar"] == 3
+    assert submission["decision_bar_time"] == bars.index[3]
 
 
 def test_limit_quote_is_not_recorded_as_fill_when_margin_rejects_the_entry() -> None:
@@ -996,6 +1136,8 @@ def test_event_backtest_cancels_limit_when_source_setup_or_session_ends(
     records = result["trades"].to_dict("records")
     cancellation = next(event for event in records if event.get("type") == "order_cancel")
     assert cancellation["reason"] == expected_reason
+    if source_change == "invalidates":
+        assert cancellation["time"] == bars.index[3] + pd.Timedelta(minutes=1)
     submit = next(event for event in records if event.get("type") == "order_submit")
     assert cancellation["trade_setup_candidate_id"] == submit["trade_setup_candidate_id"]
     assert cancellation["trade_setup_source_event_id"] == submit["trade_setup_source_event_id"]

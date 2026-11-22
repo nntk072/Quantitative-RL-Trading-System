@@ -210,6 +210,9 @@ def main() -> None:
             randomized_fill_latency_ms=cfg.execution.randomized_fill_latency_ms,
             max_tick_quote_wait_ms=cfg.execution.max_tick_quote_wait_ms,
             execution_seed=args.seed,
+            open_manipulation_bars=int(cfg.env.get("open_manipulation_bars", 10)),
+            session_timezone=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         )
         result["initial_balance"] = cfg.account.initial_balance
         metric_equity = (

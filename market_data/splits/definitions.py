@@ -95,12 +95,15 @@ def split_bars(
     return train, test
 
 
-def inclusive_date_exclusive_end(end_date: str, timezone: str | None) -> pd.Timestamp:
+def inclusive_date_exclusive_end(
+    end_date: str, timezone: str | None, source_clock_model: str = "native"
+) -> pd.Timestamp:
     """Return the next local midnight after an inclusive calendar date.
 
     Args:
         end_date: Inclusive calendar date to convert to an exclusive boundary.
         timezone: Optional timezone used to localize or convert the date.
+        source_clock_model: Optional interpretation of the localized wall-clock date.
 
     Returns:
         Timestamp for midnight after ``end_date`` in the requested timezone.
@@ -111,7 +114,12 @@ def inclusive_date_exclusive_end(end_date: str, timezone: str | None) -> pd.Time
             boundary = boundary.tz_localize(timezone)
         else:
             boundary = boundary.tz_convert(timezone)
-    return boundary.normalize() + pd.DateOffset(days=1)
+    boundary = boundary.normalize() + pd.DateOffset(days=1)
+    if source_clock_model != "native":
+        from market_data.transforms.sessions import session_reference_index
+
+        boundary = session_reference_index(pd.DatetimeIndex([boundary]), source_clock_model)[0]
+    return boundary
 
 
 def get_split_config(cfg: Any) -> tuple[str, str]:

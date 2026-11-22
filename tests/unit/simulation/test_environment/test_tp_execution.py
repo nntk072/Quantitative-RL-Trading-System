@@ -216,6 +216,9 @@ class TestTPExecution:
 
         resolve_quote.assert_called_once_with(next_bar_time)
         assert env.trade_log[-1]["reason"] == "ema_21_exit"
+        assert env.trade_log[-1]["time"] == quote.tick_time
+        assert env.trade_log[-1]["decision_time"] == env._bar_time(0)
+        assert env.trade_log[-1]["fill_time"] == quote.tick_time
 
     def _enter_multi_tp(
         self,

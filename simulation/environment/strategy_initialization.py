@@ -54,6 +54,7 @@ class StrategyInitializationMixin(RuntimeMixinBase):
         self._selected_tp_z = (0.0, 0.0)
         self._decision_action = _empty_decision()
         self._entry_rejection_reason = ""
+        self._entry_rejection_order_id: str | None = None
         self._session_entry_counts: dict[int, int] = {}
         self._cooldown_until_bar: int = -1
         self._last_realized_close_pnl: float | None = None
@@ -88,7 +89,12 @@ class StrategyInitializationMixin(RuntimeMixinBase):
         ):
             from features.context.reachability import max_tp_distance
 
-            dist = max_tp_distance(bars, features["atr_5"]).reindex(bars.index)
+            dist = max_tp_distance(
+                bars,
+                features["atr_5"],
+                session_tz=self._session_timezone,
+                source_clock_model=self._source_clock_model,
+            ).reindex(bars.index)
             self._max_tp_dist = dist.to_numpy(dtype=float)
 
 

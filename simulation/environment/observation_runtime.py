@@ -18,8 +18,9 @@ from .mixin_base import RuntimeMixinBase
 from .observations import (
     DEFAULT_HTF_WINDOWS,
     HTF_BRANCHES,
-    closed_window,
+    closed_window_raw,
     prepare_observation_feature_channels,
+    prepare_observation_feature_channels_many,
     sanitize_observation_values,
 )
 
@@ -214,16 +215,27 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             obs.update(build_candidate_geometry_observation(self))
         if self.mtf:
             decision = int(self.step_idx)
-            for key, _, seq_key in HTF_BRANCHES:
-                cols = self._htf_idx[key]
-                window, mask = closed_window(
+            # One sanitize/mask pass for all higher-timeframe windows; per-window
+            # gather and padding are unchanged.
+            lengths = [
+                int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key]))
+                for key, _, _ in HTF_BRANCHES
+            ]
+            raw_windows = [
+                closed_window_raw(
                     self._obs_features_arr,
                     self._htf_starts[key],
                     decision,
-                    int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key])),
-                    columns=cols,
-                    include_validity=self.feature_validity_channels,
+                    length,
+                    columns=self._htf_idx[key],
                 )
+                for (key, _, _), length in zip(HTF_BRANCHES, lengths)
+            ]
+            prepared_windows = prepare_observation_feature_channels_many(
+                raw_windows, include_validity=self.feature_validity_channels
+            )
+            for (key, _, seq_key), length, values in zip(HTF_BRANCHES, lengths, prepared_windows):
+                window, mask = pad_observation_window(values, length)
                 if not self.completed_htf_history_enabled:
                     window.fill(0.0)
                     mask.fill(0.0)

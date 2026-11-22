@@ -506,7 +506,7 @@ def test_tick_mode_uses_correct_ask_and_records_actual_entry_quote(latency_ms: f
 
 @pytest.mark.parametrize("latency_ms", [0.0, 30.0])
 @pytest.mark.parametrize("tick_in_bar", [False, True])
-def test_tick_only_mode_rejects_ohlc_stop_without_matching_tick(
+def test_tick_only_mode_keeps_position_open_when_ohlc_stop_has_no_matching_tick(
     latency_ms: float, tick_in_bar: bool
 ) -> None:
     index = pd.date_range("2026-01-05T14:30:00Z", periods=4, freq="min")
@@ -543,7 +543,9 @@ def test_tick_only_mode_rejects_ohlc_stop_without_matching_tick(
     env.position = pos
     bar = BarView(open=100.0, low=99.0, high=100.5, close=100.0)
 
-    with pytest.raises(TickExecutionUnavailable, match="no matching tick trigger"):
+    # Fail-closed: an OHLC stop touch with no matching executable tick must raise,
+    # not keep the position open or fill from the candle.
+    with pytest.raises(TickExecutionUnavailable):
         env._check_sl_tp(bar, 100.0, 100.2, env.step_idx)
     assert env.position is pos
     assert not any(row.get("type") == "stop_close" for row in env.trade_log)

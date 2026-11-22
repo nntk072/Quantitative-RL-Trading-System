@@ -408,6 +408,8 @@ def main() -> None:
             fill_latency_bars=cfg.execution.get("fill_latency_bars", 0),
             randomized_fill_latency_ms=float(cfg.execution.get("randomized_fill_latency_ms", 0.0)),
             max_tick_quote_wait_ms=int(cfg.execution.get("max_tick_quote_wait_ms", 60_000)),
+            session_timezone=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
             use_structure_sl_tp=False,
             risk_frac=risk_frac,
             rr_ratio=rr_ratio,

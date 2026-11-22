@@ -124,8 +124,17 @@ def main(report_path: Path = OUT) -> None:
 
     def load_symbol(path: Path) -> pd.DataFrame:
         bars = clean(load_bars(path), tz=str(base.data.tz))
-        bars = add_session_labels(bars, tz=str(base.data.tz), ny_end=str(base.session.end))
-        return add_session_id(bars)
+        bars = add_session_labels(
+            bars,
+            tz=str(base.session.tz),
+            ny_end=str(base.session.end),
+            source_clock_model=str(base.data.get("timestamp_clock", "native")),
+        )
+        return add_session_id(
+            bars,
+            session_tz=str(base.session.tz),
+            source_clock_model=str(base.data.get("timestamp_clock", "native")),
+        )
 
     primary, secondary = load_symbol(primary_path), load_symbol(secondary_path)
     train_end, test_start = get_split_config(base)

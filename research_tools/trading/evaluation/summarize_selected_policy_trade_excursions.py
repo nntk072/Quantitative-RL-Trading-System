@@ -74,9 +74,10 @@ def _parse_named_path(value: str) -> tuple[str, Path]:
     return name, path.resolve()
 
 
-def _tick_settings(config_path: Path) -> tuple[str, float | None]:
+def _tick_settings(config_path: Path) -> tuple[str, str, float | None]:
     config = OmegaConf.load(config_path)
     timezone = str(OmegaConf.select(config, "data.tz"))
+    source_clock_model = str(OmegaConf.select(config, "data.timestamp_clock", default="native"))
     grid_enabled = bool(
         OmegaConf.select(config, "data.price_discretization.enabled", default=False)
     )
@@ -85,7 +86,7 @@ def _tick_settings(config_path: Path) -> tuple[str, float | None]:
         if grid_enabled
         else None
     )
-    return timezone, grid_increment
+    return timezone, source_clock_model, grid_increment
 
 
 def _utc_timestamp(value: Any, *, position_id: str, field: str) -> pd.Timestamp:
@@ -312,19 +313,21 @@ def run(
 
     config_settings: dict[str, dict[str, Any]] = {}
     for name, path in configs:
-        timezone, grid_increment = _tick_settings(path)
+        timezone, source_clock_model, grid_increment = _tick_settings(path)
         config_settings[name] = {
             "path": _path_identity(path),
             "sha256": _sha256_file(path),
             "timezone": timezone,
+            "source_clock_model": source_clock_model,
             "price_grid_increment": grid_increment,
         }
     tick_setting_pairs = {
-        (item["timezone"], item["price_grid_increment"]) for item in config_settings.values()
+        (item["timezone"], item["source_clock_model"], item["price_grid_increment"])
+        for item in config_settings.values()
     }
     if len(tick_setting_pairs) != 1:
         raise ValueError("matched arm configs have different TickBook timezone/grid settings")
-    timezone, price_grid_increment = next(iter(tick_setting_pairs))
+    timezone, source_clock_model, price_grid_increment = next(iter(tick_setting_pairs))
     quality_report = json.loads(quality_report_path.read_text(encoding="utf-8"))
     tick_relative = tick_csv.resolve().relative_to(ROOT).as_posix()
     tick_record = next(
@@ -341,6 +344,7 @@ def run(
     book = build_tick_book(
         tick_csv,
         tz=timezone,
+        source_clock_model=source_clock_model,
         price_grid_increment=price_grid_increment,
     )
     frames = {
@@ -434,6 +438,7 @@ def run(
                 "config": {
                     "arms": config_settings,
                     "shared_timezone": timezone,
+                    "shared_source_clock_model": source_clock_model,
                     "shared_price_grid_increment": price_grid_increment,
                 },
                 "tickbook_content_sha256": book.content_sha256(),

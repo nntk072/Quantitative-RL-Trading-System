@@ -14,7 +14,7 @@ import argparse
 import hashlib
 import json
 import math
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -31,6 +31,23 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _source_code_path_for_hash(relative_path: str) -> Path:
+    """Resolve report code identities to the implementation files they hash.
+
+    Args:
+        relative_path: Source identity key stored in the comparison report.
+
+    Returns:
+        Absolute path to the source file whose bytes were recorded.
+    """
+    if relative_path == "generator":
+        return (
+            ROOT
+            / "research_tools/simulation/evaluation/compare_simulator_local_session_account_trace.py"
+        )
+    return ROOT / relative_path
 
 
 def close(left: float, right: float, *, atol: float = 1e-8) -> bool:
@@ -54,6 +71,22 @@ def event_time(event: dict[str, Any]) -> str | None:
         (event[key] for key in ("fill_time", "close_time", "time") if event.get(key) is not None),
         None,
     )
+
+
+def _same_instant(left: str | None, right: str | None) -> bool:
+    """Compare timezone-aware event timestamps by their UTC instant."""
+    if left is None or right is None:
+        return False
+    try:
+        left_time = datetime.fromisoformat(left)
+        right_time = datetime.fromisoformat(right)
+    except (TypeError, ValueError):
+        return False
+    if left_time.tzinfo is None or right_time.tzinfo is None:
+        return False
+    if left_time.utcoffset() is None or right_time.utcoffset() is None:
+        return False
+    return left_time.astimezone(UTC) == right_time.astimezone(UTC)
 
 
 def event_datetime(event: dict[str, Any]) -> datetime:
@@ -104,7 +137,7 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
     if len(env_events) == len(backtest_events):
         for env_event, backtest_event in zip(env_events, backtest_events, strict=True):
             event_type_matches = env_event["type"] == backtest_event["type"]
-            time_matches = event_time(env_event) == event_time(backtest_event)
+            time_matches = _same_instant(event_time(env_event), event_time(backtest_event))
             session_matches = session_for(env_event, report) == session_for(backtest_event, report)
             price_matches = close(env_event["price"], backtest_event["price"])
             if env_event["type"] == "open" and backtest_event["type"] == "open":
@@ -181,7 +214,7 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
     if len(env_closes) == len(backtest_closes):
         for env_close, backtest_close in zip(env_closes, backtest_closes, strict=True):
             pnl_delta = float(env_close["pnl"]) - float(backtest_close["pnl"])
-            same_close_time = event_time(env_close) == event_time(backtest_close)
+            same_close_time = _same_instant(event_time(env_close), event_time(backtest_close))
             same_session = session_for(env_close, report) == session_for(backtest_close, report)
             recomputed_close_comparisons.append(
                 {
@@ -439,12 +472,7 @@ def verify(report_path: Path, input_hashes: dict[str, str]) -> dict[str, Any]:
         )
     code_hash_checks = {}
     for relative_path, recorded_hash in report["code_sha256"].items():
-        source_path = (
-            ROOT
-            / "scripts/research/analysis/evaluation/compare_simulator_local_session_account_trace.py"
-            if relative_path == "generator"
-            else ROOT / relative_path
-        )
+        source_path = _source_code_path_for_hash(relative_path)
         matches = sha256(source_path) == recorded_hash
         code_hash_checks[relative_path] = matches
         checks[f"source_hash_{relative_path}"] = matches

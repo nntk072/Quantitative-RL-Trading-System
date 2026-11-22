@@ -1,5 +1,12 @@
 schema_version: 1
 scripts:
+- path: scripts/research/analysis/evaluation/action_tape.py
+  owner_module: simulation
+  target: research_tools.simulation.evaluation.action_tape
+  entrypoint: module
+  tests:
+  - tests/unit/research_tools/test_action_tape.py
+  migration_state: complete
 - path: scripts/research/analysis/evaluation/audit_candidate_action_eligibility.py
   owner_module: decisioning
   target: research_tools.decisioning.evaluation.audit_candidate_action_eligibility
@@ -186,6 +193,13 @@ scripts:
   entrypoint: cli
   tests: *id005
   migration_state: complete
+- path: scripts/research/analysis/evaluation/replay_simulator_action_tape.py
+  owner_module: simulation
+  target: research_tools.simulation.evaluation.replay_simulator_action_tape
+  entrypoint: module
+  tests:
+  - tests/integration/backtest/test_action_tape_replay.py
+  migration_state: complete
 - path: scripts/research/analysis/evaluation/report_ablations.py
   owner_module: evaluation
   target: research_tools.evaluation.evaluation.report_ablations
@@ -294,7 +308,10 @@ scripts:
   owner_module: simulation
   target: research_tools.simulation.evaluation.verify_simulator_local_session_account_trace
   entrypoint: cli
-  tests: *id005
+  tests:
+  - tests/unit/simulation/test_environment/test_simulation_transition_contract.py
+  - tests/unit/simulation/test_environment/test_trading_env_golden_traces.py
+  - tests/research/test_simulator_local_session_trace_verifier.py
   migration_state: complete
 - path: scripts/research/analysis/evaluation/verify_simulator_local_tick_trace_set.py
   owner_module: simulation

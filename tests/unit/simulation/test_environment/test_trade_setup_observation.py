@@ -427,6 +427,7 @@ def test_step_returns_candidate_mask_for_next_decision_row() -> None:
         obs_window=10,
         strategy_actions=True,
         trade_setup_actions=True,
+        source_clock_model="europe_helsinki",
     )
     env.reset(seed=3)
     env.step_idx = 49

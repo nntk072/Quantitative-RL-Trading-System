@@ -9,9 +9,11 @@ data:
     increment: 0.25                     # .00/.25/.50/.75 price grid when enabled
     rounding: "nearest_half_away_from_zero"
   prebuilt_feature_cache: null          # optional named cache path; content hash is verified
+  # Date-specific index-CFD closes use the Helsinki source-wall clock; source notices use MetaTrader time.
+  # A close at the session open represents a full-day instrument closure.
   session_schedule_file: "config/ny_session_schedule.csv"
-  tz: "Etc/GMT-3"                      # fixed-offset carrier for server wall-clock labels
-  timestamp_clock: "ftmo_mt5_us_dst"    # FTMO MT4/5: GMT+2 standard / GMT+3 US DST
+  tz: "Etc/GMT-3"                      # fixed-offset carrier for Helsinki wall-clock labels
+  timestamp_clock: "europe_helsinki"    # source chart timestamps are Helsinki local time
   bar_timestamp_convention: "open"      # bar export timestamp marks the interval open
   require_native_timeframes: true        # missing native bars fail unless explicitly derived
   symbols: ["US100.cash", "US500.cash"]
@@ -98,10 +100,10 @@ data:
         US500.cash: "US500.cash_202412300105_202610162349.csv"
 
 session:
-  tz: "Etc/GMT-3"                      # wall-clock labels; not an absolute-timezone rule
-  start: "16:30"                       # NY open proxy
-  end:   "23:00"                       # NY close proxy
-  # Session times are FTMO server wall time; CT feature conversion uses timestamp_clock.
+  tz: "America/Chicago"                # exchange clock; DST follows New York
+  start: "08:30"                       # NY cash-market open
+  end:   "15:00"                       # NY cash-market close
+  # Source chart labels are interpreted through data.timestamp_clock.
   dst_flag: true
 
 account:
@@ -175,6 +177,9 @@ costs:
   use_tick_execution: true
 
 execution:
+  approved_no_fill_quote_anchors:
+    US100.cash: []
+    US500.cash: []
   # Fill on the tick that crosses SL or TP. 0 = that tick, not a later one.
   # A prop-firm stop fills at the level or worse; a later tick can bounce back.
   fill_delay_ms: 0
@@ -692,7 +697,7 @@ strategy:
   variant_id: null
   manipulation_filter: "against"  # "against" | "follow"
   session:
-    timezone: "Etc/GMT-3"
+    timezone: "America/Chicago"
   liquidity:
     swing_period: 5
     require_reclaim: true

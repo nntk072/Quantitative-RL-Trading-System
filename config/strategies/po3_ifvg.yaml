@@ -18,7 +18,7 @@ strategy:
   name: "po3_ifvg"
   variant_id: "po3_confirmed_ifvg_htf_mtf_v1"
   session:
-    timezone: "Etc/GMT-3"
+    timezone: "America/Chicago"
   liquidity:
     swing_period: 5
     require_reclaim: true

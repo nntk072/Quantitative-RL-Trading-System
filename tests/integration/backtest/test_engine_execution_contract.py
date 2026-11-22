@@ -308,6 +308,39 @@ def test_terminal_liquidation_updates_equity_at_bar_close_time() -> None:
     assert result["equity_valuation_times"].is_monotonic_increasing
 
 
+def test_session_close_trace_uses_the_close_bar_state() -> None:
+    index = pd.date_range("2026-01-05 14:30", periods=6, freq="1min", tz="UTC")
+    prices = [100.0, 100.0, 101.0, 100.0, 100.0, 100.0]
+    bars = pd.DataFrame(
+        {
+            "open": prices,
+            "high": [price + 0.2 for price in prices],
+            "low": [price - 0.2 for price in prices],
+            "close": prices,
+            "session": ["london", "ny", "ny", "ny", "closed", "closed"],
+            "session_id": [1, 2, 2, 2, 3, 3],
+        },
+        index=index,
+    )
+    actions = iter([1, 0])
+
+    result = run_backtest(
+        bars,
+        pd.DataFrame(index=index),
+        lambda _obs: next(actions),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.01),
+        hold_on_zero=True,
+        block_overnight=True,
+    )
+
+    close = result["trades"].loc[result["trades"]["type"] == "eod_close"].iloc[-1]
+    trace = result["account_state_trace"].set_index("backtest_bar_index").loc[int(close["bar"])]
+    assert close["fill_time"] == index[3] + pd.Timedelta(minutes=1)
+    assert pd.Timestamp(trace["valuation_time"]) == close["fill_time"]
+    assert trace["state_phase"] == "post_action_valuation"
+
+
 def test_terminal_market_close_uses_configured_slippage_by_default() -> None:
     index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
     actions = iter([1, 1, 1])
@@ -375,7 +408,11 @@ def test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times() -> N
     repeated_result = run(19)
     first = cast(pd.DataFrame, first_result["trades"])
     repeated = cast(pd.DataFrame, repeated_result["trades"])
-    assert first.loc[first["type"] != "order_submit", "type"].tolist() == ["open", "eod_close"]
+    assert first.loc[first["type"] != "order_submit", "type"].tolist() == [
+        "order_fill",
+        "open",
+        "eod_close",
+    ]
     pd.testing.assert_frame_equal(first, repeated)
     pd.testing.assert_series_equal(first_result["equity"], repeated_result["equity"])
     pd.testing.assert_series_equal(
@@ -501,40 +538,41 @@ def test_randomized_backtest_needs_no_tick_quote_when_no_order_is_placed() -> No
 
 
 @pytest.mark.parametrize("latency_ms", [0.0, 30.0])
-def test_tick_only_backtest_rejects_candle_only_protective_fill(latency_ms: float) -> None:
+def test_tick_only_backtest_keeps_position_open_without_executable_protective_tick(
+    latency_ms: float,
+) -> None:
     index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
-    tick_time = index[2] + pd.Timedelta(milliseconds=50)
+    tick_times = [
+        index[2] + pd.Timedelta(milliseconds=50),
+        index[-1] + pd.Timedelta(seconds=1),
+        index[-1] + pd.Timedelta(minutes=1, seconds=1),
+    ]
     tickbook = TickBook(
-        np.asarray([tick_time.value], dtype=np.int64),
-        np.asarray([100.0]),
-        np.asarray([100.5]),
+        np.asarray([tick.value for tick in tick_times], dtype=np.int64),
+        np.asarray([100.0, 100.0, 100.0]),
+        np.asarray([100.5, 100.5, 100.5]),
     )
     actions = iter([1, 0, 0, 0])
     features = pd.DataFrame({"last_swing_low": [99.0] * len(index)}, index=index)
 
-    with pytest.raises(TickExecutionUnavailable, match="candle fallback is disabled") as exc_info:
-        run_backtest(
-            _bars(index),
-            features,
-            lambda _obs: next(actions),
-            obs_window=1,
-            cost_model=CostModel(spread_points=0.0, point_size=0.01),
-            tickbook=tickbook,
-            tick_execution_required=True,
-            randomized_fill_latency_ms=latency_ms,
-            use_structure_sl_tp=True,
-            swing_buffer_pts=0.0,
-            min_lot=0.01,
-            max_lot=1.0,
-            hold_on_zero=True,
-            block_overnight=False,
-        )
+    result = run_backtest(
+        _bars(index),
+        features,
+        lambda _obs: next(actions),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.01),
+        tickbook=tickbook,
+        tick_execution_required=True,
+        randomized_fill_latency_ms=latency_ms,
+        use_structure_sl_tp=True,
+        swing_buffer_pts=0.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        hold_on_zero=True,
+        block_overnight=False,
+    )
 
-    message = str(exc_info.value)
-    assert "bar_idx=" in message
-    assert "bar_time=" in message
-    assert "direction=1" in message
-    assert "sl=" in message
+    assert not result["trades"]["type"].eq("stop_close").any()
 
 
 def test_randomized_backtest_fails_closed_without_tick_after_order_arrival() -> None:
