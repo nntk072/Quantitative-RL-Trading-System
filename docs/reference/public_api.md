@@ -10,7 +10,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 711 |
+| stable | 712 |
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 462 |
@@ -283,7 +283,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `InputSchema` | class | [features.contracts](../../features/contracts.py#L13) | stable |
 | `InputView` | class | [features.contracts](../../features/contracts.py#L35) | stable |
 | `OBS_RAW_PRICE_COLUMNS` | value | [features.pipeline.schema](../../features/pipeline/schema.py#L122) | stable |
-| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
+| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L193) | stable |
 | `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L155) | stable |
 | `build_fvg_zone_features` | function | [features.po3.fvg](../../features/po3/fvg.py#L28) | stable |
 | `build_po3_phase_features` | function | [features.po3.entries](../../features/po3/entries.py#L11) | stable |
@@ -295,14 +295,14 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `select_legacy_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L125) | compatibility-only |
 | `select_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L152) | stable |
 | `attach_policy_market_context` | function | [features.context.policy_market](../../features/context/policy_market.py#L154) | stable |
-| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
+| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L193) | stable |
 | `max_tp_distance` | function | [features.context.reachability](../../features/context/reachability.py#L17) | stable |
-| `reachable_r_series` | function | [features.context.reachability](../../features/context/reachability.py#L144) | stable |
-| `rr_reaches` | function | [features.context.reachability](../../features/context/reachability.py#L187) | stable |
+| `reachable_r_series` | function | [features.context.reachability](../../features/context/reachability.py#L163) | stable |
+| `rr_reaches` | function | [features.context.reachability](../../features/context/reachability.py#L228) | stable |
 | `FEATURE_CACHE_VERSION` | value | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L17) | stable |
 | `OBS_RAW_PRICE_COLUMNS` | value | [features.pipeline.schema](../../features/pipeline/schema.py#L122) | stable |
 | `apply_rolling_zscore_state` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L106) | stable |
-| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
+| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L193) | stable |
 | `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L155) | stable |
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
@@ -441,7 +441,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L45) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L491) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L492) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L125) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
@@ -472,22 +472,23 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `write_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L184) | stable |
 | `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L128) | stable |
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L45) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L491) | stable |
-| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L941) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L492) | stable |
+| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L961) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
 | `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L192) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L141) | stable |
-| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L693) | stable |
-| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L656) | stable |
-| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L752) | stable |
-| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L716) | stable |
-| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L565) | stable |
-| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L592) | stable |
-| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L676) | stable |
-| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L519) | stable |
-| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L538) | stable |
-| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L816) | stable |
+| `TickBook.bar_quote_ns` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L694) | stable |
+| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L713) | stable |
+| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L657) | stable |
+| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L772) | stable |
+| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L736) | stable |
+| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L566) | stable |
+| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L593) | stable |
+| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L677) | stable |
+| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L520) | stable |
+| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L539) | stable |
+| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L836) | stable |
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L125) | stable |
 | `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L145) | stable |
 | `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L161) | stable |

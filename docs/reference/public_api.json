@@ -11140,7 +11140,7 @@
       "name": "attach_reachable_r",
       "numpy_style": false,
       "package": "features",
-      "source_line": 161,
+      "source_line": 193,
       "source_module": "features.context.reachability",
       "source_path": "features/context/reachability.py"
     },
@@ -11296,7 +11296,7 @@
       "name": "attach_reachable_r",
       "numpy_style": false,
       "package": "features",
-      "source_line": 161,
+      "source_line": 193,
       "source_module": "features.context.reachability",
       "source_path": "features/context/reachability.py"
     },
@@ -11320,7 +11320,7 @@
       "name": "reachable_r_series",
       "numpy_style": false,
       "package": "features",
-      "source_line": 144,
+      "source_line": 163,
       "source_module": "features.context.reachability",
       "source_path": "features/context/reachability.py"
     },
@@ -11332,7 +11332,7 @@
       "name": "rr_reaches",
       "numpy_style": false,
       "package": "features",
-      "source_line": 187,
+      "source_line": 228,
       "source_module": "features.context.reachability",
       "source_path": "features/context/reachability.py"
     },
@@ -11740,7 +11740,7 @@
       "name": "_reachable_r_values",
       "numpy_style": false,
       "package": "features",
-      "source_line": 83,
+      "source_line": 89,
       "source_module": "features.context.reachability",
       "source_path": "features/context/reachability.py"
     },
@@ -12184,7 +12184,7 @@
       "name": "attach_reachable_r",
       "numpy_style": false,
       "package": "features",
-      "source_line": 161,
+      "source_line": 193,
       "source_module": "features.context.reachability",
       "source_path": "features/context/reachability.py"
     },
@@ -15340,7 +15340,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 491,
+      "source_line": 492,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15868,7 +15868,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 491,
+      "source_line": 492,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15892,7 +15892,7 @@
       "name": "build_tick_book",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 941,
+      "source_line": 961,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16045,10 +16045,22 @@
       "documented": true,
       "exported_from": "market_data.loading.ticks",
       "kind": "method",
+      "name": "TickBook.bar_quote_ns",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 694,
+      "source_module": "market_data.loading.ticks",
+      "source_path": "market_data/loading/ticks.py"
+    },
+    {
+      "classification": "stable",
+      "documented": true,
+      "exported_from": "market_data.loading.ticks",
+      "kind": "method",
       "name": "TickBook.bar_quotes",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 693,
+      "source_line": 713,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16060,7 +16072,7 @@
       "name": "TickBook.content_sha256",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 656,
+      "source_line": 657,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16072,7 +16084,7 @@
       "name": "TickBook.delayed_exit_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 752,
+      "source_line": 772,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16084,7 +16096,7 @@
       "name": "TickBook.delayed_exit_quote",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 716,
+      "source_line": 736,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16096,7 +16108,7 @@
       "name": "TickBook.execution_quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 565,
+      "source_line": 566,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16108,7 +16120,7 @@
       "name": "TickBook.first_limit_execution_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 592,
+      "source_line": 593,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16120,7 +16132,7 @@
       "name": "TickBook.has_ticks_between",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 676,
+      "source_line": 677,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16132,7 +16144,7 @@
       "name": "TickBook.quote_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 519,
+      "source_line": 520,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16144,7 +16156,7 @@
       "name": "TickBook.quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 538,
+      "source_line": 539,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16156,7 +16168,7 @@
       "name": "TickBook.slice",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 816,
+      "source_line": 836,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16168,7 +16180,7 @@
       "name": "_ffill_inplace",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 477,
+      "source_line": 478,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -19540,7 +19552,7 @@
       "name": "_bars_digest",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 224,
+      "source_line": 230,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -19552,7 +19564,7 @@
       "name": "_bundle_source_fingerprints",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 158,
+      "source_line": 164,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -19564,7 +19576,7 @@
       "name": "_numeric_column",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 78,
+      "source_line": 84,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -19576,7 +19588,7 @@
       "name": "_numeric_feature_array",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 62,
+      "source_line": 68,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -19588,7 +19600,7 @@
       "name": "_pre_ny_arrays",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 109,
+      "source_line": 115,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -19600,7 +19612,7 @@
       "name": "_session_codes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 94,
+      "source_line": 100,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -19612,7 +19624,7 @@
       "name": "_tick_arrays",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 136,
+      "source_line": 142,
       "source_module": "simulation.environment.bundles",
       "source_path": "simulation/environment/bundles.py"
     },
@@ -20116,7 +20128,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 365,
+      "source_line": 369,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -20476,7 +20488,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 203,
+      "source_line": 206,
       "source_module": "simulation.environment.step_end_runtime",
       "source_path": "simulation/environment/step_end_runtime.py"
     },
@@ -20500,7 +20512,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 307,
+      "source_line": 311,
       "source_module": "simulation.environment.step_info_runtime",
       "source_path": "simulation/environment/step_info_runtime.py"
     },
@@ -20548,7 +20560,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 96,
+      "source_line": 101,
       "source_module": "simulation.environment.strategy_initialization",
       "source_path": "simulation/environment/strategy_initialization.py"
     },
