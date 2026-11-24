@@ -72,6 +72,7 @@ caller_paths:
 - training/setup/callbacks.py
 - training/setup/learner.py
 - tests/unit/learning/test_graph_replay_cache.py
+- tests/unit/learning/test_update_graph_dispatch.py
 source_scopes:
   - {path: learning/rl, study_ids: [learning.ppo_action_probability_contract, learning.sac_action_replay_and_budget, learning.seed_resume_and_fit_identity]}
   - {path: learning/supervised, study_ids: [learning.auxiliary_target_isolation]}
