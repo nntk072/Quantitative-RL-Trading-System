@@ -44,3 +44,15 @@ model, learner, and evaluation suites test downstream use.
 See [observation schemas](../docs/reference/observation_schemas.md),
 [action schemas](../docs/reference/action_schemas.md), and the
 [decisioning guide](../docs/modules/decisioning.md).
+
+## Purpose
+
+Decisioning adapts model outputs and external policies into the common action contract consumed by training, evaluation, and execution.
+
+## Public API
+
+Use the package decision-provider interfaces and adapters; public exports are listed in the package initializers and module guides.
+
+## Invariants
+
+Validate action shape and meaning at the boundary. Invalid or unavailable decisions must follow the explicit fail-closed contract.

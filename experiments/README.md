@@ -89,3 +89,15 @@ Keep historical run records immutable and create a new run identity when an
 experimental factor changes. Focused tests are under
 `tests/unit/experiments/`; worker lifecycle tests also live with training and
 orchestration.
+
+## Purpose
+
+Experiments register frozen run designs, resolve variants, execute run lifecycles, and coordinate multi-run workflows.
+
+## Public API
+
+Use the run, variant, provenance, and orchestration interfaces under this package; reusable training behavior belongs to `training`.
+
+## Invariants
+
+Register configuration before use, preserve the exact run identity, and retain negative, breached, no-trade, and incomplete outcomes.

@@ -63,3 +63,15 @@ will match the replay.
 - [Data and feature preparation](../market_data/README.md) and
   [features](../features/README.md)
 - [Evaluation](../evaluation/README.md)
+
+## Purpose
+
+Simulation provides the trading environment and event-driven backtest surfaces used to exercise decisions under configured market and account rules.
+
+## Public API
+
+Use the public environment API and the event-driven backtest entry points documented by their package guides.
+
+## Invariants
+
+Use only information available at decision time; session rules are eligibility masks and must not remove bars from feature data; fills follow explicit quote and risk contracts.

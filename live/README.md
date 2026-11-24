@@ -28,3 +28,15 @@ Shared schemas do not guarantee identical timing or fills. Keep broker I/O out
 of reusable decision and simulation packages. Tests are under
 `tests/unit/live/` and broker adapter tests under the integration package;
 never treat a mocked broker test as live connectivity evidence.
+
+## Purpose
+
+The live package connects validated decisions to runtime market, account, and execution services.
+
+## Public API
+
+Use the live runtime and strategy interfaces documented under this package; broker-specific adapters belong to `integrations`.
+
+## Invariants
+
+Keep configured risk limits aligned with training/account limits. Preserve hard floors and breach latches, and do not bypass execution validation.

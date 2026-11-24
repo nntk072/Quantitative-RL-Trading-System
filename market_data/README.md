@@ -44,3 +44,15 @@ alignment and cache behavior are also covered in feature and integration tests.
 See the [market-data guide](../docs/modules/market_data.md),
 [data flow](../docs/architecture/data_flow.md), and
 [causal-feature concept](../docs/concepts/market_structure.md).
+
+## Purpose
+
+Market-data modules load, normalize, cache, and split bar and tick inputs for downstream features and simulation.
+
+## Public API
+
+Use the package loaders, transforms, cache interfaces, and chronological split helpers documented by their modules.
+
+## Invariants
+
+Keep timestamps and availability causal; higher-timeframe values become available after close; cache identity includes feature version and content hash.

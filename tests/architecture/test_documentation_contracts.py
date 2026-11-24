@@ -52,6 +52,50 @@ def test_maintained_documentation_has_local_guides_and_resolving_links() -> None
     assert validate(ROOT) == []
 
 
+def test_every_product_package_readme_has_purpose_api_and_invariants() -> None:
+    product_packages = (
+        "configuration",
+        "artifacts",
+        "market_data",
+        "features",
+        "trading",
+        "simulation",
+        "models",
+        "decisioning",
+        "learning",
+        "training",
+        "evaluation",
+        "experiments",
+        "live",
+        "integrations",
+        "compute",
+    )
+    missing: list[str] = []
+    for package in product_packages:
+        directory = ROOT / package
+        readme = next(
+            (
+                candidate
+                for candidate in (directory / "README.md", directory / "README.rst")
+                if candidate.is_file()
+            ),
+            None,
+        )
+        if readme is None:
+            missing.append(f"{directory.relative_to(ROOT)}: missing README")
+            continue
+        contents = readme.read_text(encoding="utf-8").lower()
+        for section in ("purpose", "public api", "invariants"):
+            if not any(
+                line.lstrip("# ").strip() == section
+                for line in contents.splitlines()
+                if line.startswith("#")
+            ):
+                missing.append(f"{readme.relative_to(ROOT)}: missing {section} section")
+
+    assert not missing, "package README contract failures:\n" + "\n".join(missing)
+
+
 def test_documentation_link_checker_ignores_paths_in_fenced_examples(tmp_path: Path) -> None:
     document = tmp_path / "guide.md"
     document.write_text(

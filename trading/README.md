@@ -48,3 +48,15 @@ adapters preserve the same domain meaning.
 See the [trading guide](../docs/modules/trading.md),
 [risk concept](../docs/concepts/risk_and_account_limits.md), and
 [execution concept](../docs/concepts/execution_and_costs.md).
+
+## Purpose
+
+Trading modules define strategy concepts, order intent, account state, risk limits, and execution cost semantics.
+
+## Public API
+
+Use the explicit policy, order, position, account, and risk contracts documented by each subpackage.
+
+## Invariants
+
+Preserve hard risk floors and breach latches. Keep order intent separate from fills, and keep configured risk limits aligned with live overrides.

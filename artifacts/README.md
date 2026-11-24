@@ -47,3 +47,15 @@ fields from incidental runtime metadata. Atomic replacement protects against
 partially written metadata but does not make a multi-file experiment
 transactional. Tests are under `tests/unit/artifacts/`; workflow-specific
 manifest tests live with training, evaluation, and experiment runs.
+
+## Purpose
+
+The artifacts package defines persisted run outputs and the metadata needed to identify and inspect them.
+
+## Public API
+
+Use the artifact schemas, writers, and readers in this package; callers should preserve the recorded run and source identities.
+
+## Invariants
+
+Keep artifact provenance with its output, preserve negative and incomplete outcomes, and do not silently overwrite immutable evidence.

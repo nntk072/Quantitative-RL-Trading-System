@@ -39,3 +39,15 @@ these differ from training, declare the difference and its purpose. A summary
 metric is not a substitute for examining trade exits, exposure, cost, and
 drawdown paths. Focused tests live in `tests/unit/evaluation/`; backtest and
 end-to-end reporting tests are under `tests/integration/`.
+
+## Purpose
+
+Evaluation replays trained policies and produces metrics, reports, charts, and reconciliation outputs.
+
+## Public API
+
+Use the rollout, metrics, reporting, plotting, and reanalysis entry points documented by their subpackages.
+
+## Invariants
+
+Do not select models, checkpoints, or thresholds on the locked report period. Reports must preserve source, split, and run identity.
