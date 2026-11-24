@@ -22,7 +22,9 @@ _WARMUP_ITERATIONS = 3
 class _StepGraph:
     """Static buffers and the captured minibatch step for one minibatch shape."""
 
-    def __init__(self, model: Any, sample: Any) -> None:
+    def __init__(
+        self, model: Any, sample: Any
+    ) -> None:  # pragma: no cover - needs CUDA graph capture
         """Allocate static buffers from one minibatch and capture the step.
 
         Args:
@@ -70,7 +72,7 @@ class _StepGraph:
         model.policy.reset_mode_prior_stats()
         self.bad.zero_()
 
-    def _step(self) -> None:
+    def _step(self) -> None:  # pragma: no cover - runs only inside CUDA graph capture
         """Forward, loss, backward, and gradient clip into the static buffers."""
         model = self.model
         policy = model.policy

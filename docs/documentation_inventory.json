@@ -1,5 +1,5 @@
 {
-  "page_count": 488,
+  "page_count": 489,
   "pages": [
     {
       "links": [
@@ -3976,6 +3976,7 @@
         "runtime/data_and_features.md",
         "runtime/environment_step.md",
         "deployment.md",
+        "coverage-policy.md",
         "migrations/README.md",
         "cross_cutting_concerns.md",
         "quality_attributes.md",
@@ -4012,6 +4013,16 @@
       "section": "architecture",
       "status": "current",
       "title": "System context",
+      "type": "developer"
+    },
+    {
+      "links": [],
+      "orphan_status": "in toctree",
+      "path": "docs/architecture/coverage-policy.md",
+      "primary_navigation_owner": [],
+      "section": "architecture",
+      "status": "current",
+      "title": "Coverage policy",
       "type": "developer"
     },
     {
