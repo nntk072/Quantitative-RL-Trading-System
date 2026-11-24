@@ -229,12 +229,14 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
                     length,
                     columns=self._htf_idx[key],
                 )
-                for (key, _, _), length in zip(HTF_BRANCHES, lengths)
+                for (key, _, _), length in zip(HTF_BRANCHES, lengths, strict=False)
             ]
             prepared_windows = prepare_observation_feature_channels_many(
                 raw_windows, include_validity=self.feature_validity_channels
             )
-            for (key, _, seq_key), length, values in zip(HTF_BRANCHES, lengths, prepared_windows):
+            for (key, _, seq_key), length, values in zip(
+                HTF_BRANCHES, lengths, prepared_windows, strict=False
+            ):
                 window, mask = pad_observation_window(values, length)
                 if not self.completed_htf_history_enabled:
                     window.fill(0.0)

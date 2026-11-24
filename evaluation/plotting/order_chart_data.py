@@ -533,9 +533,9 @@ def _feature_swing_segments(
                         )
                         overlaps_lower = overlaps_lower or any(
                             getattr(ray, "side", None) == side
-                            and max(t0, pd.Timestamp(getattr(ray, "t0")))
-                            <= min(t1, pd.Timestamp(getattr(ray, "t1")))
-                            and abs(current - float(getattr(ray, "price"))) <= 0.5
+                            and max(t0, pd.Timestamp(cast(Any, ray).t0))
+                            <= min(t1, pd.Timestamp(cast(Any, ray).t1))
+                            and abs(current - float(cast(Any, ray).price)) <= 0.5
                             for ray in lower_timeframe_swings
                         )
                         if not overlaps_lower:

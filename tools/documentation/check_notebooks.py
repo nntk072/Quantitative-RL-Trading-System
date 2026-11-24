@@ -83,7 +83,7 @@ def validate_notebook(path: Path) -> list[str]:
 def execute_tier_a(paths: tuple[Path, ...]) -> list[str]:
     """Execute every Tier A notebook and require a generated cell output."""
     nbformat = importlib.import_module("nbformat")
-    notebook_client = getattr(importlib.import_module("nbclient"), "NotebookClient")
+    notebook_client = importlib.import_module("nbclient").NotebookClient
 
     errors: list[str] = []
     for path in paths:

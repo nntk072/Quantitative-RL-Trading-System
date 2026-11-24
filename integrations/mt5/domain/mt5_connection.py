@@ -18,15 +18,14 @@ def ensure_mt5_logged_in(
         server: Text or path value identifying the server.
         terminal_path: Path or filename identifying the terminal.
     """
-    if mt5.terminal_info() is None:
-        if not mt5.initialize(path=terminal_path):
-            logger.error(f"MT5 initialize failed: {mt5.last_error()}")
-            raise RuntimeError("Failed to initialize MT5")
+    if mt5.terminal_info() is None and not mt5.initialize(path=terminal_path):
+        logger.error(f"MT5 initialize failed: {mt5.last_error()}")
+        raise RuntimeError("Failed to initialize MT5")
 
     try:
         login_int = int(login)
-    except (TypeError, ValueError):
-        raise ValueError(f"LOGIN must be an integer account number, got: {login!r}")
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"LOGIN must be an integer account number, got: {login!r}") from exc
 
     acct = mt5.account_info()
     if acct is not None and getattr(acct, "login", None) == login_int:

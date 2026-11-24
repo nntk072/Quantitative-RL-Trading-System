@@ -723,7 +723,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     )
 ```
 
-2. [production caller: `evaluate_tier0_setup_baselines`](../../../../evaluation/rollout/matched_setup_baselines.py#L449)
+2. [production caller: `evaluate_tier0_setup_baselines`](../../../../evaluation/rollout/matched_setup_baselines.py#L448)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

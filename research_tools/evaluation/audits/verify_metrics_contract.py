@@ -97,9 +97,10 @@ def verify_file(path: Path) -> dict[str, Any]:
             ):
                 failures.append(f"payload {index} {field} is not a finite typed number")
         breach_rate = payload.get("breach_rate")
-        if isinstance(breach_rate, (int, float)) and not isinstance(breach_rate, bool):
-            if math.isfinite(float(breach_rate)) and not 0.0 <= breach_rate <= 1.0:
-                failures.append(f"payload {index} breach_rate is outside [0, 1]")
+        if (isinstance(breach_rate, (int, float)) and not isinstance(breach_rate, bool)) and (
+            math.isfinite(float(breach_rate)) and not 0.0 <= breach_rate <= 1.0
+        ):
+            failures.append(f"payload {index} breach_rate is outside [0, 1]")
         for field in RUIN_BOOLEAN_FIELDS:
             value_at_field = payload.get(field)
             if value_at_field is None:

@@ -243,7 +243,7 @@ def _input_identity(cfg: DictConfig, symbol: str, timeframes: Sequence[str]) -> 
             filenames[timeframe] = str(filename)
 
     identities: dict[str, str] = {}
-    for timeframe, filename in filenames.items():
+    for _timeframe, filename in filenames.items():
         if filename is None:
             continue
         relative = (Path(str(spec.raw_dir)) / str(filename)).as_posix()

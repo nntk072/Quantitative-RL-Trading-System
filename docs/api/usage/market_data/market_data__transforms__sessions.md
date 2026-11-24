@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `market_data.transforms.se
 
 **Purpose:** Add a ``session_id`` integer column: unique per calendar date.
 
-**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_id` · **Source:** [market_data/transforms/sessions.py:246](../../../../market_data/transforms/sessions.py#L246)
+**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_id` · **Source:** [market_data/transforms/sessions.py:243](../../../../market_data/transforms/sessions.py#L243)
 
 **Inputs and outputs:**
 
@@ -72,7 +72,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Add a ``session`` column (asia/london/ny/closed) using :func:`get_session`.
 
-**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_labels` · **Source:** [market_data/transforms/sessions.py:182](../../../../market_data/transforms/sessions.py#L182)
+**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_labels` · **Source:** [market_data/transforms/sessions.py:179](../../../../market_data/transforms/sessions.py#L179)
 
 **Inputs and outputs:**
 
@@ -140,7 +140,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Boolean mask of bars whose clock time falls in the tradable NY window.
 
-**Exact API:** {py:obj}`market_data.transforms.sessions.ny_session_mask` · **Source:** [market_data/transforms/sessions.py:139](../../../../market_data/transforms/sessions.py#L139)
+**Exact API:** {py:obj}`market_data.transforms.sessions.ny_session_mask` · **Source:** [market_data/transforms/sessions.py:136](../../../../market_data/transforms/sessions.py#L136)
 
 **Inputs and outputs:**
 

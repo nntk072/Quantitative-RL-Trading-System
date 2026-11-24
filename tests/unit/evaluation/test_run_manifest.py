@@ -7,7 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -474,11 +474,11 @@ def test_stop_candidate_schema_survives_sb3_checkpoint_roundtrip(tmp_path) -> No
     model = PPO(
         "MlpPolicy", _SchemaRoundTripEnv(), n_steps=8, batch_size=4, n_epochs=1, device="cpu"
     )
-    setattr(model, "stop_candidate_schema", schema)
+    cast(Any, model).stop_candidate_schema = schema
     path = tmp_path / "checkpoint"
     model.save(path)
     restored = PPO.load(path, device="cpu")
-    assert getattr(restored, "stop_candidate_schema") == schema
+    assert cast(Any, restored).stop_candidate_schema == schema
 
 
 def test_manifest_fails_closed_without_split_boundaries(tmp_path) -> None:

@@ -178,7 +178,7 @@ class ActionIntentRuntimeMixin(RuntimeMixinBase):
             else:
                 gate_ok = True
                 if bool(getattr(self.strategy, "previous_session_pd_gate", False)):
-                    pd_eligible = getattr(self.strategy, "previous_session_pd_eligible")
+                    pd_eligible = self.strategy.previous_session_pd_eligible
                     gate_ok = bool(pd_eligible(feat_row, discrete_action))
             if not gate_ok:
                 # Gate not satisfied, force to hold

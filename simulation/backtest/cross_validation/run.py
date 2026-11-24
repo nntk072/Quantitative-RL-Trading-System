@@ -236,10 +236,7 @@ def run_custom_engine(
     )
     trade_count = int(result["trades"].get("position_complete", pd.Series(dtype=bool)).sum())
     equity = result["equity"]
-    if equity.empty:
-        max_drawdown = 0.0
-    else:
-        max_drawdown = float((1.0 - equity / equity.cummax()).max())
+    max_drawdown = 0.0 if equity.empty else float((1.0 - equity / equity.cummax()).max())
     return {
         "engine": "custom",
         "trade_count": trade_count,

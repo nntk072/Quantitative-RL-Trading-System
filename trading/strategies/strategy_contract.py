@@ -84,6 +84,7 @@ class TradingStrategy(ABC):
         Args:
             columns: Items supplied for the columns, in input order.
         """
+        return None
 
     def context_direction(self, row: pd.Series) -> int:  # noqa: ARG002
         """Intended trade side from HTF/PO3 context: -1, 0, or +1.

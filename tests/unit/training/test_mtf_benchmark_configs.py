@@ -53,7 +53,9 @@ def test_exact_environment_config_preserves_resolved_ppo_geometry(monkeypatch) -
         "config/research/trade_setup_mtf_m1_htf_snapshot_2m.yaml",
     ):
         config = load_config(config_path=config_path)
-        monkeypatch.setattr(configuration_stage, "load_merged_config", lambda _: config)
+        monkeypatch.setattr(
+            configuration_stage, "load_merged_config", lambda _, config=config: config
+        )
         monkeypatch.setattr(configuration_stage, "scale_training_cfg", record_scale)
         resolved = configuration_stage._prepare_training_configuration().cfg
 

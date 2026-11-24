@@ -187,7 +187,7 @@ class VAEDecoder(nn.Module):
         # Decoder layers (transposed convolutions)
         layers: list[nn.Module] = []
         in_channels = channels[0]
-        for i, out_channels in enumerate(channels[1:]):
+        for _i, out_channels in enumerate(channels[1:]):
             layers.append(
                 nn.ConvTranspose1d(
                     in_channels=in_channels,

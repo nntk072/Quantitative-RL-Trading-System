@@ -173,7 +173,10 @@ class CandidateProposal:
         oriented_targets = tuple(self.direction * (price - entry) for _, price in targets)
         if any(value <= 0.0 for value in oriented_targets):
             raise ValueError("all target choices must be beyond entry")
-        if any(right <= left for left, right in zip(oriented_targets, oriented_targets[1:])):
+        if any(
+            right <= left
+            for left, right in zip(oriented_targets, oriented_targets[1:], strict=False)
+        ):
             raise ValueError("target choices must be ordered away from entry")
 
         low = _finite(self.source_zone_low, "source_zone_low")
@@ -182,9 +185,10 @@ class CandidateProposal:
             raise ValueError("source zone requires both low and high")
         if low is not None and high is not None and low > high:
             raise ValueError("source zone bounds must be ordered")
-        if self.entry_type == "limit" and low is not None and high is not None:
-            if not low <= entry <= high:
-                raise ValueError("limit entry must lie within its declared source zone")
+        if (
+            self.entry_type == "limit" and low is not None and high is not None
+        ) and not low <= entry <= high:
+            raise ValueError("limit entry must lie within its declared source zone")
         atr = _finite(self.atr_scale, "atr_scale")
         spread = _finite(self.spread_at_proposal, "spread_at_proposal")
         latency = _finite(self.latency_estimate_ms, "latency_estimate_ms")

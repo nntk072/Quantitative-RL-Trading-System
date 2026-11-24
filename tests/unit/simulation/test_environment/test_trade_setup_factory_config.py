@@ -514,7 +514,7 @@ def test_mtf_reasoning_overlay_builds_real_env_and_agent(
     loaded = PPO.load(checkpoint, env=env, device="cpu")
     assert isinstance(loaded.policy.features_extractor, MTFReasoningEncoder)
     assert type(loaded.policy) is expected_policy
-    assert getattr(loaded, "_trade_setup_observation_schema") == env.trade_setup_observation_schema
+    assert cast(Any, loaded)._trade_setup_observation_schema == env.trade_setup_observation_schema
     loaded_action, _ = loaded.predict(observation, deterministic=True)
     np.testing.assert_array_equal(loaded_action, deterministic_action)
     assert trade_setup_id_from_box(float(loaded_action[0])) == 0

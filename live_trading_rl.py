@@ -35,6 +35,7 @@ See docs/operations/DEPLOYMENT.md for the paper->live promotion protocol and mod
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -71,10 +72,8 @@ def load_model(model_path: Path) -> Any:
     for name in ("training_log.json", "metrics.json"):
         report = run_dir / name
         if report.is_file():
-            try:
+            with contextlib.suppress(ValueError, OSError):
                 algo_hint = json.loads(report.read_text()).get("algo")
-            except (ValueError, OSError):
-                pass
             if algo_hint:
                 break
 

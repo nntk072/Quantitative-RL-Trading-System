@@ -778,7 +778,7 @@ def ensure_controller_directories(self) -> None:
 
 **Observed usage:**
 
-1. [production caller: `render`](../../../../experiments/runs/status.py#L568)
+1. [production caller: `render`](../../../../experiments/runs/status.py#L574)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1256,7 +1256,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L390)
+1. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L391)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1307,7 +1307,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `latest_checkpoint`](../../../../experiments/runs/status.py#L334)
+1. [production caller: `latest_checkpoint`](../../../../experiments/runs/status.py#L340)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

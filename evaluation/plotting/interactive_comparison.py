@@ -33,7 +33,7 @@ def plot_baseline_comparison(
     colors = [_EQUITY_COLOR, _LONG_COLOR, _SHORT_COLOR, _CLOSE_COLOR, "#ce93d8", "#80cbc4"]
 
     fig = go.Figure()
-    for (name, eq), col in zip(equity_dict.items(), colors):
+    for (name, eq), col in zip(equity_dict.items(), colors, strict=False):
         normed = (eq / eq.iloc[0] - 1) * 100
         fig.add_trace(
             go.Scatter(

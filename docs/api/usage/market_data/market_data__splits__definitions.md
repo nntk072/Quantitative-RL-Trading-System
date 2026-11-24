@@ -301,7 +301,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_chart_feature_train_mask`](../../../../evaluation/reporting/order_chart_regeneration.py#L77)
+2. [production caller: `_chart_feature_train_mask`](../../../../evaluation/reporting/order_chart_regeneration.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

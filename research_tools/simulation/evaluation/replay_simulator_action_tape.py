@@ -299,17 +299,13 @@ def _compare_account_state_rows(
                 right = backtest_snapshot.get(field)
                 if field == "state_phase" and not phase_is_comparable:
                     equal = True
-                elif field in {"decision_time", "valuation_time"}:
-                    equal = _snapshot_time(left) == _snapshot_time(right)
-                elif field in {
+                elif field in {"decision_time", "valuation_time"} or field in {
                     "pending_order_submission_time",
                     "pending_order_expiry_time",
                     "pending_order_scheduled_fill_time",
                 }:
                     equal = _snapshot_time(left) == _snapshot_time(right)
-                elif field == "pending_order_id":
-                    equal = (left is None) == (right is None)
-                elif field == "pending_order_decision_id":
+                elif field == "pending_order_id" or field == "pending_order_decision_id":
                     equal = (left is None) == (right is None)
                 elif pd.isna(left) and pd.isna(right):
                     equal = True

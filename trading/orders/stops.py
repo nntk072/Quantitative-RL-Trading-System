@@ -247,11 +247,12 @@ def stop_menu(
     row_columns = getattr(row, "index", ())
     for column in row_columns:
         column_name = str(column)
-        if column_name == ob_stem or column_name.endswith(f"_{ob_stem}"):
-            if _flag(row, column_name.removesuffix("_low").removesuffix("_high") + "_active"):
-                level = finite_level(row, column_name)
-                if level is not None:
-                    raw.append((column_name, level))
+        if (column_name == ob_stem or column_name.endswith(f"_{ob_stem}")) and _flag(
+            row, column_name.removesuffix("_low").removesuffix("_high") + "_active"
+        ):
+            level = finite_level(row, column_name)
+            if level is not None:
+                raw.append((column_name, level))
     raw.extend(deviation_candidates(row))
     raw_deviation_candidates = [item for item in raw if "standard_deviation_level_" in item[0]]
     invalid_deviation_candidates = [

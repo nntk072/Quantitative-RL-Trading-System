@@ -253,20 +253,16 @@ class EMAMACDStrategy(bt.Strategy):
                     self.order = self.sell()
                     self.position = -1
 
-        elif self.position == 1:
-            # In long: check for exit
-            if bearish_cross:
-                # Exit signal
-                self.log(f"EXIT LONG CREATE, {self.dataclose[0]:.2f}")
-                self.order = self.close()
-                self.position = 0
-                self.cooldown_counter = self.cooldown_bars
+        elif self.position == 1 and bearish_cross:
+            # In long: check for exit; exit signal
+            self.log(f"EXIT LONG CREATE, {self.dataclose[0]:.2f}")
+            self.order = self.close()
+            self.position = 0
+            self.cooldown_counter = self.cooldown_bars
 
-        elif self.position == -1:
-            # In short: check for exit
-            if bullish_cross:
-                # Exit signal
-                self.log(f"EXIT SHORT CREATE, {self.dataclose[0]:.2f}")
-                self.order = self.close()
-                self.position = 0
-                self.cooldown_counter = self.cooldown_bars
+        # In short: check for exit
+        if self.position == -1 and bullish_cross:
+            self.log(f"EXIT SHORT CREATE, {self.dataclose[0]:.2f}")
+            self.order = self.close()
+            self.position = 0
+            self.cooldown_counter = self.cooldown_bars

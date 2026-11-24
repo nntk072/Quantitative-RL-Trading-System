@@ -66,11 +66,7 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
         """
         if getattr(self.strategy, "name", "") != "po3_ifvg":
             return
-        setattr(
-            self.strategy,
-            "_session_manip_confirmed",
-            session_id in self._ny_manip_confirmed,
-        )
+        self.strategy._session_manip_confirmed = session_id in self._ny_manip_confirmed
 
     def _entry_action_requested(self, discrete_action: int) -> bool:
         """Interpret whether the decoded policy action requests entry execution.

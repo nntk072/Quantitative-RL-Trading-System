@@ -173,13 +173,15 @@ extend-exclude = ["evidence/research/archive_2026"]
 src = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "UP", "D2", "D3", "D4"]
+select = ["E4", "E7", "E9", "F", "I", "UP", "D2", "D3", "D4", "B", "SIM"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["D205"]
+# orchestra/ is development tooling outside the product scope; its B and SIM findings are deferred.
+"orchestra/**/*.py" = ["B", "SIM"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]

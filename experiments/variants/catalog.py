@@ -145,11 +145,12 @@ def validate_catalog_index(
                 for source in sources:
                     _validate_historical_source(root, source, family_id)
 
-        if family["comparison_type"] == "matched":
-            if roles.count("control") != 1 or roles.count("treatment") < 1:
-                raise CatalogError(
-                    f"matched family {family_id} needs one control and at least one treatment"
-                )
+        if family["comparison_type"] == "matched" and (
+            roles.count("control") != 1 or roles.count("treatment") < 1
+        ):
+            raise CatalogError(
+                f"matched family {family_id} needs one control and at least one treatment"
+            )
 
     missing = current_names - classified_names
     if missing:

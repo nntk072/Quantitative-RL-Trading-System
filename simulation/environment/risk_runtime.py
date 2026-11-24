@@ -59,10 +59,7 @@ class RiskRuntimeMixin(RuntimeMixinBase):
         Returns:
             Whether check guardrails meets the requested condition.
         """
-        if self.repeated_payout_policy:
-            reason = self.guardrails.breach_reason(self.account)
-            session_blocked = False
-        elif self.episodic:
+        if self.repeated_payout_policy or self.episodic:
             reason = self.guardrails.breach_reason(self.account)
             session_blocked = False
         elif self._year_failed:

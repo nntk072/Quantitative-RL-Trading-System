@@ -44,7 +44,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert clean(bars).attrs["source_diagnostics"] == bars.attrs["source_diagnostics"]
 ```
 
-2. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L272)
+2. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L273)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

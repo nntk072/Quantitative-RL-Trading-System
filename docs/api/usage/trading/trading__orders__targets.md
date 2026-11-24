@@ -105,17 +105,17 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert deviation_candidates(row) == [("standard_deviation_level_neg_4_price", 106.0)]
 ```
 
-2. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L255)
+2. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L256)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        if column_name == ob_stem or column_name.endswith(f"_{ob_stem}"):
-            if _flag(row, column_name.removesuffix("_low").removesuffix("_high") + "_active"):
-                level = finite_level(row, column_name)
-                if level is not None:
-                    raw.append((column_name, level))
+            row, column_name.removesuffix("_low").removesuffix("_high") + "_active"
+        ):
+            level = finite_level(row, column_name)
+            if level is not None:
+                raw.append((column_name, level))
     raw.extend(deviation_candidates(row))
     raw_deviation_candidates = [item for item in raw if "standard_deviation_level_" in item[0]]
     invalid_deviation_candidates = [

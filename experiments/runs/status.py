@@ -74,7 +74,13 @@ def scheduler_jobs() -> list[dict[str, str]]:
         parts = line.split("|", maxsplit=6)
         if len(parts) == 7:
             result.append(
-                dict(zip(("id", "state", "name", "elapsed", "limit", "nodes", "reason"), parts))
+                dict(
+                    zip(
+                        ("id", "state", "name", "elapsed", "limit", "nodes", "reason"),
+                        parts,
+                        strict=False,
+                    )
+                )
             )
     return result
 

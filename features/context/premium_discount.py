@@ -100,7 +100,9 @@ def _prior_calendar_hl(
         prefix = "ctx_prev_day"
     elif freq == "W":
         iso = idx.isocalendar()
-        keys = pd.Series([f"{y}-W{w:02d}" for y, w in zip(iso.year, iso.week)], index=idx)
+        keys = pd.Series(
+            [f"{y}-W{w:02d}" for y, w in zip(iso.year, iso.week, strict=False)], index=idx
+        )
         prefix = "ctx_prev_week"
     else:
         raise ValueError(f"unsupported freq {freq!r}")

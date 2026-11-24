@@ -816,7 +816,8 @@ def plot_per_trade_orders(
 
         # --- Top panel: Candlesticks + EMA50 + Entry/Exit + MAE/MFE/SL/TP ---
         colors_up = [
-            LONG_COLOR if o <= c else SHORT_COLOR for o, c in zip(window["open"], window["close"])
+            LONG_COLOR if o <= c else SHORT_COLOR
+            for o, c in zip(window["open"], window["close"], strict=False)
         ]
 
         body_width = _candle_body_days(pd.DatetimeIndex(window.index))

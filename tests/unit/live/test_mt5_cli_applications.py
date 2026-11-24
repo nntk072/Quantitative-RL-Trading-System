@@ -3,6 +3,7 @@
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Any, cast
 
 import pytest
 
@@ -13,10 +14,10 @@ if "MetaTrader5" not in sys.modules:
         import MetaTrader5  # noqa: F401
     except ImportError:
         mt5_stub = ModuleType("MetaTrader5")
-        setattr(mt5_stub, "TIMEFRAME_H1", 16385)
+        cast(Any, mt5_stub).TIMEFRAME_H1 = 16385
         sys.modules["MetaTrader5"] = mt5_stub
 if not hasattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1"):
-    setattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1", 16385)
+    cast(Any, sys.modules["MetaTrader5"]).TIMEFRAME_H1 = 16385
 import demo_trading  # noqa: E402
 import live_trading  # noqa: E402
 

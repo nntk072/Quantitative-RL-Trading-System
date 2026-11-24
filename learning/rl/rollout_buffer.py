@@ -54,7 +54,7 @@ def _single_copy_add(
     if len(log_prob.shape) == 0:
         log_prob = log_prob.reshape(-1, 1)
 
-    for key in self.observations.keys():
+    for key in self.observations:
         src = obs[key]
         if isinstance(self.observation_space.spaces[key], spaces.Discrete):
             src = np.reshape(src, (self.n_envs,) + self.obs_shape[key])

@@ -87,12 +87,13 @@ class RewardInitializationMixin(RuntimeMixinBase):
             self.reward_fn = SurvivalReward()
             return _strategy_actions
 
-        if self.reward_mode in ("equity_delta_r", "equity_log_growth"):
-            if use_sweep_reward or strategy_reward is not None:
-                raise ValueError(
-                    f"reward_mode={self.reward_mode!r} cannot be combined with sweep or "
-                    "strategy reward shaping"
-                )
+        if self.reward_mode in ("equity_delta_r", "equity_log_growth") and (
+            use_sweep_reward or strategy_reward is not None
+        ):
+            raise ValueError(
+                f"reward_mode={self.reward_mode!r} cannot be combined with sweep or "
+                "strategy reward shaping"
+            )
         if self.reward_mode == "equity_delta_r":
             if self.risk_mode != "fixed" or self.fixed_risk_usd <= 0.0:
                 raise ValueError(

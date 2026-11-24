@@ -207,7 +207,7 @@ def _leaf_paths(cfg: DictConfig, prefix: str = "") -> set[str]:
         Result of return all dot-paths to *leaf* keys (including explicit ``null`` leaves).
     """
     paths: set[str] = set()
-    for k in cfg.keys():
+    for k in cfg:
         key = str(k)
         path = f"{prefix}.{key}" if prefix else key
         child = cfg[k]

@@ -65,7 +65,7 @@ def configured_feature_timeframes(
     if feature_config is not None:
         block = getattr(feature_config, block_name, None)
         if block is not None and hasattr(block, "timeframes"):
-            raw = getattr(block, "timeframes")
+            raw = block.timeframes
         else:
             raw = getattr(feature_config, f"{block_name}_timeframes", None)
     if raw is None:
@@ -121,7 +121,7 @@ def feature_block_enabled(feature_config: object, block_name: str, default: bool
         return default
     block = getattr(feature_config, block_name, None)
     if block is not None and hasattr(block, "enabled"):
-        return bool(getattr(block, "enabled"))
+        return bool(block.enabled)
     flat = getattr(feature_config, f"{block_name}_enabled", None)
     return default if flat is None else bool(flat)
 

@@ -56,7 +56,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve sweep and swing columns once for the step loop.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.bind_columns` · **Source:** [trading/strategies/po3_ifvg.py:111](../../../../trading/strategies/po3_ifvg.py#L111)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.bind_columns` · **Source:** [trading/strategies/po3_ifvg.py:112](../../../../trading/strategies/po3_ifvg.py#L112)
 
 **Inputs and outputs:**
 
@@ -92,7 +92,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Long on a sell-side sweep or a confirmed swing low. Short mirrors it.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.context_direction` · **Source:** [trading/strategies/po3_ifvg.py:228](../../../../trading/strategies/po3_ifvg.py#L228)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.context_direction` · **Source:** [trading/strategies/po3_ifvg.py:229](../../../../trading/strategies/po3_ifvg.py#L229)
 
 **Inputs and outputs:**
 
@@ -145,7 +145,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** A live gap on any timeframe.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.entry_gap` · **Source:** [trading/strategies/po3_ifvg.py:204](../../../../trading/strategies/po3_ifvg.py#L204)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.entry_gap` · **Source:** [trading/strategies/po3_ifvg.py:205](../../../../trading/strategies/po3_ifvg.py#L205)
 
 **Inputs and outputs:**
 
@@ -188,7 +188,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Swept, or within one ATR of the sweep or manipulation level.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.entry_liquidity` · **Source:** [trading/strategies/po3_ifvg.py:188](../../../../trading/strategies/po3_ifvg.py#L188)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.entry_liquidity` · **Source:** [trading/strategies/po3_ifvg.py:189](../../../../trading/strategies/po3_ifvg.py#L189)
 
 **Inputs and outputs:**
 
@@ -231,7 +231,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** True when a qualified PO3 or independent idea matches the side.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.entry_setup` · **Source:** [trading/strategies/po3_ifvg.py:253](../../../../trading/strategies/po3_ifvg.py#L253)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.entry_setup` · **Source:** [trading/strategies/po3_ifvg.py:254](../../../../trading/strategies/po3_ifvg.py#L254)
 
 **Inputs and outputs:**
 
@@ -250,7 +250,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `validate_entry`](../../../../trading/strategies/po3_ifvg.py#L136)
+1. [production caller: `validate_entry`](../../../../trading/strategies/po3_ifvg.py#L137)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -272,7 +272,7 @@ def validate_entry(self, *, direction: int, row: pd.Series) -> bool:
 
 **Purpose:** Structural SL ladder for trader ``sl_anchor`` selection.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_candidates` · **Source:** [trading/strategies/po3_ifvg.py:406](../../../../trading/strategies/po3_ifvg.py#L406)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_candidates` · **Source:** [trading/strategies/po3_ifvg.py:407](../../../../trading/strategies/po3_ifvg.py#L407)
 
 **Inputs and outputs:**
 
@@ -344,7 +344,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the manipulation low for longs or high for shorts.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_reference` · **Source:** [trading/strategies/po3_ifvg.py:138](../../../../trading/strategies/po3_ifvg.py#L138)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_reference` · **Source:** [trading/strategies/po3_ifvg.py:139](../../../../trading/strategies/po3_ifvg.py#L139)
 
 **Inputs and outputs:**
 
@@ -387,7 +387,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Named structural targets; the TP resolver validates each side.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.target_candidates` · **Source:** [trading/strategies/po3_ifvg.py:155](../../../../trading/strategies/po3_ifvg.py#L155)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.target_candidates` · **Source:** [trading/strategies/po3_ifvg.py:156](../../../../trading/strategies/po3_ifvg.py#L156)
 
 **Inputs and outputs:**
 
@@ -430,7 +430,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Sweep or protected swing on this side when the gate is enforced.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.validate_entry` · **Source:** [trading/strategies/po3_ifvg.py:124](../../../../trading/strategies/po3_ifvg.py#L124)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.validate_entry` · **Source:** [trading/strategies/po3_ifvg.py:125](../../../../trading/strategies/po3_ifvg.py#L125)
 
 **Inputs and outputs:**
 

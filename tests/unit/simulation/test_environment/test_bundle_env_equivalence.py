@@ -303,7 +303,7 @@ def test_bundle_env_uses_read_only_ndarray_views(tmp_path: Path) -> None:
 
 def _assert_same_equity_times(left: list[pd.Timestamp], right: list[pd.Timestamp]) -> None:
     assert len(left) == len(right), f"equity_times length differs: {len(left)} vs {len(right)}"
-    for i, (a, b) in enumerate(zip(left, right)):
+    for i, (a, b) in enumerate(zip(left, right, strict=False)):
         assert a.tzinfo is not None, f"equity_times[{i}] is naive (frames path): {a}"
         assert a.utcoffset() == pd.Timedelta(hours=3), (
             f"equity_times[{i}] utcoffset={a.utcoffset()}"
@@ -319,7 +319,7 @@ def _assert_same_equity_times(left: list[pd.Timestamp], right: list[pd.Timestamp
 
 def _assert_same_trade_log(left: list[dict[str, Any]], right: list[dict[str, Any]]) -> None:
     assert len(left) == len(right), f"trade_log length differs: {len(left)} vs {len(right)}"
-    for i, (la, rb) in enumerate(zip(left, right)):
+    for i, (la, rb) in enumerate(zip(left, right, strict=False)):
         for key, value in la.items():
             if key == "time":
                 continue

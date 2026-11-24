@@ -178,12 +178,15 @@ class EntryStateMachine:
             self._clear()
             return self.state
 
-        if self.state == "CANDIDATE":
-            if evidence.arm_condition and (
+        if (
+            self.state == "CANDIDATE"
+            and evidence.arm_condition
+            and (
                 not self.arm_requires_retest
                 or (evidence.retest_confirmed and evidence.direction == candidate.direction)
-            ):
-                self._enter("ARMED")
+            )
+        ):
+            self._enter("ARMED")
         return self.state
 
     def request_trigger(self) -> EntryCandidate | None:

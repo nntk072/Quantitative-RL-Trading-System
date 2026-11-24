@@ -653,53 +653,52 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
                 }
             )
 
-        if self.strategy_actions and isinstance(self.reward_fn, CompositeReward):
-            if getattr(self.reward_fn, "strategy_reward", None) is not None:
-                pos_dir = 0
-                in_ifvg = False
-                if self.position is not None:
-                    pos_dir = int(self.position.direction)
-                    in_ifvg = (
-                        float(feat_row.get("price_in_ifvg_bull", 0.0)) > 0
-                        if pos_dir == 1
-                        else float(feat_row.get("price_in_ifvg_bear", 0.0)) > 0
-                    )
-                reward_kwargs["strategy_context"] = {
-                    "position_changed": bool(self._opened_this_step),
-                    "direction": pos_dir,
-                    "in_ifvg": in_ifvg,
-                    "manipulation_active": (
-                        float(feat_row.get("po3_manipulation_active", 0.0)) > 0
-                    ),
-                    "manipulation_end": (float(feat_row.get("po3_manipulation_end", 0.0)) > 0),
-                    "distribution_phase": (float(feat_row.get("po3_distribution", 0.0)) > 0),
-                    "liquidity": (
-                        self.strategy.entry_liquidity(feat_row, pos_dir)
-                        if pos_dir != 0 and hasattr(self.strategy, "entry_liquidity")
-                        else True
-                    ),
-                    "in_gap": (
-                        self.strategy.entry_gap(feat_row, pos_dir)
-                        if pos_dir != 0 and hasattr(self.strategy, "entry_gap")
-                        else in_ifvg
-                    ),
-                    "entry_setup": (
-                        self.strategy.entry_setup(feat_row, pos_dir)
-                        if pos_dir != 0 and hasattr(self.strategy, "entry_setup")
-                        else False
-                    ),
-                    "distribution_after_ifvg": (
-                        self.strategy.distribution_ready(feat_row, pos_dir)
-                        if pos_dir != 0 and hasattr(self.strategy, "distribution_ready")
-                        else False
-                    ),
-                    "sweep_high": float(feat_row.get("sweep_high", 0.0)) > 0,
-                    "sweep_low": float(feat_row.get("sweep_low", 0.0)) > 0,
-                    "sweep_high_reclaimed": float(feat_row.get("sweep_high_reclaimed", 0.0)) > 0,
-                    "sweep_low_reclaimed": float(feat_row.get("sweep_low_reclaimed", 0.0)) > 0,
-                    "bos_up": float(feat_row.get("bos_up", 0.0)) > 0,
-                    "bos_down": float(feat_row.get("bos_down", 0.0)) > 0,
-                }
+        if (self.strategy_actions and isinstance(self.reward_fn, CompositeReward)) and getattr(
+            self.reward_fn, "strategy_reward", None
+        ) is not None:
+            pos_dir = 0
+            in_ifvg = False
+            if self.position is not None:
+                pos_dir = int(self.position.direction)
+                in_ifvg = (
+                    float(feat_row.get("price_in_ifvg_bull", 0.0)) > 0
+                    if pos_dir == 1
+                    else float(feat_row.get("price_in_ifvg_bear", 0.0)) > 0
+                )
+            reward_kwargs["strategy_context"] = {
+                "position_changed": bool(self._opened_this_step),
+                "direction": pos_dir,
+                "in_ifvg": in_ifvg,
+                "manipulation_active": (float(feat_row.get("po3_manipulation_active", 0.0)) > 0),
+                "manipulation_end": (float(feat_row.get("po3_manipulation_end", 0.0)) > 0),
+                "distribution_phase": (float(feat_row.get("po3_distribution", 0.0)) > 0),
+                "liquidity": (
+                    self.strategy.entry_liquidity(feat_row, pos_dir)
+                    if pos_dir != 0 and hasattr(self.strategy, "entry_liquidity")
+                    else True
+                ),
+                "in_gap": (
+                    self.strategy.entry_gap(feat_row, pos_dir)
+                    if pos_dir != 0 and hasattr(self.strategy, "entry_gap")
+                    else in_ifvg
+                ),
+                "entry_setup": (
+                    self.strategy.entry_setup(feat_row, pos_dir)
+                    if pos_dir != 0 and hasattr(self.strategy, "entry_setup")
+                    else False
+                ),
+                "distribution_after_ifvg": (
+                    self.strategy.distribution_ready(feat_row, pos_dir)
+                    if pos_dir != 0 and hasattr(self.strategy, "distribution_ready")
+                    else False
+                ),
+                "sweep_high": float(feat_row.get("sweep_high", 0.0)) > 0,
+                "sweep_low": float(feat_row.get("sweep_low", 0.0)) > 0,
+                "sweep_high_reclaimed": float(feat_row.get("sweep_high_reclaimed", 0.0)) > 0,
+                "sweep_low_reclaimed": float(feat_row.get("sweep_low_reclaimed", 0.0)) > 0,
+                "bos_up": float(feat_row.get("bos_up", 0.0)) > 0,
+                "bos_down": float(feat_row.get("bos_down", 0.0)) > 0,
+            }
 
         return float(self.reward_fn(pnl_step, **reward_kwargs))
 
@@ -752,10 +751,7 @@ class EpisodeRuntimeMixin(RuntimeMixinBase):
         """
         next_pos = int(self._ny_pos) + 1
         n_ny = len(self._ny_indices)
-        if next_pos >= n_ny:
-            next_step = int(self.step_idx) + 1
-        else:
-            next_step = int(self._ny_indices[next_pos])
+        next_step = int(self.step_idx) + 1 if next_pos >= n_ny else int(self._ny_indices[next_pos])
         return next_pos < n_ny and next_step < self._n_bars
 
     def _advance_ny_step(self) -> None:

@@ -613,11 +613,12 @@ def evaluate_model(
         raise ValueError(
             "supplied evaluation environment does not use the requested legacy sequence columns"
         )
-    if env is not None and sequence_columns_override is not None:
-        if tuple(getattr(env, "_obs_columns", ())) != sequence_columns_override:
-            raise ValueError(
-                "supplied evaluation environment does not use the recorded sequence coordinates"
-            )
+    if (env is not None and sequence_columns_override is not None) and tuple(
+        getattr(env, "_obs_columns", ())
+    ) != sequence_columns_override:
+        raise ValueError(
+            "supplied evaluation environment does not use the recorded sequence coordinates"
+        )
     if execution_seed is not None and execution_seed < 0:
         raise ValueError("execution_seed must be non-negative")
     effective_latency_ms = randomized_fill_latency_ms

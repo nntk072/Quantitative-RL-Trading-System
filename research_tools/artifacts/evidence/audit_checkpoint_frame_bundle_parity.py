@@ -127,7 +127,9 @@ def _equal(left: Any, right: Any) -> bool:
     if isinstance(left, dict) and isinstance(right, dict):
         return left.keys() == right.keys() and all(_equal(left[key], right[key]) for key in left)
     if isinstance(left, (list, tuple)) and isinstance(right, (list, tuple)):
-        return len(left) == len(right) and all(_equal(a, b) for a, b in zip(left, right))
+        return len(left) == len(right) and all(
+            _equal(a, b) for a, b in zip(left, right, strict=False)
+        )
     if isinstance(left, (float, np.floating)) and isinstance(right, (float, np.floating)):
         return bool((np.isnan(left) and np.isnan(right)) or left == right)
     return bool(left == right)
@@ -282,14 +284,14 @@ def main() -> int:
         if args.checkpoint.is_absolute()
         else (run_dir / args.checkpoint).resolve()
     )
-    getattr(eval_run, "_validate_reanalysis_request")(
+    cast(Any, eval_run)._validate_reanalysis_request(
         run_dir, output_root, allow_historical=args.allow_historical
     )
     if not checkpoint.is_file():
         raise FileNotFoundError(checkpoint)
 
     provenance_path, provenance = _checkpoint_provenance(run_dir, checkpoint)
-    cfg = getattr(eval_run, "_load_run_config")(run_dir)
+    cfg = cast(Any, eval_run)._load_run_config(run_dir)
     manifest_path = run_dir / "run_manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict):

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -330,7 +330,7 @@ def test_env_uses_armed_candidate_after_per_bar_setup_disappears(
     assert decoded_states[-1] == candidate_obs_state
     assert str(env.entry_state_machine.state) == "ARMED"
     assert tuple(observation["account"][6:]) == entry_state_one_hot("ARMED")
-    entry_setup = getattr(env.strategy, "entry_setup")
+    entry_setup = cast(Any, env.strategy).entry_setup
     assert callable(entry_setup)
     assert entry_setup(features.iloc[12], 1) is False
     armed_observation = observation

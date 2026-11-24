@@ -152,7 +152,8 @@ def _decision_prefix_matches(
     if len(candidate) > len(reference):
         return False
     return all(
-        _decision_key(left) == _decision_key(right) for left, right in zip(candidate, reference)
+        _decision_key(left) == _decision_key(right)
+        for left, right in zip(candidate, reference, strict=False)
     )
 
 
@@ -340,7 +341,7 @@ def _audit_arm(
 
     total_realized = 0.0
     position_pnl_mismatch_count = 0
-    for position_id, event_rows in closes_by_position.items():
+    for _position_id, event_rows in closes_by_position.items():
         event_pnl_values = [_number(row.get("net_pnl")) for row in event_rows]
         if any(value is None for value in event_pnl_values):
             continue

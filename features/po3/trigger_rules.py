@@ -119,7 +119,7 @@ def detect_entry_trigger(
 
         if entry_type == "retest":
             # Long entry: price retests bullish IFVG zone
-            for idx, fvg_low, fvg_high in confirmed_bullish_ifvg[:]:
+            for _idx, fvg_low, fvg_high in confirmed_bullish_ifvg[:]:
                 fvg_size = fvg_high - fvg_low
                 if fvg_size > 0:
                     distance = abs(close_price - fvg_high) / fvg_size
@@ -129,7 +129,7 @@ def detect_entry_trigger(
                         break
 
                         # Short entry: price retests bearish IFVG zone
-            for idx, fvg_low, fvg_high in confirmed_bearish_ifvg[:]:
+            for _idx, fvg_low, fvg_high in confirmed_bearish_ifvg[:]:
                 fvg_size = fvg_high - fvg_low
                 if fvg_size > 0:
                     distance = abs(close_price - fvg_low) / fvg_size
@@ -140,14 +140,14 @@ def detect_entry_trigger(
 
         elif entry_type == "close_through":
             # Long entry: strong close above bearish IFVG
-            for idx, fvg_low, fvg_high in confirmed_bearish_ifvg[:]:
+            for _idx, _fvg_low, fvg_high in confirmed_bearish_ifvg[:]:
                 if close_price > fvg_high:
                     out_entry_long[i] = 1
                     out_trigger_type[i] = "close_through"
                     break
 
                     # Short entry: strong close below bullish IFVG
-            for idx, fvg_low, fvg_high in confirmed_bullish_ifvg[:]:
+            for _idx, fvg_low, _fvg_high in confirmed_bullish_ifvg[:]:
                 if close_price < fvg_low:
                     out_entry_short[i] = 1
                     out_trigger_type[i] = "close_through"

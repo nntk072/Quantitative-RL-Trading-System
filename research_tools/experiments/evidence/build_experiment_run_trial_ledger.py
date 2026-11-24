@@ -11,7 +11,7 @@ import subprocess
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from configuration.paths import repository_root
 
@@ -281,17 +281,22 @@ def build_trial_ledger(
         observed_job_ids: set[int] = set()
         scheduler_cache: dict[int, str | None] = {}
 
-        def scheduler_for(job_id: int | None) -> str | None:
+        def scheduler_for(
+            job_id: int | None,
+            *,
+            observed_job_ids: Any = observed_job_ids,
+            scheduler_cache: Any = scheduler_cache,
+        ) -> str | None:
             if job_id is None:
                 return None
             observed_job_ids.add(job_id)
             if job_id in scheduler_cache:
-                return scheduler_cache[job_id]
+                return cast(str | None, scheduler_cache[job_id])
             if scheduler_states is not None:
                 scheduler_cache[job_id] = scheduler_states.get(job_id)
             else:
                 scheduler_cache[job_id] = _scheduler_state(job_id)
-            return scheduler_cache[job_id]
+            return cast(str | None, scheduler_cache[job_id])
 
         manifest_scheduler = scheduler_for(manifest_job_id)
         failures = _attempt_failure_map(experiment_run_dir)

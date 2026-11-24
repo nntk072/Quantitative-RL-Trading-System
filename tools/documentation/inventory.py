@@ -132,9 +132,7 @@ def local_links(path: Path, text: str) -> list[str]:
     for match in LINK_PATTERN.finditer(text):
         raw = match.group(1).strip().split(maxsplit=1)[0].strip("<>")
         parsed = urlsplit(raw)
-        if raw and not parsed.scheme and not parsed.netloc and parsed.path:
-            links.append(raw)
-        elif raw:
+        if raw and not parsed.scheme and not parsed.netloc and parsed.path or raw:
             links.append(raw)
     return links
 

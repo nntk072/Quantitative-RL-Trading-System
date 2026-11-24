@@ -74,22 +74,27 @@ def _all_names(tree: ast.Module) -> tuple[str, ...]:
             for target in statement.targets:
                 if isinstance(target, ast.Name):
                     literal_values[target.id] = statement.value
-        elif isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name):
-            if statement.value is not None:
-                literal_values[statement.target.id] = statement.value
+        if (
+            isinstance(statement, ast.AnnAssign) and isinstance(statement.target, ast.Name)
+        ) and statement.value is not None:
+            literal_values[statement.target.id] = statement.value
     names: list[str] = []
     for node in tree.body:
         value: ast.expr | None = None
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
+            )
+            or (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                or isinstance(node, ast.AugAssign)
+                and isinstance(node.target, ast.Name)
+            )
+            and node.target.id == "__all__"
         ):
             value = node.value
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            if node.target.id == "__all__":
-                value = node.value
-        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
-            if node.target.id == "__all__":
-                value = node.value
         if value is None:
             continue
         candidate = _literal_export_value(value, literal_values)
@@ -103,16 +108,17 @@ def _literal_export_value(value: ast.expr, assignments: dict[str, ast.expr]) -> 
         return _literal_export_value(value.left, assignments) + _literal_export_value(
             value.right, assignments
         )
-    if isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "list":
-        if value.args and isinstance(value.args[0], ast.Name):
-            assigned = assignments.get(value.args[0].id)
-            if assigned is not None:
-                try:
-                    candidate = ast.literal_eval(assigned)
-                except (TypeError, ValueError):
-                    return []
-                if isinstance(candidate, dict):
-                    return [key for key in candidate if isinstance(key, str)]
+    if (
+        isinstance(value, ast.Call) and isinstance(value.func, ast.Name) and value.func.id == "list"
+    ) and (value.args and isinstance(value.args[0], ast.Name)):
+        assigned = assignments.get(value.args[0].id)
+        if assigned is not None:
+            try:
+                candidate = ast.literal_eval(assigned)
+            except (TypeError, ValueError):
+                return []
+            if isinstance(candidate, dict):
+                return [key for key in candidate if isinstance(key, str)]
     try:
         candidate = ast.literal_eval(value)
     except (TypeError, ValueError):
@@ -452,9 +458,7 @@ def _non_none_return(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     annotation = ast.unparse(node.returns).replace("typing.", "")
     if annotation in _NONE_ANNOTATIONS:
         return False
-    if isinstance(node.returns, ast.Constant) and node.returns.value is None:
-        return False
-    return True
+    return not (isinstance(node.returns, ast.Constant) and node.returns.value is None)
 
 
 def _production_function_docstring_gaps(root: Path = ROOT) -> list[str]:
@@ -488,7 +492,12 @@ def _production_function_docstring_gaps(root: Path = ROOT) -> list[str]:
                     """Record an asynchronous function's enclosing scope."""
                     self._visit_function(node)
 
-                def _visit_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
+                def _visit_function(
+                    self,
+                    node: ast.FunctionDef | ast.AsyncFunctionDef,
+                    *,
+                    methods: Any = methods,
+                ) -> None:
                     """Track methods and recursively visit nested definitions."""
                     if self.scopes and self.scopes[-1] == "class":
                         methods.add(id(node))

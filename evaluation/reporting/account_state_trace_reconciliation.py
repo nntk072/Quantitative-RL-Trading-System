@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import math
 from collections.abc import Mapping
 from typing import Any
@@ -1416,12 +1417,10 @@ def reconcile_account_state_trace(
                                     cancel_session = _number(cancel_session_raw)
                                     cancel_session_missing = cancel_session_raw is None
                                     if not cancel_session_missing:
-                                        try:
+                                        with contextlib.suppress(TypeError, ValueError):
                                             cancel_session_missing = bool(
                                                 pd.isna(cancel_session_raw)
                                             )
-                                        except (TypeError, ValueError):
-                                            pass
                                     is_breach_order_cancel = len(submissions) == 1 and (
                                         cancel_session_missing
                                         or (

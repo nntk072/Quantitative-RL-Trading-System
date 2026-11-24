@@ -83,7 +83,9 @@ def _same_value(left: Any, right: Any) -> bool:
         and isinstance(right, Sequence)
         and not isinstance(left, (str, bytes))
     ):
-        return len(left) == len(right) and all(_same_value(a, b) for a, b in zip(left, right))
+        return len(left) == len(right) and all(
+            _same_value(a, b) for a, b in zip(left, right, strict=False)
+        )
     try:
         left_missing = bool(pd.isna(left))
         right_missing = bool(pd.isna(right))

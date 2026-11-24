@@ -96,7 +96,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `run_backtest`](../../../../simulation/backtest/event_driven_backtest.py#L1330)
+1. [production caller: `run_backtest`](../../../../simulation/backtest/event_driven_backtest.py#L1331)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -181,7 +181,7 @@ def test_load_release_times_reads_utc_column(tmp_path: Path) -> None:
     assert load_release_times(path) == [datetime(2025, 2, 7, 13, 30, tzinfo=UTC)]
 ```
 
-2. [production caller: `run_backtest`](../../../../simulation/backtest/event_driven_backtest.py#L1342)
+2. [production caller: `run_backtest`](../../../../simulation/backtest/event_driven_backtest.py#L1343)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L686)
+1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L684)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

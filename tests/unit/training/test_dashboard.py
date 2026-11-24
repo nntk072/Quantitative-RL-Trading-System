@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pickle
 import random
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -201,7 +201,7 @@ def test_dashboard_train_wrapper_forwards_off_policy_update_arguments(
 
     model = SimpleNamespace(train=train, num_timesteps=0)
     callback = TrainingDashboardCallback(total_timesteps=10, log_every=10)
-    setattr(callback, "model", model)
+    cast(Any, callback).model = model
     monkeypatch.setattr(callback, "_apply_prior_interval", lambda: None)
     monkeypatch.setattr(callback, "_maybe_eval", lambda: None)
     monkeypatch.setattr(callback, "_should_log", lambda: False)
@@ -365,7 +365,9 @@ def test_dashboard_eval_can_restore_global_rng_state(raises: bool) -> None:
     if torch_cuda_states is not None:
         assert all(
             torch.equal(actual, expected)
-            for actual, expected in zip(torch.cuda.get_rng_state_all(), torch_cuda_states)
+            for actual, expected in zip(
+                torch.cuda.get_rng_state_all(), torch_cuda_states, strict=False
+            )
         )
     assert cb._eval_just_ran is (not raises)
 
@@ -397,7 +399,7 @@ def test_prior_direction_coordinate_uses_schema_names_not_action_width(monkeypat
     cb._apply_prior_interval()
 
     assert cb.model.action_space.shape == (6,)
-    assert "direction" not in getattr(cb.model.policy, "names")
+    assert "direction" not in cast(Any, cb.model).policy.names
 
 
 def test_empty_opens_still_turn_risk_on_at_the_floor() -> None:

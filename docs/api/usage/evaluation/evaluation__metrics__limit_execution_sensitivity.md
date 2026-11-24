@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `evaluation.metrics.limit_
 
 **Purpose:** Compare paired backtests that differ only in limit-fill conservatism.
 
-**Exact API:** {py:obj}`evaluation.metrics.limit_execution_sensitivity.compare_limit_execution_sensitivity` · **Source:** [evaluation/metrics/limit_execution_sensitivity.py:301](../../../../evaluation/metrics/limit_execution_sensitivity.py#L301)
+**Exact API:** {py:obj}`evaluation.metrics.limit_execution_sensitivity.compare_limit_execution_sensitivity` · **Source:** [evaluation/metrics/limit_execution_sensitivity.py:303](../../../../evaluation/metrics/limit_execution_sensitivity.py#L303)
 
 **Inputs and outputs:**
 

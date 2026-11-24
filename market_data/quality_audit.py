@@ -653,7 +653,7 @@ def build_report(campaign_path: Path, *, chunksize: int = CHUNK_ROWS) -> dict[st
     # bid/ask tick inputs. Missing quote minutes remain visible in the counts.
     coverage: dict[str, Any] = {}
     for role in ("training", "testing"):
-        for tick_path, tick_record in (
+        for tick_path, _tick_record in (
             (path, record)
             for path, record in by_path.items()
             if path.startswith(f"data/{role}/") and record.get("kind") == "tick"

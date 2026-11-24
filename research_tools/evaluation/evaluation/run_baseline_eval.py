@@ -162,6 +162,8 @@ def main() -> None:
             obs: Any,
             _strategy: BaseStrategy = strategy,
             _discrete_actions: pd.Series | None = discrete_actions,
+            *,
+            env: Any = env,
         ) -> Any:
             del obs
             if _discrete_actions is not None:

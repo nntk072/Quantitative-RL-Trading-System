@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -123,8 +123,8 @@ def test_max_episode_steps_null_reaches_last_session() -> None:
 def test_training_and_evaluation_share_hard_breach_penalty() -> None:
     train_env = _multi_day_env(episodic=True)
     eval_env = _multi_day_env(episodic=False)
-    assert getattr(train_env.reward_fn, "breach_penalty") == pytest.approx(-10.0)
-    assert getattr(eval_env.reward_fn, "breach_penalty") == pytest.approx(-10.0)
+    assert cast(Any, train_env.reward_fn).breach_penalty == pytest.approx(-10.0)
+    assert cast(Any, eval_env.reward_fn).breach_penalty == pytest.approx(-10.0)
 
 
 @pytest.mark.unit

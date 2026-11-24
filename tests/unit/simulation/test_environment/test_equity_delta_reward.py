@@ -11,7 +11,9 @@ from simulation.environment.rewards import EquityDeltaReward
 def test_equity_delta_reward_telescopes_to_total_equity_change() -> None:
     equity = np.asarray([100_000.0, 100_125.0, 99_950.0, 100_400.0])
     reward = EquityDeltaReward(500.0)
-    rewards = [reward(float(right - left)) for left, right in zip(equity[:-1], equity[1:])]
+    rewards = [
+        reward(float(right - left)) for left, right in zip(equity[:-1], equity[1:], strict=False)
+    ]
     assert sum(rewards) == pytest.approx((equity[-1] - equity[0]) / 500.0)
 
 

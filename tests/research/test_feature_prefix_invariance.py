@@ -181,7 +181,7 @@ def test_feature_groups_have_one_effective_builder_configuration(
 def test_default_variant_file_is_the_registered_experiment_run_list() -> None:
     expected = AUDIT.ROOT / "config" / "experiment_runs" / "variant_list.txt"
 
-    assert AUDIT.DEFAULT_VARIANT_FILE == expected
+    assert expected == AUDIT.DEFAULT_VARIANT_FILE
     assert AUDIT.DEFAULT_VARIANT_FILE.is_file()
 
 

@@ -54,13 +54,13 @@ class EmaExitRuntimeMixin(RuntimeMixinBase):
         if pos is None or pos.exit_mode != "ema_21":
             return
         runner_fraction = float(getattr(pos, "ema_runner_fraction", 0.0))
-        if runner_fraction > 0.0:
-            # In the opt-in runner policy, EMA can manage only the size left
-            # after the agent's configured structural TP ladder has completed.
-            if pos.tp_hit_mask == 0 or any(
-                getattr(pos, f"tp{slot}_price") is not None for slot in (1, 2, 3)
-            ):
-                return
+        # In the opt-in runner policy, EMA can manage only the size left
+        # after the agent's configured structural TP ladder has completed.
+        if runner_fraction > 0.0 and (
+            pos.tp_hit_mask == 0
+            or any(getattr(pos, f"tp{slot}_price") is not None for slot in (1, 2, 3))
+        ):
+            return
         risk = float(pos.stop_distance)
         if risk <= 1e-12:
             return

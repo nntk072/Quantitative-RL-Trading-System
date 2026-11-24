@@ -345,7 +345,7 @@ class MultiSymbolRobot:
         )
 
         # Trade each symbol
-        for symbol in self.strategies.keys():
+        for symbol in self.strategies:
             try:
                 self.trade_symbol(symbol)
             except Exception as e:

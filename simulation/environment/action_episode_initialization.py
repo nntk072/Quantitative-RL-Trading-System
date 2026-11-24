@@ -138,9 +138,8 @@ class ActionEpisodeInitializationMixin(RuntimeMixinBase):
             raise ValueError("execution.limit_order_max_ttl_bars must be a positive integer")
         self.limit_order_max_ttl_bars = ttl_bars
         self.limit_order_require_trade_through = bool(limit_order_require_trade_through)
-        if self.agent_entry_execution:
-            if not self.trade_setup_actions:
-                raise ValueError("env.agent_entry_execution requires env.trade_setup_actions=true")
+        if self.agent_entry_execution and not self.trade_setup_actions:
+            raise ValueError("env.agent_entry_execution requires env.trade_setup_actions=true")
 
         if self.trade_setup_actions:
             self.action_schema = build_trade_setup_action_schema(

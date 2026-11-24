@@ -143,9 +143,11 @@ def _select_event_pair(
             continue
         required_side = str(raw_event.get("required_quote_side", ""))
         expected_entry_side = "ask" if direction == 1 else "bid"
-        if str(raw_event.get("event_type", "")).lower() == "open":
-            if required_side != expected_entry_side:
-                continue
+        if (
+            str(raw_event.get("event_type", "")).lower() == "open"
+            and required_side != expected_entry_side
+        ):
+            continue
         candidates.append(
             {
                 **dict(raw_event),

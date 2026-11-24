@@ -548,13 +548,13 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_version_and_layout_survive_sb3_save_load_without_training(tmp_path):
     schema = build_action_schema(has_direction=True)
     model = PPO("MlpPolicy", _TinyEnv(), n_steps=2, batch_size=2, device="cpu")
-    setattr(model, "_action_schema_version", schema.version)
-    setattr(model, "_action_layout_key", schema.key)
+    cast(Any, model)._action_schema_version = schema.version
+    cast(Any, model)._action_layout_key = schema.key
     path = tmp_path / "schema_saved.zip"
     model.save(path)
 
     loaded = PPO.load(path, device="cpu")
-    assert getattr(loaded, "_action_schema_version") == schema.version
+    assert cast(Any, loaded)._action_schema_version == schema.version
 # … caller assertions omitted …
 ```
 
@@ -666,8 +666,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    assert getattr(loaded, "_action_schema_version") == schema.version
-    assert getattr(loaded, "_action_layout_key") == schema.key
+    assert cast(Any, loaded)._action_schema_version == schema.version
+    assert cast(Any, loaded)._action_layout_key == schema.key
     validate_model_action_schema(loaded, schema)
 
     same_width_other_layout = build_action_schema(has_sl_mode=True)

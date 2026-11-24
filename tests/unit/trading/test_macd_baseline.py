@@ -170,10 +170,7 @@ def test_macd_backtest_alignment(sample_bars):
     state = {"i": obs_window}
 
     def policy(obs):
-        if state["i"] < len(actions):
-            action = int(actions.iloc[state["i"]])
-        else:
-            action = 0
+        action = int(actions.iloc[state["i"]]) if state["i"] < len(actions) else 0
         state["i"] += 1
         return action
 

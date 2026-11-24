@@ -195,7 +195,7 @@ def _resource_profiles(experiment_run_dir: Path) -> list[dict[str, Any]]:
                 try:
                     utils = json.loads(row.get("gpu_utilization_pct_by_device", "[]"))
                     memories = json.loads(row.get("gpu_memory_used_mib_by_device", "[]"))
-                    parsed = [(int(u), int(m)) for u, m in zip(utils, memories)]
+                    parsed = [(int(u), int(m)) for u, m in zip(utils, memories, strict=False)]
                 except (ValueError, TypeError):
                     parsed = []
             elif "gpu_utilization_pct" in header and "gpu_memory_used_mib" in header:

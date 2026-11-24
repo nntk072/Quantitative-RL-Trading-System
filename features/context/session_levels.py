@@ -110,10 +110,8 @@ def session_mask(
     t = reference_index.tz_convert(session_tz).time
     start_t = _parse_hhmm(start_ct)
     end_t = _parse_hhmm(end_ct)
-    if start_t <= end_t:
-        mask = (t >= start_t) & (t < end_t)
-    else:  # window crosses midnight in session_tz
-        mask = (t >= start_t) | (t < end_t)
+    # A window that crosses midnight in session_tz (start after end) is the union of both ends.
+    mask = (t >= start_t) & (t < end_t) if start_t <= end_t else (t >= start_t) | (t < end_t)
     return pd.Series(mask, index=idx)
 
 
@@ -227,7 +225,9 @@ def prior_period_high_low(
         prefix = prefix or "yesterday"
     elif freq_norm.startswith("w"):
         iso = idx_tz.isocalendar()
-        keys = pd.Series([f"{y}-W{w:02d}" for y, w in zip(iso.year, iso.week)], index=idx)
+        keys = pd.Series(
+            [f"{y}-W{w:02d}" for y, w in zip(iso.year, iso.week, strict=False)], index=idx
+        )
         prefix = prefix or "lastweek"
     else:
         raise ValueError(f"unsupported freq {freq!r} (use 'D' or 'W')")

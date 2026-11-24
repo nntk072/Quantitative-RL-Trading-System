@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import gymnasium as gym
 import numpy as np
@@ -105,7 +105,7 @@ def test_semantic_ppo_has_finite_distribution_and_roundtrips(tmp_path) -> None:
 
     checkpoint = tmp_path / "semantic_policy.zip"
     observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2)
-    setattr(model, "_observation_schema", observation_schema.to_dict())
+    cast(Any, model)._observation_schema = observation_schema.to_dict()
     model.save(checkpoint)
     loaded = PPO.load(checkpoint, device="cpu")
     assert isinstance(loaded.policy, SemanticClampedStdMultiInputPolicy)

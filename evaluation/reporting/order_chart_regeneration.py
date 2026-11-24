@@ -8,6 +8,7 @@ does not retrain the policy or rerun the event-driven backtest.
 from __future__ import annotations
 
 import ast
+import contextlib
 import sys
 from pathlib import Path
 from typing import Any
@@ -335,10 +336,8 @@ def _replot_split_summary(
         return
     daily_loss_limit, max_loss_limit, profit_target = _extract_ftmo_limits(cfg)
     initial_balance = 100_000.0
-    try:
+    with contextlib.suppress(Exception):
         initial_balance = float(cfg.account.initial_balance)
-    except Exception:
-        pass
     log.info("Re-plotting equity/drawdown/daily PnL → %s", split_dir)
     _plt.plot_equity_curve(
         equity,

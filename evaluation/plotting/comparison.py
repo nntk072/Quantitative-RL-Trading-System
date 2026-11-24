@@ -44,7 +44,7 @@ def plot_baseline_comparison(
     colors = [EQUITY_COLOR, LONG_COLOR, SHORT_COLOR, CLOSE_COLOR, "#ce93d8", "#80cbc4"]
 
     fig, ax = plt.subplots(figsize=(14, 5))
-    for (name, eq), col in zip(equity_dict.items(), colors):
+    for (name, eq), col in zip(equity_dict.items(), colors, strict=False):
         normed = eq / eq.iloc[0]
         ax.plot(normed.index, normed.values, label=name, color=col)
 

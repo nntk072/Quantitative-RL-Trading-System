@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from types import ModuleType, SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -16,11 +16,11 @@ if "MetaTrader5" not in sys.modules:
 
 _mt5_stub = sys.modules["MetaTrader5"]
 if not hasattr(_mt5_stub, "TIMEFRAME_H1"):
-    setattr(_mt5_stub, "TIMEFRAME_H1", 60)
+    cast(Any, _mt5_stub).TIMEFRAME_H1 = 60
 if not hasattr(_mt5_stub, "ORDER_TYPE_BUY"):
-    setattr(_mt5_stub, "ORDER_TYPE_BUY", 0)
+    cast(Any, _mt5_stub).ORDER_TYPE_BUY = 0
 if not hasattr(_mt5_stub, "ORDER_TYPE_SELL"):
-    setattr(_mt5_stub, "ORDER_TYPE_SELL", 1)
+    cast(Any, _mt5_stub).ORDER_TYPE_SELL = 1
 
 import MetaTrader5 as mt5  # noqa: E402
 

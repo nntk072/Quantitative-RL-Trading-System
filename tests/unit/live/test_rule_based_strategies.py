@@ -2,6 +2,7 @@
 
 import sys
 from types import ModuleType
+from typing import Any, cast
 from unittest.mock import patch
 
 # Stub MetaTrader5 module for testing in environments without MT5.
@@ -10,10 +11,10 @@ try:  # pragma: no cover - depends on platform
     import MetaTrader5  # noqa: F401
 except ImportError:
     mt5_stub = ModuleType("MetaTrader5")
-    setattr(mt5_stub, "TIMEFRAME_H1", 16385)
+    cast(Any, mt5_stub).TIMEFRAME_H1 = 16385
     sys.modules.setdefault("MetaTrader5", mt5_stub)
 if not hasattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1"):
-    setattr(sys.modules["MetaTrader5"], "TIMEFRAME_H1", 16385)
+    cast(Any, sys.modules["MetaTrader5"]).TIMEFRAME_H1 = 16385
 
 
 class TestLiveTradingConfig:
@@ -90,7 +91,7 @@ class TestMT5TerminalPath:
         import live_trading
 
         expected_default = r"C:\Program Files\MetaTrader 5\terminal64.exe"
-        assert live_trading.TERMINAL_PATH == expected_default
+        assert expected_default == live_trading.TERMINAL_PATH
 
 
 class TestStrategyTypeConfig:

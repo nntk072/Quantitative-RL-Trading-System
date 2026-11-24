@@ -126,9 +126,8 @@ def parse_train_args() -> argparse.Namespace:
     campaign_phase = args.survival_campaign_phase
     if (args.survival_campaign_dir is None) != (campaign_phase is None):
         parser.error("--survival-campaign-dir and --survival-campaign-phase must be used together")
-    if campaign_phase is not None:
-        if tuple(args.seeds or ()) != EXPECTED_SEEDS:
-            parser.error("bounded confirmatory work requires protocol seeds 42..47 in order")
+    if campaign_phase is not None and tuple(args.seeds or ()) != EXPECTED_SEEDS:
+        parser.error("bounded confirmatory work requires protocol seeds 42..47 in order")
     if campaign_phase in {"train_seed", "walk_forward_fold"}:
         if args.survival_campaign_seed is None:
             parser.error(f"{campaign_phase} requires --survival-campaign-seed")

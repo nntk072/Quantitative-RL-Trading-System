@@ -7,6 +7,7 @@ Does not create or cancel Slurm allocations. Runs in an existing compute-node jo
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import fcntl
 import hashlib
@@ -199,11 +200,11 @@ def normalize_experiment_run_config_overrides(value: Any) -> dict[str, Experimen
         key = str(raw_key).strip()
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", key):
             raise ValueError(f"invalid experiment run config override key: {raw_key!r}")
-        if isinstance(raw_value, bool):
-            normalized[key] = raw_value
-        elif isinstance(raw_value, int):
-            normalized[key] = raw_value
-        elif isinstance(raw_value, float) and math.isfinite(raw_value):
+        if (
+            isinstance(raw_value, (bool, int))
+            or isinstance(raw_value, float)
+            and math.isfinite(raw_value)
+        ):
             normalized[key] = raw_value
         elif isinstance(raw_value, list) and all(
             isinstance(item, (bool, int, str)) or (isinstance(item, float) and math.isfinite(item))
@@ -1273,18 +1274,14 @@ def main() -> int:
             stop_deadline = time.monotonic() + 60
             for proc, _, _ in running.values():
                 if proc.poll() is None:
-                    try:
+                    with contextlib.suppress(ProcessLookupError):
                         os.killpg(proc.pid, signal.SIGTERM)
-                    except ProcessLookupError:
-                        pass
             stop_sent = True
         if STOP and stop_deadline is not None and time.monotonic() >= stop_deadline:
             for proc, _, _ in running.values():
                 if proc.poll() is None:
-                    try:
+                    with contextlib.suppress(ProcessLookupError):
                         os.killpg(proc.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
             stop_deadline = None
         while not STOP and len(running) < args.workers:
             next_job = next((j for j in jobs if j["status"] == "pending"), None)

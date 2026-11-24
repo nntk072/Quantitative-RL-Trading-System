@@ -206,7 +206,7 @@ def build_report() -> dict[str, Any]:
         backtest = run_backtest(
             bars,
             features,
-            lambda _observation: next(actions, 0),
+            lambda _observation, actions=actions: next(actions, 0),
             execution_seed=11,
             risk_frac=0.001,
             rr_ratio=1.0,

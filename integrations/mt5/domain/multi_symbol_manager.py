@@ -182,7 +182,7 @@ class MultiSymbolManager:
 
     def refresh_data(self) -> None:
         """Refresh data for all symbols."""
-        for symbol, data_source in self.data_sources.items():
+        for symbol, _data_source in self.data_sources.items():
             try:
                 # Data will be refreshed when get_data() is called
                 # This is just a placeholder for future optimization
