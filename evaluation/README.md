@@ -46,7 +46,13 @@ Evaluation replays trained policies and produces metrics, reports, charts, and r
 
 ## Public API
 
-Use the rollout, metrics, reporting, plotting, and reanalysis entry points documented by their subpackages.
+Package-level exports cover `WFSplit` and `purged_walk_forward`; bootstrap,
+calibration, distribution, performance, and temporal metrics; run-summary and
+comparison builders; `run_episode` and `evaluate_provider`; and the
+always-no-trade and random-eligible-setup baselines. The complete supported
+re-export list is declared in `evaluation/__init__.py`. Plotting, artifact
+writing, and checkpoint reanalysis APIs remain in their documented
+subpackages rather than being re-exported here.
 
 ## Invariants
 

@@ -51,7 +51,13 @@ Decisioning adapts model outputs and external policies into the common action co
 
 ## Public API
 
-Use the package decision-provider interfaces and adapters; public exports are listed in the package initializers and module guides.
+The package exports the backend-neutral `DecisionInput`, `Decision`,
+`DecisionProvider`, action and observation schema types, and their builders.
+Trade-setup exports cover the versioned category/action constants, candidate
+geometry helpers, schema builders, decoders, and validators. Account-state
+exports provide the entry-state dimensions and observation-vector helpers.
+The explicit export list in `decisioning/__init__.py` is the supported
+package-level re-export surface; framework adapters remain in `adapters/`.
 
 ## Invariants
 
