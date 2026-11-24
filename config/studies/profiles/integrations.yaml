@@ -13,6 +13,7 @@ api_paths:
 - integrations/mt5/robot/multi_symbol_robot.py
 - integrations/mt5/robot/rl_robot.py
 caller_paths:
+- tests/unit/integrations/test_volatility_analyzer.py
 - tests/unit/live/test_crossover_robot.py
 - tests/unit/live/test_mt5_cli_applications.py
 - tests/unit/live/test_mt5_trader_quotes.py
@@ -24,7 +25,7 @@ source_scopes:
   - {path: integrations/mt5, study_ids: [integrations.broker_contract_conversion, integrations.symbol_and_order_constraints]}
   - {path: integrations/__init__.py, study_ids: [integrations.broker_contract_conversion]}
 config_paths: [config/base/default.yaml]
-test_paths: [tests/unit/live]
+test_paths: [tests/unit/integrations/test_volatility_analyzer.py, tests/unit/live]
 studies:
   - id: integrations.broker_contract_conversion
     type: code_check
