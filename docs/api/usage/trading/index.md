@@ -28,7 +28,7 @@ trading__orders__stops
 trading__orders__targets
 trading__orders__timeframes
 trading__policy__config
-trading__policy__legacy
+trading__policy__fixed_risk
 trading__policy__repeated_payout
 trading__positions__multi_tp
 trading__risk__budget

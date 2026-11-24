@@ -3467,16 +3467,16 @@
     },
     {
       "links": [
-        "../../../../trading/policy/legacy.py#L8"
+        "../../../../trading/policy/fixed_risk.py#L8"
       ],
       "orphan_status": "in toctree",
-      "path": "docs/api/usage/trading/trading__policy__legacy.md",
+      "path": "docs/api/usage/trading/trading__policy__fixed_risk.md",
       "primary_navigation_owner": [
         "API"
       ],
       "section": "api",
       "status": "current",
-      "title": "Trading \u00b7 `policy.legacy`",
+      "title": "Trading \u00b7 `policy.fixed_risk`",
       "type": "reference"
     },
     {
@@ -6833,14 +6833,14 @@
         "../../trading/orders/targets.py#L58",
         "../../trading/orders/timeframes.py#L20",
         "../../trading/orders/selection.py#L198",
-        "../../trading/policy/legacy.py#L5",
+        "../../trading/policy/fixed_risk.py#L5",
         "../../trading/policy/repeated_payout.py#L13",
         "../../trading/policy/config.py#L24",
         "../../trading/policy/repeated_payout.py#L51",
         "../../trading/policy/repeated_payout.py#L25",
         "../../trading/policy/config.py#L200",
         "../../trading/policy/config.py#L283",
-        "../../trading/policy/legacy.py#L8",
+        "../../trading/policy/fixed_risk.py#L8",
         "../../trading/policy/config.py#L72",
         "../../trading/policy/config.py#L81",
         "../../trading/policy/config.py#L63",

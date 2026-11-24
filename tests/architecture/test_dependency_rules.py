@@ -233,13 +233,13 @@ FORBIDDEN_IMPORT_PREFIXES = {
 }
 
 ALLOWED_COMPOSITION_IMPORTS = {
-    "evaluation/reanalysis/legacy_sb3.py": ("learning.rl",),
+    "evaluation/reanalysis/sb3_checkpoint_backend.py": ("learning.rl",),
 }
 
 RUNTIME_BACKEND_FORBIDDEN = {
     "live": ("learning.rl", "learning.supervised", "training"),
 }
-EVALUATION_BACKEND_COMPOSITION_ROOTS = {"evaluation/reanalysis/legacy_sb3.py"}
+EVALUATION_BACKEND_COMPOSITION_ROOTS = {"evaluation/reanalysis/sb3_checkpoint_backend.py"}
 
 
 def test_evaluation_and_live_are_backend_neutral() -> None:

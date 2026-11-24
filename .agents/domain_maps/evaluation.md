@@ -137,7 +137,7 @@ links are unavailable.
 
 - `evaluation/rollout/provider.py`
 - `evaluation/reanalysis/checkpoint_reanalysis.py`
-- `evaluation/reanalysis/legacy_sb3.py`
+- `evaluation/reanalysis/sb3_checkpoint_backend.py`
 - `evaluation/metrics/performance.py`
 - `evaluation/contracts.py`
 - `evaluation/reporting/geometry.py`
