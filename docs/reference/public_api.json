@@ -19474,15 +19474,27 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 44,
+      "source_module": "simulation.backtest.protective_events",
+      "source_path": "simulation/backtest/protective_events.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "simulation.backtest.protective_events",
       "kind": "function",
       "name": "_active_target_slots",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 46,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 18,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19492,9 +19504,9 @@
       "name": "_advance_management_modes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 127,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 99,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19504,9 +19516,9 @@
       "name": "_apply_tp_management",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 174,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 146,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19516,21 +19528,9 @@
       "name": "_default_sl_mode",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 82,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.protective_events",
-      "kind": "function",
-      "name": "_finite_feature",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 63,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 54,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19540,9 +19540,9 @@
       "name": "_record_target_slot",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 293,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 265,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19552,9 +19552,45 @@
       "name": "_tick_touch_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 360,
+      "source_line": 332,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "function",
+      "name": "liquidate_terminal_position",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 25,
+      "source_module": "simulation.backtest.protective_liquidation",
+      "source_path": "simulation/backtest/protective_liquidation.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "function",
+      "name": "process_protective_and_account_events",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 59,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_management",
+      "kind": "function",
+      "name": "_finite_feature",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 35,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",

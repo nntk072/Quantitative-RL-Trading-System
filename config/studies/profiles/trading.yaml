@@ -54,6 +54,8 @@ caller_paths:
 - simulation/backtest/policy_actions.py
 - simulation/backtest/quotes.py
 - simulation/backtest/protective_events.py
+- simulation/backtest/protective_management.py
+- simulation/backtest/protective_liquidation.py
 - simulation/backtest/runtime.py
 - simulation/entry_evidence.py
 - simulation/environment/account_policy_initialization.py

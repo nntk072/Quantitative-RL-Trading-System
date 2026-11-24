@@ -66,6 +66,8 @@ caller_paths:
 - simulation/backtest/event_driven_backtest.py
 - simulation/backtest/policy_actions.py
 - simulation/backtest/protective_events.py
+- simulation/backtest/protective_management.py
+- simulation/backtest/protective_liquidation.py
 - simulation/backtest/quotes.py
 - simulation/backtest/runtime.py
 - simulation/environment/bundles.py

@@ -13,8 +13,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | stable | 723 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 469 |
-| private implementation | 1034 |
+| cross-package internal | 471 |
+| private implementation | 1035 |
 
 ## Public package exports
 
