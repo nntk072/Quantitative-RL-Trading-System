@@ -39,7 +39,14 @@ class NewsGuardConfig:
 
 
 def load_release_times(calendar_path: Path) -> list[datetime]:
-    """Release times (UTC) from a calendar CSV written by ``market_data.news.calendar``."""
+    """Release times (UTC) from a calendar CSV written by ``market_data.news.calendar``.
+
+    Args:
+        calendar_path: Calendar CSV path.
+
+    Returns:
+        Release times as timezone-aware UTC datetimes.
+    """
     frame = pd.read_csv(calendar_path, usecols=["utc_time"])
     return [
         datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
@@ -57,6 +64,15 @@ def session_baseline_atr(
 
     The baseline for a bar excludes its own session, so it is causal. Bars with no earlier
     history get NaN, which makes the spike test false for them.
+
+    Args:
+        atr: ATR value per bar.
+        session_ids: Session identifier per bar.
+        session_labels: Session label per bar (for example ``ny`` or ``london``).
+        lookback_sessions: Number of earlier sessions in the rolling median.
+
+    Returns:
+        Baseline ATR per bar, NaN where there is no earlier history.
     """
     frame = pd.DataFrame(
         {
@@ -88,7 +104,22 @@ def news_block_mask(
     *,
     open_manipulation_bars: int,
 ) -> np.ndarray[Any, Any]:
-    """Boolean mask over bars: True where new entries are blocked."""
+    """Boolean mask over bars: True where new entries are blocked.
+
+    Args:
+        bar_times: Bar start times.
+        close: Close price per bar.
+        atr: ATR per bar, used as the spike baseline source.
+        session_ids: Session identifier per bar.
+        session_labels: Session label per bar.
+        release_times: Scheduled release times (UTC).
+        config: Guard settings.
+        open_manipulation_bars: Number of bars at the start of each NY session that are exempt
+            from the spike rule when ``config.exempt_open_manipulation`` is set.
+
+    Returns:
+        Boolean mask, True where new entries are blocked.
+    """
     times = np.array([pd.Timestamp(t).timestamp() for t in bar_times], dtype=float)
     releases = np.sort(np.array([pd.Timestamp(t).timestamp() for t in release_times], dtype=float))
     before = config.blackout_minutes_before * 60.0
@@ -120,7 +151,14 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def news_guard_config(block: Mapping[str, Any] | None) -> NewsGuardConfig | None:
-    """Build the guard from ``execution.news_spike_guard``; None when the guard is disabled."""
+    """Build the guard from ``execution.news_spike_guard``; None when the guard is disabled.
+
+    Args:
+        block: The ``execution.news_spike_guard`` config mapping, or None.
+
+    Returns:
+        The guard settings, or None when the guard is disabled or absent.
+    """
     if block is None or not bool(block.get("enabled", False)):
         return None
     calendar = Path(str(block["calendar_path"]))
@@ -142,6 +180,14 @@ def causal_atr5(high: Any, low: Any, close: Any) -> np.ndarray[Any, Any]:
 
     shortcut: a plain 5-bar mean of true range, not the bundle's atr_5 definition; upgrade if
     the guard must match the bundle exactly.
+
+    Args:
+        high: High price per bar.
+        low: Low price per bar.
+        close: Close price per bar.
+
+    Returns:
+        Rolling 5-bar mean of true range, one value per bar.
     """
     high_s = pd.Series(np.asarray(high, dtype=float))
     low_s = pd.Series(np.asarray(low, dtype=float))

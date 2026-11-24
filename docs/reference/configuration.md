@@ -73,6 +73,7 @@ is read by every listed package.
 | `backtest.validation.max_loss_per_trade_usd` | `number` | `900.0` | `simulation/backtest` |
 | `backtest.validation.take_profit_per_trade_usd` | `null` | `null` | `simulation/backtest` |
 | `backtest.validation.validation_mode` | `boolean` | `false` | `simulation/backtest` |
+| `compute.autocast_dtype` | `string` | `"auto"` | `compute` |
 | `compute.cudnn_benchmark` | `boolean` | `true` | `compute` |
 | `constrained_rl.cost_discount_gamma` | `number` | `1.0` | `learning/rl` |
 | `constrained_rl.dual_learning_rate` | `number` | `0.1` | `learning/rl` |
@@ -253,6 +254,14 @@ is read by every listed package.
 | `execution.limit_order_max_ttl_bars` | `integer` | `60` | `trading/execution and simulation` |
 | `execution.limit_order_require_trade_through` | `boolean` | `false` | `trading/execution and simulation` |
 | `execution.max_tick_quote_wait_ms` | `integer` | `60000` | `trading/execution and simulation` |
+| `execution.news_spike_guard.baseline_lookback_sessions` | `integer` | `20` | `trading/execution and simulation` |
+| `execution.news_spike_guard.blackout_minutes_after` | `integer` | `5` | `trading/execution and simulation` |
+| `execution.news_spike_guard.blackout_minutes_before` | `integer` | `5` | `trading/execution and simulation` |
+| `execution.news_spike_guard.calendar_path` | `string` | `"data/news/usd_high_impact_calendar.csv"` | `trading/execution and simulation` |
+| `execution.news_spike_guard.enabled` | `boolean` | `true` | `trading/execution and simulation` |
+| `execution.news_spike_guard.exempt_open_manipulation` | `boolean` | `true` | `trading/execution and simulation` |
+| `execution.news_spike_guard.spike_atr_multiple` | `number` | `2.0` | `trading/execution and simulation` |
+| `execution.news_spike_guard.spike_window_bars` | `integer` | `5` | `trading/execution and simulation` |
 | `execution.randomized_fill_latency_ms` | `number` | `0.0` | `trading/execution and simulation` |
 | `execution.server_side_protective_orders` | `boolean` | `false` | `trading/execution and simulation` |
 | `features.adx_period` | `integer` | `14` | `features` |
@@ -365,12 +374,18 @@ is read by every listed package.
 | `ppo.mode_prior_coef` | `number` | `0.001` | `learning/rl` |
 | `ppo.n_epochs` | `integer` | `15` | `learning/rl` |
 | `ppo.n_steps` | `integer` | `2048` | `learning/rl` |
+| `ppo.overlap_collect` | `boolean` | `false` | `learning/rl` |
 | `ppo.policy_distribution` | `string` | `"clamped_diagonal_gaussian"` | `learning/rl` |
 | `ppo.rollout_buffer_on_device` | `boolean` | `true` | `learning/rl` |
+| `ppo.rollout_feature_graph` | `boolean` | `false` | `learning/rl` |
+| `ppo.rollout_host_mask_check` | `boolean` | `false` | `learning/rl` |
+| `ppo.rollout_policy_graph` | `boolean` | `false` | `learning/rl` |
 | `ppo.semantic_head_width` | `integer` | `64` | `learning/rl` |
+| `ppo.torch_compile_features` | `boolean` | `false` | `learning/rl` |
 | `ppo.total_timesteps` | `integer` | `20000000` | `learning/rl` |
 | `ppo.trade_setup_conditioned.embedding_dim` | `integer` | `32` | `learning/rl` |
 | `ppo.trade_setup_conditioned.execution_hidden_dim` | `integer` | `128` | `learning/rl` |
+| `ppo.update_graph` | `boolean` | `false` | `learning/rl` |
 | `quality_diagnostics.enabled` | `boolean` | `false` | `training and evaluation` |
 | `quality_execution.effective_n_envs` | `null` | `null` | `trading/risk and simulation` |
 | `quality_execution.exact_n_envs` | `boolean` | `false` | `trading/risk and simulation` |

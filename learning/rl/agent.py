@@ -994,7 +994,14 @@ def _ppo_policy_and_ent_coef(
 
 
 def _autocast_override(cfg: Any) -> str:
-    """Read the GPU-specific autocast override (``compute.autocast_dtype``, default auto)."""
+    """Read the GPU-specific autocast override (``compute.autocast_dtype``, default auto).
+
+    Args:
+        cfg: Run configuration mapping.
+
+    Returns:
+        The configured autocast dtype name, ``auto`` when unset.
+    """
     compute = cfg.get("compute", {}) if hasattr(cfg, "get") else {}
     return str(compute.get("autocast_dtype", "auto")) if hasattr(compute, "get") else "auto"
 

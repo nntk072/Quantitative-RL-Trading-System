@@ -12,7 +12,7 @@ This page contains 12 public callable records owned by `decisioning.contracts`. 
 
 **Observed usage:**
 
-1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L208)
+1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L209)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

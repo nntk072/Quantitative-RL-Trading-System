@@ -45,7 +45,17 @@ def fetch_release_dates(
     *,
     session: Any = requests,
 ) -> dict[str, Any]:
-    """Return the FRED release-dates response for every configured release id."""
+    """Return the FRED release-dates response for every configured release id.
+
+    Args:
+        api_key: FRED API key.
+        start: First realtime date to request (YYYY-MM-DD).
+        end: Last realtime date to request (YYYY-MM-DD).
+        session: HTTP session with a ``get`` method; defaults to ``requests``.
+
+    Returns:
+        The combined response with a ``release_dates`` list.
+    """
     combined: dict[str, Any] = {"release_dates": []}
     for release_id in FRED_RELEASES:
         response = session.get(
@@ -66,7 +76,15 @@ def fetch_release_dates(
 
 
 def events_from_fred_json(path: Path, source: str = FRED_SOURCE) -> list[CalendarEvent]:
-    """Convert a saved FRED release-dates response into calendar events."""
+    """Convert a saved FRED release-dates response into calendar events.
+
+    Args:
+        path: Saved FRED JSON file.
+        source: Provenance label recorded on every row.
+
+    Returns:
+        Calendar events for the configured release ids.
+    """
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     payload = json.loads(path.read_text(encoding="utf-8"))
     rows: list[CalendarEvent] = []
@@ -90,6 +108,17 @@ def events_from_fred_json(path: Path, source: str = FRED_SOURCE) -> list[Calenda
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Fetch FRED release dates to a local JSON file and return the exit code.
+
+    Args:
+        argv: Command-line arguments; ``sys.argv[1:]`` when None.
+
+    Returns:
+        Zero on success.
+
+    Raises:
+        SystemExit: When ``FRED_API_KEY`` is not set.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)

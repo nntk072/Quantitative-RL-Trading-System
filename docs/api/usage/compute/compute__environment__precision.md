@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `compute.environment.preci
 
 **Purpose:** Configure allocator and backend kernels before PPO's first GPU allocation.
 
-**Exact API:** {py:obj}`compute.environment.precision.configure_accelerator_for_training` · **Source:** [compute/environment/precision.py:76](../../../../compute/environment/precision.py#L76)
+**Exact API:** {py:obj}`compute.environment.precision.configure_accelerator_for_training` · **Source:** [compute/environment/precision.py:93](../../../../compute/environment/precision.py#L93)
 
 **Inputs and outputs:**
 
@@ -21,7 +21,7 @@ This page contains 4 public callable records owned by `compute.environment.preci
 
 **Observed usage:**
 
-1. [production caller: `configure_cuda_for_training`](../../../../compute/environment/precision.py#L114)
+1. [production caller: `configure_cuda_for_training`](../../../../compute/environment/precision.py#L131)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -66,7 +66,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Backward-compatible alias for accelerator-wide training setup.
 
-**Exact API:** {py:obj}`compute.environment.precision.configure_cuda_for_training` · **Source:** [compute/environment/precision.py:105](../../../../compute/environment/precision.py#L105)
+**Exact API:** {py:obj}`compute.environment.precision.configure_cuda_for_training` · **Source:** [compute/environment/precision.py:122](../../../../compute/environment/precision.py#L122)
 
 **Inputs and outputs:**
 
@@ -119,7 +119,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the selected accelerator autocast context, or a CPU no-op.
 
-**Exact API:** {py:obj}`compute.environment.precision.get_autocast_context` · **Source:** [compute/environment/precision.py:51](../../../../compute/environment/precision.py#L51)
+**Exact API:** {py:obj}`compute.environment.precision.get_autocast_context` · **Source:** [compute/environment/precision.py:68](../../../../compute/environment/precision.py#L68)
 
 **Inputs and outputs:**
 
@@ -163,7 +163,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Kind:** function · **Status:** stable · **Owner:** `compute.environment.precision`
 
-**Purpose:** Choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it.
+**Purpose:** Choose the encoder autocast dtype for a CUDA device.
 
 **Exact API:** {py:obj}`compute.environment.precision.get_autocast_dtype` · **Source:** [compute/environment/precision.py:31](../../../../compute/environment/precision.py#L31)
 
@@ -173,12 +173,13 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
   ```text
   device: Compute device on which to perform the operation.
+  override: One of auto, fp16, bf16, fp32.
   ```
 
 - **Returns:**
 
   ```text
-  Result of choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it.
+  The autocast dtype, or None for no autocast.
   ```
 
 **Observed usage:**

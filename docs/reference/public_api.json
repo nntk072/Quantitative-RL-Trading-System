@@ -784,7 +784,7 @@
       "name": "configure_accelerator_for_training",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 76,
+      "source_line": 93,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -796,7 +796,7 @@
       "name": "configure_cuda_for_training",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 105,
+      "source_line": 122,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -820,7 +820,7 @@
       "name": "get_autocast_context",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 51,
+      "source_line": 68,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -1072,7 +1072,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 117,
+      "source_line": 134,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -1096,7 +1096,7 @@
       "name": "configure_accelerator_for_training",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 76,
+      "source_line": 93,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -1108,7 +1108,7 @@
       "name": "configure_cuda_for_training",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 105,
+      "source_line": 122,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -1120,7 +1120,7 @@
       "name": "get_autocast_context",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 51,
+      "source_line": 68,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
     },
@@ -14257,10 +14257,22 @@
       "documented": true,
       "exported_from": "learning.rl.agent",
       "kind": "function",
+      "name": "_autocast_override",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 996,
+      "source_module": "learning.rl.agent",
+      "source_path": "learning/rl/agent.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.agent",
+      "kind": "function",
       "name": "_finalize_cuda_policy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 959,
+      "source_line": 1009,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -14272,7 +14284,7 @@
       "name": "_ppo_policy_and_ent_coef",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 820,
+      "source_line": 857,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -14284,7 +14296,7 @@
       "name": "_validate_survival_objective_config",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 797,
+      "source_line": 834,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -14603,12 +14615,144 @@
     {
       "classification": "cross-package internal",
       "documented": true,
+      "exported_from": "learning.rl.feature_graph",
+      "kind": "class",
+      "name": "FeatureGraphCache",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 22,
+      "source_module": "learning.rl.feature_graph",
+      "source_path": "learning/rl/feature_graph.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.feature_graph",
+      "kind": "class",
+      "name": "GraphedForwardCache",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 94,
+      "source_module": "learning.rl.feature_graph",
+      "source_path": "learning/rl/feature_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.feature_graph",
+      "kind": "class",
+      "name": "_Captured",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 16,
+      "source_module": "learning.rl.feature_graph",
+      "source_path": "learning/rl/feature_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.feature_graph",
+      "kind": "class",
+      "name": "_CapturedForward",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 88,
+      "source_module": "learning.rl.feature_graph",
+      "source_path": "learning/rl/feature_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.feature_graph",
+      "kind": "value",
+      "name": "_WARMUP_ITERATIONS",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 12,
+      "source_module": "learning.rl.feature_graph",
+      "source_path": "learning/rl/feature_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.feature_graph",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 84,
+      "source_module": "learning.rl.feature_graph",
+      "source_path": "learning/rl/feature_graph.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.host_mask_check",
+      "kind": "class",
+      "name": "EligibilityCheckedVecEnv",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 21,
+      "source_module": "learning.rl.host_mask_check",
+      "source_path": "learning/rl/host_mask_check.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.host_mask_check",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 139,
+      "source_module": "learning.rl.host_mask_check",
+      "source_path": "learning/rl/host_mask_check.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.host_mask_check",
+      "kind": "function",
+      "name": "_no_device_mask_check",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 129,
+      "source_module": "learning.rl.host_mask_check",
+      "source_path": "learning/rl/host_mask_check.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.host_mask_check",
+      "kind": "function",
+      "name": "_prevalidated",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 97,
+      "source_module": "learning.rl.host_mask_check",
+      "source_path": "learning/rl/host_mask_check.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.host_mask_check",
+      "kind": "function",
+      "name": "install_host_mask_check",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 80,
+      "source_module": "learning.rl.host_mask_check",
+      "source_path": "learning/rl/host_mask_check.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
       "exported_from": "learning.rl.hybrid",
       "kind": "class",
       "name": "HybridActorHeads",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 77,
+      "source_line": 135,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14620,7 +14764,7 @@
       "name": "HybridBoxDistribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 139,
+      "source_line": 197,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14632,7 +14776,7 @@
       "name": "HybridClampedStdMultiInputPolicy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 397,
+      "source_line": 449,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14644,7 +14788,7 @@
       "name": "TradeSetupConditionedActorHeads",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 573,
+      "source_line": 733,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14656,7 +14800,7 @@
       "name": "TradeSetupConditionedClampedStdMultiInputPolicy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 998,
+      "source_line": 1188,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14668,7 +14812,7 @@
       "name": "TradeSetupConditionedHybridBoxDistribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 689,
+      "source_line": 885,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14680,7 +14824,19 @@
       "name": "_CATEGORICAL_COORDINATES",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 17,
+      "source_line": 75,
+      "source_module": "learning.rl.hybrid",
+      "source_path": "learning/rl/hybrid.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.hybrid",
+      "kind": "value",
+      "name": "_PREVALIDATED_MASKS",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 19,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14692,7 +14848,7 @@
       "name": "_SETUP_COORDINATES",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 16,
+      "source_line": 18,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14704,7 +14860,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 1103,
+      "source_line": 1307,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14716,7 +14872,19 @@
       "name": "_categorical_distribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 34,
+      "source_line": 92,
+      "source_module": "learning.rl.hybrid",
+      "source_path": "learning/rl/hybrid.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.hybrid",
+      "kind": "function",
+      "name": "_eligibility_mask",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 52,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14728,7 +14896,7 @@
       "name": "_encoded_centers",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 47,
+      "source_line": 105,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14740,7 +14908,7 @@
       "name": "_normal_distribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 20,
+      "source_line": 78,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14791,6 +14959,42 @@
       "source_line": 13,
       "source_module": "learning.rl.learner",
       "source_path": "learning/rl/learner.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.overlap_collect",
+      "kind": "class",
+      "name": "OverlapCollector",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 24,
+      "source_module": "learning.rl.overlap_collect",
+      "source_path": "learning/rl/overlap_collect.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.overlap_collect",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 280,
+      "source_module": "learning.rl.overlap_collect",
+      "source_path": "learning/rl/overlap_collect.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.overlap_collect",
+      "kind": "function",
+      "name": "install_overlap_collect",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 210,
+      "source_module": "learning.rl.overlap_collect",
+      "source_path": "learning/rl/overlap_collect.py"
     },
     {
       "classification": "private implementation",
@@ -14935,6 +15139,78 @@
       "source_line": 8,
       "source_module": "learning.rl.stopping",
       "source_path": "learning/rl/stopping.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.update_graph",
+      "kind": "class",
+      "name": "_StepGraph",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 22,
+      "source_module": "learning.rl.update_graph",
+      "source_path": "learning/rl/update_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.update_graph",
+      "kind": "value",
+      "name": "_WARMUP_ITERATIONS",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 19,
+      "source_module": "learning.rl.update_graph",
+      "source_path": "learning/rl/update_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.update_graph",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 225,
+      "source_module": "learning.rl.update_graph",
+      "source_path": "learning/rl/update_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.update_graph",
+      "kind": "function",
+      "name": "_graph_supported",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 134,
+      "source_module": "learning.rl.update_graph",
+      "source_path": "learning/rl/update_graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.update_graph",
+      "kind": "function",
+      "name": "_graphed_train",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 152,
+      "source_module": "learning.rl.update_graph",
+      "source_path": "learning/rl/update_graph.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.update_graph",
+      "kind": "function",
+      "name": "install_graphed_update",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 209,
+      "source_module": "learning.rl.update_graph",
+      "source_path": "learning/rl/update_graph.py"
     },
     {
       "classification": "cross-package internal",
@@ -15340,7 +15616,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 492,
+      "source_line": 632,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15868,7 +16144,7 @@
       "name": "TickBook",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 492,
+      "source_line": 632,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -15892,7 +16168,7 @@
       "name": "build_tick_book",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 961,
+      "source_line": 1119,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16045,10 +16321,22 @@
       "documented": true,
       "exported_from": "market_data.loading.ticks",
       "kind": "method",
+      "name": "TickBook.bar_arrays",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 853,
+      "source_module": "market_data.loading.ticks",
+      "source_path": "market_data/loading/ticks.py"
+    },
+    {
+      "classification": "stable",
+      "documented": true,
+      "exported_from": "market_data.loading.ticks",
+      "kind": "method",
       "name": "TickBook.bar_quote_ns",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 694,
+      "source_line": 834,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16060,7 +16348,7 @@
       "name": "TickBook.bar_quotes",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 713,
+      "source_line": 871,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16072,7 +16360,7 @@
       "name": "TickBook.content_sha256",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 657,
+      "source_line": 797,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16084,7 +16372,7 @@
       "name": "TickBook.delayed_exit_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 772,
+      "source_line": 930,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16096,7 +16384,7 @@
       "name": "TickBook.delayed_exit_quote",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 736,
+      "source_line": 894,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16108,7 +16396,7 @@
       "name": "TickBook.execution_quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 566,
+      "source_line": 706,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16120,7 +16408,7 @@
       "name": "TickBook.first_limit_execution_event",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 593,
+      "source_line": 733,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16132,7 +16420,7 @@
       "name": "TickBook.has_ticks_between",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 677,
+      "source_line": 817,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16144,7 +16432,7 @@
       "name": "TickBook.quote_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 520,
+      "source_line": 660,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16156,7 +16444,7 @@
       "name": "TickBook.quote_event_at",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 539,
+      "source_line": 679,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16168,7 +16456,7 @@
       "name": "TickBook.slice",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 836,
+      "source_line": 994,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
     },
@@ -16180,9 +16468,81 @@
       "name": "_ffill_inplace",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 478,
+      "source_line": 618,
       "source_module": "market_data.loading.ticks",
       "source_path": "market_data/loading/ticks.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.news.calendar",
+      "kind": "value",
+      "name": "_KEEP_PATTERNS",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 28,
+      "source_module": "market_data.news.calendar",
+      "source_path": "market_data/news/calendar.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.news.calendar",
+      "kind": "function",
+      "name": "_parse_dtstart",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 100,
+      "source_module": "market_data.news.calendar",
+      "source_path": "market_data/news/calendar.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.news.calendar",
+      "kind": "function",
+      "name": "_sha256",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 167,
+      "source_module": "market_data.news.calendar",
+      "source_path": "market_data/news/calendar.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.news.calendar",
+      "kind": "function",
+      "name": "_unescape",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 88,
+      "source_module": "market_data.news.calendar",
+      "source_path": "market_data/news/calendar.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.news.calendar",
+      "kind": "function",
+      "name": "_unfold",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 70,
+      "source_module": "market_data.news.calendar",
+      "source_path": "market_data/news/calendar.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.news.guard",
+      "kind": "value",
+      "name": "_REPO_ROOT",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 150,
+      "source_module": "market_data.news.guard",
+      "source_path": "market_data/news/guard.py"
     },
     {
       "classification": "private implementation",
@@ -17008,7 +17368,7 @@
       "name": "_CausalTCN",
       "numpy_style": false,
       "package": "models",
-      "source_line": 30,
+      "source_line": 29,
       "source_module": "models.encoders.mtf",
       "source_path": "models/encoders/mtf.py"
     },
@@ -17056,7 +17416,7 @@
       "name": "_MTF_STREAMS",
       "numpy_style": false,
       "package": "models",
-      "source_line": 23,
+      "source_line": 22,
       "source_module": "models.encoders.mtf",
       "source_path": "models/encoders/mtf.py"
     },
@@ -17152,7 +17512,7 @@
       "name": "_AVAILABLE_MTF_TIMEFRAMES",
       "numpy_style": false,
       "package": "models",
-      "source_line": 21,
+      "source_line": 20,
       "source_module": "models.encoders.mtf",
       "source_path": "models/encoders/mtf.py"
     },
@@ -17320,7 +17680,7 @@
       "name": "MTFReasoningEncoder.forward",
       "numpy_style": false,
       "package": "models",
-      "source_line": 75,
+      "source_line": 80,
       "source_module": "models.encoders.mtf_reasoning",
       "source_path": "models/encoders/mtf_reasoning.py"
     },
@@ -17332,7 +17692,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "models",
-      "source_line": 108,
+      "source_line": 113,
       "source_module": "models.encoders.mtf_reasoning",
       "source_path": "models/encoders/mtf_reasoning.py"
     },
@@ -18484,7 +18844,7 @@
       "name": "TradingEnv",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 33,
+      "source_line": 34,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -18520,7 +18880,7 @@
       "name": "run_backtest",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 584,
+      "source_line": 599,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18868,7 +19228,7 @@
       "name": "_bar_duration",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 393,
+      "source_line": 400,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18880,7 +19240,7 @@
       "name": "_bar_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 379,
+      "source_line": 386,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18892,7 +19252,7 @@
       "name": "_bar_spread_price_units",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 335,
+      "source_line": 342,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18904,7 +19264,7 @@
       "name": "_decision_valuation_time",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 112,
+      "source_line": 119,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18916,7 +19276,7 @@
       "name": "_entry_state_diagnostics",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 174,
+      "source_line": 181,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18928,7 +19288,7 @@
       "name": "_fill_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 411,
+      "source_line": 418,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18940,7 +19300,7 @@
       "name": "_fill_quote_event",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 442,
+      "source_line": 449,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18952,7 +19312,7 @@
       "name": "_geometry_action_record",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 211,
+      "source_line": 218,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18964,7 +19324,7 @@
       "name": "_is_last_ny_bar",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 536,
+      "source_line": 551,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18976,7 +19336,7 @@
       "name": "_ny_gap_guard_mask",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 563,
+      "source_line": 578,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -18988,7 +19348,7 @@
       "name": "_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 239,
+      "source_line": 246,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19000,7 +19360,7 @@
       "name": "_scalar_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 152,
+      "source_line": 159,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19012,7 +19372,7 @@
       "name": "_sl_tp_fill_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 357,
+      "source_line": 364,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19024,7 +19384,7 @@
       "name": "_finite_feature",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 40,
+      "source_line": 41,
       "source_module": "simulation.backtest.policy_actions",
       "source_path": "simulation/backtest/policy_actions.py"
     },
@@ -19036,7 +19396,7 @@
       "name": "_repeated_payout_size",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 57,
+      "source_line": 58,
       "source_module": "simulation.backtest.policy_actions",
       "source_path": "simulation/backtest/policy_actions.py"
     },
@@ -19048,7 +19408,7 @@
       "name": "_active_target_slots",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 43,
+      "source_line": 46,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
     },
@@ -19060,7 +19420,7 @@
       "name": "_advance_management_modes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 124,
+      "source_line": 127,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
     },
@@ -19072,7 +19432,7 @@
       "name": "_apply_tp_management",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 171,
+      "source_line": 174,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
     },
@@ -19084,7 +19444,7 @@
       "name": "_default_sl_mode",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 79,
+      "source_line": 82,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
     },
@@ -19096,7 +19456,7 @@
       "name": "_finite_feature",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 60,
+      "source_line": 63,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
     },
@@ -19108,7 +19468,19 @@
       "name": "_record_target_slot",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 290,
+      "source_line": 293,
+      "source_module": "simulation.backtest.protective_events",
+      "source_path": "simulation/backtest/protective_events.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "function",
+      "name": "_tick_touch_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 360,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
     },
@@ -19204,7 +19576,7 @@
       "name": "TradingEnv",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 33,
+      "source_line": 34,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19228,7 +19600,7 @@
       "name": "build_eval_common",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 217,
+      "source_line": 218,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19240,7 +19612,7 @@
       "name": "cost_model",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 526,
+      "source_line": 527,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19252,7 +19624,7 @@
       "name": "eval_guardrail_kwargs",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 112,
+      "source_line": 113,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19264,7 +19636,7 @@
       "name": "fill_delay_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 364,
+      "source_line": 365,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19276,7 +19648,7 @@
       "name": "guardrail_kwargs",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 71,
+      "source_line": 72,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19288,7 +19660,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 554,
+      "source_line": 555,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19300,7 +19672,7 @@
       "name": "max_episode_steps",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 127,
+      "source_line": 128,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19312,7 +19684,7 @@
       "name": "max_loss_per_trade",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 54,
+      "source_line": 55,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19324,7 +19696,7 @@
       "name": "max_tick_quote_wait_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 461,
+      "source_line": 462,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19336,7 +19708,7 @@
       "name": "mtf_settings",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 479,
+      "source_line": 480,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19348,7 +19720,7 @@
       "name": "randomized_fill_latency_ms",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 406,
+      "source_line": 407,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19360,7 +19732,7 @@
       "name": "regime_observation_enabled",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 437,
+      "source_line": 438,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19372,7 +19744,7 @@
       "name": "scheduled_session_closes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 512,
+      "source_line": 513,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19384,7 +19756,7 @@
       "name": "strategy_from_cfg",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 144,
+      "source_line": 145,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19396,7 +19768,7 @@
       "name": "strategy_risk_ranges",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 24,
+      "source_line": 25,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19408,7 +19780,7 @@
       "name": "tick_execution_required",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 424,
+      "source_line": 425,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -19780,7 +20152,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 107,
+      "source_line": 109,
       "source_module": "simulation.environment.entry_diagnostics",
       "source_path": "simulation/environment/entry_diagnostics.py"
     },
@@ -19804,7 +20176,7 @@
       "name": "_previous_session_audit",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 76,
+      "source_line": 78,
       "source_module": "simulation.environment.entry_diagnostics",
       "source_path": "simulation/environment/entry_diagnostics.py"
     },
@@ -19900,7 +20272,7 @@
       "name": "TradingEnv",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 33,
+      "source_line": 34,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19912,7 +20284,7 @@
       "name": "TradingEnv.from_bundle",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 434,
+      "source_line": 439,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19924,7 +20296,7 @@
       "name": "TradingEnv.step",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 466,
+      "source_line": 471,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19936,7 +20308,7 @@
       "name": "TradingEnv.transition",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 480,
+      "source_line": 485,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -19948,7 +20320,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 30,
+      "source_line": 31,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -20116,7 +20488,7 @@
       "name": "ObservationArraysInitializationMixin",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 28,
+      "source_line": 29,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -20128,7 +20500,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 369,
+      "source_line": 386,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -20179,6 +20551,30 @@
       "source_line": 7,
       "source_module": "simulation.environment.position_constants",
       "source_path": "simulation/environment/position_constants.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.protective_level_runtime",
+      "kind": "function",
+      "name": "_level_reached",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 657,
+      "source_module": "simulation.environment.protective_level_runtime",
+      "source_path": "simulation/environment/protective_level_runtime.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.protective_level_runtime",
+      "kind": "function",
+      "name": "_pending_tp_sl_quotes",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 617,
+      "source_module": "simulation.environment.protective_level_runtime",
+      "source_path": "simulation/environment/protective_level_runtime.py"
     },
     {
       "classification": "cross-package internal",
@@ -20404,7 +20800,7 @@
       "name": "StepAccountingRuntimeMixin",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 16,
+      "source_line": 17,
       "source_module": "simulation.environment.step_accounting_runtime",
       "source_path": "simulation/environment/step_accounting_runtime.py"
     },
@@ -20416,7 +20812,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 143,
+      "source_line": 157,
       "source_module": "simulation.environment.step_accounting_runtime",
       "source_path": "simulation/environment/step_accounting_runtime.py"
     },
@@ -20428,7 +20824,7 @@
       "name": "StepActionExecutionMixin",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 24,
+      "source_line": 25,
       "source_module": "simulation.environment.step_action_execution",
       "source_path": "simulation/environment/step_action_execution.py"
     },
@@ -20440,7 +20836,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 539,
+      "source_line": 582,
       "source_module": "simulation.environment.step_action_execution",
       "source_path": "simulation/environment/step_action_execution.py"
     },
@@ -20464,7 +20860,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 449,
+      "source_line": 451,
       "source_module": "simulation.environment.step_constraints_runtime",
       "source_path": "simulation/environment/step_constraints_runtime.py"
     },
@@ -20620,7 +21016,7 @@
       "name": "_block",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 20,
+      "source_line": 21,
       "source_module": "simulation.environment.worker",
       "source_path": "simulation/environment/worker.py"
     },
@@ -20632,7 +21028,7 @@
       "name": "_strategy",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 34,
+      "source_line": 35,
       "source_module": "simulation.environment.worker",
       "source_path": "simulation/environment/worker.py"
     },
@@ -22297,6 +22693,18 @@
       "documented": false,
       "exported_from": "trading.orders.targets",
       "kind": "value",
+      "name": "_DEVIATION_COLUMN_CACHE",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 237,
+      "source_module": "trading.orders.targets",
+      "source_path": "trading/orders/targets.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "trading.orders.targets",
+      "kind": "value",
       "name": "_PRICE_TOL",
       "numpy_style": false,
       "package": "trading",
@@ -22312,7 +22720,19 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 295,
+      "source_line": 315,
+      "source_module": "trading.orders.targets",
+      "source_path": "trading/orders/targets.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "trading.orders.targets",
+      "kind": "function",
+      "name": "_deviation_level_columns",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 240,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -22348,7 +22768,7 @@
       "name": "finite_level",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 273,
+      "source_line": 293,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -22372,7 +22792,7 @@
       "name": "suffixed_levels",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 252,
+      "source_line": 272,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -25516,7 +25936,7 @@
       "name": "_configured_backtest_policy",
       "numpy_style": false,
       "package": "training",
-      "source_line": 58,
+      "source_line": 59,
       "source_module": "training.runner.backtest",
       "source_path": "training/runner/backtest.py"
     },
@@ -25528,7 +25948,7 @@
       "name": "_random_policy",
       "numpy_style": false,
       "package": "training",
-      "source_line": 46,
+      "source_line": 47,
       "source_module": "training.runner.backtest",
       "source_path": "training/runner/backtest.py"
     },
@@ -25948,7 +26368,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "training",
-      "source_line": 554,
+      "source_line": 555,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26044,7 +26464,7 @@
       "name": "build_eval_common",
       "numpy_style": false,
       "package": "training",
-      "source_line": 217,
+      "source_line": 218,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26080,7 +26500,7 @@
       "name": "cost_model",
       "numpy_style": false,
       "package": "training",
-      "source_line": 526,
+      "source_line": 527,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26092,7 +26512,7 @@
       "name": "eval_guardrail_kwargs",
       "numpy_style": false,
       "package": "training",
-      "source_line": 112,
+      "source_line": 113,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26104,7 +26524,7 @@
       "name": "fill_delay_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 364,
+      "source_line": 365,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26128,7 +26548,7 @@
       "name": "guardrail_kwargs",
       "numpy_style": false,
       "package": "training",
-      "source_line": 71,
+      "source_line": 72,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26140,7 +26560,7 @@
       "name": "make_env",
       "numpy_style": false,
       "package": "training",
-      "source_line": 554,
+      "source_line": 555,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26152,7 +26572,7 @@
       "name": "max_episode_steps",
       "numpy_style": false,
       "package": "training",
-      "source_line": 127,
+      "source_line": 128,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26164,7 +26584,7 @@
       "name": "max_loss_per_trade",
       "numpy_style": false,
       "package": "training",
-      "source_line": 54,
+      "source_line": 55,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26176,7 +26596,7 @@
       "name": "max_tick_quote_wait_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 461,
+      "source_line": 462,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26188,7 +26608,7 @@
       "name": "mtf_settings",
       "numpy_style": false,
       "package": "training",
-      "source_line": 479,
+      "source_line": 480,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26200,7 +26620,7 @@
       "name": "randomized_fill_latency_ms",
       "numpy_style": false,
       "package": "training",
-      "source_line": 406,
+      "source_line": 407,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26212,7 +26632,7 @@
       "name": "strategy_from_cfg",
       "numpy_style": false,
       "package": "training",
-      "source_line": 144,
+      "source_line": 145,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26224,7 +26644,7 @@
       "name": "strategy_risk_ranges",
       "numpy_style": false,
       "package": "training",
-      "source_line": 24,
+      "source_line": 25,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },
@@ -26236,7 +26656,7 @@
       "name": "tick_execution_required",
       "numpy_style": false,
       "package": "training",
-      "source_line": 424,
+      "source_line": 425,
       "source_module": "simulation.environment.trading_environment_factory",
       "source_path": "simulation/environment/trading_environment_factory.py"
     },

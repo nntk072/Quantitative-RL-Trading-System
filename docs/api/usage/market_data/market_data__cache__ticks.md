@@ -35,7 +35,7 @@ This page contains 5 public callable records owned by `market_data.cache.ticks`.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1064)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1222)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -96,7 +96,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1076)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1234)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -240,7 +240,7 @@ def tick_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1414)
+1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1421)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -261,7 +261,7 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
     assert not cache_path.exists()
 ```
 
-2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1223)
+2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1381)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -194,7 +194,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L118)
+2. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L119)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -735,7 +735,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L113)
+2. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L114)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -807,7 +807,7 @@ def _actions(schema: Any, candidate_id: int) -> tuple[np.ndarray[Any, Any], np.n
     return action, no_trade
 ```
 
-2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L75)
+2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L76)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1127,7 +1127,7 @@ def _actions(schema: Any, candidate_id: int) -> tuple[np.ndarray[Any, Any], np.n
     return action, no_trade
 ```
 
-2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L74)
+2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L75)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1172,7 +1172,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L210)
+1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L211)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1234,7 +1234,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L219)
+1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L220)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1320,7 +1320,7 @@ def _actions(schema: Any, candidate_id: int) -> tuple[np.ndarray[Any, Any], np.n
     return action, no_trade
 ```
 
-2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L73)
+2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L74)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

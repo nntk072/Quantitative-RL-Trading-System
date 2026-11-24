@@ -68,7 +68,14 @@ class CalendarEvent:
 
 
 def _unfold(text: str) -> list[str]:
-    """Undo iCalendar line folding and split into logical content lines."""
+    """Undo iCalendar line folding and split into logical content lines.
+
+    Args:
+        text: Raw iCalendar document text.
+
+    Returns:
+        Logical content lines, with folded continuations joined.
+    """
     lines: list[str] = []
     for raw in text.splitlines():
         if raw[:1] in (" ", "\t") and lines:
@@ -79,11 +86,30 @@ def _unfold(text: str) -> list[str]:
 
 
 def _unescape(value: str) -> str:
+    """Decode the iCalendar text escapes used in SUMMARY values.
+
+    Args:
+        value: Escaped text from a content line.
+
+    Returns:
+        The unescaped text.
+    """
     return value.replace("\\,", ",").replace("\\;", ";").replace("\\n", " ").replace("\\\\", "\\")
 
 
 def _parse_dtstart(name_params: str, value: str) -> datetime:
-    """Return the event start as an aware UTC datetime."""
+    """Return the event start as an aware UTC datetime.
+
+    Args:
+        name_params: The property name and parameters, for example ``DTSTART;TZID=...``.
+        value: The raw DTSTART value.
+
+    Returns:
+        The start time in UTC.
+
+    Raises:
+        ValueError: When the value has an unsupported format or no time zone.
+    """
     match = re.fullmatch(r"(\d{8})T(\d{6})(Z?)", value)
     if match is None:
         raise ValueError(f"unsupported DTSTART value: {value!r}")
@@ -97,7 +123,14 @@ def _parse_dtstart(name_params: str, value: str) -> datetime:
 
 
 def parse_ics(text: str) -> list[tuple[datetime, str]]:
-    """Return (UTC start, summary) for every VEVENT in an iCalendar document."""
+    """Return (UTC start, summary) for every VEVENT in an iCalendar document.
+
+    Args:
+        text: Raw iCalendar document text.
+
+    Returns:
+        One (start, summary) pair per complete VEVENT.
+    """
     events: list[tuple[datetime, str]] = []
     start: datetime | None = None
     summary: str | None = None
@@ -117,7 +150,14 @@ def parse_ics(text: str) -> list[tuple[datetime, str]]:
 
 
 def classify(summary: str) -> str | None:
-    """Return the USD high-impact category for a release summary, or None to skip it."""
+    """Return the USD high-impact category for a release summary, or None to skip it.
+
+    Args:
+        summary: The release summary text.
+
+    Returns:
+        The category name, or None when the release is not kept.
+    """
     for category, pattern in _KEEP_PATTERNS:
         if pattern.search(summary):
             return category
@@ -125,11 +165,27 @@ def classify(summary: str) -> str | None:
 
 
 def _sha256(path: Path) -> str:
+    """SHA-256 hex digest of a file's bytes.
+
+    Args:
+        path: File to hash.
+
+    Returns:
+        The hexadecimal digest.
+    """
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def events_from_ics(path: Path, source: str) -> list[CalendarEvent]:
-    """Parse one downloaded feed and keep its USD high-impact releases."""
+    """Parse one downloaded feed and keep its USD high-impact releases.
+
+    Args:
+        path: Downloaded iCalendar file.
+        source: URL or label recorded as the provenance of each row.
+
+    Returns:
+        Calendar events for the kept releases.
+    """
     digest = _sha256(path)
     rows: list[CalendarEvent] = []
     for start, summary in parse_ics(path.read_text(encoding="utf-8", errors="replace")):
@@ -140,7 +196,14 @@ def events_from_ics(path: Path, source: str) -> list[CalendarEvent]:
 
 
 def fomc_events(statement_time: str = FOMC_STATEMENT_TIME) -> list[CalendarEvent]:
-    """FOMC statement rows at ``statement_time`` ET, marked by their assumed time in the summary."""
+    """FOMC statement rows at ``statement_time`` ET, marked by their assumed time in the summary.
+
+    Args:
+        statement_time: Assumed statement time as ``HH:MM`` in America/New_York.
+
+    Returns:
+        One calendar event per FOMC statement date.
+    """
     hour, minute = (int(part) for part in statement_time.split(":"))
     rows: list[CalendarEvent] = []
     for day in FOMC_STATEMENT_DATES:
@@ -158,7 +221,16 @@ def fomc_events(statement_time: str = FOMC_STATEMENT_TIME) -> list[CalendarEvent
 
 
 def write_calendar(events: Iterable[CalendarEvent], out: Path, retrieved_on: str) -> int:
-    """Write events sorted by time as CSV. Returns the number of rows written."""
+    """Write events sorted by time as CSV.
+
+    Args:
+        events: Events to write.
+        out: CSV path; parent directories are created.
+        retrieved_on: Retrieval date recorded on every row.
+
+    Returns:
+        The number of rows written.
+    """
     rows = sorted(events, key=lambda event: event.utc_time)
     out.parent.mkdir(parents=True, exist_ok=True)
     with out.open("w", newline="", encoding="utf-8") as handle:
@@ -190,6 +262,15 @@ def blackout_mask(
     """True for each bar whose start falls within the blackout window of any release.
 
     Uses only the release schedule, which is published in advance.
+
+    Args:
+        bar_times: Bar start times, timezone-aware.
+        release_times: Scheduled release times, timezone-aware.
+        minutes_before: Blackout length before each release, in minutes.
+        minutes_after: Blackout length after each release, in minutes.
+
+    Returns:
+        One flag per bar, True when the bar is blacked out.
     """
     from bisect import bisect_left, bisect_right
 
@@ -206,6 +287,14 @@ def blackout_mask(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Build the USD calendar CSV from the given sources and return the exit code.
+
+    Args:
+        argv: Command-line arguments; ``sys.argv[1:]`` when None.
+
+    Returns:
+        Zero on success.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description=__doc__)
