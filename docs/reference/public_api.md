@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 713 |
+| stable | 723 |
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 469 |
-| private implementation | 1033 |
+| private implementation | 1034 |
 
 ## Public package exports
 
@@ -490,6 +490,16 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L660) | stable |
 | `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L679) | stable |
 | `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L994) | stable |
+| `CalendarEvent` | class | [market_data.news.calendar](../../market_data/news/calendar.py#L60) | stable |
+| `NewsGuardConfig` | class | [market_data.news.guard](../../market_data/news/guard.py#L30) | stable |
+| `blackout_mask` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L255) | stable |
+| `causal_atr5` | function | [market_data.news.guard](../../market_data/news/guard.py#L179) | stable |
+| `classify` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L152) | stable |
+| `events_from_ics` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L179) | stable |
+| `fomc_events` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L198) | stable |
+| `load_release_times` | function | [market_data.news.guard](../../market_data/news/guard.py#L42) | stable |
+| `news_block_mask` | function | [market_data.news.guard](../../market_data/news/guard.py#L97) | stable |
+| `news_guard_config` | function | [market_data.news.guard](../../market_data/news/guard.py#L154) | stable |
 | `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L125) | stable |
 | `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L145) | stable |
 | `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L161) | stable |

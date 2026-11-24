@@ -1,5 +1,5 @@
 {
-  "page_count": 486,
+  "page_count": 488,
   "pages": [
     {
       "links": [
@@ -2322,6 +2322,61 @@
       "section": "api",
       "status": "current",
       "title": "Market data \u00b7 `loading.ticks`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../market_data/news/calendar.py#L60",
+        "../../../../market_data/news/calendar.py#L194",
+        "../../../../market_data/news/calendar.py#L212",
+        "../../../../market_data/news/calendar.py#L255",
+        "../../../../tests/unit/market_data/test_news_calendar.py#L84",
+        "../../../../market_data/news/calendar.py#L152",
+        "../../../../tests/unit/market_data/test_news_calendar.py#L44",
+        "../../../../market_data/news/calendar.py#L192",
+        "../../../../market_data/news/calendar.py#L179",
+        "../../../../tests/unit/market_data/test_news_calendar.py#L60",
+        "../../../../market_data/news/calendar.py#L320",
+        "../../../../market_data/news/calendar.py#L198",
+        "../../../../tests/unit/market_data/test_news_calendar.py#L67",
+        "../../../../tests/unit/market_data/test_news_calendar.py#L90"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/market_data/market_data__news__calendar.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Market data \u00b7 `news.calendar`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../market_data/news/guard.py#L30",
+        "../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L2013",
+        "../../../../tests/integration/backtest/test_news_spike_guard_backtest.py#L52",
+        "../../../../market_data/news/guard.py#L179",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1330",
+        "../../../../simulation/environment/observation_arrays_initialization.py#L294",
+        "../../../../market_data/news/guard.py#L42",
+        "../../../../tests/unit/market_data/test_news_guard.py#L153",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1342",
+        "../../../../market_data/news/guard.py#L97",
+        "../../../../tests/unit/market_data/test_news_guard.py#L59",
+        "../../../../tests/unit/market_data/test_news_guard.py#L80",
+        "../../../../market_data/news/guard.py#L154",
+        "../../../../simulation/environment/trading_environment_factory.py#L686",
+        "../../../../simulation/environment/worker.py#L313"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/market_data/market_data__news__guard.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Market data \u00b7 `news.guard`",
       "type": "reference"
     },
     {
@@ -6564,6 +6619,16 @@
         "../../market_data/loading/ticks.py#L660",
         "../../market_data/loading/ticks.py#L679",
         "../../market_data/loading/ticks.py#L994",
+        "../../market_data/news/calendar.py#L60",
+        "../../market_data/news/guard.py#L30",
+        "../../market_data/news/calendar.py#L255",
+        "../../market_data/news/guard.py#L179",
+        "../../market_data/news/calendar.py#L152",
+        "../../market_data/news/calendar.py#L179",
+        "../../market_data/news/calendar.py#L198",
+        "../../market_data/news/guard.py#L42",
+        "../../market_data/news/guard.py#L97",
+        "../../market_data/news/guard.py#L154",
         "../../market_data/splits/definitions.py#L125",
         "../../market_data/splits/definitions.py#L145",
         "../../market_data/splits/definitions.py#L161",
