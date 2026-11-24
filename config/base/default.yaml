@@ -177,6 +177,18 @@ costs:
   use_tick_execution: true
 
 execution:
+  # News and spike guard: block new entries and cancel resting limits while a USD high-impact
+  # release is within the blackout, or when the 5-bar move exceeds the session-baseline ATR
+  # multiple (NY open manipulation window exempt). On by default: the USD release blackout and spike rule are part of the research setup.
+  news_spike_guard:
+    enabled: true
+    calendar_path: data/news/usd_high_impact_calendar.csv
+    blackout_minutes_before: 5
+    blackout_minutes_after: 5
+    spike_window_bars: 5
+    spike_atr_multiple: 2.0
+    baseline_lookback_sessions: 20
+    exempt_open_manipulation: true
   approved_no_fill_quote_anchors:
     US100.cash: []
     US500.cash: []
@@ -467,6 +479,12 @@ ppo:
   batch_size: 512
   n_epochs: 15
   rollout_buffer_on_device: true  # stage each completed PPO rollout on the learner device
+  rollout_feature_graph: false  # CUDA-graph replay of the shared feature extractor during rollouts
+  update_graph: false  # CUDA-graph replay of each PPO minibatch step (forward, loss, backward, clip)
+  torch_compile_features: false  # torch.compile the features extractor forward on CUDA (needs a C compiler)
+  overlap_collect: false  # collect rollout k+1 on a policy snapshot while the learner updates on rollout k (one-update data lag)
+  rollout_host_mask_check: false  # check trade_setup masks on the host in the vector env, not per call on the device
+  rollout_policy_graph: false  # replay the whole rollout policy forward from a CUDA graph (needs rollout_host_mask_check)
   learning_rate: 3.0e-4
   gamma: 0.99
   gae_lambda: 0.95
@@ -580,6 +598,9 @@ agent:
 
 compute:
   cudnn_benchmark: true # shape autotuning; disable when variable MTF suffix shapes make it costly
+  # GPU-specific encoder autocast: auto keeps the device default (bf16 on Ampere+ and newer).
+  # fp16 or fp32 may be faster on some GPUs (e.g. MI210, where bf16 convolutions use slow kernels).
+  autocast_dtype: auto
 
 device: "auto"
 

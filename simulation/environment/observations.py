@@ -206,8 +206,9 @@ def closed_window_raw(
     rows = np.empty(visible.size, dtype=np.int64)
     rows[:-1] = visible[1:] - 1
     rows[-1] = decision
+    # Row gather then column pick is the same values and about twice as fast as np.ix_.
     return np.asarray(
-        block[rows] if selected_columns is None else block[np.ix_(rows, selected_columns)],
+        block[rows] if selected_columns is None else block[rows][:, selected_columns],
         dtype=np.float32,
     )
 

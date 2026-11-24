@@ -419,10 +419,22 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         self._active_prior = frozenset(cleaned)
 
     def reset_mode_prior_stats(self) -> None:
-        """Clear the prior terms accumulated since the last PPO update."""
-        self._mode_term_sum = {name: 0.0 for name in _PRIOR_ORDER}
-        self._mode_prior_sum = 0.0
-        self._mode_batches = 0
+        """Clear the prior terms accumulated since the last PPO update.
+
+        The accumulators are device tensors updated in place, so a captured update step
+        keeps writing to the same storage after a reset.
+        """
+        device = next(self.parameters()).device
+        sums = getattr(self, "_mode_term_sum", None)
+        prior_sum = getattr(self, "_mode_prior_sum", None)
+        if sums is None or prior_sum is None or prior_sum.device != device:
+            # Created before the policy moved to its device, or never created: (re)allocate on it.
+            self._mode_term_sum = {name: torch.zeros((), device=device) for name in _PRIOR_ORDER}
+            self._mode_prior_sum = torch.zeros((), device=device)
+            self._mode_batches = torch.zeros((), device=device)
+            return
+        for tensor in (*sums.values(), self._mode_prior_sum, self._mode_batches):
+            tensor.zero_()
 
     def mode_prior_metrics(self) -> dict[str, float]:
         """Prior value, 0/1 active flags, and a term for each active name.
@@ -430,14 +442,15 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         Returns:
             Mapping from ``str`` keys to ``float`` values.
         """
-        batches = int(self._mode_batches)
+        batches = float(self._mode_batches.item())
         if batches <= 0:
             return {}
-        metrics = {"train/mode_prior": self._mode_prior_sum / batches}
+        metrics = {"train/mode_prior": float(self._mode_prior_sum.item()) / batches}
         for name in _PRIOR_ORDER:
             metrics[f"prior_active_{name}"] = 1.0 if name in self._active_prior else 0.0
             if name in self._active_prior:
-                metrics[f"train/mode_prior_{name}"] = self._mode_term_sum[name] / batches
+                term_total = float(self._mode_term_sum[name].item())
+                metrics[f"train/mode_prior_{name}"] = term_total / batches
         return metrics
 
     def _prior_dims(self, width: int) -> tuple[int, ...]:
@@ -468,21 +481,26 @@ class ClampedStdMultiInputPolicy(MultiInputActorCriticPolicy):
         width = int(mean_actions.shape[1])
         if width < 1 or mean_actions.shape[0] == 0:
             return
+        if (
+            getattr(self, "_mode_prior_sum", None) is None
+            or self._mode_prior_sum.device != mean_actions.device
+        ):
+            self.reset_mode_prior_stats()
         key = getattr(self, "_action_layout_key", "5")
         table = _MODE_INDEX.get(key)
         if table is None:
             return
         coef = float(self.mode_prior_coef)
-        prior = 0.0
+        prior = torch.zeros((), device=mean_actions.device)
         for name in _PRIOR_ORDER:
             if name not in self._active_prior or name not in table:
                 continue
-            bar = float(mean_actions[:, table[name]].detach().mean())
+            bar = mean_actions[:, table[name]].detach().mean()
             term = coef * bar * bar
-            self._mode_term_sum[name] += term
-            prior += term
-        self._mode_prior_sum += prior
-        self._mode_batches += 1
+            self._mode_term_sum[name].add_(term)
+            prior = prior + term
+        self._mode_prior_sum.add_(prior)
+        self._mode_batches.add_(1.0)
 
     def _get_constructor_parameters(self) -> dict[str, Any]:
         """Return constructor parameters.

@@ -16,7 +16,7 @@ from __future__ import annotations
 import multiprocessing
 import sys
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import torch
@@ -735,7 +735,7 @@ def build_agent(
         if isinstance(setup_schema, dict):
             setattr(model, "_trade_setup_observation_schema", setup_schema)
         persist_action_schema(model, env)
-        return _finalize_cuda_policy(model, device)
+        return _finalize_cuda_policy(model, device, _autocast_override(cfg))
         # Default to PPO
     ppo_n_steps = cfg.ppo.n_steps
     if n_envs > 1 and env_fn is not None:
@@ -791,7 +791,44 @@ def build_agent(
     from learning.rl.rollout_buffer import install_single_copy_add
 
     install_single_copy_add(ppo_model.rollout_buffer)
-    return _finalize_cuda_policy(ppo_model, device)
+    # CUDA graphs need a GPU; on other devices the same eager path runs, so one config serves both.
+    on_cuda = device is not None and torch.device(device).type == "cuda"
+    if bool(cfg.ppo.get("rollout_feature_graph", False)) and on_cuda:
+        enable_feature_graph = getattr(ppo_model.policy, "enable_feature_graph", None)
+        if enable_feature_graph is None:
+            raise ValueError("ppo.rollout_feature_graph requires a hybrid policy")
+        enable_feature_graph()
+    if bool(cfg.ppo.get("rollout_host_mask_check", False)):
+        from learning.rl.host_mask_check import install_host_mask_check
+
+        install_host_mask_check(ppo_model)
+    if bool(cfg.ppo.get("rollout_policy_graph", False)):
+        if not bool(cfg.ppo.get("rollout_host_mask_check", False)):
+            raise ValueError("ppo.rollout_policy_graph requires ppo.rollout_host_mask_check")
+        if on_cuda:
+            enable_policy_graph = getattr(ppo_model.policy, "enable_rollout_policy_graph")
+            enable_policy_graph()
+    if bool(cfg.ppo.get("torch_compile_features", False)) and on_cuda:
+        # Compile the extractor's forward in place: state-dict names and parameters stay unchanged.
+        extractor = ppo_model.policy.features_extractor
+        extractor.forward = torch.compile(extractor.forward, dynamic=False)
+    if bool(cfg.ppo.get("update_graph", False)):
+        from learning.rl.update_graph import install_graphed_update
+
+        install_graphed_update(ppo_model)
+    if bool(cfg.ppo.get("overlap_collect", False)):
+        from omegaconf import OmegaConf
+
+        from learning.rl.overlap_collect import install_overlap_collect
+
+        # Separate snapshot policy for collection: built from the same config, never trained.
+        snapshot_cfg = cast(DictConfig, OmegaConf.create(OmegaConf.to_container(cfg, resolve=True)))
+        snapshot_cfg.ppo.overlap_collect = False
+        snapshot = build_agent(
+            env, snapshot_cfg, arch=arch, algo=algo, device=device, env_fn=None, seed=seed
+        )
+        install_overlap_collect(ppo_model, snapshot)
+    return _finalize_cuda_policy(ppo_model, device, _autocast_override(cfg))
 
 
 def _validate_survival_objective_config(cfg: DictConfig, algo: str) -> None:
@@ -956,12 +993,21 @@ def _ppo_policy_and_ent_coef(
     return policy_cls, kwargs, float(cfg.ppo.get("ent_coef_continuous", 0.001))
 
 
-def _finalize_cuda_policy(model: Any, device: str | torch.device | None) -> Any:
+def _autocast_override(cfg: Any) -> str:
+    """Read the GPU-specific autocast override (``compute.autocast_dtype``, default auto)."""
+    compute = cfg.get("compute", {}) if hasattr(cfg, "get") else {}
+    return str(compute.get("autocast_dtype", "auto")) if hasattr(compute, "get") else "auto"
+
+
+def _finalize_cuda_policy(
+    model: Any, device: str | torch.device | None, autocast: str = "auto"
+) -> Any:
     """Enable bf16 encoder autocast when the policy lives on CUDA.
 
     Args:
         model: Model used for this operation.
         device: Compute device on which to perform the operation.
+        autocast: Encoder autocast override from compute.autocast_dtype (auto keeps the default).
 
     Returns:
         Result of enable bf16 encoder autocast when the policy lives on CUDA.
@@ -983,7 +1029,7 @@ def _finalize_cuda_policy(model: Any, device: str | torch.device | None) -> Any:
         if component is not None:
             extractors.append(getattr(component, "features_extractor", None))
 
-    autocast_dtype = get_autocast_dtype(dev)
+    autocast_dtype = get_autocast_dtype(dev, autocast)
     seen_extractors: set[int] = set()
     for extractor in extractors:
         if extractor is None or id(extractor) in seen_extractors:

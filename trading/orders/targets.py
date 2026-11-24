@@ -225,28 +225,48 @@ def deviation_candidates(
     Returns:
         Values returned by ``deviation_candidates``, in the declared order.
     """
-    columns = getattr(row, "index", ())
+    minimum_level = -8.0 if allow_extreme_extension else -4.0
+    out: list[tuple[str, float]] = []
+    for column, configured_level in _deviation_level_columns(getattr(row, "index", ())):
+        level = finite_level(row, column)
+        if level is not None and configured_level >= minimum_level:
+            out.append((column, level))
+    return out
+
+
+_DEVIATION_COLUMN_CACHE: dict[int, tuple[Any, tuple[tuple[str, float], ...]]] = {}
+
+
+def _deviation_level_columns(columns: Any) -> tuple[tuple[str, float], ...]:
+    """Return (column, configured level) for every column naming a standard-deviation level.
+
+    The match depends only on column names, so it is computed once per column index object.
+    Columns are kept in index order and each takes the first matching level name.
+
+    Args:
+        columns: Column index of the feature frame.
+
+    Returns:
+        Matching column names with their configured levels, in column order.
+    """
+    cached = _DEVIATION_COLUMN_CACHE.get(id(columns))
+    if cached is not None and cached[0] is columns:
+        return cached[1]
     levels_by_name = {
         f"standard_deviation_level_{level_token(level)}_price": level for level in SWING_LEVELS
     }
-    minimum_level = -8.0 if allow_extreme_extension else -4.0
-    out: list[tuple[str, float]] = []
+    matched: list[tuple[str, float]] = []
     for raw_column in columns:
         column = str(raw_column)
-        if not any(column == name or column.endswith(f"_{name}") for name in levels_by_name):
-            continue
-        level = finite_level(row, column)
-        configured_level = next(
-            (
-                value
-                for name, value in levels_by_name.items()
-                if column == name or column.endswith(f"_{name}")
-            ),
-            None,
-        )
-        if level is not None and configured_level is not None and configured_level >= minimum_level:
-            out.append((column, level))
-    return out
+        for name, value in levels_by_name.items():
+            if column == name or column.endswith(f"_{name}"):
+                matched.append((column, value))
+                break
+    result = tuple(matched)
+    if len(_DEVIATION_COLUMN_CACHE) >= 64:
+        _DEVIATION_COLUMN_CACHE.clear()
+    _DEVIATION_COLUMN_CACHE[id(columns)] = (columns, result)
+    return result
 
 
 def suffixed_levels(row: Any, suffixes: tuple[str, ...]) -> list[tuple[str, float]]:

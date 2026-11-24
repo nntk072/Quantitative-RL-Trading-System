@@ -101,7 +101,27 @@ def _process_tree_cpu_seconds() -> float:
 
 @contextmanager
 def _time_method_calls(instance: Any, method_name: str, samples: list[float]) -> Iterator[None]:
-    """Time a class method without adding a closure to the serialized instance."""
+    """Time a method without adding a closure to the serialized instance.
+
+    An instance-level override (set by an installed wrapper) is timed in place of the class method.
+    """
+    if method_name in vars(instance):
+        instance_method = vars(instance)[method_name]
+
+        def timed_instance(*args: Any, **kwargs: Any) -> Any:
+            started = time.perf_counter()
+            try:
+                return instance_method(*args, **kwargs)
+            finally:
+                samples.append(time.perf_counter() - started)
+
+        setattr(instance, method_name, timed_instance)
+        try:
+            yield
+        finally:
+            setattr(instance, method_name, instance_method)
+        return
+
     owner = type(instance)
     original_method = getattr(owner, method_name)
 
@@ -615,6 +635,12 @@ def _train_probe(
         "vector_backend": vector_backend,
         "rollout_buffer_class": type(model.rollout_buffer).__name__,
         "rollout_buffer_on_device": bool(cfg.ppo.get("rollout_buffer_on_device", False)),
+        "rollout_feature_graph": bool(cfg.ppo.get("rollout_feature_graph", False)),
+        "update_graph": bool(cfg.ppo.get("update_graph", False)),
+        "torch_compile_features": bool(cfg.ppo.get("torch_compile_features", False)),
+        "overlap_collect": bool(cfg.ppo.get("overlap_collect", False)),
+        "rollout_host_mask_check": bool(cfg.ppo.get("rollout_host_mask_check", False)),
+        "rollout_policy_graph": bool(cfg.ppo.get("rollout_policy_graph", False)),
         "defer_metric_sync": bool(cfg.ppo.get("defer_metric_sync", False)),
         "ppo_class": type(model).__name__,
         "torch_compile_mode": torch_compile_mode,
