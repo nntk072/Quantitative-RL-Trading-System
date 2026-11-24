@@ -11,7 +11,7 @@ GiB = 1024**3
 
 
 def test_get_device_auto_without_cuda_is_cpu(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(device.torch.cuda, "is_available", lambda: False)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
 
     assert device.get_device(None) == torch.device("cpu")
     assert device.get_device("auto") == torch.device("cpu")
@@ -19,7 +19,7 @@ def test_get_device_auto_without_cuda_is_cpu(monkeypatch: pytest.MonkeyPatch) ->
 
 
 def test_get_device_auto_with_cuda_is_cuda(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(device.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
 
     assert device.get_device("AUTO") == torch.device("cuda")
 
