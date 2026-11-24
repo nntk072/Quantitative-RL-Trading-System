@@ -9,6 +9,7 @@ import pandas as pd
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
     event_keyed_execution_rng,
+    nearest_tick_execution,
     resolve_tick_execution,
     resolve_tick_exit,
 )
@@ -127,6 +128,13 @@ class TickQuoteRuntimeMixin(RuntimeMixinBase):
             max_latency_ns_exclusive=int(self.randomized_fill_latency_ms * 1_000_000),
             max_quote_wait_ns=self.max_tick_quote_wait_ms * 1_000_000,
         )
+        if quote is None:
+            # No tick follows the arrival within the wait: fill at the nearest tick in time, within the same cap.
+            quote = nearest_tick_execution(
+                self._tickbook,
+                pd.Timestamp(order_time),
+                max_gap_ns=self.max_tick_quote_wait_ms * 1_000_000,
+            )
         if quote is None:
             raise TickExecutionUnavailable(
                 f"no executable quote within {self.max_tick_quote_wait_ms}ms of {order_time}"

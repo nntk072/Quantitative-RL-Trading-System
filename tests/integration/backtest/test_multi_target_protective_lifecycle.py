@@ -11,7 +11,6 @@ import pandas as pd
 
 from market_data.loading.ticks import (
     TickBook,
-    TickExecutionUnavailable,
     event_keyed_execution_rng,
     resolve_tick_execution,
 )
@@ -110,6 +109,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             fill_delay_ms=0,
             randomized_fill_latency_ms=randomized_fill_latency_ms,
             tick_execution_required=require_tick_execution,
+            max_tick_quote_wait_ms=60_000,
             server_side_protective_orders=server_side_protective_orders,
             _breakeven_trigger_r=breakeven_trigger_r,
             _breakeven_buffer_pts=breakeven_buffer_pts,
@@ -137,7 +137,8 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             "_check_multi_tp_ticks",
             "_adverse_tick_fill_quote",
             "_close_at_quote",
-            "_assert_tick_protective_events_observed",
+            "_tick_fill_mode",
+            "_untriggered_level_quote",
         ):
             setattr(env, name, MethodType(getattr(TradingEnv, name), env))
         bar = SimpleNamespace(
@@ -335,6 +336,34 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         self.assertIsNotNone(env.position)
         self.assertEqual([record.get("type") for record in env.trade_log], ["tp_partial_close"])
 
+    def test_runner_stop_touched_by_bar_range_without_crossing_tick_still_fills(self) -> None:
+        start = pd.Timestamp("2026-01-05T10:00:00Z")
+        book = TickBook(
+            np.array(
+                [
+                    (start + pd.Timedelta(seconds=10)).value,
+                    (start + pd.Timedelta(seconds=20)).value,
+                ],
+                dtype=np.int64,
+            ),
+            np.array([100.6, 99.2]),
+            np.array([100.61, 99.21]),
+        )
+        env = self._run_environment(
+            tickbook=book,
+            fractions=(0.8,),
+            runner_fraction=0.2,
+            low=98.9,
+            high=100.6,
+            require_tick_execution=True,
+        )
+
+        self.assertIsNone(env.position)
+        self.assertEqual(
+            [record.get("type") for record in env.trade_log], ["tp_partial_close", "stop_close"]
+        )
+        self.assertAlmostEqual(env.trade_log[-1]["price"], 99.0)
+
     def test_multi_target_replay_does_not_apply_new_stop_to_prior_ohlc_range(self) -> None:
         start = pd.Timestamp("2026-01-05T10:00:00Z")
         tick_times = np.array(
@@ -523,7 +552,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             self.assertEqual(actual["position_complete"], reference["position_complete"])
         self.assertAlmostEqual(state.account.balance, env.account.balance)
 
-    def test_tick_mode_keeps_position_open_when_ohlc_target_has_no_crossing_tick(self) -> None:
+    def test_tick_mode_fills_ohlc_target_at_nearest_tick_without_crossing_tick(self) -> None:
         start = pd.Timestamp("2026-01-05T10:00:00Z")
         tick_time = start + pd.Timedelta(seconds=10)
         book = TickBook(
@@ -533,23 +562,27 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         )
         state = self._run(tickbook=book)
 
-        self.assertIsNotNone(state.position)
-        self.assertFalse(
-            any(record.get("type", "").startswith("tp_") for record in state.trade_log)
-        )
-        # Fail-closed: with tick execution required, an OHLC-only touch with no
-        # matching tick must raise rather than fill from the candle.
-        with self.assertRaises(TickExecutionUnavailable):
-            self._run_environment(tickbook=book, require_tick_execution=True)
+        # The bar's nearest tick (bid 100.4) is below the 100.5 target, so it is the
+        # worse-than-level quote and the target fills there, not at the level.
+        self.assertIsNone(state.position)
+        tp_records = [r for r in state.trade_log if r.get("type", "").startswith("tp_")]
+        self.assertTrue(tp_records)
+        self.assertLessEqual(tp_records[-1]["price"], 100.4)
+        # Tick mode: the bar's nearest tick (bid 100.4) is worse than the target
+        # and is the fill, with any adverse slippage applied on top.
+        filled = self._run_environment(tickbook=book, require_tick_execution=True)
+        self.assertIsNone(filled.position)
+        tp_fills = [r for r in filled.trade_log if r.get("type", "").startswith("tp_")]
+        self.assertTrue(tp_fills)
+        self.assertLessEqual(tp_fills[-1]["price"], 100.4)
 
-        short_state = self._run(tickbook=book, direction=-1)
-
-        self.assertIsNotNone(short_state.position)
-        self.assertFalse(
-            any(record.get("type", "").startswith("tp_") for record in short_state.trade_log)
+        short_filled = self._run_environment(
+            tickbook=book, direction=-1, require_tick_execution=True
         )
-        with self.assertRaises(TickExecutionUnavailable):
-            self._run_environment(tickbook=book, direction=-1, require_tick_execution=True)
+        self.assertIsNone(short_filled.position)
+        short_tp = [r for r in short_filled.trade_log if r.get("type", "").startswith("tp_")]
+        self.assertTrue(short_tp)
+        self.assertGreaterEqual(short_tp[-1]["price"], 100.41)
 
     def test_stop_remains_first_when_bar_also_reaches_targets(self) -> None:
         state = self._run(low=98.5)

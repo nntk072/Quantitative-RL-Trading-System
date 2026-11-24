@@ -17,10 +17,11 @@ from market_data.loading.ticks import (
     TICK_CACHE_VERSION,
     TickBook,
     TickBookBuildDiagnostics,
-    TickExecutionUnavailable,
     _ffill_inplace,
     build_tick_book,
     limit_entry_execution_rng,
+    nearest_exit_tick_quote,
+    nearest_tick_execution,
     resolve_tick_execution,
     resolve_tick_execution_by_deadline,
     resolve_tick_exit,
@@ -645,23 +646,29 @@ def test_tick_exit_respects_multi_minute_bar_window():
     assert result.quote.bid == 94.0
 
 
-def test_randomized_tick_exit_fails_closed_when_trigger_has_no_later_quote():
+def test_randomized_tick_exit_fills_at_trigger_tick_when_no_later_quote():
     start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    trigger = start + pd.Timedelta(seconds=5)
     book = TickBook(
-        np.array([(start + pd.Timedelta(seconds=5)).value], dtype=np.int64),
+        np.array([trigger.value], dtype=np.int64),
         np.array([94.0]),
         np.array([94.5]),
     )
 
-    with pytest.raises(TickExecutionUnavailable, match="no timely quote"):
-        resolve_tick_exit(
-            book,
-            start,
-            direction=1,
-            sl=95.0,
-            tp=None,
-            rng=np.random.default_rng(1729),
-        )
+    result = resolve_tick_exit(
+        book,
+        start,
+        direction=1,
+        sl=95.0,
+        tp=None,
+        rng=np.random.default_rng(1729),
+        max_quote_wait_ns=1,
+    )
+
+    assert result is not None
+    assert result.kind == "sl"
+    assert result.quote.tick_time == trigger
+    assert result.quote.bid == 94.0
 
 
 def test_ffill_inplace_fills_internal_nans():
@@ -1414,3 +1421,72 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
         write_tick_cache(cache_path, empty, {"cache_id": "empty"})
 
     assert not cache_path.exists()
+
+
+def test_nearest_exit_tick_quote_picks_window_tick_closest_to_level() -> None:
+    start = pd.Timestamp("2026-01-05T10:00:00Z")
+    times = np.array([(start + pd.Timedelta(seconds=s)).value for s in (5, 20, 40)], dtype=np.int64)
+    book = TickBook(times, np.array([99.4, 99.8, 99.6]), np.array([99.5, 99.9, 99.7]))
+    # Long exit uses bid; closest to 99.6 is the tick at 40s (bid 99.6).
+    assert nearest_exit_tick_quote(book, start, 1, 99.6, bar_minutes=1) == (99.6, 99.7)
+
+
+def test_nearest_exit_tick_quote_empty_window_uses_nearest_tick_in_time() -> None:
+    start = pd.Timestamp("2026-01-05T10:00:00Z")
+    before = (start - pd.Timedelta(seconds=30)).value
+    after = (start + pd.Timedelta(minutes=2)).value
+    book = TickBook(
+        np.array([before, after], dtype=np.int64),
+        np.array([100.0, 101.0]),
+        np.array([100.1, 101.1]),
+    )
+    # Window [10:00, 10:01) is empty; the tick 30s before is nearer than the one 1m after the window.
+    assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1) == (100.0, 100.1)
+    # An entry time after the earlier tick excludes it, leaving the later tick.
+    entry = start - pd.Timedelta(seconds=5)
+    assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1, earliest_time=entry) == (
+        101.0,
+        101.1,
+    )
+
+
+def test_nearest_exit_tick_quote_empty_book_returns_none() -> None:
+    book = TickBook(np.array([], dtype=np.int64), np.array([]), np.array([]))
+    assert (
+        nearest_exit_tick_quote(
+            book, pd.Timestamp("2026-01-05T10:00:00Z"), -1, 100.0, bar_minutes=1
+        )
+        is None
+    )
+
+
+def test_nearest_exit_tick_quote_gap_cap_rejects_far_tick() -> None:
+    start = pd.Timestamp("2026-01-05T10:00:00Z")
+    far = (start + pd.Timedelta(minutes=5)).value
+    book = TickBook(np.array([far], dtype=np.int64), np.array([101.0]), np.array([101.1]))
+    # The only tick is 4 minutes after the window, beyond a 60 s cap.
+    assert (
+        nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1, max_gap_ns=60_000_000_000)
+        is None
+    )
+    # Without a cap the same tick is used.
+    assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1) == (101.0, 101.1)
+
+
+def test_nearest_tick_execution_is_first_tick_after_order_within_cap() -> None:
+    order = pd.Timestamp("2026-01-05T10:00:00Z")
+    before = (order - pd.Timedelta(seconds=20)).value
+    after = (order + pd.Timedelta(seconds=40)).value
+    book = TickBook(
+        np.array([before, after], dtype=np.int64),
+        np.array([100.0, 101.0]),
+        np.array([100.1, 101.1]),
+    )
+    quote = nearest_tick_execution(book, order, max_gap_ns=60_000_000_000)
+    assert quote is not None
+    # The tick before submission is never eligible for an order.
+    assert quote.tick_time == pd.Timestamp(after, unit="ns", tz="UTC")
+    assert (quote.bid, quote.ask) == (101.0, 101.1)
+    assert quote.latency_ns == 0
+    # Beyond the cap there is no fill.
+    assert nearest_tick_execution(book, order, max_gap_ns=10_000_000_000) is None

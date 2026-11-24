@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from market_data.loading.ticks import TickBook, TickExecutionUnavailable
+from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
 from simulation.backtest.event_driven_backtest import _fill_quote_event, _sl_tp_fill_quote
 from trading.execution.costs import CostModel
@@ -424,7 +424,11 @@ def test_randomized_tick_fills_are_seeded_and_record_order_and_fill_times() -> N
     for field in ("balance", "equity", "daily_loss", "max_drawdown", "open_pnl"):
         assert getattr(first_result["account"], field) == getattr(repeated_result["account"], field)
     fills = first.loc[first["type"] != "order_submit"]
-    assert fills["fill_quote_source"].eq("tick").all()
+    # The final terminal close uses the last tick of the final minute, else the bar close.
+    assert fills.iloc[:-1]["fill_quote_source"].eq("tick").all()
+    assert fills.iloc[-1]["fill_quote_source"] in {"tick", "terminal_bar_close"}
+    # The per-fill latency checks below cover the tick fills, not the terminal bar close.
+    fills = fills.iloc[:-1]
     assert fills["execution_latency_ns"].between(0, 29_999_999).all()
     assert fills["order_submission_time"].equals(fills["execution_order_time"])
     assert (fills["execution_arrival_time"] >= fills["execution_order_time"]).all()
@@ -538,7 +542,7 @@ def test_randomized_backtest_needs_no_tick_quote_when_no_order_is_placed() -> No
 
 
 @pytest.mark.parametrize("latency_ms", [0.0, 30.0])
-def test_tick_only_backtest_keeps_position_open_without_executable_protective_tick(
+def test_tick_only_backtest_fills_ohlc_stop_at_level_without_crossing_tick(
     latency_ms: float,
 ) -> None:
     index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
@@ -572,10 +576,14 @@ def test_tick_only_backtest_keeps_position_open_without_executable_protective_ti
         block_overnight=False,
     )
 
-    assert not result["trades"]["type"].eq("stop_close").any()
+    stops = result["trades"][result["trades"]["type"].eq("stop_close")]
+    # The bar touched the 99.0 stop and no tick crossed it; the nearest tick (bid 100.0)
+    # is better than the stop, so the fill is at the stop level.
+    assert len(stops) == 1
+    assert stops["price"].iloc[0] <= 99.0 + 1e-9
 
 
-def test_randomized_backtest_fails_closed_without_tick_after_order_arrival() -> None:
+def test_randomized_backtest_rejects_order_without_tick_after_arrival() -> None:
     index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
     tickbook = TickBook(
         np.asarray([index[2].value - 1], dtype=np.int64),
@@ -584,19 +592,22 @@ def test_randomized_backtest_fails_closed_without_tick_after_order_arrival() -> 
     )
     actions = iter([1, 0, 0, 0])
 
-    with pytest.raises(TickExecutionUnavailable, match="no executable tick"):
-        run_backtest(
-            _bars(index),
-            pd.DataFrame(index=index),
-            lambda _obs: next(actions),
-            obs_window=1,
-            cost_model=CostModel(spread_points=0.0, point_size=0.01),
-            tickbook=tickbook,
-            randomized_fill_latency_ms=30.0,
-            max_tick_quote_wait_ms=1,
-            hold_on_zero=True,
-            block_overnight=False,
-        )
+    result = run_backtest(
+        _bars(index),
+        pd.DataFrame(index=index),
+        lambda _obs: next(actions),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.01),
+        tickbook=tickbook,
+        randomized_fill_latency_ms=30.0,
+        max_tick_quote_wait_ms=1,
+        hold_on_zero=True,
+        block_overnight=False,
+    )
+
+    rejects = result["trades"][result["trades"]["type"].eq("reject")]
+    assert rejects["reason"].eq("no_executable_tick_within_wait").any()
+    assert not result["trades"]["type"].eq("open").any()
 
 
 @pytest.mark.parametrize("tick_slippage", [-0.1, float("nan"), float("inf")])
@@ -610,3 +621,89 @@ def test_backtest_rejects_invalid_tick_fill_slippage(tick_slippage: float) -> No
             obs_window=1,
             tick_fill_slippage_points=tick_slippage,
         )
+
+
+def test_tick_only_backtest_fills_ohlc_target_at_nearest_tick_without_crossing_tick() -> None:
+    index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
+    bars = _bars(index)
+    # Keep the stop untouched, then touch the 102.0 target on bar 3 with no crossing tick.
+    bars.loc[index[2:], "low"] = 99.5
+    bars.loc[index[3], "high"] = 102.5
+    tick_times = [
+        index[2] + pd.Timedelta(milliseconds=50),
+        index[-1] + pd.Timedelta(seconds=1),
+        index[-1] + pd.Timedelta(minutes=1, seconds=1),
+    ]
+    tickbook = TickBook(
+        np.asarray([tick.value for tick in tick_times], dtype=np.int64),
+        np.asarray([100.0, 100.0, 100.0]),
+        np.asarray([100.5, 100.5, 100.5]),
+    )
+    actions = iter([1, 0, 0, 0])
+    features = pd.DataFrame({"last_swing_low": [99.0] * len(index)}, index=index)
+
+    result = run_backtest(
+        bars,
+        features,
+        lambda _obs: next(actions),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.01),
+        tickbook=tickbook,
+        tick_execution_required=True,
+        randomized_fill_latency_ms=0.0,
+        use_structure_sl_tp=True,
+        swing_buffer_pts=0.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        hold_on_zero=True,
+        block_overnight=False,
+        rr_ratio=1.0,
+    )
+
+    targets = result["trades"][result["trades"]["type"].eq("tp_close")]
+    assert len(targets) == 1
+    # The target was touched by the bar, and the nearest tick (bid 100.0) is worse
+    # than the 102.0 target, so the fill is that tick.
+    assert targets["price"].iloc[0] == pytest.approx(100.0)
+
+
+def _terminal_close_run(last_tick_offset: pd.Timedelta | None) -> pd.DataFrame:
+    index = pd.date_range("2026-01-05 14:00", periods=5, freq="1min", tz="UTC")
+    tick_times = [index[2] + pd.Timedelta(milliseconds=50)]
+    bids = [100.0]
+    if last_tick_offset is not None:
+        tick_times.append(index[-1] + last_tick_offset)
+        bids.append(100.3)
+    tickbook = TickBook(
+        np.asarray([tick.value for tick in tick_times], dtype=np.int64),
+        np.asarray(bids),
+        np.asarray([b + 0.5 for b in bids]),
+    )
+    actions = iter([1, 0, 0, 0])
+    result = run_backtest(
+        _bars(index),
+        pd.DataFrame(index=index),
+        lambda _obs: next(actions),
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.01),
+        tickbook=tickbook,
+        tick_execution_required=True,
+        hold_on_zero=True,
+        block_overnight=False,
+    )
+    return cast(pd.DataFrame, result["trades"])
+
+
+def test_terminal_close_uses_last_tick_within_final_minute() -> None:
+    trades = _terminal_close_run(pd.Timedelta(seconds=30))
+
+    closes = trades[trades["type"].eq("eod_close")]
+    assert len(closes) == 1
+    assert closes["price"].iloc[0] == pytest.approx(100.3)
+
+
+def test_terminal_close_falls_back_to_bar_close_without_tick_in_final_minute() -> None:
+    trades = _terminal_close_run(None)
+
+    closes = trades[trades["type"].eq("eod_close")]
+    assert len(closes) == 1

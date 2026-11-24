@@ -13,6 +13,7 @@ from market_data.loading.ticks import (
     limit_entry_execution_rng,
     resolve_tick_limit_execution,
 )
+from market_data.news.guard import load_release_times, news_block_mask
 from simulation.entry_state import EntryCandidate
 from trading.execution import Position
 from trading.orders import limit_order_expiry, limit_price_from_atr_offset
@@ -27,6 +28,11 @@ class StepActionExecutionMixin(RuntimeMixinBase):
     position: Position | None
     _entry_rejection_order_id: str | None
     _pending_entry_order: dict[str, Any] | None
+    _news_block_mask: Any
+    _news_guard: Any
+    _news_close: Any
+    _news_atr: Any
+    _news_labels: Any
 
     def _submit_limit_entry_order(
         self,
@@ -189,6 +195,41 @@ class StepActionExecutionMixin(RuntimeMixinBase):
         )
         return True
 
+    def _news_spike_blocked(self, step_idx: int) -> bool:
+        """Whether new entries and resting limits are blocked at this bar (news or spike guard).
+
+        The mask is computed once from causal inputs: bar closes, causal ATR, session
+        labels and the release calendar (published in advance).
+
+        Args:
+            step_idx: Bar index of the decision.
+
+        Returns:
+            True when the guard is enabled and this bar is blocked.
+        """
+        guard = getattr(self, "_news_guard", None)
+        if guard is None:
+            return False
+        if self._news_block_mask is None:
+            if getattr(self, "_news_atr", None) is None:
+                raise ValueError("news spike guard requires an atr_5 feature")
+            session_ids = (
+                np.asarray(self._session_ids_arr)
+                if self._session_ids_arr is not None
+                else np.zeros(len(self._news_close), dtype=np.int64)
+            )
+            self._news_block_mask = news_block_mask(
+                list(pd.DatetimeIndex(self._bar_time_index).to_pydatetime()),
+                self._news_close,
+                self._news_atr,
+                session_ids,
+                self._news_labels,
+                load_release_times(guard.calendar_path),
+                guard,
+                open_manipulation_bars=int(self.open_manipulation_bars),
+            )
+        return bool(self._news_block_mask[int(step_idx)])
+
     def _execute_step_action(
         self,
         action: int | float | np.ndarray[Any, Any],
@@ -290,6 +331,8 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                     self._note_close(pnl)
             elif discrete_action != 0 and fill_idx >= self._n_bars:
                 self._reject("terminal_no_fill_bar")
+            elif discrete_action != 0 and self._news_spike_blocked(self.step_idx):
+                self._reject("news_spike_blocked")
             elif discrete_action != 0 and not session_blocked and not peak_dd_block:
                 # A live resting limit owns the account's single pending-entry
                 # slot. Ignore subsequent entry requests until it fills or

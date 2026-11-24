@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -29,7 +29,17 @@ class MarketAccessMixin(RuntimeMixinBase):
         Returns:
             Result of return bar ``idx`` as a tz-aware Timestamp in the broker timezone.
         """
-        value = self._bar_times[idx]
+        # The conversion depends only on the bar index and the immutable bar-time array, and the
+        # step path asks for the same bar several times, so results are cached per array object.
+        source = self._bar_times
+        cache: tuple[Any, dict[int, pd.Timestamp]] | None = getattr(self, "_bar_time_cache", None)
+        if cache is None or cache[0] is not source:
+            cache = (source, {})
+            setattr(self, "_bar_time_cache", cache)
+        cached = cache[1].get(idx)
+        if cached is not None:
+            return cached
+        value = source[idx]
         ts = pd.Timestamp(value)
         source_is_helsinki_wall = (
             self._bundle_arrays is None
@@ -40,7 +50,11 @@ class MarketAccessMixin(RuntimeMixinBase):
             ts = ts.tz_localize(None).tz_localize("Europe/Helsinki")
         elif ts.tzinfo is None:
             ts = ts.tz_localize("UTC")
-        return ts.tz_convert(BAR_TIME_TZ)
+        result = ts.tz_convert(BAR_TIME_TZ)
+        if len(cache[1]) >= 4096:
+            cache[1].clear()
+        cache[1][idx] = result
+        return result
 
     def _create_account(self) -> AccountState:
         """Factory for fresh account state.

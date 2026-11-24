@@ -70,6 +70,8 @@ _REJECTION_COUNTERS: dict[str, str] = {
     "limit_entry_source_setup_unavailable": "rejected_entry_execution",
     "limit_entry_requires_flat_account": "rejected_entry_execution",
     "trade_setup_inactive": "rejected_trade_setup_inactive",
+    "no_executable_tick_within_wait": "rejected_entry_execution",
+    "news_spike_blocked": "rejected_gate",
 }
 
 

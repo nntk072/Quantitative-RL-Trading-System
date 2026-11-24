@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
@@ -1994,3 +1995,55 @@ def test_account_breach_delayed_market_cancel_reconciles() -> None:
         "failures": matched["failures"],
         "incomplete_reasons": matched["incomplete_reasons"],
     }
+
+
+def test_event_backtest_cancels_resting_limit_when_release_blackout_starts(tmp_path: Path) -> None:
+    from market_data.news.guard import NewsGuardConfig
+
+    bars, features, _, schema, _, limit_action = _backtest_inputs()
+    release_bar = bars.index[3]
+    calendar = tmp_path / "calendar.csv"
+    calendar.write_text(
+        "utc_time,category,summary,source,source_sha256,retrieved_on\n"
+        f"{release_bar.strftime('%Y-%m-%dT%H:%M:%SZ')},CPI,CPI,x,y,z\n",
+        encoding="utf-8",
+    )
+    # Zero-minute blackout: only the release bar is blocked. The spike multiple is huge so
+    # the spike rule cannot fire.
+    guard = NewsGuardConfig(
+        calendar_path=calendar,
+        blackout_minutes_before=0,
+        blackout_minutes_after=0,
+        spike_atr_multiple=1e9,
+        exempt_open_manipulation=False,
+        baseline_lookback_sessions=5,
+    )
+    # A tick far above the limit, after the release, so the order cannot fill on its own.
+    tick_time = bars.index[5] + pd.Timedelta(seconds=30)
+    tickbook = TickBook(
+        np.asarray([tick_time.value], dtype=np.int64),
+        np.asarray([20_100.0]),
+        np.asarray([20_100.25]),
+    )
+
+    result = run_backtest(
+        bars,
+        features,
+        lambda _observation: limit_action,
+        obs_window=1,
+        cost_model=CostModel(spread_points=0.0, point_size=0.25, commission_per_lot=0.0),
+        hold_on_zero=True,
+        block_overnight=False,
+        trade_setup_actions=True,
+        trade_setup_action_schema=schema,
+        tickbook=tickbook,
+        trade_setup_geometry=False,
+        news_guard=guard,
+    )
+
+    records = result["trades"].to_dict("records")
+    submitted = [event for event in records if event.get("type") == "order_submit"]
+    cancels = [event for event in records if event.get("type") == "order_cancel"]
+    assert submitted and submitted[0]["order_type"] == "limit"
+    assert any(event["reason"] == "news_spike_before_limit_fill" for event in cancels)
+    assert not any(event.get("type") == "order_fill" for event in records)

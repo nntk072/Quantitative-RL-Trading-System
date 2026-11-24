@@ -30,6 +30,7 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from artifacts.identity import file_sha256
 from market_data.cache.ticks import build_tick_cache_identity, load_tick_cache, write_tick_cache
@@ -106,6 +107,139 @@ def tick_price_reaches_level(price: float, level: float, *, direction: int) -> b
         raise ValueError("direction must be -1 or +1")
     boundary = math.nextafter(float(level), -math.inf if direction == 1 else math.inf)
     return float(price) >= boundary if direction == 1 else float(price) <= boundary
+
+
+def nearest_exit_tick_quote(
+    book: TickBook,
+    bar_start: pd.Timestamp,
+    direction: int,
+    level: float,
+    *,
+    bar_minutes: int,
+    earliest_time: pd.Timestamp | None = None,
+    max_gap_ns: int | None = None,
+) -> tuple[float, float] | None:
+    """Executable (bid, ask) for a level that OHLC reached but no tick crossed.
+
+    With ticks in the bar window, the fill is the one whose exit-side price is
+    closest to ``level``, so its distance from the level is the slippage. A bar
+    with no ticks has nothing executed inside it, so the fill is the tick nearest
+    in time to the window, before or after, with ties going to the earlier tick.
+
+    Args:
+        book: TickBook with sorted timestamps and bid/ask arrays.
+        bar_start: Start of the bar window.
+        direction: +1 for a long exit (bid), -1 for a short exit (ask).
+        level: Protective level that OHLC reached.
+        bar_minutes: Window length in minutes.
+        earliest_time: Optional lower bound, such as the entry time.
+        max_gap_ns: Largest distance from the window allowed for an empty-window
+            fill; a farther tick is not used. ``None`` means no limit.
+
+    Returns:
+        ``(bid, ask)`` of the chosen tick, or ``None`` when no eligible tick is
+        within ``max_gap_ns`` (or the book has no tick at or after ``earliest_time``).
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    ts = book._ts
+    start_ns = pd.Timestamp(bar_start).value
+    earliest_ns = None if earliest_time is None else pd.Timestamp(earliest_time).value
+    if earliest_ns is not None:
+        start_ns = max(start_ns, earliest_ns)
+    end_ns = pd.Timestamp(bar_start).value + int(pd.Timedelta(minutes=bar_minutes).value)
+    i0 = int(np.searchsorted(ts, start_ns, side="left"))
+    i1 = int(np.searchsorted(ts, end_ns, side="left"))
+    side = book._bid if direction == 1 else book._ask
+    if i0 < i1:
+        j = i0 + int(np.argmin(np.abs(side[i0:i1] - float(level))))
+    else:
+        # Empty window: the tick nearest in time, before or after the window.
+        candidates: list[tuple[int, int]] = []
+        if i1 < len(ts):
+            candidates.append((int(ts[i1]) - end_ns, i1))
+        before = i0 - 1
+        if before >= 0 and (earliest_ns is None or int(ts[before]) >= earliest_ns):
+            candidates.append((start_ns - int(ts[before]), before))
+        if max_gap_ns is not None:
+            candidates = [item for item in candidates if item[0] <= max_gap_ns]
+        if not candidates:
+            return None
+        # Equal distances keep the earlier tick, the one already known when the bar ended.
+        j = min(candidates, key=lambda item: (item[0], item[1]))[1]
+    return float(book._bid[j]), float(book._ask[j])
+
+
+def nearest_tick_execution(
+    book: TickBook,
+    order_time: pd.Timestamp,
+    *,
+    max_gap_ns: int,
+) -> TickExecutionQuote | None:
+    """First executable tick at or after an order, within a gap cap.
+
+    Used when no tick follows the sampled arrival within the wait. Orders never fill
+    on a tick that predates submission, so only ticks at or after the order are
+    eligible; the nearest such tick within ``max_gap_ns`` is the fill.
+    shortcut: no latency is sampled on this fallback; upgrade if the wait must apply.
+
+    Args:
+        book: TickBook with sorted timestamps and bid/ask arrays.
+        order_time: Order submission time.
+        max_gap_ns: Largest allowed distance from the order to the tick.
+
+    Returns:
+        The eligible tick's quote, or ``None`` when no tick is within the cap.
+    """
+    submitted = pd.Timestamp(order_time)
+    t_ns = submitted.value
+    ts = book._ts
+    i = int(np.searchsorted(ts, t_ns, side="left"))
+    if i >= len(ts) or int(ts[i]) - t_ns > max_gap_ns:
+        return None
+    tick_time = pd.Timestamp(int(ts[i]), unit="ns", tz="UTC")
+    return TickExecutionQuote(
+        order_time=submitted,
+        arrival_time=submitted,
+        tick_time=tick_time,
+        bid=float(book._bid[i]),
+        ask=float(book._ask[i]),
+        latency_ns=0,
+    )
+
+
+def last_tick_quote_before(
+    book: TickBook,
+    end_time: pd.Timestamp,
+    lookback: pd.Timedelta,
+) -> TickExecutionQuote | None:
+    """Latest executable tick at or before ``end_time`` and no older than ``lookback``.
+
+    Used to close a position at the end of the data from the last tick in its final window.
+
+    Args:
+        book: TickBook with sorted timestamps and bid/ask arrays.
+        end_time: End of the data window; ticks after it are not eligible.
+        lookback: Largest allowed age of the tick at ``end_time``.
+
+    Returns:
+        The tick's quote, or ``None`` when no tick falls in the window.
+    """
+    end = pd.Timestamp(end_time)
+    end_ns = end.value
+    ts = book._ts
+    j = int(np.searchsorted(ts, end_ns, side="right")) - 1
+    if j < 0 or int(ts[j]) < end_ns - int(pd.Timedelta(lookback).value):
+        return None
+    tick_time = pd.Timestamp(int(ts[j]), unit="ns", tz="UTC")
+    return TickExecutionQuote(
+        order_time=end,
+        arrival_time=end,
+        tick_time=tick_time,
+        bid=float(book._bid[j]),
+        ask=float(book._ask[j]),
+        latency_ns=0,
+    )
 
 
 @dataclass(slots=True)
@@ -395,9 +529,8 @@ def resolve_tick_exit(
     """Resolve the first tick-triggered SL/TP after randomized execution latency.
 
     Stop wins if a single tick is beyond both levels. Once a trigger is found,
-    execution uses the first quote at or after the sampled arrival time. A
-    triggered order without a timely subsequent quote raises rather than
-    silently becoming a candle-priced fill.
+    execution uses the first quote at or after the sampled arrival time. When no
+    timely quote follows that arrival, the fill is the triggering tick itself.
 
     Args:
         book: Book used by the operation described above.
@@ -467,9 +600,16 @@ def resolve_tick_exit(
             max_quote_wait_ns=max_quote_wait_ns,
         )
         if quote is None:
-            raise TickExecutionUnavailable(
-                f"{kind.upper()} triggered at {trigger_time}, but no timely quote "
-                "exists after its sampled order-arrival time"
+            # No tick follows the sampled arrival within the wait. The nearest tick is the
+            # one that triggered the exit, so it is the fill.
+            # shortcut: no sampled latency on this fallback fill; upgrade if the wait must apply.
+            quote = TickExecutionQuote(
+                order_time=trigger_time,
+                arrival_time=trigger_time,
+                tick_time=trigger_time,
+                bid=float(book._bid[i]),
+                ask=float(book._ask[i]),
+                latency_ns=0,
             )
         return TickExitExecution(kind=kind, trigger_time=trigger_time, quote=quote)
     return None
@@ -709,6 +849,24 @@ class TickBook:
         i1 = int(np.searchsorted(self._ts, end_ns, side="left"))
         for idx in range(i0, i1):
             yield (int(self._ts[idx]), float(self._bid[idx]), float(self._ask[idx]))
+
+    def bar_arrays(
+        self, bar_start: pd.Timestamp, bar_minutes: int = 1
+    ) -> tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.float64]]:
+        """Return the quote arrays for the same half-open bar interval as ``bar_quote_ns``.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+
+        Returns:
+            Quote nanoseconds (UTC), bid and ask arrays, in timestamp order.
+        """
+        start_ns = pd.Timestamp(bar_start).value
+        end_ns = start_ns + int(pd.Timedelta(minutes=bar_minutes).value)
+        i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
+        i1 = int(np.searchsorted(self._ts, end_ns, side="left"))
+        return self._ts[i0:i1], self._bid[i0:i1], self._ask[i0:i1]
 
     def bar_quotes(
         self, bar_start: pd.Timestamp, bar_minutes: int = 1

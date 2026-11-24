@@ -8,6 +8,7 @@ import pandas as pd
 
 from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT
 from market_data.loading.ticks import TickBook
+from market_data.news.guard import news_guard_config
 from simulation.environment.distribution_reward import DistributionReward
 from simulation.environment.env import TradingEnv
 from simulation.environment.po3_reward import PO3Reward
@@ -682,6 +683,7 @@ def make_env(
         fill_delay_ms=fill_delay_ms(cfg),
         randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
         max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
+        news_guard=news_guard_config(cfg.execution.get("news_spike_guard")),
         server_side_protective_orders=bool(
             cfg.execution.get("server_side_protective_orders", False)
         ),

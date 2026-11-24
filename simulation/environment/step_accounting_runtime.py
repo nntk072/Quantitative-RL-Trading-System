@@ -6,6 +6,7 @@ from typing import Any
 
 import pandas as pd
 
+from market_data.loading.ticks import TickExecutionUnavailable, last_tick_quote_before
 from trading.execution import Position
 
 from .market_view import BarView, FeatureRow
@@ -35,15 +36,28 @@ class StepAccountingRuntimeMixin(RuntimeMixinBase):
         terminal_time = pd.Timestamp(bar_time) + pd.Timedelta(minutes=self._minutes_per_step)
         execution_meta: dict[str, Any] = {}
         tick_fill = bool(self.tick_execution_required or self.randomized_fill_latency_ms > 0.0)
-        if tick_fill:
-            quote, execution_meta = self._resolve_randomized_tick_quote(
-                terminal_time,
-                event_key=f"bar_fill:{terminal_time.value}",
-            )
-            fill_quote = (float(quote.bid), float(quote.ask))
-            fill_time = pd.Timestamp(quote.tick_time)
+        last_tick = (
+            last_tick_quote_before(self._tickbook, terminal_time, pd.Timedelta(minutes=1))
+            if tick_fill and self._tickbook is not None
+            else None
+        )
+        if last_tick is not None:
+            # Close at the last tick of the final minute of data, as the event-driven engine does.
+            fill_quote = (float(last_tick.bid), float(last_tick.ask))
+            fill_time = pd.Timestamp(last_tick.tick_time)
             quote_source = "tick"
+            execution_meta = {
+                "order_submission_time": last_tick.order_time,
+                "execution_order_time": last_tick.order_time,
+                "execution_arrival_time": last_tick.arrival_time,
+                "execution_latency_ns": last_tick.latency_ns,
+                "actual_tick_time": last_tick.tick_time,
+                "fill_quote_source": "tick",
+            }
+        elif tick_fill and self._tickbook is None:
+            raise TickExecutionUnavailable("tick-only fills require a TickBook")
         else:
+            # No tick in the final minute: the final bar close, as in non-tick mode.
             fill_quote = self._bar_quote(bar)
             fill_time = terminal_time
             quote_source = "terminal_bar_close"

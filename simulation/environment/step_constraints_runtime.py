@@ -120,6 +120,8 @@ class StepConstraintsRuntimeMixin(RuntimeMixinBase):
                 cancel_reason = "session_blocked_before_limit_fill"
             elif peak_dd_block:
                 cancel_reason = "trailing_drawdown_blocked_before_limit_fill"
+            elif self._news_spike_blocked(self.step_idx):
+                cancel_reason = "news_spike_before_limit_fill"
             elif pending_soft_block:
                 cancel_reason = "soft_guardrail_blocked_before_limit_fill"
             else:

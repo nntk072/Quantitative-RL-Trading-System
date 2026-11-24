@@ -12,7 +12,7 @@ import pytest
 from evaluation.reporting.account_state_trace_reconciliation import (
     reconcile_account_state_trace,
 )
-from market_data.loading.ticks import TickBook, TickExecutionUnavailable
+from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import CostModel
@@ -702,8 +702,8 @@ def test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending
     assert action_index == len(actions) - 1  # the final bar has no next fill bar
 
 
-def test_environment_and_backtest_both_fail_closed_on_quote_wait_gap() -> None:
-    """A late first quote cannot become a candle-priced entry in either engine."""
+def test_environment_and_backtest_both_reject_entry_on_quote_wait_gap() -> None:
+    """A late first quote cannot become a candle-priced entry; both engines refuse the order."""
     index = pd.date_range("2025-01-06T14:30:00Z", periods=6, freq="1min")
     prices = np.full(len(index), 100.0)
     bars = pd.DataFrame(
@@ -752,33 +752,36 @@ def test_environment_and_backtest_both_fail_closed_on_quote_wait_gap() -> None:
         max_tick_quote_wait_ms=1,
     )
     env.reset(seed=7)
-    with pytest.raises(TickExecutionUnavailable, match="no executable quote within 1ms"):
-        env.step(1)
+    env.step(1)
+    assert env.position is None
+    assert env._entry_diag["rejected_entry_execution"] == 1
 
     actions = iter([1, 0, 0, 0, 0])
-    with pytest.raises(TickExecutionUnavailable, match="no executable tick within 1ms"):
-        run_backtest(
-            bars,
-            features,
-            lambda _observation: next(actions),
-            obs_window=1,
-            cost_model=cost_model,
-            initial_balance=50_000.0,
-            risk_frac=0.001,
-            rr_ratio=1.0,
-            use_structure_sl_tp=True,
-            swing_buffer_pts=0.0,
-            min_lot=0.01,
-            max_lot=1.0,
-            contract_size=1.0,
-            max_loss_per_trade_usd=100.0,
-            hold_on_zero=True,
-            block_overnight=False,
-            fill_latency_bars=1,
-            tickbook=tickbook,
-            tick_execution_required=True,
-            max_tick_quote_wait_ms=1,
-        )
+    result = run_backtest(
+        bars,
+        features,
+        lambda _observation: next(actions),
+        obs_window=1,
+        cost_model=cost_model,
+        initial_balance=50_000.0,
+        risk_frac=0.001,
+        rr_ratio=1.0,
+        use_structure_sl_tp=True,
+        swing_buffer_pts=0.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        hold_on_zero=True,
+        block_overnight=False,
+        fill_latency_bars=1,
+        tickbook=tickbook,
+        tick_execution_required=True,
+        max_tick_quote_wait_ms=1,
+    )
+    rejects = result["trades"][result["trades"]["type"].eq("reject")]
+    assert not result["trades"]["type"].eq("open").any()
+    assert rejects["reason"].eq("no_executable_tick_within_wait").any()
 
 
 def test_environment_and_backtest_use_first_source_order_for_tied_stop_target_ticks() -> None:

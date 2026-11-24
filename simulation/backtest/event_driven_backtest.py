@@ -67,8 +67,15 @@ from market_data.loading.ticks import (
     TickExecutionUnavailable,
     event_keyed_execution_rng,
     limit_entry_execution_rng,
+    nearest_tick_execution,
     resolve_tick_execution,
     resolve_tick_limit_execution,
+)
+from market_data.news.guard import (
+    NewsGuardConfig,
+    causal_atr5,
+    load_release_times,
+    news_block_mask,
 )
 from simulation.entry_evidence import build_entry_evidence
 from simulation.entry_state import EntryStateMachine
@@ -480,9 +487,17 @@ def _fill_quote_event(
             max_quote_wait_ns=max_tick_quote_wait_ms * 1_000_000,
         )
         if execution is None:
-            raise TickExecutionUnavailable(
-                f"no executable tick within {max_tick_quote_wait_ms}ms of {fill_instant}"
+            # No tick follows the arrival within the cap: the nearest tick in time, within the same cap.
+            nearest = nearest_tick_execution(
+                tickbook,
+                pd.Timestamp(fill_instant),
+                max_gap_ns=int(max_tick_quote_wait_ms * 1_000_000),
             )
+            if nearest is None:
+                raise TickExecutionUnavailable(
+                    f"no executable tick within {max_tick_quote_wait_ms}ms of {fill_instant}"
+                )
+            execution = nearest
         return (
             (execution.bid, execution.ask),
             execution.tick_time,
@@ -598,6 +613,7 @@ def run_backtest(
     randomized_fill_latency_ms: float = 0.0,
     max_tick_quote_wait_ms: int = 60_000,
     tick_execution_required: bool = False,
+    news_guard: NewsGuardConfig | None = None,
     server_side_protective_orders: bool = False,
     execution_seed: int = 0,
     fill_latency_bars: int = 0,
@@ -678,6 +694,7 @@ def run_backtest(
         randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
         max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
         tick_execution_required: Whether to enable or require the tick execution required.
+        news_guard: News and spike guard settings; None disables the guard.
         server_side_protective_orders: Execute attached SL/TP orders on their triggering
             tick without sampling a new EA/network latency.
         execution_seed: Numeric value used for the execution seed.
@@ -1301,6 +1318,32 @@ def run_backtest(
         else {}
     )
     ny_gap_guard = _ny_gap_guard_mask(bars)
+    news_blocked_bars: np.ndarray[Any, Any] = (
+        np.zeros(len(bars), dtype=bool)
+        if news_guard is None
+        else news_block_mask(
+            list(pd.DatetimeIndex(bars.index).to_pydatetime()),
+            bars["close"].to_numpy(dtype=float),
+            (
+                features["atr_5"].to_numpy(dtype=float)
+                if "atr_5" in features.columns
+                else causal_atr5(bars["high"], bars["low"], bars["close"])
+            ),
+            (
+                bars["session_id"].to_numpy(dtype=np.int64)
+                if "session_id" in bars.columns
+                else np.zeros(len(bars), dtype=np.int64)
+            ),
+            (
+                bars["session"].to_numpy().astype(str)
+                if "session" in bars.columns
+                else np.full(len(bars), "all")
+            ),
+            load_release_times(news_guard.calendar_path),
+            news_guard,
+            open_manipulation_bars=settings.open_manipulation_bars,
+        )
+    )
     bar_duration = _bar_duration(bar_times)
     feat_array: np.ndarray[Any, Any] = features.values.astype(np.float32)
     feat_array = np.nan_to_num(feat_array, nan=0.0).astype(np.float32)
@@ -1920,6 +1963,8 @@ def run_backtest(
                     block_reason = "session_changed_before_limit_fill"
                 elif session in state.breached_sessions or state.year_failed:
                     block_reason = "account_guardrail_before_limit_fill"
+                elif news_blocked_bars[i]:
+                    block_reason = "news_spike_before_limit_fill"
                 elif guardrails.check_soft_daily(
                     state.account
                 ) or guardrails.check_soft_trailing_dd(state.account):
@@ -2379,6 +2424,23 @@ def run_backtest(
                 }
             )
             continue
+        if action in (1, -1) and state.position is None and news_blocked_bars[i]:
+            state.trade_log.append(
+                {
+                    "type": "reject",
+                    "decision_id": current_policy_decision_id,
+                    "reason": "news_spike_blocked",
+                    "trade_setup_candidate_id": (
+                        None if selected_trade_setup is None else selected_trade_setup.candidate_id
+                    ),
+                    **trade_setup_event_identity_record(setup_identity),
+                    "decision_bar": i,
+                    "decision_bar_time": bar_time,
+                    "decision_time": bar_time + bar_duration,
+                    "direction": action,
+                }
+            )
+            continue
         if (
             execution_choice is not None
             and execution_choice.order_type == "limit"
@@ -2762,7 +2824,11 @@ def run_backtest(
                 ),
                 None,
             )
-            if rejected_order_index is not None:
+            if (
+                rejected_order_index is not None
+                and state.trade_log[rejected_order_index].get("reason")
+                != "no_executable_tick_within_wait"
+            ):
                 fill_quote, fill_time, _, _ = resolve_bar_execution()
                 rejected_order_cancel = {
                     "type": "order_cancel",

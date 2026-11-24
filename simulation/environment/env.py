@@ -9,6 +9,7 @@ import pandas as pd
 
 from decisioning.observations import OBSERVATION_SCHEMA_V1
 from market_data.loading.ticks import TickBook
+from market_data.news.guard import NewsGuardConfig
 from simulation.contracts import SimulationTransition
 from simulation.environment.diagnostics import DebugStepError
 from trading.execution import COST_US100, CostModel
@@ -127,6 +128,7 @@ class TradingEnv(
         fill_delay_ms: int = 0,
         randomized_fill_latency_ms: float = 0.0,
         max_tick_quote_wait_ms: int = 60_000,
+        news_guard: NewsGuardConfig | None = None,
         server_side_protective_orders: bool = False,
         tick_fill_slippage_points: float = 0.0,
         agent_direction_control: bool = False,
@@ -246,6 +248,7 @@ class TradingEnv(
             fill_delay_ms: Numeric value used for the fill delay ms.
             randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
             max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+            news_guard: News and spike guard settings; None disables the guard.
             server_side_protective_orders: Execute attached SL/TP orders on their
                 triggering tick without sampling a new EA/network latency.
             tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
@@ -353,6 +356,8 @@ class TradingEnv(
             max_tick_quote_wait_ms,
             tick_fill_slippage_points,
         )
+        self._news_guard = news_guard
+        self._news_block_mask: Any = None
         if not isinstance(server_side_protective_orders, bool):
             raise ValueError("server_side_protective_orders must be boolean")
         if server_side_protective_orders and not tick_execution_required:

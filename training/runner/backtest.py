@@ -27,6 +27,7 @@ from configuration import load_config
 from evaluation import PerformanceMetrics, account_path_metric_inputs, calculate_metrics
 from evaluation.reporting.run_artifact_writer import save_run
 from market_data.loading import build_tick_books, run_pipeline
+from market_data.news.guard import news_guard_config
 from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,
@@ -182,6 +183,7 @@ def main() -> None:
             cost_model=cost_model(cfg),
             initial_balance=cfg.account.initial_balance,
             guardrail_kwargs=eval_guardrail_kwargs(cfg),
+            news_guard=news_guard_config(cfg.execution.get("news_spike_guard")),
             max_loss_per_trade_usd=max_loss_per_trade,
             take_profit_per_trade_usd=take_profit_per_trade,
             eod_risk=dict(cfg.env.get("eod_risk", {})),

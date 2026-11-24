@@ -15,6 +15,7 @@ from decisioning.trade_setup import (
 )
 from features import attach_reachable_r, select_legacy_obs_columns, select_obs_columns
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
+from market_data.news.guard import causal_atr5
 
 from .mixin_base import RuntimeMixinBase
 from .observations import (
@@ -269,6 +270,11 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
             self._session_ids_arr = (
                 self._bundle_arrays["bar_session_id"] if self._bundle_has_session_id else None
             )
+            self._news_close = np.asarray(self._bundle_arrays["bar_ohlc"][:, 3], dtype=float)
+            self._news_atr = np.asarray(self._bundle_arrays["atr_5"], dtype=float)
+            session_codes = np.asarray(self._bundle_arrays["bar_session"], dtype=int)
+            session_names = bundle_data.manifest.get("labels", {}).get("session", [])
+            self._news_labels = np.array([str(session_names[c]) for c in session_codes])
         else:
             assert bars is not None and features is not None
             _feat_numeric = features.select_dtypes(include="number")
@@ -280,6 +286,17 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                 bars["session_id"].to_numpy(dtype=np.int64)
                 if "session_id" in bars.columns
                 else None
+            )
+            self._news_close = bars["close"].to_numpy(dtype=float)
+            self._news_atr = (
+                features["atr_5"].to_numpy(dtype=float)
+                if "atr_5" in features.columns
+                else causal_atr5(bars["high"], bars["low"], bars["close"])
+            )
+            self._news_labels = (
+                bars["session"].to_numpy().astype(str)
+                if "session" in bars.columns
+                else np.full(len(bars), "all")
             )
         self._m1_idx, self._htf_idx = split_obs_columns(self._obs_columns)
         self.regime_observation = bool(regime_observation)

@@ -13,6 +13,7 @@ from features.context.trade_setup_candidates import (
     TradeSetupEventIdentity,
     trade_setup_event_identity_record,
 )
+from market_data.loading.ticks import TickExecutionUnavailable
 from trading.execution import (
     FILL_COST_PROVENANCE_SCHEMA_VERSION,
     TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -245,9 +246,27 @@ def apply_policy_action(
         ):
             return
 
-        fq, execution_time, fill_source, execution_meta = resolve_bar_execution(
-            order_submission_time
-        )
+        try:
+            fq, execution_time, fill_source, execution_meta = resolve_bar_execution(
+                order_submission_time
+            )
+        except TickExecutionUnavailable:
+            if settings.tickbook is None:
+                raise
+            # No tick within the wait cap of the order: refuse the entry, as the environment does.
+            state.trade_log.append(
+                {
+                    "type": "reject",
+                    "decision_id": decision_id,
+                    "order_id": order_id,
+                    **selected_setup_context,
+                    "reason": "no_executable_tick_within_wait",
+                    "bar": i,
+                    "time": bar_time,
+                    "direction": action,
+                }
+            )
+            return
         entry_order_type = str(execution_meta.get("order_type", "market"))
         pre_execution_quote = tuple(map(float, fq))
         market_entry_slippage_applied = (
