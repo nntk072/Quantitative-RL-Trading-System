@@ -14,6 +14,7 @@ api_paths:
 - market_data/loading/__init__.py
 - market_data/loading/bars.py
 - market_data/loading/ticks.py
+- market_data/news/__init__.py
 - market_data/news/calendar.py
 - market_data/news/fred.py
 - market_data/news/guard.py
