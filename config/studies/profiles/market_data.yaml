@@ -1,5 +1,8 @@
 module_id: market_data
-source_roots: [market_data, research_tools/market_data, research_tools/studies/handlers/market_data.py]
+source_roots:
+- market_data
+- research_tools/market_data
+- research_tools/studies/handlers/market_data.py
 api_paths:
 - market_data/__init__.py
 - market_data/cache/__init__.py
@@ -11,6 +14,9 @@ api_paths:
 - market_data/loading/__init__.py
 - market_data/loading/bars.py
 - market_data/loading/ticks.py
+- market_data/news/calendar.py
+- market_data/news/fred.py
+- market_data/news/guard.py
 - market_data/quality_audit.py
 - market_data/splits/definitions.py
 - market_data/splits/walkforward.py
@@ -23,11 +29,6 @@ api_paths:
 - market_data/transforms/session_schedule.py
 - market_data/transforms/sessions.py
 caller_paths:
-- tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
-- tests/integration/backtest/test_market_entry_fill_event_parity.py
-- tests/integration/backtest/test_market_order_quote_wait_contract.py
-- tests/integration/backtest/test_pending_limit_rejection_parity.py
-- tests/unit/training/test_tick_execution_preflight.py
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
 - evaluation/contracts.py
@@ -62,17 +63,21 @@ caller_paths:
 - learning/self_supervised/vae_pre_ny.py
 - scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py
 - simulation/backtest/event_driven_backtest.py
+- simulation/backtest/policy_actions.py
 - simulation/backtest/protective_events.py
 - simulation/backtest/runtime.py
 - simulation/environment/bundles.py
 - simulation/environment/candidate_geometry_observation.py
+- simulation/environment/entry_execution_runtime.py
 - simulation/environment/entry_runtime.py
 - simulation/environment/env.py
 - simulation/environment/episode_runtime.py
 - simulation/environment/execution_controls_initialization.py
 - simulation/environment/market_source_initialization.py
+- simulation/environment/observation_arrays_initialization.py
 - simulation/environment/observations.py
 - simulation/environment/protective_level_runtime.py
+- simulation/environment/step_accounting_runtime.py
 - simulation/environment/step_action_execution.py
 - simulation/environment/tick_quote_runtime.py
 - simulation/environment/trading_environment_factory.py
@@ -80,12 +85,17 @@ caller_paths:
 - tests/architecture/test_functional_filename_contracts.py
 - tests/architecture/test_public_imports.py
 - tests/integration/backtest/test_account_transition_parity.py
+- tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
 - tests/integration/backtest/test_agent_selected_entry_execution.py
 - tests/integration/backtest/test_engine_execution_contract.py
 - tests/integration/backtest/test_local_tick_action_trace.py
 - tests/integration/backtest/test_local_trace_source_clock.py
+- tests/integration/backtest/test_market_entry_fill_event_parity.py
+- tests/integration/backtest/test_market_order_quote_wait_contract.py
 - tests/integration/backtest/test_multi_target_protective_lifecycle.py
+- tests/integration/backtest/test_news_spike_guard_backtest.py
 - tests/integration/backtest/test_no_action_account_parity.py
+- tests/integration/backtest/test_pending_limit_rejection_parity.py
 - tests/integration/backtest/test_risk_lifecycle_characterization.py
 - tests/integration/test_activity.py
 - tests/integration/test_bar_cache_manifest.py
@@ -115,6 +125,9 @@ caller_paths:
 - tests/unit/market_data/test_helsinki_ny_sessions.py
 - tests/unit/market_data/test_market_data_ingestion.py
 - tests/unit/market_data/test_mt5_server_protective_fills.py
+- tests/unit/market_data/test_news_calendar.py
+- tests/unit/market_data/test_news_fred.py
+- tests/unit/market_data/test_news_guard.py
 - tests/unit/market_data/test_quality_audit.py
 - tests/unit/market_data/test_session_schedule.py
 - tests/unit/market_data/test_ticks.py
@@ -122,13 +135,15 @@ caller_paths:
 - tests/unit/market_data/test_walkforward_properties.py
 - tests/unit/simulation/test_environment/test_eligibility_wiring.py
 - tests/unit/simulation/test_environment/test_env_bundle_builder.py
+- tests/unit/simulation/test_environment/test_env_step_tick_golden_trace.py
+- tests/unit/simulation/test_environment/test_news_spike_guard_env.py
 - tests/unit/simulation/test_environment/test_ny_steps_eod.py
 - tests/unit/simulation/test_environment/test_sl_tp_fill.py
-- tests/unit/simulation/test_environment/test_env_step_tick_golden_trace.py
 - tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
 - tests/unit/simulation/test_environment/test_tp_execution.py
 - tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
 - tests/unit/simulation/test_environment/test_year_episode_survival.py
+- tests/unit/training/test_tick_execution_preflight.py
 - training/runner/backtest.py
 - training/runner/baselines.py
 - training/runner/data_stage.py
@@ -140,95 +155,217 @@ caller_paths:
 - training/setup/learner.py
 - training/setup/tick_execution_preflight.py
 source_scopes:
-  - {path: market_data/loading, study_ids: [market_data.source_parsing_and_quality, market_data.cache_identity_and_rebuild, market_data.bar_ingestion_and_row_validity, market_data.tick_order_and_book_reconstruction, market_data.tick_coverage_and_quote_age]}
-  - {path: market_data/cache, study_ids: [market_data.cache_identity_and_rebuild]}
-  - {path: market_data/transforms, study_ids: [market_data.time_sessions_and_timeframes, market_data.timeframe_resampling_and_close_alignment, market_data.session_timezone_and_schedule_boundaries, market_data.price_grid_and_tick_size]}
-  - {path: market_data/splits, study_ids: [market_data.chronological_splits]}
-  - {path: market_data/commands, study_ids: [market_data.source_parsing_and_quality, market_data.symbol_discovery_and_source_selection]}
-  - {path: market_data/contracts.py, study_ids: [market_data.source_parsing_and_quality]}
-  - {path: market_data/quality_audit.py, study_ids: [market_data.source_parsing_and_quality, market_data.raw_data_quality_and_coverage]}
-  - {path: market_data/cli.py, study_ids: [market_data.source_parsing_and_quality]}
-  - {path: market_data/__init__.py, study_ids: [market_data.source_parsing_and_quality]}
-  - {path: research_tools/studies/handlers/market_data.py, study_ids: [market_data.raw_data_quality_and_coverage, market_data.tick_coverage_and_quote_age]}
-  - {path: research_tools/market_data, study_ids: [market_data.source_parsing_and_quality, market_data.cache_identity_and_rebuild, market_data.time_sessions_and_timeframes, market_data.chronological_splits, market_data.raw_data_quality_and_coverage]}
-config_paths: [config/base/default.yaml, config/data_modes/normal.yaml, config/data_modes/discretion.yaml, config/symbols_config.yaml, config/ny_session_schedule.csv]
-test_paths: [tests/unit/market_data, tests/integration]
+- path: market_data/loading
+  study_ids:
+  - market_data.source_parsing_and_quality
+  - market_data.cache_identity_and_rebuild
+  - market_data.bar_ingestion_and_row_validity
+  - market_data.tick_order_and_book_reconstruction
+  - market_data.tick_coverage_and_quote_age
+- path: market_data/cache
+  study_ids:
+  - market_data.cache_identity_and_rebuild
+- path: market_data/transforms
+  study_ids:
+  - market_data.time_sessions_and_timeframes
+  - market_data.timeframe_resampling_and_close_alignment
+  - market_data.session_timezone_and_schedule_boundaries
+  - market_data.price_grid_and_tick_size
+- path: market_data/splits
+  study_ids:
+  - market_data.chronological_splits
+- path: market_data/commands
+  study_ids:
+  - market_data.source_parsing_and_quality
+  - market_data.symbol_discovery_and_source_selection
+- path: market_data/contracts.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+- path: market_data/quality_audit.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+  - market_data.raw_data_quality_and_coverage
+- path: market_data/cli.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+- path: market_data/__init__.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+- path: research_tools/studies/handlers/market_data.py
+  study_ids:
+  - market_data.raw_data_quality_and_coverage
+  - market_data.tick_coverage_and_quote_age
+- path: research_tools/market_data
+  study_ids:
+  - market_data.source_parsing_and_quality
+  - market_data.cache_identity_and_rebuild
+  - market_data.time_sessions_and_timeframes
+  - market_data.chronological_splits
+  - market_data.raw_data_quality_and_coverage
+- path: market_data/news
+  study_ids:
+  - market_data.raw_data_quality_and_coverage
+config_paths:
+- config/base/default.yaml
+- config/data_modes/normal.yaml
+- config/data_modes/discretion.yaml
+- config/symbols_config.yaml
+- config/ny_session_schedule.csv
+test_paths:
+- tests/unit/market_data
+- tests/integration
 studies:
-  - id: market_data.source_parsing_and_quality
-    type: code_check
-    question: Are bar and tick rows parsed with explicit schemas and quality denominators?
-    source_paths: [market_data/loading/bars.py, market_data/loading/ticks.py, market_data/quality_audit.py]
-    checks: [tests/integration/test_loader.py, tests/unit/market_data/test_ticks.py]
-    outputs: [source_schema_and_quality_check]
-  - id: market_data.cache_identity_and_rebuild
-    type: code_check
-    question: Do bar and tick caches bind parsed content and semantic settings to their identity?
-    source_paths: [market_data/cache/bars.py, market_data/cache/ticks.py, market_data/loading/market_data_ingestion.py]
-    checks: [tests/integration/test_bar_cache_manifest.py, tests/integration/test_pipeline_splits.py]
-    outputs: [cache_identity_check]
-  - id: market_data.time_sessions_and_timeframes
-    type: code_check
-    question: Are timezone, session calendar, resampling, and completed higher-timeframe alignment consistent?
-    source_paths: [market_data/transforms/sessions.py, market_data/transforms/session_schedule.py, market_data/transforms/resample.py, market_data/transforms/align.py]
-    checks: [tests/unit/market_data/test_session_schedule.py, tests/integration/test_resample_m10.py, tests/unit/features/test_htf_alignment.py]
-    outputs: [time_and_alignment_check]
-  - id: market_data.chronological_splits
-    type: code_check
-    question: Do date splits and walk-forward folds enforce chronology, purge, embargo, and non-overlap?
-    source_paths: [market_data/splits/definitions.py, market_data/splits/walkforward.py]
-    checks: [tests/unit/market_data/test_walkforward.py]
-    outputs: [split_contract_check]
-  - id: market_data.raw_data_quality_and_coverage
-    type: audit
-    question: Do the current canonical bar and tick sources meet registered parsing, chronology, missingness, and quote-denominator requirements?
-    acceptance: Every canonical source is hash-bound and represented in the audit; row, interval, invalid-value, and quote-coverage denominators reconcile, and every breach or unresolved interval remains explicit as a no-go for dependent claims.
-    audit_tool: market_data.raw_data_quality
-    config_paths: [config/base/default.yaml, evidence/research/data_identity/raw_data_manifest.json, evidence/research/data_identity/raw_source_inventory.json]
-    source_paths: [market_data/quality_audit.py, scripts/research/analysis/market_data/scan_local_market_data_quality.py, scripts/research/analysis/market_data/audit_tick_quote_coverage.py, research_tools/studies/handlers/market_data.py]
-    checks: [tests/unit/market_data/test_quality_audit.py, tests/research/test_quote_quality_scans.py]
-    outputs: [source_quality_report, tick_quote_coverage_report, unresolved_interval_register]
-  - id: market_data.bar_ingestion_and_row_validity
-    type: code_check
-    question: Do bar loaders preserve source identity, timestamp order, duplicate handling, and invalid OHLC dispositions?
-    source_paths: [market_data/loading/bars.py, market_data/loading/market_data_ingestion.py, market_data/transforms/cleaning.py]
-    checks: [tests/integration/test_loader.py, tests/unit/market_data/test_quality_audit.py]
-    outputs: [bar_ingestion_and_row_validity_check]
-  - id: market_data.tick_order_and_book_reconstruction
-    type: code_check
-    question: Are tick timestamps ordered and bid/ask books reconstructed with explicit equal-time and carried-quote rules?
-    source_paths: [market_data/loading/ticks.py, market_data/loading/tick_book_pipeline.py]
-    checks: [tests/unit/market_data/test_ticks.py, tests/integration/backtest/test_local_tick_action_trace.py]
-    outputs: [tick_order_and_book_reconstruction_check]
-  - id: market_data.tick_coverage_and_quote_age
-    type: audit
-    question: Which decision and fill intervals lack local quote coverage or rely on carried quotes beyond the declared age limit?
-    acceptance: Source files and intervals are counted against registered denominators; missing, stale, and unavailable quotes remain separate outcomes. If carried-side age is not measured, the audit marks dependent fill claims blocked and does not treat minute coverage as age evidence.
-    audit_tool: market_data.tick_coverage_and_quote_age
-    source_paths: [market_data/loading/tick_book_pipeline.py, research_tools/market_data/market_data/audit_tick_quote_coverage.py, research_tools/market_data/market_data/audit_tickbook_carry_forward.py, research_tools/studies/handlers/market_data.py]
-    config_paths: [config/base/default.yaml, config/research/research_output_contract.yaml]
-    checks: [tests/research/test_quote_quality_scans.py, tests/research/test_fill_quote_source_alignment.py]
-    outputs: [tick_interval_coverage_counts, quote_age_distribution, uncovered_interval_dispositions]
-  - id: market_data.timeframe_resampling_and_close_alignment
-    type: code_check
-    question: Do resampled bars retain the configured source interval and become visible only at their actual close time?
-    source_paths: [market_data/transforms/align.py, market_data/transforms/resample.py]
-    checks: [tests/research/test_configured_timeframe_parity.py, tests/unit/features/test_htf_alignment.py]
-    outputs: [timeframe_close_and_resampling_check]
-  - id: market_data.session_timezone_and_schedule_boundaries
-    type: code_check
-    question: Do session labels and scheduled closes handle timezone conversion, daylight-saving transitions, holidays, and session gaps consistently?
-    source_paths: [market_data/transforms/session_schedule.py, market_data/transforms/sessions.py]
-    checks: [tests/unit/market_data/test_session_schedule.py, tests/unit/features/test_session_tz_pd.py]
-    outputs: [session_timezone_and_schedule_check]
-  - id: market_data.price_grid_and_tick_size
-    type: code_check
-    question: Are bars and quotes quantized to the configured instrument price grid without changing source identity or trade direction?
-    source_paths: [market_data/transforms/price_grid.py]
-    checks: [tests/integration/test_price_grid.py, tests/unit/market_data/test_ticks.py]
-    outputs: [price_grid_and_tick_size_check]
-  - id: market_data.symbol_discovery_and_source_selection
-    type: code_check
-    question: Does symbol discovery and source selection produce a reproducible instrument set with explicit exclusions?
-    source_paths: [market_data/commands/discover.py, market_data/contracts.py]
-    checks: [tests/unit/market_data/test_dataset_source_contract.py]
-    outputs: [symbol_discovery_and_source_selection_check]
+- id: market_data.source_parsing_and_quality
+  type: code_check
+  question: Are bar and tick rows parsed with explicit schemas and quality denominators?
+  source_paths:
+  - market_data/loading/bars.py
+  - market_data/loading/ticks.py
+  - market_data/quality_audit.py
+  checks:
+  - tests/integration/test_loader.py
+  - tests/unit/market_data/test_ticks.py
+  outputs:
+  - source_schema_and_quality_check
+- id: market_data.cache_identity_and_rebuild
+  type: code_check
+  question: Do bar and tick caches bind parsed content and semantic settings to their identity?
+  source_paths:
+  - market_data/cache/bars.py
+  - market_data/cache/ticks.py
+  - market_data/loading/market_data_ingestion.py
+  checks:
+  - tests/integration/test_bar_cache_manifest.py
+  - tests/integration/test_pipeline_splits.py
+  outputs:
+  - cache_identity_check
+- id: market_data.time_sessions_and_timeframes
+  type: code_check
+  question: Are timezone, session calendar, resampling, and completed higher-timeframe alignment consistent?
+  source_paths:
+  - market_data/transforms/sessions.py
+  - market_data/transforms/session_schedule.py
+  - market_data/transforms/resample.py
+  - market_data/transforms/align.py
+  checks:
+  - tests/unit/market_data/test_session_schedule.py
+  - tests/integration/test_resample_m10.py
+  - tests/unit/features/test_htf_alignment.py
+  outputs:
+  - time_and_alignment_check
+- id: market_data.chronological_splits
+  type: code_check
+  question: Do date splits and walk-forward folds enforce chronology, purge, embargo, and non-overlap?
+  source_paths:
+  - market_data/splits/definitions.py
+  - market_data/splits/walkforward.py
+  checks:
+  - tests/unit/market_data/test_walkforward.py
+  outputs:
+  - split_contract_check
+- id: market_data.raw_data_quality_and_coverage
+  type: audit
+  question: Do the current canonical bar and tick sources meet registered parsing, chronology, missingness, and quote-denominator requirements?
+  acceptance: Every canonical source is hash-bound and represented in the audit; row, interval, invalid-value, and quote-coverage denominators reconcile, and every breach or unresolved interval remains explicit as a no-go for dependent claims.
+  audit_tool: market_data.raw_data_quality
+  config_paths:
+  - config/base/default.yaml
+  - evidence/research/data_identity/raw_data_manifest.json
+  - evidence/research/data_identity/raw_source_inventory.json
+  source_paths:
+  - market_data/quality_audit.py
+  - scripts/research/analysis/market_data/scan_local_market_data_quality.py
+  - scripts/research/analysis/market_data/audit_tick_quote_coverage.py
+  - research_tools/studies/handlers/market_data.py
+  checks:
+  - tests/unit/market_data/test_quality_audit.py
+  - tests/research/test_quote_quality_scans.py
+  outputs:
+  - source_quality_report
+  - tick_quote_coverage_report
+  - unresolved_interval_register
+- id: market_data.bar_ingestion_and_row_validity
+  type: code_check
+  question: Do bar loaders preserve source identity, timestamp order, duplicate handling, and invalid OHLC dispositions?
+  source_paths:
+  - market_data/loading/bars.py
+  - market_data/loading/market_data_ingestion.py
+  - market_data/transforms/cleaning.py
+  checks:
+  - tests/integration/test_loader.py
+  - tests/unit/market_data/test_quality_audit.py
+  outputs:
+  - bar_ingestion_and_row_validity_check
+- id: market_data.tick_order_and_book_reconstruction
+  type: code_check
+  question: Are tick timestamps ordered and bid/ask books reconstructed with explicit equal-time and carried-quote rules?
+  source_paths:
+  - market_data/loading/ticks.py
+  - market_data/loading/tick_book_pipeline.py
+  checks:
+  - tests/unit/market_data/test_ticks.py
+  - tests/integration/backtest/test_local_tick_action_trace.py
+  outputs:
+  - tick_order_and_book_reconstruction_check
+- id: market_data.tick_coverage_and_quote_age
+  type: audit
+  question: Which decision and fill intervals lack local quote coverage or rely on carried quotes beyond the declared age limit?
+  acceptance: Source files and intervals are counted against registered denominators; missing, stale, and unavailable quotes remain separate outcomes. If carried-side age is not measured, the audit marks dependent fill claims blocked and does not treat minute coverage as age evidence.
+  audit_tool: market_data.tick_coverage_and_quote_age
+  source_paths:
+  - market_data/loading/tick_book_pipeline.py
+  - research_tools/market_data/market_data/audit_tick_quote_coverage.py
+  - research_tools/market_data/market_data/audit_tickbook_carry_forward.py
+  - research_tools/studies/handlers/market_data.py
+  config_paths:
+  - config/base/default.yaml
+  - config/research/research_output_contract.yaml
+  checks:
+  - tests/research/test_quote_quality_scans.py
+  - tests/research/test_fill_quote_source_alignment.py
+  outputs:
+  - tick_interval_coverage_counts
+  - quote_age_distribution
+  - uncovered_interval_dispositions
+- id: market_data.timeframe_resampling_and_close_alignment
+  type: code_check
+  question: Do resampled bars retain the configured source interval and become visible only at their actual close time?
+  source_paths:
+  - market_data/transforms/align.py
+  - market_data/transforms/resample.py
+  checks:
+  - tests/research/test_configured_timeframe_parity.py
+  - tests/unit/features/test_htf_alignment.py
+  outputs:
+  - timeframe_close_and_resampling_check
+- id: market_data.session_timezone_and_schedule_boundaries
+  type: code_check
+  question: Do session labels and scheduled closes handle timezone conversion, daylight-saving transitions, holidays, and session gaps consistently?
+  source_paths:
+  - market_data/transforms/session_schedule.py
+  - market_data/transforms/sessions.py
+  checks:
+  - tests/unit/market_data/test_session_schedule.py
+  - tests/unit/features/test_session_tz_pd.py
+  outputs:
+  - session_timezone_and_schedule_check
+- id: market_data.price_grid_and_tick_size
+  type: code_check
+  question: Are bars and quotes quantized to the configured instrument price grid without changing source identity or trade direction?
+  source_paths:
+  - market_data/transforms/price_grid.py
+  checks:
+  - tests/integration/test_price_grid.py
+  - tests/unit/market_data/test_ticks.py
+  outputs:
+  - price_grid_and_tick_size_check
+- id: market_data.symbol_discovery_and_source_selection
+  type: code_check
+  question: Does symbol discovery and source selection produce a reproducible instrument set with explicit exclusions?
+  source_paths:
+  - market_data/commands/discover.py
+  - market_data/contracts.py
+  checks:
+  - tests/unit/market_data/test_dataset_source_contract.py
+  outputs:
+  - symbol_discovery_and_source_selection_check

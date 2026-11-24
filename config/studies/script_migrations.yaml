@@ -943,6 +943,19 @@ scripts:
   entrypoint: cli
   tests: *id012
   migration_state: complete
+- path: scripts/research/benchmarks/profile_env_step.py
+  owner_module: simulation
+  target: research_tools.learning.benchmarks.profile_env_step
+  entrypoint: cli
+  tests: &id_profile_env
+  - tests/integration/test_measure_ppo_throughput.py
+  migration_state: complete
+- path: scripts/research/benchmarks/profile_ppo_rocm.py
+  owner_module: learning
+  target: research_tools.learning.benchmarks.profile_ppo_rocm
+  entrypoint: cli
+  tests: *id012
+  migration_state: complete
 - path: scripts/research/benchmarks/measure_shared_ppo_memory.py
   owner_module: compute
   target: research_tools.compute.benchmarks.measure_shared_ppo_memory

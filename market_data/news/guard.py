@@ -1,6 +1,7 @@
 """News and spike guard: a per-bar mask of bars where new entries are blocked.
 
 A bar is blocked when either:
+
 - it falls inside the scheduled-release blackout (default 5 minutes before and after each
   USD high-impact release), or
 - a spike occurred: the close moved more than ``spike_atr_multiple`` times a session baseline

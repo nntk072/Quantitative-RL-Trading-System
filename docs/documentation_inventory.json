@@ -2687,7 +2687,7 @@
       "links": [
         "../../../../models/runtime/precision.py#L13",
         "../../../../tests/integration/test_device.py#L472",
-        "../../../../learning/rl/agent.py#L1038"
+        "../../../../learning/rl/agent.py#L1045"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/models/models__runtime__precision.md",
