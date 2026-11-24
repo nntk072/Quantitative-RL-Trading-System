@@ -2357,11 +2357,11 @@
         "../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L2013",
         "../../../../tests/integration/backtest/test_news_spike_guard_backtest.py#L52",
         "../../../../market_data/news/guard.py#L179",
-        "../../../../simulation/backtest/event_driven_backtest.py#L1331",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1138",
         "../../../../simulation/environment/observation_arrays_initialization.py#L294",
         "../../../../market_data/news/guard.py#L42",
         "../../../../tests/unit/market_data/test_news_guard.py#L153",
-        "../../../../simulation/backtest/event_driven_backtest.py#L1343",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1150",
         "../../../../market_data/news/guard.py#L97",
         "../../../../tests/unit/market_data/test_news_guard.py#L59",
         "../../../../tests/unit/market_data/test_news_guard.py#L80",
@@ -2834,7 +2834,7 @@
     },
     {
       "links": [
-        "../../../../simulation/backtest/event_driven_backtest.py#L599"
+        "../../../../simulation/backtest/event_driven_backtest.py#L406"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/simulation/simulation__backtest__event_driven_backtest.md",
@@ -6693,7 +6693,7 @@
         "../../models/runtime/precision.py#L13",
         "../../simulation/contracts/transition.py#L13",
         "../../simulation/environment/env.py#L34",
-        "../../simulation/backtest/event_driven_backtest.py#L599",
+        "../../simulation/backtest/event_driven_backtest.py#L406",
         "../../simulation/backtest/cross_validation/strategies/cross_over.py#L4",
         "../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L130",
         "../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L6",

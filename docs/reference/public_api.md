@@ -563,7 +563,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 |---|---|---|---|
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
 | `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L34) | stable |
-| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L599) | stable |
+| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L406) | stable |
 | `CrossOverStrategy` | class | [simulation.backtest.cross_validation.strategies.cross_over](../../simulation/backtest/cross_validation/strategies/cross_over.py#L4) | stable |
 | `EMAMACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L130) | stable |
 | `MACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L6) | stable |

@@ -19012,7 +19012,7 @@
       "name": "run_backtest",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 599,
+      "source_line": 406,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19360,31 +19360,7 @@
       "name": "_bar_duration",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 400,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_bar_quote",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 386,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_bar_spread_price_units",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 342,
+      "source_line": 340,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19396,7 +19372,7 @@
       "name": "_decision_valuation_time",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 119,
+      "source_line": 117,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19408,31 +19384,7 @@
       "name": "_entry_state_diagnostics",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 181,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_fill_quote",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 418,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_fill_quote_event",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 449,
+      "source_line": 179,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19444,7 +19396,7 @@
       "name": "_geometry_action_record",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 218,
+      "source_line": 216,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19456,7 +19408,7 @@
       "name": "_is_last_ny_bar",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 551,
+      "source_line": 358,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19468,7 +19420,7 @@
       "name": "_ny_gap_guard_mask",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 578,
+      "source_line": 385,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19480,7 +19432,7 @@
       "name": "_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 246,
+      "source_line": 244,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19492,19 +19444,7 @@
       "name": "_scalar_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 159,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_sl_tp_fill_quote",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 364,
+      "source_line": 157,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19615,6 +19555,66 @@
       "source_line": 360,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_bar_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 65,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_bar_spread_price_units",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 21,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_fill_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 79,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_fill_quote_event",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 110,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_sl_tp_fill_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 43,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
     },
     {
       "classification": "stable",
