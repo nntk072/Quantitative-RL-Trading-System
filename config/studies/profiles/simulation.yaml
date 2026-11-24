@@ -7,6 +7,7 @@ api_paths:
 - simulation/backtest/cross_validation/main.py
 - simulation/backtest/cross_validation/run.py
 - simulation/backtest/event_driven_backtest.py
+- simulation/backtest/quotes.py
 - simulation/backtest/protective_events.py
 - simulation/backtest/runtime.py
 - simulation/contracts/__init__.py
@@ -200,7 +201,7 @@ studies:
   - id: simulation.protective_order_priority_and_ties
     type: code_check
     question: When stop, target, and terminal events are reachable in one interval, is the fill chosen by the declared source-order and tie policy?
-    source_paths: [simulation/backtest/protective_events.py, simulation/environment/protective_level_runtime.py, simulation/environment/fill_quote_runtime.py]
+    source_paths: [simulation/backtest/protective_events.py, simulation/backtest/protective_management.py, simulation/backtest/protective_liquidation.py, simulation/environment/protective_level_runtime.py, simulation/environment/fill_quote_runtime.py]
     checks: [tests/unit/simulation/test_environment/test_sl_tp_fill.py, tests/integration/backtest/test_multi_target_protective_lifecycle.py, tests/unit/simulation/test_environment/test_take_profit_level_ordering.py]
     outputs: [protective_order_priority_and_tie_check]
   - id: simulation.limit_entry_price_bound_and_expiry

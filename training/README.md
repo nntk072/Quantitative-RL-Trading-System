@@ -43,3 +43,15 @@ ambiguous; preserve the resolved config and worker logs with each attempt.
 Focused tests are under `tests/unit/training/`, with integration checks for
 training entrypoints and checkpoint behavior. Use the
 [training how-to](../docs/how-to/run_training.md) for the safe launch sequence.
+
+## Purpose
+
+Training coordinates run setup, seed execution, checkpoints, diagnostics, and training artifacts.
+
+## Public API
+
+Use the configuration, runner, callback, and artifact interfaces under this package; experiment registration is owned by `experiments`.
+
+## Invariants
+
+Respect frozen run configuration and chronological split boundaries. Record failures and incomplete runs with their identity and output paths.

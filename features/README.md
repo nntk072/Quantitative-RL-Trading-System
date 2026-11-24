@@ -47,3 +47,15 @@ tests.
 See the [feature guide](../docs/modules/features.md),
 [data flow](../docs/architecture/data_flow.md), and
 [market-structure concept](../docs/concepts/market_structure.md).
+
+## Purpose
+
+The features package builds causal market structure, price, and context inputs from normalized market data.
+
+## Public API
+
+Use the feature pipeline and named feature builders under this package; fitted feature state must be handled by its training-scope interfaces.
+
+## Invariants
+
+Never use future inputs. Fit normalization and feature state on training rows only, and reuse the last fitted state on later rows.

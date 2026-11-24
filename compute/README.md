@@ -31,3 +31,15 @@ under `tests/unit/compute/` validate detection and resource contracts; they do
 not prove cluster availability or a remote job's utilization.
 
 Scheduler adapter behavior is described in the local [Slurm guide](slurm/README.md).
+
+## Purpose
+
+Compute provides environment discovery, device selection, resource planning, and scheduler adapters for research workloads.
+
+## Public API
+
+Use the device and resource-planning interfaces and the Slurm helpers documented in the compute subpackages.
+
+## Invariants
+
+Match Python environments to node architecture, inspect live resources before allocation, and keep one research workload within its declared resource contract.

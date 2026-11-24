@@ -8,7 +8,7 @@ import pytest
 
 from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
-from simulation.backtest.event_driven_backtest import _fill_quote_event, _sl_tp_fill_quote
+from simulation.backtest.quotes import _fill_quote_event, _sl_tp_fill_quote
 from trading.execution.costs import CostModel
 from trading.execution.quotes import (
     bar_stop_fill_quote,

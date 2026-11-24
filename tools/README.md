@@ -13,7 +13,8 @@ or source before using an operation that writes files.
 `./tools/check coverage` runs the scoped unit and integration gates with
 coverage enabled. In CI those suites publish their coverage data once, and
 `./tools/check coverage-report` combines the data, emits XML/JSON reports, and
-checks line and branch coverage against the measured `main` baseline.
+checks line coverage against the measured `main` baseline. Branch coverage is
+reported but does not fail the gate.
 
 `./tools/check test-overlap` ranks test modules by the production lines their
 coverage contexts share. Use the results to choose pairs for source-and-assertion

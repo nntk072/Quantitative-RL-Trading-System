@@ -31,7 +31,12 @@ from evaluation import account_path_metric_inputs, calculate_metrics, evaluation
 from evaluation.reanalysis.checkpoint import resolve_checkpoint
 from evaluation.reanalysis.cli import build_reanalysis_parser
 from evaluation.reanalysis.datasets import reconstruct_reanalysis_datasets
-from evaluation.reanalysis.legacy_sb3 import (
+from evaluation.reanalysis.provenance import (
+    _evaluation_dataset_records,
+    _load_run_config,
+    _validate_reanalysis_request,
+)
+from evaluation.reanalysis.sb3_checkpoint_backend import (
     is_sb3_box_model,
     is_sb3_discrete_model,
     load_sb3_checkpoint,
@@ -41,11 +46,6 @@ from evaluation.reanalysis.legacy_sb3 import (
     validate_sb3_discrete_action_schema,
     validate_sb3_observation_schema,
     validate_sb3_overlay_action_schema,
-)
-from evaluation.reanalysis.provenance import (
-    _evaluation_dataset_records,
-    _load_run_config,
-    _validate_reanalysis_request,
 )
 from evaluation.reanalysis.validation import (
     resolve_execution_seed,

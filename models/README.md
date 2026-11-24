@@ -44,3 +44,15 @@ parameters needed by checkpoint loading. Add focused tests for shapes, masks,
 gradients, device/dtype behavior, and serialization. Encoder tests are under
 `tests/unit/models/`; learner-policy compatibility is covered under
 `tests/unit/learning/`.
+
+## Purpose
+
+Models implement policy networks, encoders, auxiliary networks, and model construction for the declared observation and action spaces.
+
+## Public API
+
+Use the named model factories, policy classes, and encoder interfaces in this package; preserve checkpoint compatibility where documented.
+
+## Invariants
+
+Keep observation and action shapes aligned with their schemas, mask unavailable inputs, and do not introduce future information through encoders.

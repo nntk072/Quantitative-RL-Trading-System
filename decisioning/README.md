@@ -44,3 +44,21 @@ model, learner, and evaluation suites test downstream use.
 See [observation schemas](../docs/reference/observation_schemas.md),
 [action schemas](../docs/reference/action_schemas.md), and the
 [decisioning guide](../docs/modules/decisioning.md).
+
+## Purpose
+
+Decisioning adapts model outputs and external policies into the common action contract consumed by training, evaluation, and execution.
+
+## Public API
+
+The package exports the backend-neutral `DecisionInput`, `Decision`,
+`DecisionProvider`, action and observation schema types, and their builders.
+Trade-setup exports cover the versioned category/action constants, candidate
+geometry helpers, schema builders, decoders, and validators. Account-state
+exports provide the entry-state dimensions and observation-vector helpers.
+The explicit export list in `decisioning/__init__.py` is the supported
+package-level re-export surface; framework adapters remain in `adapters/`.
+
+## Invariants
+
+Validate action shape and meaning at the boundary. Invalid or unavailable decisions must follow the explicit fail-closed contract.

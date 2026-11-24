@@ -13,8 +13,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | stable | 723 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 469 |
-| private implementation | 1034 |
+| cross-package internal | 471 |
+| private implementation | 1055 |
 
 ## Public package exports
 
@@ -563,7 +563,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 |---|---|---|---|
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
 | `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L34) | stable |
-| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L599) | stable |
+| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L406) | stable |
 | `CrossOverStrategy` | class | [simulation.backtest.cross_validation.strategies.cross_over](../../simulation/backtest/cross_validation/strategies/cross_over.py#L4) | stable |
 | `EMAMACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L130) | stable |
 | `MACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L6) | stable |
@@ -708,14 +708,14 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `target_menu` | function | [trading.orders.targets](../../trading/orders/targets.py#L58) | stable |
 | `timeframe_index` | function | [trading.orders.timeframes](../../trading/orders/timeframes.py#L20) | stable |
 | `validate_tp_levels` | function | [trading.orders.selection](../../trading/orders/selection.py#L198) | stable |
-| `LEGACY_POLICY_MODE` | value | [trading.policy.legacy](../../trading/policy/legacy.py#L5) | compatibility-only |
+| `LEGACY_POLICY_MODE` | value | [trading.policy.fixed_risk](../../trading/policy/fixed_risk.py#L5) | compatibility-only |
 | `PayoutDecision` | class | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L13) | stable |
 | `TradingPolicyConfig` | class | [trading.policy.config](../../trading/policy/config.py#L24) | stable |
 | `build_payout_reset_event` | function | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L51) | stable |
 | `evaluate_payout` | function | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L25) | stable |
 | `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L200) | stable |
 | `resolve_trading_policy_mapping` | function | [trading.policy.config](../../trading/policy/config.py#L283) | stable |
-| `uses_fixed_risk_budget` | function | [trading.policy.legacy](../../trading/policy/legacy.py#L8) | stable |
+| `uses_fixed_risk_budget` | function | [trading.policy.fixed_risk](../../trading/policy/fixed_risk.py#L8) | stable |
 | `TradingPolicyConfig.daily_loss_limit` | method | [trading.policy.config](../../trading/policy/config.py#L72) | stable |
 | `TradingPolicyConfig.from_mapping` | method | [trading.policy.config](../../trading/policy/config.py#L81) | stable |
 | `TradingPolicyConfig.repeated_payout` | method | [trading.policy.config](../../trading/policy/config.py#L63) | stable |

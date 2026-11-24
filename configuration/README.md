@@ -55,3 +55,15 @@ Focused tests are under `tests/unit/configuration/`. Variant resolution also
 has coverage under training and experiment tests. Do not copy full effective
 configurations into this page; inspect the resolver output for the selected
 run.
+
+## Purpose
+
+Repository configuration services resolve validated YAML against the shared defaults and expose typed settings to product code.
+
+## Public API
+
+Use the settings and configuration-loading modules under `configuration`; `config/base/default.yaml` is the canonical source for new runtime settings.
+
+## Invariants
+
+New settings require a YAML key and validation. Defaults must remain explicit, and credentials or machine-specific secrets stay outside the repository.

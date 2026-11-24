@@ -694,6 +694,18 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "compute",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "compute",
+      "source_line": 3,
+      "source_module": "compute",
+      "source_path": "compute/__init__.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "compute.cli",
       "kind": "function",
@@ -1135,6 +1147,18 @@
       "source_line": 31,
       "source_module": "compute.environment.precision",
       "source_path": "compute/environment/precision.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "compute.slurm",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "compute",
+      "source_line": 3,
+      "source_module": "compute.slurm",
+      "source_path": "compute/slurm/__init__.py"
     },
     {
       "classification": "private implementation",
@@ -2419,6 +2443,18 @@
       "source_line": 29,
       "source_module": "decisioning.actions",
       "source_path": "decisioning/actions.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "decisioning.adapters",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "decisioning",
+      "source_line": 3,
+      "source_module": "decisioning.adapters",
+      "source_path": "decisioning/adapters/__init__.py"
     },
     {
       "classification": "cross-package internal",
@@ -7486,126 +7522,6 @@
     },
     {
       "classification": "private implementation",
-      "documented": false,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "value",
-      "name": "__all__",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 17,
-      "source_module": "evaluation.reanalysis.legacy_sb3",
-      "source_path": "evaluation/reanalysis/legacy_sb3.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "is_sb3_box_model",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 206,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "is_sb3_discrete_model",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 218,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "load_sb3_checkpoint",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 44,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "seed_sb3",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 119,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "validate_model_candidate_geometry_observation_schema",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 324,
-      "source_module": "learning.rl.agent",
-      "source_path": "learning/rl/agent.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "validate_model_trade_setup_observation_schema",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 311,
-      "source_module": "learning.rl.agent",
-      "source_path": "learning/rl/agent.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "validate_sb3_discrete_action_schema",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 176,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "validate_sb3_observation_schema",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 128,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "cross-package internal",
-      "documented": true,
-      "exported_from": "evaluation.reanalysis.legacy_sb3",
-      "kind": "function",
-      "name": "validate_sb3_overlay_action_schema",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 143,
-      "source_module": "learning.rl.checkpoint",
-      "source_path": "learning/rl/checkpoint.py"
-    },
-    {
-      "classification": "private implementation",
       "documented": true,
       "exported_from": "evaluation.reanalysis.provenance",
       "kind": "function",
@@ -7699,6 +7615,126 @@
       "source_line": 59,
       "source_module": "evaluation.reanalysis.provenance",
       "source_path": "evaluation/reanalysis/provenance.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 17,
+      "source_module": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "source_path": "evaluation/reanalysis/sb3_checkpoint_backend.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "is_sb3_box_model",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 206,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "is_sb3_discrete_model",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 218,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "load_sb3_checkpoint",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 44,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "seed_sb3",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 119,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "validate_model_candidate_geometry_observation_schema",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 324,
+      "source_module": "learning.rl.agent",
+      "source_path": "learning/rl/agent.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "validate_model_trade_setup_observation_schema",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 311,
+      "source_module": "learning.rl.agent",
+      "source_path": "learning/rl/agent.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "validate_sb3_discrete_action_schema",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 176,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "validate_sb3_observation_schema",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 128,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "evaluation.reanalysis.sb3_checkpoint_backend",
+      "kind": "function",
+      "name": "validate_sb3_overlay_action_schema",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 143,
+      "source_module": "learning.rl.checkpoint",
+      "source_path": "learning/rl/checkpoint.py"
     },
     {
       "classification": "private implementation",
@@ -9826,6 +9862,18 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "experiments",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 3,
+      "source_module": "experiments",
+      "source_path": "experiments/__init__.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "experiments.cli",
       "kind": "function",
@@ -9979,6 +10027,18 @@
       "source_line": 88,
       "source_module": "experiments.orchestration.weekly",
       "source_path": "experiments/orchestration/weekly.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "experiments.provenance",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 3,
+      "source_module": "experiments.provenance",
+      "source_path": "experiments/provenance/__init__.py"
     },
     {
       "classification": "private implementation",
@@ -10915,6 +10975,18 @@
       "source_line": 41,
       "source_module": "experiments.runs.variant_worker",
       "source_path": "experiments/runs/variant_worker.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "experiments.variants",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 3,
+      "source_module": "experiments.variants",
+      "source_path": "experiments/variants/__init__.py"
     },
     {
       "classification": "private implementation",
@@ -13089,6 +13161,18 @@
       "source_path": "features/technical/swings.py"
     },
     {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "integrations",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "integrations",
+      "source_line": 3,
+      "source_module": "integrations",
+      "source_path": "integrations/__init__.py"
+    },
+    {
       "classification": "stable",
       "documented": true,
       "exported_from": "integrations.mt5",
@@ -13343,6 +13427,18 @@
     {
       "classification": "private implementation",
       "documented": false,
+      "exported_from": "integrations.mt5.cli",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "integrations",
+      "source_line": 3,
+      "source_module": "integrations.mt5.cli",
+      "source_path": "integrations/mt5/cli/__init__.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
       "exported_from": "integrations.mt5.cli.single_symbol_demo",
       "kind": "value",
       "name": "_cross_over_robot",
@@ -13471,6 +13567,18 @@
       "source_line": 11,
       "source_module": "integrations.mt5.domain",
       "source_path": "integrations/mt5/domain/__init__.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "integrations.mt5.domain.data_sources",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "integrations",
+      "source_line": 1,
+      "source_module": "integrations.mt5.domain.data_sources",
+      "source_path": "integrations/mt5/domain/data_sources/__init__.py"
     },
     {
       "classification": "stable",
@@ -14097,6 +14205,18 @@
       "source_path": "integrations/mt5/risk_configuration.py"
     },
     {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "integrations.mt5.robot",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "integrations",
+      "source_line": 1,
+      "source_module": "integrations.mt5.robot",
+      "source_path": "integrations/mt5/robot/__init__.py"
+    },
+    {
       "classification": "stable",
       "documented": true,
       "exported_from": "learning",
@@ -14251,6 +14371,18 @@
       "source_line": 10,
       "source_module": "learning.learner_factory",
       "source_path": "learning/learner_factory.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 3,
+      "source_module": "learning.rl",
+      "source_path": "learning/rl/__init__.py"
     },
     {
       "classification": "private implementation",
@@ -15239,6 +15371,18 @@
     {
       "classification": "private implementation",
       "documented": false,
+      "exported_from": "learning.self_supervised",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 3,
+      "source_module": "learning.self_supervised",
+      "source_path": "learning/self_supervised/__init__.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
       "exported_from": "learning.self_supervised.vae_pre_ny",
       "kind": "value",
       "name": "_PRE_NY_END",
@@ -15451,6 +15595,30 @@
       "source_line": 249,
       "source_module": "learning.supervised.reference",
       "source_path": "learning/supervised/reference.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "live",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "live",
+      "source_line": 3,
+      "source_module": "live",
+      "source_path": "live/__init__.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "live.paper",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "live",
+      "source_line": 3,
+      "source_module": "live.paper",
+      "source_path": "live/paper/__init__.py"
     },
     {
       "classification": "stable",
@@ -16015,6 +16183,18 @@
       "source_line": 11,
       "source_module": "market_data.cli",
       "source_path": "market_data/cli.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.commands",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 1,
+      "source_module": "market_data.commands",
+      "source_path": "market_data/commands/__init__.py"
     },
     {
       "classification": "private implementation",
@@ -17119,6 +17299,18 @@
       "source_line": 58,
       "source_module": "market_data.transforms.sessions",
       "source_path": "market_data/transforms/sessions.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "models",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "models",
+      "source_line": 3,
+      "source_module": "models",
+      "source_path": "models/__init__.py"
     },
     {
       "classification": "cross-package internal",
@@ -19012,7 +19204,7 @@
       "name": "run_backtest",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 599,
+      "source_line": 406,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19039,6 +19231,18 @@
       "source_line": 181,
       "source_module": "simulation.backtest.accounting",
       "source_path": "simulation/backtest/accounting.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.backtest.cross_validation",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 3,
+      "source_module": "simulation.backtest.cross_validation",
+      "source_path": "simulation/backtest/cross_validation/__init__.py"
     },
     {
       "classification": "private implementation",
@@ -19354,37 +19558,25 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.backtest.cross_validation.utils",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 3,
+      "source_module": "simulation.backtest.cross_validation.utils",
+      "source_path": "simulation/backtest/cross_validation/utils/__init__.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "simulation.backtest.event_driven_backtest",
       "kind": "function",
       "name": "_bar_duration",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 400,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_bar_quote",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 386,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_bar_spread_price_units",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 342,
+      "source_line": 340,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19396,7 +19588,7 @@
       "name": "_decision_valuation_time",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 119,
+      "source_line": 117,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19408,31 +19600,7 @@
       "name": "_entry_state_diagnostics",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 181,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_fill_quote",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 418,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_fill_quote_event",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 449,
+      "source_line": 179,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19444,7 +19612,7 @@
       "name": "_geometry_action_record",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 218,
+      "source_line": 216,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19456,7 +19624,7 @@
       "name": "_is_last_ny_bar",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 551,
+      "source_line": 358,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19468,7 +19636,7 @@
       "name": "_ny_gap_guard_mask",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 578,
+      "source_line": 385,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19480,7 +19648,7 @@
       "name": "_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 246,
+      "source_line": 244,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19492,19 +19660,7 @@
       "name": "_scalar_policy_action",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 159,
-      "source_module": "simulation.backtest.event_driven_backtest",
-      "source_path": "simulation/backtest/event_driven_backtest.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.event_driven_backtest",
-      "kind": "function",
-      "name": "_sl_tp_fill_quote",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 364,
+      "source_line": 157,
       "source_module": "simulation.backtest.event_driven_backtest",
       "source_path": "simulation/backtest/event_driven_backtest.py"
     },
@@ -19534,15 +19690,27 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 44,
+      "source_module": "simulation.backtest.protective_events",
+      "source_path": "simulation/backtest/protective_events.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "simulation.backtest.protective_events",
       "kind": "function",
       "name": "_active_target_slots",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 46,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 18,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19552,9 +19720,9 @@
       "name": "_advance_management_modes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 127,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 99,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19564,9 +19732,9 @@
       "name": "_apply_tp_management",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 174,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 146,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19576,21 +19744,9 @@
       "name": "_default_sl_mode",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 82,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "simulation.backtest.protective_events",
-      "kind": "function",
-      "name": "_finite_feature",
-      "numpy_style": false,
-      "package": "simulation",
-      "source_line": 63,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 54,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19600,9 +19756,9 @@
       "name": "_record_target_slot",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 293,
-      "source_module": "simulation.backtest.protective_events",
-      "source_path": "simulation/backtest/protective_events.py"
+      "source_line": 265,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
     },
     {
       "classification": "private implementation",
@@ -19612,9 +19768,105 @@
       "name": "_tick_touch_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 360,
+      "source_line": 332,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "function",
+      "name": "liquidate_terminal_position",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 25,
+      "source_module": "simulation.backtest.protective_liquidation",
+      "source_path": "simulation/backtest/protective_liquidation.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_events",
+      "kind": "function",
+      "name": "process_protective_and_account_events",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 59,
       "source_module": "simulation.backtest.protective_events",
       "source_path": "simulation/backtest/protective_events.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.protective_management",
+      "kind": "function",
+      "name": "_finite_feature",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 35,
+      "source_module": "simulation.backtest.protective_management",
+      "source_path": "simulation/backtest/protective_management.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_bar_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 65,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_bar_spread_price_units",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 21,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_fill_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 79,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_fill_quote_event",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 110,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.backtest.quotes",
+      "kind": "function",
+      "name": "_sl_tp_fill_quote",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 43,
+      "source_module": "simulation.backtest.quotes",
+      "source_path": "simulation/backtest/quotes.py"
     },
     {
       "classification": "stable",
@@ -22949,8 +23201,8 @@
       "numpy_style": false,
       "package": "trading",
       "source_line": 5,
-      "source_module": "trading.policy.legacy",
-      "source_path": "trading/policy/legacy.py"
+      "source_module": "trading.policy.fixed_risk",
+      "source_path": "trading/policy/fixed_risk.py"
     },
     {
       "classification": "stable",
@@ -23045,8 +23297,8 @@
       "numpy_style": false,
       "package": "trading",
       "source_line": 8,
-      "source_module": "trading.policy.legacy",
-      "source_path": "trading/policy/legacy.py"
+      "source_module": "trading.policy.fixed_risk",
+      "source_path": "trading/policy/fixed_risk.py"
     },
     {
       "classification": "stable",
@@ -24381,6 +24633,18 @@
       "source_path": "trading/strategies/strategy_contract.py"
     },
     {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "training",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 3,
+      "source_module": "training",
+      "source_path": "training/__init__.py"
+    },
+    {
       "classification": "stable",
       "documented": false,
       "exported_from": "training.artifacts",
@@ -24643,6 +24907,18 @@
       "source_line": 114,
       "source_module": "training.artifacts.walk_forward",
       "source_path": "training/artifacts/walk_forward.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "training.callbacks",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "training",
+      "source_line": 3,
+      "source_module": "training.callbacks",
+      "source_path": "training/callbacks/__init__.py"
     },
     {
       "classification": "private implementation",

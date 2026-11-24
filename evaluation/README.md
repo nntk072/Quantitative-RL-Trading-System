@@ -39,3 +39,21 @@ these differ from training, declare the difference and its purpose. A summary
 metric is not a substitute for examining trade exits, exposure, cost, and
 drawdown paths. Focused tests live in `tests/unit/evaluation/`; backtest and
 end-to-end reporting tests are under `tests/integration/`.
+
+## Purpose
+
+Evaluation replays trained policies and produces metrics, reports, charts, and reconciliation outputs.
+
+## Public API
+
+Package-level exports cover `WFSplit` and `purged_walk_forward`; bootstrap,
+calibration, distribution, performance, and temporal metrics; run-summary and
+comparison builders; `run_episode` and `evaluate_provider`; and the
+always-no-trade and random-eligible-setup baselines. The complete supported
+re-export list is declared in `evaluation/__init__.py`. Plotting, artifact
+writing, and checkpoint reanalysis APIs remain in their documented
+subpackages rather than being re-exported here.
+
+## Invariants
+
+Do not select models, checkpoints, or thresholds on the locked report period. Reports must preserve source, split, and run identity.

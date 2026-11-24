@@ -46,3 +46,15 @@ checkpoint resume, and deterministic inference where applicable. Focused
 coverage is under `tests/unit/learning/`; end-to-end transition-to-update tests
 live in integration/smoke suites. Learning reward and financial outcome are
 separate evidence and must both be reported.
+
+## Purpose
+
+Learning contains reinforcement-learning and reference-learning algorithms that update model parameters from training data.
+
+## Public API
+
+Use the algorithm, callback, and policy interfaces in the `learning` subpackages; training orchestration belongs to `training`.
+
+## Invariants
+
+Keep fitting within the training split and preserve configured seeds, policy contracts, and checkpoint identity.

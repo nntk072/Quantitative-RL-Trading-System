@@ -9,6 +9,27 @@ guardrail checks read the selected daily-PnL basis through
 MT5 runtime. These shared account inputs and synthetic transition tests do
 not establish full cross-backend risk parity.
 
+## Purpose
+
+Provide broker-neutral risk state and decision contracts, hard account
+guardrails, risk-budget resolution, execution reserves, position sizing, and
+stop-management price helpers.
+
+## Public API
+
+`trading.risk` re-exports `RiskState`, `RiskDecision`, `RiskPolicy`,
+`RiskBudgetDecision`, daily-PnL basis and schema constants, `FTMOGuardrails`,
+the FTMO trading-day helpers, risk-budget and reserve functions, lot and stop
+sizing functions, adverse-position-loss and breach-scope helpers, and the
+breakeven/trailing-stop functions. `trading/risk/__init__.py` declares the
+complete supported re-export list.
+
+## Invariants
+
+Preserve account-currency units, the explicit daily-PnL basis, configured hard
+loss floors, and fail-closed breach behavior. Learned policy output cannot
+override an account guardrail.
+
 ## Core contracts
 
 `RiskState` v1 carries current equity, signed daily PnL (profit positive, loss

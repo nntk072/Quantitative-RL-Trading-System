@@ -24,7 +24,7 @@ api_paths:
 - learning/self_supervised/vae_pre_ny.py
 - learning/supervised/reference.py
 caller_paths:
-- evaluation/reanalysis/legacy_sb3.py
+- evaluation/reanalysis/sb3_checkpoint_backend.py
 - experiments/runs/checkpoint_lineage.py
 - tests/architecture/test_public_imports.py
 - tests/integration/backtest/test_agent_selected_entry_execution.py

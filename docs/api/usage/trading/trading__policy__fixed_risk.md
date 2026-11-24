@@ -1,14 +1,14 @@
-# Trading · `policy.legacy`
+# Trading · `policy.fixed_risk`
 
-This page contains 1 public callable records owned by `trading.policy.legacy`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 1 public callable records owned by `trading.policy.fixed_risk`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `uses_fixed_risk_budget`
 
-**Kind:** function · **Status:** stable · **Owner:** `trading.policy.legacy`
+**Kind:** function · **Status:** stable · **Owner:** `trading.policy.fixed_risk`
 
 **Purpose:** Return whether legacy settings require fixed risk sizing.
 
-**Exact API:** {py:obj}`trading.policy.legacy.uses_fixed_risk_budget` · **Source:** [trading/policy/legacy.py:8](../../../../trading/policy/legacy.py#L8)
+**Exact API:** {py:obj}`trading.policy.fixed_risk.uses_fixed_risk_budget` · **Source:** [trading/policy/fixed_risk.py:8](../../../../trading/policy/fixed_risk.py#L8)
 
 **Inputs and outputs:**
 

@@ -32,3 +32,15 @@ retry rules, idempotency, and unsupported order features explicit. Use a fake
 or sandbox for deterministic tests of rejections, timeouts, partial fills,
 reconnect, and duplicate submissions. Focused tests are under
 `tests/unit/live/`; deployment checks are separate from unit-test evidence.
+
+## Purpose
+
+Integrations adapt external broker and data-service APIs to the repository’s broker-neutral domain contracts.
+
+## Public API
+
+Use the adapter interfaces and integration-specific entry points documented by each integration package.
+
+## Invariants
+
+Keep external calls at adapter boundaries, validate returned data and order state, and keep credentials outside source and configuration files.

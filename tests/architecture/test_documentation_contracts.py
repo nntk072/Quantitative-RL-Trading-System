@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import subprocess
 import sys
 import tomllib
@@ -50,6 +51,93 @@ def test_dependency_model_check_mode_succeeds_from_repository_root() -> None:
 
 def test_maintained_documentation_has_local_guides_and_resolving_links() -> None:
     assert validate(ROOT) == []
+
+
+def test_every_product_package_readme_has_purpose_api_and_invariants() -> None:
+    product_packages = (
+        "configuration",
+        "artifacts",
+        "market_data",
+        "features",
+        "trading",
+        "simulation",
+        "models",
+        "decisioning",
+        "learning",
+        "training",
+        "evaluation",
+        "experiments",
+        "live",
+        "integrations",
+        "compute",
+    )
+    missing: list[str] = []
+    for package in product_packages:
+        directory = ROOT / package
+        readme = next(
+            (
+                candidate
+                for candidate in (directory / "README.md", directory / "README.rst")
+                if candidate.is_file()
+            ),
+            None,
+        )
+        if readme is None:
+            missing.append(f"{directory.relative_to(ROOT)}: missing README")
+            continue
+        contents = readme.read_text(encoding="utf-8").lower()
+        for section in ("purpose", "public api", "invariants"):
+            if not any(
+                line.lstrip("# ").strip() == section
+                for line in contents.splitlines()
+                if line.startswith("#")
+            ):
+                missing.append(f"{readme.relative_to(ROOT)}: missing {section} section")
+
+    assert not missing, "package README contract failures:\n" + "\n".join(missing)
+
+
+def test_every_product_package_initializer_declares_all() -> None:
+    product_packages = (
+        "configuration",
+        "artifacts",
+        "market_data",
+        "features",
+        "trading",
+        "simulation",
+        "models",
+        "decisioning",
+        "learning",
+        "training",
+        "evaluation",
+        "experiments",
+        "live",
+        "integrations",
+        "compute",
+    )
+    missing = []
+    for package in product_packages:
+        for init_file in (ROOT / package).rglob("__init__.py"):
+            module = ast.parse(init_file.read_text(encoding="utf-8"))
+            has_all = any(
+                (
+                    isinstance(node, ast.Assign)
+                    and any(
+                        isinstance(target, ast.Name) and target.id == "__all__"
+                        for target in node.targets
+                    )
+                )
+                or (
+                    isinstance(node, ast.AnnAssign)
+                    and isinstance(node.target, ast.Name)
+                    and node.target.id == "__all__"
+                )
+                for node in module.body
+            )
+            if not has_all:
+                missing.append(str(init_file.relative_to(ROOT)))
+
+    assert not missing, "package initializers missing explicit __all__:\n" + "\n".join(missing)
 
 
 def test_documentation_link_checker_ignores_paths_in_fenced_examples(tmp_path: Path) -> None:
