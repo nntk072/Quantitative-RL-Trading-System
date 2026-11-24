@@ -2,17 +2,17 @@
 
 Coverage is measured per product package. The CI `coverage-report` job combines
 unit and integration data, compares each package with the main baseline in
-`tools/quality/coverage_baseline.json`, and fails if line or branch coverage falls
-below that baseline. The product floor target is 100% line coverage over the
+`tools/quality/coverage_baseline.json`, and fails if line coverage falls below
+that baseline. Branch coverage is reported but is not gated. The product floor target is 100% line coverage over the
 product packages, which is not yet met; the regression gate is the enforced rule today.
 
 ## Latest measured coverage
 
 CI run `45488589255` at source `5afc2f3d` measured 37,933 of 48,008 product
 lines covered (75.72%) and 11,740 of 17,592 branches covered (66.73%). Branch
-coverage is reported for information; the enforced checks are regression
-against the baseline above. The current line gap is 10,075 statements, so the
-100% target remains open.
+coverage is informational only. The enforced check is line regression against
+the baseline above. The current line gap is 10,075 statements, so the 100%
+target remains open.
 
 | Product package | Line coverage |
 |---|---:|

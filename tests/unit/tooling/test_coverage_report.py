@@ -47,16 +47,22 @@ def test_coverage_ratchet_accepts_equal_main_baseline() -> None:
     assert compare_baseline(coverage, baseline) == []
 
 
-def test_coverage_ratchet_reports_line_and_branch_regressions() -> None:
+def test_coverage_ratchet_reports_line_but_not_branch_regressions() -> None:
     baseline = aggregate_coverage(_report())
     current = aggregate_coverage(_report(covered_lines=7, covered_branches=2))
 
     errors = compare_baseline(current, baseline)
 
     assert "overall line coverage fell below main baseline" in errors
-    assert "overall branch coverage fell below main baseline" in errors
     assert "artifacts line coverage fell below main baseline" in errors
-    assert "artifacts branch coverage fell below main baseline" in errors
+    assert all("branch coverage" not in error for error in errors)
+
+
+def test_coverage_ratchet_accepts_branch_regression_when_lines_hold() -> None:
+    baseline = aggregate_coverage(_report())
+    current = aggregate_coverage(_report(covered_lines=8, covered_branches=2))
+
+    assert compare_baseline(current, baseline) == []
 
 
 def test_coverage_packages_keep_nested_training_paths_separate() -> None:

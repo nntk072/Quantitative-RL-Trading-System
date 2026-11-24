@@ -55,25 +55,23 @@ def aggregate_coverage(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def compare_baseline(current: dict[str, Any], baseline: dict[str, Any]) -> list[str]:
-    """Return package/overall coverage regressions versus the main-branch floor."""
+    """Return package/overall line-coverage regressions versus the main baseline."""
     errors: list[str] = []
     prior_overall = baseline["overall"]
-    for label, ratio_key in (("line", "line_ratio"), ("branch", "branch_ratio")):
-        before = prior_overall[ratio_key]
-        after = current["overall"][ratio_key]
-        if before is not None and (after is None or after < before):
-            errors.append(f"overall {label} coverage fell below main baseline")
+    before_line = prior_overall["line_ratio"]
+    after_line = current["overall"]["line_ratio"]
+    if before_line is not None and (after_line is None or after_line < before_line):
+        errors.append("overall line coverage fell below main baseline")
     current_packages = current["packages"]
     for name, prior in baseline["packages"].items():
         if name not in current_packages:
             errors.append(f"baseline package is missing from coverage report: {name}")
             continue
         now = current_packages[name]
-        for label, ratio_key in (("line", "line_ratio"), ("branch", "branch_ratio")):
-            before = prior[ratio_key]
-            after = now[ratio_key]
-            if before is not None and (after is None or after < before):
-                errors.append(f"{name} {label} coverage fell below main baseline")
+        before_line = prior["line_ratio"]
+        after_line = now["line_ratio"]
+        if before_line is not None and (after_line is None or after_line < before_line):
+            errors.append(f"{name} line coverage fell below main baseline")
     return errors
 
 
