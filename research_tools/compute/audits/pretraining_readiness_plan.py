@@ -45,7 +45,15 @@ class ReadinessPlan:
     schema_version: str
     tasks: tuple[TaskSpec, ...]
     barriers: tuple[BarrierSpec, ...]
-    external_scientific_gates: tuple[str, ...]
+    common_external_scientific_gates: tuple[str, ...]
+    price_external_scientific_gates: tuple[str, ...]
+    common_barriers: tuple[str, ...]
+    price_barriers: tuple[str, ...]
+
+    @property
+    def external_scientific_gates(self) -> tuple[str, ...]:
+        """Return all external gates in the legacy flat-list shape."""
+        return self.common_external_scientific_gates + self.price_external_scientific_gates
 
 
 def _mapping(value: Any, label: str) -> Mapping[str, Any]:
@@ -227,24 +235,37 @@ def _parse_barriers(
     return tuple(barriers)
 
 
-def _parse_external_gates(root: Mapping[str, Any]) -> tuple[str, ...]:
-    """Parse the explicit gates that remain outside implementation readiness.
+def _parse_external_gates(
+    root: Mapping[str, Any],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Parse common and PRICE-only gates outside implementation readiness.
 
     Args:
         root: Parsed readiness-plan mapping.
 
     Returns:
-        Unique non-empty scientific gate identifiers.
+        Unique common gates and PRICE-only gates.
     """
-    external = tuple(
-        str(item)
-        for item in _sequence(root.get("external_scientific_gates"), "external_scientific_gates")
-    )
-    if not external or any(not item for item in external):
+    value = root.get("external_scientific_gates")
+    if isinstance(value, Mapping):
+        common = tuple(
+            str(item) for item in _sequence(value.get("common"), "common scientific gates")
+        )
+        price = tuple(
+            str(item) for item in _sequence(value.get("price", []), "PRICE scientific gates")
+        )
+    else:
+        # Schema v1 stored all external gates in one list. Treat those as common
+        # prerequisites; new plans must classify PRICE-only gates explicitly.
+        common = tuple(str(item) for item in _sequence(value, "external_scientific_gates"))
+        price = ()
+    if not common or any(not item for item in common + price):
         raise ValueError("scientific gates must remain explicit and external")
-    if len(external) != len(set(external)):
+    if len(common) != len(set(common)) or len(price) != len(set(price)):
         raise ValueError("external scientific gates must be unique")
-    return external
+    if set(common) & set(price):
+        raise ValueError("common and PRICE scientific gates must be disjoint")
+    return common, price
 
 
 def load_plan(path: Path) -> ReadinessPlan:
@@ -258,15 +279,34 @@ def load_plan(path: Path) -> ReadinessPlan:
     """
     raw = OmegaConf.to_container(OmegaConf.load(path), resolve=True)
     root = _mapping(raw, "pretraining readiness plan")
-    if root.get("schema_version") != "pretraining-parallel-readiness-v1":
+    if root.get("schema_version") not in {
+        "pretraining-parallel-readiness-v1",
+        "pretraining-parallel-readiness-v2",
+    }:
         raise ValueError("unsupported pretraining readiness plan schema")
     if root.get("scientific_training_authorization") != "never_from_this_plan_alone":
         raise ValueError("execution DAG must not self-authorize scientific training")
 
     tasks = _parse_tasks(root)
     barriers = _parse_barriers(root, tasks)
-    external = _parse_external_gates(root)
-    return ReadinessPlan(str(root["schema_version"]), tasks, barriers, external)
+    common_external, price_external = _parse_external_gates(root)
+    authorization = _mapping(root.get("authorization_barriers"), "authorization_barriers")
+    common = tuple(str(item) for item in _sequence(authorization.get("common"), "common barriers"))
+    price = tuple(str(item) for item in _sequence(authorization.get("price"), "PRICE barriers"))
+    barrier_ids = {barrier.barrier_id for barrier in barriers}
+    if not common or not price or len(set(common)) != len(common) or len(set(price)) != len(price):
+        raise ValueError("common and PRICE authorization barriers must be non-empty and unique")
+    if set(common) & set(price) or not set(common + price) <= barrier_ids:
+        raise ValueError("authorization barriers must reference disjoint known barriers")
+    return ReadinessPlan(
+        str(root["schema_version"]),
+        tasks,
+        barriers,
+        common_external,
+        price_external,
+        common,
+        price,
+    )
 
 
 def expand_token(token: str, *, python: str, run_root: Path, source_sha: str) -> str:
@@ -350,6 +390,20 @@ def plan_summary(plan: ReadinessPlan) -> dict[str, Any]:
     Returns:
         Plan summary with authorization disabled.
     """
+    by_barrier = {barrier.barrier_id: barrier for barrier in plan.barriers}
+    by_task = {task.task_id: task for task in plan.tasks}
+
+    def closure(barrier_ids: tuple[str, ...]) -> list[str]:
+        pending = [task for barrier_id in barrier_ids for task in by_barrier[barrier_id].requires]
+        selected: set[str] = set()
+        while pending:
+            task_id = pending.pop()
+            if task_id in selected:
+                continue
+            selected.add(task_id)
+            pending.extend(by_task[task_id].depends_on)
+        return [task.task_id for task in plan.tasks if task.task_id in selected]
+
     return {
         "schema_version": plan.schema_version,
         "executes_commands": False,
@@ -365,7 +419,25 @@ def plan_summary(plan: ReadinessPlan) -> dict[str, Any]:
             for task in plan.tasks
         ],
         "barriers": [asdict(barrier) for barrier in plan.barriers],
+        "authorization_dependency_closures": {
+            "common": {
+                "barriers": list(plan.common_barriers),
+                "tasks": closure(plan.common_barriers),
+                "external_scientific_gates": list(plan.common_external_scientific_gates),
+            },
+            "price": {
+                "barriers": list(plan.common_barriers + plan.price_barriers),
+                "tasks": closure(plan.common_barriers + plan.price_barriers),
+                "external_scientific_gates": list(
+                    plan.common_external_scientific_gates + plan.price_external_scientific_gates
+                ),
+            },
+        },
         "external_scientific_gates": list(plan.external_scientific_gates),
+        "external_scientific_gate_scopes": {
+            "common": list(plan.common_external_scientific_gates),
+            "price": list(plan.price_external_scientific_gates),
+        },
         "scientific_training_authorized": False,
         "price_training_authorized": False,
     }

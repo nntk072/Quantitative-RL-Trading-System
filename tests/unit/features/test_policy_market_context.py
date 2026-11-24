@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -49,6 +51,24 @@ def test_short_schedule_is_known_at_first_bar_and_quotes_stop_at_bar_close(tmp_p
     # The quote stamped exactly at 16:31 belongs to the next bar.
     assert np.isclose(first["tick_bid_offset_atr"], 0.5)
     assert np.isclose(first["tick_ask_offset_atr"], 0.6)
+
+
+def test_configured_calendar_includes_ftmo_early_close_on_2025_01_09() -> None:
+    index = pd.date_range("2025-01-09 16:29", periods=2, freq="min", tz="Etc/GMT-3")
+    bars = pd.DataFrame({"close": [100.0, 101.0]}, index=index)
+    features = pd.DataFrame({"atr_5": [2.0, 2.0]}, index=index)
+    schedule_path = Path(__file__).resolve().parents[3] / "config/ny_session_schedule.csv"
+
+    context = build_policy_market_context(
+        bars,
+        features,
+        _book(index, [30, 90]),
+        schedule_path=schedule_path,
+    )
+
+    first = context.iloc[0]
+    assert first["ny_scheduled_short"] == 1.0
+    assert np.isclose(first["ny_scheduled_close_fraction"], 990 / 1440)
 
 
 def test_future_ticks_do_not_change_completed_bar_context(tmp_path) -> None:

@@ -121,13 +121,17 @@ def load_market_bars(
     symbol: str,
     dataset_name: str = "training",
     raw_cache: dict[Path, pd.DataFrame] | None = None,
-    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame]
+    preprocessed_cache: dict[
+        tuple[Path, str, str, str, str, float | None, str | None], pd.DataFrame
+    ]
     | None = None,
     cache_metrics: dict[str, float | int] | None = None,
     inclusive_max_timestamp: str | None = None,
 ) -> tuple[pd.DataFrame, Path]:
     source = configured_m1_path(cfg, symbol, dataset_name)
     tz = str(cfg.data.tz)
+    session_tz = str(OmegaConf.select(cfg, "session.tz", default=tz))
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
     ny_end = str(cfg.session.end)
     price_grid = configured_price_grid_increment(cfg)
     dataset = OmegaConf.select(cfg, f"data.datasets.{dataset_name}")
@@ -163,7 +167,7 @@ def load_market_bars(
             source_end_exclusive.isoformat() if source_end_exclusive is not None else "",
         )
     )
-    cache_key = (source, tz, ny_end, price_grid, window_identity)
+    cache_key = (source, tz, session_tz, source_clock_model, ny_end, price_grid, window_identity)
     if preprocessed_cache is not None and cache_key in preprocessed_cache:
         if cache_metrics is not None:
             cache_metrics["preprocessed_cache_hits"] = (
@@ -226,8 +230,13 @@ def load_market_bars(
     preprocess_started = time.perf_counter()
     raw = quantize_bar_prices(raw, price_grid)
     bars = clean(raw, tz=tz)
-    bars = add_session_labels(bars, tz=tz, ny_end=ny_end)
-    bars = add_session_id(bars)
+    bars = add_session_labels(
+        bars,
+        tz=session_tz,
+        ny_end=ny_end,
+        source_clock_model=source_clock_model,
+    )
+    bars = add_session_id(bars, session_tz=session_tz, source_clock_model=source_clock_model)
     if cache_metrics is not None:
         cache_metrics["preprocessed_builds"] = int(cache_metrics.get("preprocessed_builds", 0)) + 1
         cache_metrics["preprocessing_seconds"] = (
@@ -245,7 +254,9 @@ def load_all_market_bars(
     cfg: Any,
     symbol: str,
     raw_cache: dict[Path, pd.DataFrame] | None = None,
-    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame]
+    preprocessed_cache: dict[
+        tuple[Path, str, str, str, str, float | None, str | None], pd.DataFrame
+    ]
     | None = None,
     cache_metrics: dict[str, float | int] | None = None,
     inclusive_max_timestamp: str | None = None,
@@ -623,7 +634,9 @@ def main() -> int:
     primary_symbol = str(cfg.data.primary)
     secondary_symbol = str(cfg.data.secondary)
     raw_cache: dict[Path, pd.DataFrame] = {}
-    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame] = {}
+    preprocessed_cache: dict[
+        tuple[Path, str, str, str, str, float | None, str | None], pd.DataFrame
+    ] = {}
     source_index_cache: dict[Path, pd.DatetimeIndex] = {}
     cache_metrics: dict[str, float | int] = {
         "raw_loads": 0,

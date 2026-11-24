@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `market_data.transforms.se
 
 **Purpose:** Add a ``session_id`` integer column: unique per calendar date.
 
-**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_id` · **Source:** [market_data/transforms/sessions.py:162](../../../../market_data/transforms/sessions.py#L162)
+**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_id` · **Source:** [market_data/transforms/sessions.py:246](../../../../market_data/transforms/sessions.py#L246)
 
 **Inputs and outputs:**
 
@@ -16,6 +16,8 @@ This page contains 3 public callable records owned by `market_data.transforms.se
 
   ```text
   df: Input DataFrame supplying the rows used by this calculation.
+  session_tz: Timezone used to derive each row's calendar-session date.
+  source_clock_model: Interpretation of source-index wall labels.
   ```
 
 - **Returns:**
@@ -70,7 +72,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Add a ``session`` column (asia/london/ny/closed) using :func:`get_session`.
 
-**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_labels` · **Source:** [market_data/transforms/sessions.py:104](../../../../market_data/transforms/sessions.py#L104)
+**Exact API:** {py:obj}`market_data.transforms.sessions.add_session_labels` · **Source:** [market_data/transforms/sessions.py:182](../../../../market_data/transforms/sessions.py#L182)
 
 **Inputs and outputs:**
 
@@ -78,8 +80,9 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
   ```text
   df: Input DataFrame supplying the rows used by this calculation.
-  tz: Text or path value identifying the tz.
-  ny_end: Text or path value identifying the ny end.
+  tz: Session timezone.
+  ny_end: Inclusive NY-session end.
+  source_clock_model: Interpretation of source-index wall labels.
   ```
 
 - **Returns:**
@@ -90,7 +93,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_asia_masks_london_and_asia_ctx`](../../../../tests/unit/features/test_pd_context.py#L80)
+1. [test fixture: `test_asia_masks_london_and_asia_ctx`](../../../../tests/unit/features/test_pd_context.py#L97)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -107,7 +110,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_london_has_asia_not_completed_self_as_running`](../../../../tests/unit/features/test_pd_context.py#L96)
+2. [test fixture: `test_london_has_asia_not_completed_self_as_running`](../../../../tests/unit/features/test_pd_context.py#L113)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -137,7 +140,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Boolean mask of bars whose clock time falls in the tradable NY window.
 
-**Exact API:** {py:obj}`market_data.transforms.sessions.ny_session_mask` · **Source:** [market_data/transforms/sessions.py:83](../../../../market_data/transforms/sessions.py#L83)
+**Exact API:** {py:obj}`market_data.transforms.sessions.ny_session_mask` · **Source:** [market_data/transforms/sessions.py:139](../../../../market_data/transforms/sessions.py#L139)
 
 **Inputs and outputs:**
 
@@ -145,8 +148,10 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
   ```text
   index: Position or label identifying the requested item.
-  start: Text or path value identifying the start.
-  end: Text or path value identifying the end.
+  start: Session start as HH:MM. Defaults to the selected exchange clock.
+  end: Session end as HH:MM. Defaults to the selected exchange clock.
+  session_tz: IANA timezone for boundaries; ``None`` preserves legacy behavior.
+  source_clock_model: Interpretation of source-index wall labels.
   ```
 
 - **Returns:**
@@ -170,23 +175,28 @@ def test_trading_mask_separate_from_features(sample_bars):
     assert labeled.loc[mask, "session"].eq("ny").all()
 ```
 
-2. [production caller: `plot_coverage_calendar`](../../../../evaluation/plotting/data_plots.py#L82)
+2. [test fixture: `test_ny_mask_converts_helsinki_wall_time_before_classifying`](../../../../tests/unit/market_data/test_helsinki_ny_sessions.py#L36)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-    _apply_style()
-    idx = pd.DatetimeIndex(bars.index)
-    days = idx.normalize()
-    full = days.value_counts().sort_index()
-    ny_mask = ny_session_mask(idx)
-    ny_counts = (
-        days[ny_mask.to_numpy()].value_counts().sort_index().reindex(full.index).fillna(0)
-        if ny_mask.any()
-        else pd.Series(0.0, index=full.index)
+def test_ny_mask_converts_helsinki_wall_time_before_classifying(
+    date: str, labels: list[str], expected: list[bool]
+) -> None:
+    index = pd.DatetimeIndex([f"{date} {label}" for label in labels]).tz_localize("Etc/GMT-3")
+
+    actual = ny_session_mask(
+        index,
+        start="09:30",
+        end="16:00",
+        session_tz="America/New_York",
+        source_clock_model="europe_helsinki",
     )
-# … caller assertions omitted …
+
+    assert actual.tolist() == expected
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

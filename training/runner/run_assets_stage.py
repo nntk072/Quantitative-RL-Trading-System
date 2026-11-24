@@ -122,7 +122,11 @@ def _prepare_run_assets(
             cfg,
             raw_columns=list(strategy_from_cfg(cfg)[0].raw_columns),
             feature_config_hash=feat_cache.stem,
-            tickbook=ticks_covering(primary_ticks, train_bars),
+            tickbook=ticks_covering(
+                primary_ticks,
+                train_bars,
+                source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+            ),
             pre_ny_by_date=pre_ny_by_date,
         )
         obs_mmap = str(bundle_path / "obs_features.npy")
@@ -151,7 +155,11 @@ def _prepare_run_assets(
                 cfg,
                 raw_columns=list(strategy_from_cfg(cfg)[0].raw_columns),
                 feature_config_hash=feat_cache.stem,
-                tickbook=ticks_covering(primary_ticks, test_bars),
+                tickbook=ticks_covering(
+                    primary_ticks,
+                    test_bars,
+                    source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                ),
                 pre_ny_by_date=None,
             )
             test_eval_spec = EnvSpec.from_cfg(

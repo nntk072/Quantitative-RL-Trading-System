@@ -8,6 +8,7 @@ import pandas as pd
 
 from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT
 from market_data.loading.ticks import TickBook
+from market_data.news.guard import news_guard_config
 from simulation.environment.distribution_reward import DistributionReward
 from simulation.environment.env import TradingEnv
 from simulation.environment.po3_reward import PO3Reward
@@ -346,7 +347,10 @@ def build_eval_common(
             str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
         "scheduled_session_closes": scheduled_session_closes(cfg),
-        "session_start": str(cfg.session.get("start", "16:30")),
+        "session_start": str(cfg.session.get("start", "08:30")),
+        "session_end": str(cfg.session.get("end", "15:00")),
+        "session_timezone": str(cfg.session.get("tz", "America/Chicago")),
+        "source_clock_model": str(cfg.data.get("timestamp_clock", "native")),
         "trading_policy": policy.to_dict(),
         "fill_latency_bars": fill_latency_bars(cfg),
         "limit_order_max_offset_atr": float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),
@@ -679,6 +683,7 @@ def make_env(
         fill_delay_ms=fill_delay_ms(cfg),
         randomized_fill_latency_ms=randomized_fill_latency_ms(cfg),
         max_tick_quote_wait_ms=max_tick_quote_wait_ms(cfg),
+        news_guard=news_guard_config(cfg.execution.get("news_spike_guard")),
         server_side_protective_orders=bool(
             cfg.execution.get("server_side_protective_orders", False)
         ),
@@ -694,7 +699,10 @@ def make_env(
             str(tf) for tf in cfg.risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
         scheduled_session_closes=scheduled_session_closes(cfg),
-        session_start=str(cfg.session.get("start", "16:30")),
+        session_start=str(cfg.session.get("start", "08:30")),
+        session_end=str(cfg.session.get("end", "15:00")),
+        session_timezone=str(cfg.session.get("tz", "America/Chicago")),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         trading_policy=policy.to_dict(),
         fill_latency_bars=fill_latency_bars(cfg),
         limit_order_max_offset_atr=float(cfg.execution.get("limit_order_max_offset_atr", 1.0)),

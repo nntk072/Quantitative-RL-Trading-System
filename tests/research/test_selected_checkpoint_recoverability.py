@@ -130,7 +130,7 @@ def test_stable_hash_rejects_checkpoint_changed_during_read(
         path.write_bytes(b"replacement checkpoint")
         return digest
 
-    monkeypatch.setattr(audit, "sha256", hash_then_replace)
+    monkeypatch.setattr(audit._module, "sha256", hash_then_replace)
 
     with pytest.raises(RuntimeError, match="changed while hashing"):
         stable_sha256(candidate)

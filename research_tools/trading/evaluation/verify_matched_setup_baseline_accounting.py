@@ -137,14 +137,61 @@ def _read_ledger(path: Path) -> list[dict[str, str]]:
         return rows
 
 
+def _decision_key(row: dict[str, str]) -> tuple[str, ...]:
+    """Return fields that identify the matched decision opportunity."""
+    return tuple(
+        row.get(field, "").strip()
+        for field in ("decision_id", "decision_time", "decision_bar_index", "decision_bar_time")
+    )
+
+
+def _decision_prefix_matches(
+    candidate: list[dict[str, str]], reference: list[dict[str, str]]
+) -> bool:
+    """Check whether candidate decisions exactly match a reference prefix."""
+    if len(candidate) > len(reference):
+        return False
+    return all(
+        _decision_key(left) == _decision_key(right) for left, right in zip(candidate, reference)
+    )
+
+
+def _verified_risk_breach_terminal(report: dict[str, Any]) -> bool:
+    """Check the recorded metadata needed to accept a shorter breached arm."""
+    return bool(
+        report.get("status") == "passed"
+        and report.get("completed_data_split") is False
+        and report.get("episode_end_reason") == "risk_breach"
+        and isinstance(report.get("breach_event_count"), int)
+        and report["breach_event_count"] > 0
+        and report.get("breach_event_count") == report.get("reported_breach_count")
+        and report.get("breach_event_metadata_valid") is True
+        and report.get("evaluation_step_count_matches_artifacts") is True
+    )
+
+
+def _valid_breach_event_metadata(events: object) -> bool:
+    """Require every recorded breach to include a cause and timezone-aware time."""
+    if not isinstance(events, list) or not events:
+        return False
+    for event in events:
+        if not isinstance(event, dict) or not isinstance(event.get("reason"), str):
+            return False
+        if not event["reason"].strip():
+            return False
+        event_time = event.get("detection_time", event.get("time"))
+        if _timestamp(event_time) is None:
+            return False
+    return True
+
+
 def _audit_arm(
     *,
     arm: str,
     arm_dir: Path,
     initial_balance: float,
-    common_decision_ids: list[str] | None,
     common_input_hashes: dict[str, str] | None,
-) -> tuple[dict[str, Any], list[str], dict[str, str]]:
+) -> tuple[dict[str, Any], list[dict[str, str]], dict[str, str]]:
     """Reconcile one arm's decision links, realized cashflows, and summary metrics."""
     decisions_path = arm_dir / "decisions.csv"
     ledger_path = arm_dir / "trade_fill_event_ledger.csv"
@@ -165,10 +212,8 @@ def _audit_arm(
         failures.append("decision_id_missing")
     if len(set(decision_ids)) != len(decision_ids):
         failures.append("decision_id_duplicate")
-    if common_decision_ids is not None and decision_ids != common_decision_ids:
-        failures.append("decision_sequence_differs_from_matched_arms")
     else:
-        checks["decision_rows_have_unique_ids_and_match_arms"] += 1
+        checks["decision_ids_are_unique"] += 1
 
     input_hashes = metadata.get("input_hashes")
     if not isinstance(input_hashes, dict) or not input_hashes:
@@ -330,6 +375,7 @@ def _audit_arm(
         failures.append("metrics_report_incomplete_positions")
 
     equity_rows: list[float] = []
+    evaluation_step_count_matches_artifacts = False
     with equity_path.open(newline="", encoding="utf-8") as stream:
         reader = csv.DictReader(stream)
         if not reader.fieldnames or "equity" not in reader.fieldnames:
@@ -373,20 +419,30 @@ def _audit_arm(
         else:
             checks["equity_max_drawdown_matches_metrics"] += 1
         expected_steps = _number(evaluation.get("n_steps"))
+        evaluation_step_count_matches_artifacts = False
         if expected_steps is None or not expected_steps.is_integer():
             failures.append("evaluation_step_count_missing")
         elif int(expected_steps) != len(decisions) or int(expected_steps) != len(equity_rows) - 1:
             failures.append("decision_or_equity_rows_differ_from_evaluation_steps")
         else:
+            evaluation_step_count_matches_artifacts = True
             checks["decision_and_equity_rows_match_evaluation_steps"] += 1
-
     breach_events = evaluation.get("breach_events")
-    if not isinstance(breach_events, list) or int(metrics.get("breach_count", -1)) != len(
-        breach_events
+    reported_breach_count = _number(metrics.get("breach_count"))
+    if (
+        not isinstance(breach_events, list)
+        or reported_breach_count is None
+        or not reported_breach_count.is_integer()
+        or int(reported_breach_count) != len(breach_events)
     ):
         failures.append("breach_events_do_not_match_metrics_count")
+        reported_breach_count_value = None
     else:
         checks["breach_events_match_metrics_count"] += 1
+        reported_breach_count_value = int(reported_breach_count)
+    breach_event_metadata_valid = _valid_breach_event_metadata(breach_events)
+    if isinstance(breach_events, list) and breach_events and not breach_event_metadata_valid:
+        failures.append("breach_event_metadata_invalid")
 
     for code in input_hashes:
         if not isinstance(code, str):
@@ -406,11 +462,17 @@ def _audit_arm(
         "realized_net_pnl": total_realized,
         "ending_equity": ending_equity,
         "breach_event_count": len(breach_events) if isinstance(breach_events, list) else None,
+        "reported_breach_count": reported_breach_count_value,
+        "breach_event_metadata_valid": breach_event_metadata_valid,
+        "completed_data_split": evaluation.get("completed_data_split"),
+        "episode_end_reason": evaluation.get("episode_end_reason"),
+        "n_steps": _number(evaluation.get("n_steps")),
+        "evaluation_step_count_matches_artifacts": evaluation_step_count_matches_artifacts,
         "input_hashes": input_hashes,
         "checks": dict(sorted(checks.items())),
         "failures": sorted(set(failures)),
     }
-    return result, decision_ids, input_hashes
+    return result, decisions, input_hashes
 
 
 def audit_bundle(bundle_dir: Path) -> dict[str, Any]:
@@ -427,8 +489,8 @@ def audit_bundle(bundle_dir: Path) -> dict[str, Any]:
     if initial_balance is None or not isinstance(runs, list) or not runs:
         raise ValueError("bundle needs a finite initial balance and at least one run")
     reports: list[dict[str, Any]] = []
-    common_decision_ids: list[str] | None = None
     common_input_hashes: dict[str, str] | None = None
+    decision_sequences: list[list[dict[str, str]]] = []
     for run in runs:
         if not isinstance(run, dict):
             raise ValueError("bundle run record must be an object")
@@ -480,15 +542,27 @@ def audit_bundle(bundle_dir: Path) -> dict[str, Any]:
             arm=arm,
             arm_dir=arm_dir,
             initial_balance=initial_balance,
-            common_decision_ids=common_decision_ids,
             common_input_hashes=common_input_hashes,
         )
-        if common_decision_ids is None:
-            common_decision_ids = decision_ids
+        decision_sequences.append(decision_ids)
         if common_input_hashes is None:
             common_input_hashes = input_hashes
         arm_report["artifacts"] = artifact_map
         reports.append(arm_report)
+
+    reference_decisions = max(decision_sequences, key=len)
+    for report, decisions in zip(reports, decision_sequences, strict=True):
+        if not _decision_prefix_matches(decisions, reference_decisions):
+            report["failures"].append("decision_sequence_differs_from_matched_arms")
+        elif len(decisions) < len(reference_decisions):
+            if _verified_risk_breach_terminal(report):
+                report["checks"]["decision_rows_match_verified_risk_breach_prefix"] = True
+            else:
+                report["failures"].append("short_decision_sequence_without_verified_risk_breach")
+        else:
+            report["checks"]["decision_rows_match_common_sequence"] = True
+        report["failures"] = sorted(set(report["failures"]))
+        report["status"] = "failed" if report["failures"] else "passed"
     return {
         "schema": "matched_setup_baseline_accounting_audit_v1",
         "bundle_id": manifest.get("finding_id"),

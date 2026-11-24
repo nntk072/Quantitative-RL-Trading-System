@@ -17,7 +17,12 @@ def main() -> int:
     paths.extend((ROOT / ".agents").rglob("*.md"))
     paths.extend((ROOT / ".codex").rglob("*.md"))
     paths.extend((ROOT / ".claude").rglob("*.md"))
-    paths = [path for path in paths if ".agents/skills" not in path.as_posix()]
+    # Skip Claude Code worktree copies: they are other sessions' checkouts, not this repo.
+    paths = [
+        path
+        for path in paths
+        if ".agents/skills" not in path.as_posix() and "/worktrees/" not in path.as_posix()
+    ]
     for path in sorted(set(paths)):
         text = path.read_text(encoding="utf-8")
         relative = path.relative_to(ROOT)

@@ -73,6 +73,7 @@ is read by every listed package.
 | `backtest.validation.max_loss_per_trade_usd` | `number` | `900.0` | `simulation/backtest` |
 | `backtest.validation.take_profit_per_trade_usd` | `null` | `null` | `simulation/backtest` |
 | `backtest.validation.validation_mode` | `boolean` | `false` | `simulation/backtest` |
+| `compute.autocast_dtype` | `string` | `"auto"` | `compute` |
 | `compute.cudnn_benchmark` | `boolean` | `true` | `compute` |
 | `constrained_rl.cost_discount_gamma` | `number` | `1.0` | `learning/rl` |
 | `constrained_rl.dual_learning_rate` | `number` | `0.1` | `learning/rl` |
@@ -149,7 +150,7 @@ is read by every listed package.
 | `data.split.train_start` | `string` | `"2024-12-30"` | `market_data/configuration` |
 | `data.symbols` | `array` | `["US100.cash","US500.cash"]` | `market_data/configuration` |
 | `data.timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `market_data/configuration` |
-| `data.timestamp_clock` | `string` | `"ftmo_mt5_us_dst"` | `market_data/configuration` |
+| `data.timestamp_clock` | `string` | `"europe_helsinki"` | `market_data/configuration` |
 | `data.tz` | `string` | `"Etc/GMT-3"` | `market_data/configuration` |
 | `device` | `string` | `"auto"` | `compute/environment` |
 | `encoder.windows.d1` | `integer` | `5` | `models/encoders` |
@@ -245,12 +246,22 @@ is read by every listed package.
 | `evaluation.trade_idea_plots.standard_deviation.levels` | `string` | `"${features.entry_ideas.levels}"` | `evaluation` |
 | `evaluation.trade_idea_plots.standard_deviation.max_chart_range_fraction` | `number` | `0.15` | `evaluation` |
 | `evaluation.trade_idea_plots.standard_deviation.timeframes` | `array` | `["M1","M3","M5","M10","M15","M30","H1","H4","D1"]` | `evaluation` |
+| `execution.approved_no_fill_quote_anchors.US100.cash` | `array` | `[]` | `trading/execution and simulation` |
+| `execution.approved_no_fill_quote_anchors.US500.cash` | `array` | `[]` | `trading/execution and simulation` |
 | `execution.fill_delay_ms` | `integer` | `0` | `trading/execution and simulation` |
 | `execution.fill_latency_bars` | `integer` | `0` | `trading/execution and simulation` |
 | `execution.limit_order_max_offset_atr` | `number` | `1.0` | `trading/execution and simulation` |
 | `execution.limit_order_max_ttl_bars` | `integer` | `60` | `trading/execution and simulation` |
 | `execution.limit_order_require_trade_through` | `boolean` | `false` | `trading/execution and simulation` |
 | `execution.max_tick_quote_wait_ms` | `integer` | `60000` | `trading/execution and simulation` |
+| `execution.news_spike_guard.baseline_lookback_sessions` | `integer` | `20` | `trading/execution and simulation` |
+| `execution.news_spike_guard.blackout_minutes_after` | `integer` | `5` | `trading/execution and simulation` |
+| `execution.news_spike_guard.blackout_minutes_before` | `integer` | `5` | `trading/execution and simulation` |
+| `execution.news_spike_guard.calendar_path` | `string` | `"data/news/usd_high_impact_calendar.csv"` | `trading/execution and simulation` |
+| `execution.news_spike_guard.enabled` | `boolean` | `true` | `trading/execution and simulation` |
+| `execution.news_spike_guard.exempt_open_manipulation` | `boolean` | `true` | `trading/execution and simulation` |
+| `execution.news_spike_guard.spike_atr_multiple` | `number` | `2.0` | `trading/execution and simulation` |
+| `execution.news_spike_guard.spike_window_bars` | `integer` | `5` | `trading/execution and simulation` |
 | `execution.randomized_fill_latency_ms` | `number` | `0.0` | `trading/execution and simulation` |
 | `execution.server_side_protective_orders` | `boolean` | `false` | `trading/execution and simulation` |
 | `features.adx_period` | `integer` | `14` | `features` |
@@ -363,12 +374,18 @@ is read by every listed package.
 | `ppo.mode_prior_coef` | `number` | `0.001` | `learning/rl` |
 | `ppo.n_epochs` | `integer` | `15` | `learning/rl` |
 | `ppo.n_steps` | `integer` | `2048` | `learning/rl` |
+| `ppo.overlap_collect` | `boolean` | `false` | `learning/rl` |
 | `ppo.policy_distribution` | `string` | `"clamped_diagonal_gaussian"` | `learning/rl` |
 | `ppo.rollout_buffer_on_device` | `boolean` | `true` | `learning/rl` |
+| `ppo.rollout_feature_graph` | `boolean` | `false` | `learning/rl` |
+| `ppo.rollout_host_mask_check` | `boolean` | `false` | `learning/rl` |
+| `ppo.rollout_policy_graph` | `boolean` | `false` | `learning/rl` |
 | `ppo.semantic_head_width` | `integer` | `64` | `learning/rl` |
+| `ppo.torch_compile_features` | `boolean` | `false` | `learning/rl` |
 | `ppo.total_timesteps` | `integer` | `20000000` | `learning/rl` |
 | `ppo.trade_setup_conditioned.embedding_dim` | `integer` | `32` | `learning/rl` |
 | `ppo.trade_setup_conditioned.execution_hidden_dim` | `integer` | `128` | `learning/rl` |
+| `ppo.update_graph` | `boolean` | `false` | `learning/rl` |
 | `quality_diagnostics.enabled` | `boolean` | `false` | `training and evaluation` |
 | `quality_execution.effective_n_envs` | `null` | `null` | `trading/risk and simulation` |
 | `quality_execution.exact_n_envs` | `boolean` | `false` | `trading/risk and simulation` |
@@ -395,9 +412,9 @@ is read by every listed package.
 | `sac.tau` | `number` | `0.005` | `learning/rl` |
 | `sac.train_freq` | `integer` | `1` | `learning/rl` |
 | `session.dst_flag` | `boolean` | `true` | `market_data and features` |
-| `session.end` | `string` | `"23:00"` | `market_data and features` |
-| `session.start` | `string` | `"16:30"` | `market_data and features` |
-| `session.tz` | `string` | `"Etc/GMT-3"` | `market_data and features` |
+| `session.end` | `string` | `"15:00"` | `market_data and features` |
+| `session.start` | `string` | `"08:30"` | `market_data and features` |
+| `session.tz` | `string` | `"America/Chicago"` | `market_data and features` |
 | `strategy.batch_windows` | `integer` | `256` | `trading/strategies` |
 | `strategy.entry.enforce_gate` | `boolean` | `false` | `trading/strategies` |
 | `strategy.entry.mode` | `string` | `"legacy"` | `trading/strategies` |
@@ -426,7 +443,7 @@ is read by every listed package.
 | `strategy.risk.sl_mode` | `string` | `"fixed"` | `trading/strategies` |
 | `strategy.risk.tp_mode` | `string` | `"fixed"` | `trading/strategies` |
 | `strategy.risk.tp_reference` | `string` | `"structural"` | `trading/strategies` |
-| `strategy.session.timezone` | `string` | `"Etc/GMT-3"` | `trading/strategies` |
+| `strategy.session.timezone` | `string` | `"America/Chicago"` | `trading/strategies` |
 | `strategy.tp.allowed_targets` | `array` | `["rr","buyside_liquidity","sellside_liquidity","previous_day_high_low"]` | `trading/strategies` |
 | `strategy.tp.invalid_target_policy` | `string` | `"rr_fallback"` | `trading/strategies` |
 | `strategy.tp.mode` | `string` | `"agent"` | `trading/strategies` |

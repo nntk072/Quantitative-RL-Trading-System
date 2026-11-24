@@ -1,5 +1,7 @@
 module_id: trading
-source_roots: [trading, research_tools/trading]
+source_roots:
+- trading
+- research_tools/trading
 api_paths:
 - trading/__init__.py
 - trading/account/__init__.py
@@ -79,14 +81,21 @@ caller_paths:
 - simulation/environment/worker.py
 - tests/architecture/test_public_imports.py
 - tests/integration/backtest/test_account_transition_parity.py
+- tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
+- tests/integration/backtest/test_action_tape_replay.py
 - tests/integration/backtest/test_agent_selected_entry_execution.py
 - tests/integration/backtest/test_broker_fill_accounting.py
 - tests/integration/backtest/test_broker_quote_parity.py
 - tests/integration/backtest/test_engine_backtrader_signal_parity.py
 - tests/integration/backtest/test_engine_execution_contract.py
 - tests/integration/backtest/test_entry_levels.py
+- tests/integration/backtest/test_market_entry_fill_event_parity.py
+- tests/integration/backtest/test_market_order_quote_wait_contract.py
+- tests/integration/backtest/test_market_order_rejection_parity.py
 - tests/integration/backtest/test_multi_target_protective_lifecycle.py
+- tests/integration/backtest/test_news_spike_guard_backtest.py
 - tests/integration/backtest/test_no_action_account_parity.py
+- tests/integration/backtest/test_pending_limit_rejection_parity.py
 - tests/integration/backtest/test_repeated_payout_backtest.py
 - tests/integration/backtest/test_risk_lifecycle_characterization.py
 - tests/integration/backtest/test_setup_mask_backtest_boundary.py
@@ -114,6 +123,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_fixed_risk_sizing.py
 - tests/unit/simulation/test_environment/test_merged_overlay.py
 - tests/unit/simulation/test_environment/test_mtf_windows.py
+- tests/unit/simulation/test_environment/test_news_spike_guard_env.py
 - tests/unit/simulation/test_environment/test_ny_steps_eod.py
 - tests/unit/simulation/test_environment/test_observation_schema.py
 - tests/unit/simulation/test_environment/test_protective_level_runtime.py
@@ -155,104 +165,248 @@ caller_paths:
 - training/runner/seed_runtime.py
 - training/setup/environments.py
 source_scopes:
-  - {path: trading/account, study_ids: [trading.account_cashflow_and_limits]}
-  - {path: trading/risk, study_ids: [trading.account_cashflow_and_limits, trading.sizing_orders_and_position_lifecycle]}
-  - {path: trading/orders, study_ids: [trading.sizing_orders_and_position_lifecycle]}
-  - {path: trading/positions, study_ids: [trading.sizing_orders_and_position_lifecycle]}
-  - {path: trading/execution, study_ids: [trading.execution_quotes_and_costs, trading.frozen_finalist_robustness, trading.spread_units_and_quote_side, trading.slippage_timing_and_double_counting, trading.commission_and_partial_fill_allocation]}
-  - {path: trading/policy, study_ids: [trading.policy_signals_and_baselines]}
-  - {path: trading/strategies, study_ids: [trading.policy_signals_and_baselines]}
-  - {path: trading/baselines, study_ids: [trading.policy_signals_and_baselines, trading.overnight_position_and_financing_scope]}
-  - {path: trading/__init__.py, study_ids: [trading.policy_signals_and_baselines]}
-  - {path: research_tools/trading, study_ids: [trading.account_cashflow_and_limits, trading.sizing_orders_and_position_lifecycle, trading.execution_quotes_and_costs, trading.policy_signals_and_baselines, trading.frozen_finalist_robustness]}
-config_paths: [config/base/default.yaml, config/strategies/po3_ifvg.yaml, config/strategies/distribution.yaml]
-test_paths: [tests/unit/trading]
+- path: trading/account
+  study_ids:
+  - trading.account_cashflow_and_limits
+- path: trading/risk
+  study_ids:
+  - trading.account_cashflow_and_limits
+  - trading.sizing_orders_and_position_lifecycle
+- path: trading/orders
+  study_ids:
+  - trading.sizing_orders_and_position_lifecycle
+- path: trading/positions
+  study_ids:
+  - trading.sizing_orders_and_position_lifecycle
+- path: trading/execution
+  study_ids:
+  - trading.execution_quotes_and_costs
+  - trading.frozen_finalist_robustness
+  - trading.spread_units_and_quote_side
+  - trading.slippage_timing_and_double_counting
+  - trading.commission_and_partial_fill_allocation
+- path: trading/policy
+  study_ids:
+  - trading.policy_signals_and_baselines
+- path: trading/strategies
+  study_ids:
+  - trading.policy_signals_and_baselines
+- path: trading/baselines
+  study_ids:
+  - trading.policy_signals_and_baselines
+  - trading.overnight_position_and_financing_scope
+- path: trading/__init__.py
+  study_ids:
+  - trading.policy_signals_and_baselines
+- path: research_tools/trading
+  study_ids:
+  - trading.account_cashflow_and_limits
+  - trading.sizing_orders_and_position_lifecycle
+  - trading.execution_quotes_and_costs
+  - trading.policy_signals_and_baselines
+  - trading.frozen_finalist_robustness
+config_paths:
+- config/base/default.yaml
+- config/strategies/po3_ifvg.yaml
+- config/strategies/distribution.yaml
+test_paths:
+- tests/unit/trading
 studies:
-  - id: trading.account_cashflow_and_limits
-    type: code_check
-    question: Do account cashflows, loss anchors, payout rules, and hard breach latches reconcile through every transition?
-    source_paths: [trading/account/account_state.py, trading/account/snapshots.py, trading/risk/guardrails.py]
-    checks: [tests/unit/trading/test_risk.py, tests/unit/trading/test_ftmo_midnight_fidelity.py, tests/unit/trading/test_repeated_payout_policy.py]
-    outputs: [account_and_limit_contract_check]
-  - id: trading.sizing_orders_and_position_lifecycle
-    type: code_check
-    question: Do sizing, monetary conversion, structural entries, stops, targets, and partial exits preserve risk and position invariants?
-    source_paths: [trading/risk/sizing.py, trading/orders/entries.py, trading/orders/stops.py, trading/orders/targets.py, trading/positions/multi_tp.py]
-    checks: [tests/unit/trading/test_risk_properties.py, tests/unit/trading/test_multi_tp.py, tests/unit/trading/test_stop_management.py]
-    outputs: [order_and_position_contract_check]
-  - id: trading.execution_quotes_and_costs
-    type: code_check
-    question: Are executable quote sides and each implemented cost component applied with consistent units and timing?
-    source_paths: [trading/execution/broker.py, trading/execution/quotes.py, trading/execution/costs.py]
-    checks: [tests/unit/trading/test_cost_model.py, tests/unit/trading/test_execution_quote_ranges.py, tests/unit/trading/test_entry_execution_orders.py]
-    outputs: [quote_fill_and_cost_check]
-  - id: trading.policy_signals_and_baselines
-    type: code_check
-    question: Are strategy signals causal and baseline policies neutral, deterministic, and comparable on the same decision contract?
-    source_paths: [trading/policy/config.py, trading/strategies/strategy_contract.py, trading/baselines/step_indexed_strategy.py]
-    checks: [tests/unit/trading/test_rule_based_baselines_causality.py, tests/unit/trading/test_classical_baselines.py]
-    outputs: [policy_and_baseline_check]
-  - id: trading.frozen_finalist_robustness
-    type: empirical
-    question: How does a frozen development finalist respond to implemented cost changes, the supported maximum-loss modes, and incomplete local quote intervals?
-    acceptance: Every explicit scenario reuses the same finalist, data, and paired seeds; reports survival, net return, fills, costs, and quote coverage; preserves unresolved quotes as non-fills; and retains all failures. No positive claim may use the exposed report period.
-    source_paths: [trading/execution/costs.py, trading/execution/quotes.py, simulation/backtest/event_driven_backtest.py, scripts/research/analysis/evaluation/test_oos.py]
-    checks: [tests/unit/trading/test_cost_model.py, tests/research/test_quote_coverage_sensitivity.py, tests/unit/evaluation/test_account_state_trace_reconciliation.py]
-    outputs: [scenario_level_account_and_cost_results, quote_gap_disposition, break_even_cost_frontiers]
-    prerequisites: [evaluation.primary_value_vs_no_trade]
-    claim_role: finalist_sensitivity
-    factor_policy: one named factor changes per arm; arms are never multiplied into unregistered combinations
-    cost_components: [spread, slippage_points, commission_per_lot]
-    overnight_financing: not_applicable_when_block_overnight_is_enabled
-    arms:
-      - id: frozen_finalist_reference
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [costs=configured, max_drawdown_mode=static, quote_policy=strict_local_coverage]
-      - id: max_loss_eod
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [max_drawdown_mode=eod]
-      - id: max_loss_intraday_trailing
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [max_drawdown_mode=intraday_trailing]
-      - id: spread_break_even_frontier
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [vary_spread_only, locate_first_survival_or_net_value_failure]
-      - id: slippage_break_even_frontier
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [vary_slippage_only, locate_first_survival_or_net_value_failure]
-      - id: commission_break_even_frontier
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [vary_commission_per_lot_only, locate_first_survival_or_net_value_failure]
-      - id: joint_cost_break_even_frontier
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml, config/research/survival_trade_setup_mtf_conditioned.yaml]
-        factors: [scale_spread_slippage_and_commission_together, locate_first_survival_or_net_value_failure]
-      - id: quote_complete_intervals
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml]
-        factors: [use_only_quote_complete_intervals, preserve_local_source_denominator]
-      - id: incomplete_quote_intervals_fail_closed
-        config_paths: [config/base/default.yaml, config/research/prospective_research_protocol.yaml]
-        factors: [incomplete_quote_intervals_remain_unresolved, never_impute_executable_fill]
-  - id: trading.spread_units_and_quote_side
-    type: code_check
-    question: Are broker spread points converted once to price units and charged through the executable bid/ask side for each order direction?
-    source_paths: [trading/execution/quotes.py, trading/execution/costs.py]
-    checks: [tests/unit/trading/test_execution_quote_ranges.py, tests/unit/trading/test_cost_model.py]
-    outputs: [spread_unit_and_quote_side_check]
-  - id: trading.slippage_timing_and_double_counting
-    type: code_check
-    question: Is adverse slippage applied to the transacted side at the configured fill event and removed exactly once during accounting reconciliation?
-    source_paths: [trading/execution/quotes.py, simulation/backtest/accounting.py, simulation/backtest/policy_actions.py]
-    checks: [tests/unit/trading/test_cost_model.py, tests/integration/backtest/test_broker_fill_accounting.py, tests/research/test_fill_quote_source_alignment.py]
-    outputs: [slippage_timing_and_reconciliation_check]
-  - id: trading.commission_and_partial_fill_allocation
-    type: code_check
-    question: Is commission allocated once across entry, partial exits, final close, and realized-equity reconciliation?
-    source_paths: [trading/execution/costs.py, simulation/backtest/accounting.py]
-    checks: [tests/unit/trading/test_cost_model.py, tests/unit/evaluation/test_cost_decomposition.py, tests/integration/backtest/test_broker_fill_accounting.py]
-    outputs: [commission_allocation_check]
-  - id: trading.overnight_position_and_financing_scope
-    type: code_check
-    question: Can any registered runtime configuration hold positions across a broker financing boundary, and if so is financing modeled or explicitly absent from the claim?
-    source_paths: [trading/baselines/cash_hold.py, simulation/backtest/event_driven_backtest.py, simulation/backtest/runtime.py]
-    checks: [tests/unit/trading/test_cash_hold.py, tests/unit/simulation/test_environment/test_ny_steps_eod.py, tests/unit/trading/test_cost_model.py]
-    outputs: [overnight_position_scope_and_financing_disposition]
+- id: trading.account_cashflow_and_limits
+  type: code_check
+  question: Do account cashflows, loss anchors, payout rules, and hard breach latches reconcile through every transition?
+  source_paths:
+  - trading/account/account_state.py
+  - trading/account/snapshots.py
+  - trading/risk/guardrails.py
+  checks:
+  - tests/unit/trading/test_risk.py
+  - tests/unit/trading/test_ftmo_midnight_fidelity.py
+  - tests/unit/trading/test_repeated_payout_policy.py
+  outputs:
+  - account_and_limit_contract_check
+- id: trading.sizing_orders_and_position_lifecycle
+  type: code_check
+  question: Do sizing, monetary conversion, structural entries, stops, targets, and partial exits preserve risk and position invariants?
+  source_paths:
+  - trading/risk/sizing.py
+  - trading/orders/entries.py
+  - trading/orders/stops.py
+  - trading/orders/targets.py
+  - trading/positions/multi_tp.py
+  checks:
+  - tests/unit/trading/test_risk_properties.py
+  - tests/unit/trading/test_multi_tp.py
+  - tests/unit/trading/test_stop_management.py
+  outputs:
+  - order_and_position_contract_check
+- id: trading.execution_quotes_and_costs
+  type: code_check
+  question: Are executable quote sides and each implemented cost component applied with consistent units and timing?
+  source_paths:
+  - trading/execution/broker.py
+  - trading/execution/quotes.py
+  - trading/execution/costs.py
+  checks:
+  - tests/unit/trading/test_cost_model.py
+  - tests/unit/trading/test_execution_quote_ranges.py
+  - tests/unit/trading/test_entry_execution_orders.py
+  outputs:
+  - quote_fill_and_cost_check
+- id: trading.policy_signals_and_baselines
+  type: code_check
+  question: Are strategy signals causal and baseline policies neutral, deterministic, and comparable on the same decision contract?
+  source_paths:
+  - trading/policy/config.py
+  - trading/strategies/strategy_contract.py
+  - trading/baselines/step_indexed_strategy.py
+  checks:
+  - tests/unit/trading/test_rule_based_baselines_causality.py
+  - tests/unit/trading/test_classical_baselines.py
+  outputs:
+  - policy_and_baseline_check
+- id: trading.frozen_finalist_robustness
+  type: empirical
+  question: How does a frozen development finalist respond to implemented cost changes, the supported maximum-loss modes, and incomplete local quote intervals?
+  acceptance: Every explicit scenario reuses the same finalist, data, and paired seeds; reports survival, net return, fills, costs, and quote coverage; preserves unresolved quotes as non-fills; and retains all failures. No positive claim may use the exposed report period.
+  source_paths:
+  - trading/execution/costs.py
+  - trading/execution/quotes.py
+  - simulation/backtest/event_driven_backtest.py
+  - scripts/research/analysis/evaluation/test_oos.py
+  checks:
+  - tests/unit/trading/test_cost_model.py
+  - tests/research/test_quote_coverage_sensitivity.py
+  - tests/unit/evaluation/test_account_state_trace_reconciliation.py
+  outputs:
+  - scenario_level_account_and_cost_results
+  - quote_gap_disposition
+  - break_even_cost_frontiers
+  prerequisites:
+  - evaluation.primary_value_vs_no_trade
+  claim_role: finalist_sensitivity
+  factor_policy: one named factor changes per arm; arms are never multiplied into unregistered combinations
+  cost_components:
+  - spread
+  - slippage_points
+  - commission_per_lot
+  overnight_financing: not_applicable_when_block_overnight_is_enabled
+  arms:
+  - id: frozen_finalist_reference
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - costs=configured
+    - max_drawdown_mode=static
+    - quote_policy=strict_local_coverage
+  - id: max_loss_eod
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - max_drawdown_mode=eod
+  - id: max_loss_intraday_trailing
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - max_drawdown_mode=intraday_trailing
+  - id: spread_break_even_frontier
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - vary_spread_only
+    - locate_first_survival_or_net_value_failure
+  - id: slippage_break_even_frontier
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - vary_slippage_only
+    - locate_first_survival_or_net_value_failure
+  - id: commission_break_even_frontier
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - vary_commission_per_lot_only
+    - locate_first_survival_or_net_value_failure
+  - id: joint_cost_break_even_frontier
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    - config/research/survival_trade_setup_mtf_conditioned.yaml
+    factors:
+    - scale_spread_slippage_and_commission_together
+    - locate_first_survival_or_net_value_failure
+  - id: quote_complete_intervals
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    factors:
+    - use_only_quote_complete_intervals
+    - preserve_local_source_denominator
+  - id: incomplete_quote_intervals_fail_closed
+    config_paths:
+    - config/base/default.yaml
+    - config/research/prospective_research_protocol.yaml
+    factors:
+    - incomplete_quote_intervals_remain_unresolved
+    - never_impute_executable_fill
+- id: trading.spread_units_and_quote_side
+  type: code_check
+  question: Are broker spread points converted once to price units and charged through the executable bid/ask side for each order direction?
+  source_paths:
+  - trading/execution/quotes.py
+  - trading/execution/costs.py
+  checks:
+  - tests/unit/trading/test_execution_quote_ranges.py
+  - tests/unit/trading/test_cost_model.py
+  outputs:
+  - spread_unit_and_quote_side_check
+- id: trading.slippage_timing_and_double_counting
+  type: code_check
+  question: Is adverse slippage applied to the transacted side at the configured fill event and removed exactly once during accounting reconciliation?
+  source_paths:
+  - trading/execution/quotes.py
+  - simulation/backtest/accounting.py
+  - simulation/backtest/policy_actions.py
+  checks:
+  - tests/unit/trading/test_cost_model.py
+  - tests/integration/backtest/test_broker_fill_accounting.py
+  - tests/research/test_fill_quote_source_alignment.py
+  outputs:
+  - slippage_timing_and_reconciliation_check
+- id: trading.commission_and_partial_fill_allocation
+  type: code_check
+  question: Is commission allocated once across entry, partial exits, final close, and realized-equity reconciliation?
+  source_paths:
+  - trading/execution/costs.py
+  - simulation/backtest/accounting.py
+  checks:
+  - tests/unit/trading/test_cost_model.py
+  - tests/unit/evaluation/test_cost_decomposition.py
+  - tests/integration/backtest/test_broker_fill_accounting.py
+  outputs:
+  - commission_allocation_check
+- id: trading.overnight_position_and_financing_scope
+  type: code_check
+  question: Can any registered runtime configuration hold positions across a broker financing boundary, and if so is financing modeled or explicitly absent from the claim?
+  source_paths:
+  - trading/baselines/cash_hold.py
+  - simulation/backtest/event_driven_backtest.py
+  - simulation/backtest/runtime.py
+  checks:
+  - tests/unit/trading/test_cash_hold.py
+  - tests/unit/simulation/test_environment/test_ny_steps_eod.py
+  - tests/unit/trading/test_cost_model.py
+  outputs:
+  - overnight_position_scope_and_financing_disposition

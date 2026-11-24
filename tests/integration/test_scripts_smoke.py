@@ -36,11 +36,11 @@ pytestmark = pytest.mark.slow
 def _make_bars_csv(path: Path, n_bars: int = 3000) -> Path:
     """Write a tiny synthetic bars CSV spanning the default train/test split.
 
-    3000 hourly bars from 2025-10-01 reach into early 2026, so the default
+    3000 hourly bars from 2025-11-01 reach into early 2026, so the default
     ``--train-end 2025-12-31`` / ``--test-start 2026-01-01`` split yields
     non-empty in-sample and held-out slices.
     """
-    idx = pd.date_range("2025-10-01 00:00", periods=n_bars, freq="1h")
+    idx = pd.date_range("2025-11-01 00:00", periods=n_bars, freq="1h")
     rng = np.random.default_rng(3)
     close = 20_000.0 + np.cumsum(rng.normal(0.05, 2.0, n_bars))
     df = pd.DataFrame(

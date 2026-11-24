@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from unittest.mock import Mock
 
 import gymnasium as gym
 import numpy as np
 import pytest
+import torch
 from omegaconf import OmegaConf
+from research_tools.learning.benchmarks import measure_ppo_throughput as probe
 from research_tools.learning.benchmarks.measure_ppo_throughput import (
     _apply_profile_overrides,
     _json_default,
@@ -95,6 +98,52 @@ def test_exact_quality_geometry_is_preserved_during_probe_scaling(monkeypatch) -
 def test_numpy_scalars_are_json_serializable() -> None:
     assert _json_default(np.int64(7)) == 7
     assert _json_default(np.float32(1.5)) == 1.5
+
+
+@pytest.mark.parametrize(
+    ("overrides", "expected_episodic"),
+    [([], False), (["env.reward_mode=dsr", "training.episode_mode=risk_terminated"], True)],
+)
+def test_probe_constructs_workers_with_configured_episodes_and_seeds_agent(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    overrides: list[str],
+    expected_episodic: bool,
+) -> None:
+    class AgentConstructionReached(Exception):
+        pass
+
+    make_env = Mock(return_value=Mock(observation_space=gym.spaces.Dict({})))
+    build_agent = Mock(side_effect=AgentConstructionReached)
+    monkeypatch.setattr(probe, "make_bundle_env", make_env)
+    monkeypatch.setattr(probe, "build_agent", build_agent)
+    monkeypatch.setattr(probe, "_scale_profile_config", Mock())
+    monkeypatch.setattr(probe, "configure_cuda_for_training", Mock())
+    monkeypatch.setattr(probe, "_setup_rngs", Mock())
+    monkeypatch.setattr(torch, "set_num_threads", Mock())
+    for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS"):
+        monkeypatch.setenv(name, "1")
+
+    with pytest.raises(AgentConstructionReached):
+        probe._train_probe(
+            None,
+            None,
+            None,
+            "cpu",
+            tmp_path / "report.json",
+            bundle_dir=tmp_path,
+            config_path=Path("config/research/survival_trade_setup_mtf_conditioned.yaml"),
+            overrides=overrides,
+            seed=47,
+        )
+
+    parent_spec = make_env.call_args.args[0]
+    build_agent.call_args.kwargs["env_fn"]()
+    assert make_env.call_args.args[0] == parent_spec
+    assert (parent_spec.episodic, build_agent.call_args.kwargs.get("seed")) == (
+        expected_episodic,
+        47,
+    )
 
 
 def test_process_tree_cpu_measurement_is_nonnegative() -> None:

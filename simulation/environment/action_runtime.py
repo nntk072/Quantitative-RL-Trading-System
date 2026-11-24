@@ -30,6 +30,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
     """Decode policy outputs into trade intent and stop/target controls."""
 
     _selected_trade_setup: TradeSetupCandidate | None
+    _entry_rejection_order_id: str | None
     _selected_trade_setup_event_identity: TradeSetupEventIdentity | None
     _last_action_trade_setup_candidate_id: int | None
     _last_action_trade_setup_eligible: bool | None
@@ -359,6 +360,7 @@ class ActionDecodingMixin(RuntimeMixinBase):
         self._decision_action = _empty_decision()
         self._entry_rejection_reason = ""
         self._entry_rejection_decision_id = self._current_decision_id
+        self._entry_rejection_order_id = None
         if self.strategy_actions:
             discrete_action, risk_frac, rr_ratio, tp_mode = (
                 ActionDecodingMixin._decode_strategy_action(self, action, feat_row)

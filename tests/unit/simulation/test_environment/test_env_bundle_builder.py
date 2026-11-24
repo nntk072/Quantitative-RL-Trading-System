@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from omegaconf import OmegaConf
 
+from market_data.transforms.sessions import session_reference_index
 from tests.unit.simulation.test_environment.test_trading_env_golden_traces import (
     _make_deterministic_bars,
     _make_features,
@@ -130,14 +131,20 @@ def test_bundled_observation_matrix_matches_frames_path(tmp_path: Path) -> None:
         bundle["bar_ohlc"], bars[["open", "high", "low", "close"]].to_numpy(dtype=np.float64)
     )
     np.testing.assert_array_equal(bundle["bar_spread"], bars["spread"].to_numpy(dtype=np.float64))
-    np.testing.assert_array_equal(
-        bundle["bar_time_ns"], bars.index.to_numpy(dtype="datetime64[ns]").view(np.int64)
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
+    expected_bar_index = session_reference_index(pd.DatetimeIndex(bars.index), source_clock_model)
+    expected_bar_time_ns = (
+        expected_bar_index.tz_convert("UTC")
+        .tz_localize(None)
+        .to_numpy(dtype="datetime64[ns]")
+        .view(np.int64)
     )
+    np.testing.assert_array_equal(bundle["bar_time_ns"], expected_bar_time_ns)
     np.testing.assert_array_equal(bundle["bar_session_id"], bars["session_id"].to_numpy())
     np.testing.assert_array_equal(bundle["bar_session"], (np.arange(len(bars)) + 1) % 2)
     np.testing.assert_array_equal(
         bundle["bar_day_ord"],
-        [day.toordinal() for day in pd.DatetimeIndex(bars.index).date],
+        [day.toordinal() for day in expected_bar_index.date],
     )
     np.testing.assert_array_equal(
         bundle["atr_5"], pd.to_numeric(features["atr_5"], errors="coerce")

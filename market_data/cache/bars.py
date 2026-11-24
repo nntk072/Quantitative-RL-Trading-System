@@ -17,7 +17,7 @@ from market_data.cache.storage import (
 )
 
 BAR_CACHE_MANIFEST_SCHEMA_VERSION = 1
-BAR_CACHE_TRANSFORM_ID = "bar-cleaning-session-labels-v1"
+BAR_CACHE_TRANSFORM_ID = "bar-cleaning-session-labels-v2"
 
 
 def bar_cache_path(cache_dir: str | Path, symbol: str, timeframe: str, cache_version: str) -> Path:
@@ -73,6 +73,8 @@ def build_bar_cache_identity(
     timeframe: str,
     source_identity: str,
     timezone: str,
+    session_timezone: str,
+    source_clock_model: str,
     ny_session_end: str,
     timestamp_convention: str,
     price_grid_identity: str | None,
@@ -87,6 +89,8 @@ def build_bar_cache_identity(
         timeframe: Text or path value identifying the timeframe.
         source_identity: Text or path value identifying the source identity.
         timezone: Text or path value identifying the timezone.
+        session_timezone: IANA timezone used for session labels.
+        source_clock_model: Interpretation of source timestamp wall labels.
         ny_session_end: Text or path value identifying the ny session end.
         timestamp_convention: Text or path value identifying the timestamp convention.
         price_grid_identity: Price grid identity used by the operation described above.
@@ -102,6 +106,8 @@ def build_bar_cache_identity(
         "timeframe": timeframe,
         "source_identity": source_identity,
         "timezone": timezone,
+        "session_timezone": session_timezone,
+        "source_clock_model": source_clock_model,
         "ny_session_end": ny_session_end,
         "timestamp_convention": timestamp_convention,
         "price_grid_identity": price_grid_identity,

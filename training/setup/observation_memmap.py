@@ -42,6 +42,7 @@ def publish_observation_memmap(
         features,
         strategy.raw_columns,
         reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
+        exclude_trade_setup_candidates=bool(cfg.env.get("trade_setup_actions", False)),
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     np.save(path, array)

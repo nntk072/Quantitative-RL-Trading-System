@@ -225,6 +225,43 @@ def test_opt_in_m1_validity_distinguishes_missing_from_valid_zero() -> None:
     assert env.observation_space.contains(observation)
 
 
+def test_opt_in_mtf_validity_sanitizes_nonfinite_features_across_streams() -> None:
+    bars, features, decision = _day()
+    features.loc[features.index[decision - 3], "sweep_high"] = np.nan
+    features.loc[features.index[decision - 2], "sweep_high"] = 0.0
+    features.loc[features.index[decision - 1], "sweep_high"] = -np.inf
+    features.loc[features.index[decision], "M5_bias"] = np.nan
+    features.loc[features.index[decision], "M15_bias"] = 0.0
+    features.loc[features.index[decision], "H1_bias"] = np.inf
+    env = _env(bars, features, mtf=True, feature_validity_channels=True)
+    env.reset()
+    env.step_idx = decision
+
+    observation = env._get_observation()
+
+    assert all(np.isfinite(values).all() for values in observation.values())
+    assert env.observation_space.contains(observation)
+
+    m1_columns = env._m1_idx.tolist()
+    sweep_index = env._obs_columns.index("sweep_high")
+    sweep_column = m1_columns.index(sweep_index)
+    np.testing.assert_array_equal(observation["seq"][-3:, sweep_column], [0.0, 0.0, 0.0])
+    np.testing.assert_array_equal(
+        observation["seq"][-3:, len(m1_columns) + sweep_column], [0.0, 1.0, 0.0]
+    )
+
+    for timeframe, feature, valid in (
+        ("m5", "M5_bias", 0.0),
+        ("m15", "M15_bias", 1.0),
+        ("h1", "H1_bias", 0.0),
+    ):
+        columns = env._htf_idx[timeframe].tolist()
+        feature_column = columns.index(env._obs_columns.index(feature))
+        sequence = observation[f"seq_{timeframe}"]
+        assert sequence[-1, feature_column] == 0.0
+        assert sequence[-1, len(columns) + feature_column] == valid
+
+
 def test_opt_in_mtf_validity_masks_missing_columns_and_padding() -> None:
     bars, features, decision = _day()
     env = _env(bars, features.drop(columns=["H1_bias"]), mtf=True, feature_validity_channels=True)

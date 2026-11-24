@@ -290,7 +290,24 @@ def build_features(
     if secondary is not None:
         secondary_timeframe_frames["M1"] = secondary
     scheduled_closes = scheduled_session_close_map(cfg)
-    session_start = str(OmegaConf.select(cfg, "session.start") or "16:30") if cfg else "16:30"
+    session_timezone = str(
+        (OmegaConf.select(cfg, "strategy.session.timezone") if cfg is not None else None)
+        or (OmegaConf.select(cfg, "session.timezone") if cfg is not None else None)
+        or (OmegaConf.select(cfg, "session.tz") if cfg is not None else None)
+        or (OmegaConf.select(cfg, "data.tz") if cfg is not None else None)
+        or "America/Chicago"
+    )
+    default_session_start, default_session_end = {
+        "America/Chicago": ("08:30", "15:00"),
+        "America/New_York": ("09:30", "16:00"),
+    }.get(session_timezone, ("16:30", "23:00"))
+    session_start = str(
+        (OmegaConf.select(cfg, "session.start") if cfg is not None else None)
+        or default_session_start
+    )
+    session_end = str(
+        (OmegaConf.select(cfg, "session.end") if cfg is not None else None) or default_session_end
+    )
 
     def primary_tf_bars(tf: str) -> pd.DataFrame:
         """Return cached primary bars or derive them for one timeframe.
@@ -650,15 +667,19 @@ def build_features(
 
     include_pd = feat_cfg is not None and bool(getattr(feat_cfg, "include_pd_context", False))
     if include_pd:
-        sess_tz = "Etc/GMT-3"
-        if cfg is not None:
-            sess_tz = str(
-                OmegaConf.select(cfg, "strategy.session.timezone")
-                or OmegaConf.select(cfg, "session.tz")
-                or OmegaConf.select(cfg, "data.tz")
-                or sess_tz
-            )
-        pd_ctx = build_pd_context_features(primary, feat["atr_5"], tz=sess_tz)
+        sess_tz = session_timezone
+        source_clock_model = str(
+            OmegaConf.select(cfg, "data.timestamp_clock", default="native")
+            if cfg is not None
+            else "native"
+        )
+        pd_ctx = build_pd_context_features(
+            primary,
+            feat["atr_5"],
+            tz=sess_tz,
+            ny_end=session_end,
+            source_clock_model=source_clock_model,
+        )
         feat = pd.concat([feat, pd_ctx], axis=1)
 
         # Align higher-timeframe swing and session-range distances separately
@@ -783,9 +804,18 @@ def build_features(
     if feat_cfg is not None and bool(getattr(feat_cfg, "include_previous_session_pd", False)):
         feat["decision_close"] = primary["close"].reindex(feat.index)
     session = OmegaConf.select(cfg, "session") if cfg is not None else None
-    session_start = str(session.get("start", "16:30")) if session else "16:30"
-    session_end = str(session.get("end", "23:00")) if session else "23:00"
-    clock = ny_session_clock(pd.DatetimeIndex(feat.index), session_start, session_end)
+    source_clock_model = str(
+        OmegaConf.select(cfg, "data.timestamp_clock", default="native")
+        if cfg is not None
+        else "native"
+    )
+    clock = ny_session_clock(
+        pd.DatetimeIndex(feat.index),
+        session_start,
+        session_end,
+        session_tz=session_timezone,
+        source_clock_model=source_clock_model,
+    )
     feat = pd.concat([feat, clock], axis=1)
 
     # The fib-like swing retracement idea is calculated independently on each

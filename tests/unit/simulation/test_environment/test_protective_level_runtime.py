@@ -10,11 +10,12 @@ from tests.unit.simulation.test_environment._account_fixtures import (
 from trading.execution import Position
 
 
-def test_tick_protection_check_skips_pre_entry_excursions_in_entry_bar() -> None:
+def test_tick_only_protection_keeps_position_open_for_pre_entry_excursion() -> None:
     bars = _make_bars(120)
     env = TradingEnv(bars=bars, features=_make_features(bars), obs_window=10)
     env.reset(seed=3)
     env.step_idx = 50
+    env.tick_execution_required = True
     bar_time = env._bar_time(env.step_idx)
     bar = env._bar_at(env.step_idx)
     env.position = Position(
@@ -26,4 +27,6 @@ def test_tick_protection_check_skips_pre_entry_excursions_in_entry_bar() -> None
         entry_timestamp=bar_time + pd.Timedelta(seconds=10),
     )
 
-    env._assert_tick_protective_events_observed(bar, env.step_idx)
+    env._check_sl_tp(bar, bar.close, bar.close, env.step_idx)
+    assert env.position is not None
+    assert not any(row.get("type") == "stop_close" for row in env.trade_log)

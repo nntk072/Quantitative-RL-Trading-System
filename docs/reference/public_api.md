@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 711 |
+| stable | 723 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 462 |
-| private implementation | 1001 |
+| cross-package internal | 469 |
+| private implementation | 1034 |
 
 ## Public package exports
 
@@ -72,10 +72,10 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
-| `configure_accelerator_for_training` | function | [compute.environment.precision](../../compute/environment/precision.py#L76) | stable |
-| `configure_cuda_for_training` | function | [compute.environment.precision](../../compute/environment/precision.py#L105) | stable |
+| `configure_accelerator_for_training` | function | [compute.environment.precision](../../compute/environment/precision.py#L93) | stable |
+| `configure_cuda_for_training` | function | [compute.environment.precision](../../compute/environment/precision.py#L122) | stable |
 | `discover_device_capabilities` | function | [compute.environment.capabilities](../../compute/environment/capabilities.py#L12) | stable |
-| `get_autocast_context` | function | [compute.environment.precision](../../compute/environment/precision.py#L51) | stable |
+| `get_autocast_context` | function | [compute.environment.precision](../../compute/environment/precision.py#L68) | stable |
 | `get_autocast_dtype` | function | [compute.environment.precision](../../compute/environment/precision.py#L31) | stable |
 | `get_device` | function | [compute.environment.device](../../compute/environment/device.py#L31) | stable |
 | `scale_training_cfg` | function | [compute.environment.device](../../compute/environment/device.py#L174) | stable |
@@ -199,7 +199,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `compute_metrics` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L553) | stable |
 | `conditional_pnl_distributions` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L157) | stable |
 | `conditional_pnl_groups` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L136) | stable |
-| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L1202) | stable |
+| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L1211) | stable |
 | `evaluation_periods_per_year` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L759) | stable |
 | `holding_time_distribution` | function | [evaluation.metrics.temporal](../../evaluation/metrics/temporal.py#L63) | stable |
 | `max_drawdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L450) | stable |
@@ -247,7 +247,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `StructurePrioritySetupRolloutModel` | class | [evaluation.rollout.structure_priority_setup](../../evaluation/rollout/structure_priority_setup.py#L161) | stable |
 | `discrete_actions_for_position_targets` | function | [evaluation.rollout.baseline_signal_actions](../../evaluation/rollout/baseline_signal_actions.py#L11) | stable |
 | `evaluate_model` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L367) | stable |
-| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L1202) | stable |
+| `evaluate_provider` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L1211) | stable |
 | `make_action_fn` | function | [evaluation.rollout.trained_policy_rollout](../../evaluation/rollout/trained_policy_rollout.py#L305) | stable |
 | `run_episode` | function | [evaluation.rollout.episode_rollout](../../evaluation/rollout/episode_rollout.py#L26) | stable |
 | `AlwaysNoTradePolicy.metadata` | method | [evaluation.rollout.random_eligible_setup](../../evaluation/rollout/random_eligible_setup.py#L232) | stable |
@@ -283,7 +283,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `InputSchema` | class | [features.contracts](../../features/contracts.py#L13) | stable |
 | `InputView` | class | [features.contracts](../../features/contracts.py#L35) | stable |
 | `OBS_RAW_PRICE_COLUMNS` | value | [features.pipeline.schema](../../features/pipeline/schema.py#L122) | stable |
-| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
+| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L193) | stable |
 | `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L155) | stable |
 | `build_fvg_zone_features` | function | [features.po3.fvg](../../features/po3/fvg.py#L28) | stable |
 | `build_po3_phase_features` | function | [features.po3.entries](../../features/po3/entries.py#L11) | stable |
@@ -294,15 +294,15 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `input_view_from_frame` | function | [features.input_view](../../features/input_view.py#L10) | stable |
 | `select_legacy_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L125) | compatibility-only |
 | `select_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L152) | stable |
-| `attach_policy_market_context` | function | [features.context.policy_market](../../features/context/policy_market.py#L130) | stable |
-| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
+| `attach_policy_market_context` | function | [features.context.policy_market](../../features/context/policy_market.py#L154) | stable |
+| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L193) | stable |
 | `max_tp_distance` | function | [features.context.reachability](../../features/context/reachability.py#L17) | stable |
-| `reachable_r_series` | function | [features.context.reachability](../../features/context/reachability.py#L144) | stable |
-| `rr_reaches` | function | [features.context.reachability](../../features/context/reachability.py#L187) | stable |
+| `reachable_r_series` | function | [features.context.reachability](../../features/context/reachability.py#L163) | stable |
+| `rr_reaches` | function | [features.context.reachability](../../features/context/reachability.py#L228) | stable |
 | `FEATURE_CACHE_VERSION` | value | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L17) | stable |
 | `OBS_RAW_PRICE_COLUMNS` | value | [features.pipeline.schema](../../features/pipeline/schema.py#L122) | stable |
 | `apply_rolling_zscore_state` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L106) | stable |
-| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L161) | stable |
+| `attach_reachable_r` | function | [features.context.reachability](../../features/context/reachability.py#L193) | stable |
 | `build_features` | function | [features.pipeline.feature_matrix_builder](../../features/pipeline/feature_matrix_builder.py#L155) | stable |
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
@@ -327,8 +327,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `detect_ifvg_confirmation` | function | [features.po3.ifvg_detection](../../features/po3/ifvg_detection.py#L251) | stable |
 | `detect_ltf_ifvg` | function | [features.po3.trigger_rules](../../features/po3/trigger_rules.py#L289) | stable |
 | `detect_po3_entries` | function | [features.po3.trigger_rules](../../features/po3/trigger_rules.py#L372) | stable |
-| `atr` | function | [features.technical.indicators](../../features/technical/indicators.py#L109) | stable |
-| `build_indicators` | function | [features.technical.indicators](../../features/technical/indicators.py#L468) | stable |
+| `atr` | function | [features.technical.indicators](../../features/technical/indicators.py#L111) | stable |
+| `build_indicators` | function | [features.technical.indicators](../../features/technical/indicators.py#L484) | stable |
 | `classify_structure` | function | [features.technical.swings](../../features/technical/swings.py#L222) | stable |
 | `detect_pivots` | function | [features.technical.swings](../../features/technical/swings.py#L26) | stable |
 | `detect_swings` | function | [features.technical.swings](../../features/technical/swings.py#L86) | stable |
@@ -441,11 +441,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L45) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L489) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L632) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
-| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L117) | stable |
+| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L125) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
-| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L153) | stable |
+| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L161) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L141) | stable |
 | `split_train_test` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L16) | stable |
 | `BAR_CACHE_MANIFEST_SCHEMA_VERSION` | value | [market_data.cache.bars](../../market_data/cache/bars.py#L19) | stable |
@@ -459,45 +459,57 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_tick_cache_identity` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L35) | stable |
 | `cache_is_complete` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L42) | stable |
 | `file_sha256` | function | [artifacts.identity](../../artifacts/identity.py#L47) | stable |
-| `load_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L124) | stable |
+| `load_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L130) | stable |
 | `load_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L131) | stable |
-| `load_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L106) | stable |
+| `load_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L109) | stable |
 | `mark_cache_complete` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L26) | stable |
 | `market_data_cache_id` | function | [market_data.cache.identity](../../market_data/cache/identity.py#L8) | stable |
 | `parquet_cache_is_complete` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L109) | stable |
 | `parquet_cache_manifest_path` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L54) | stable |
-| `tick_cache_is_complete` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L88) | stable |
+| `tick_cache_is_complete` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L91) | stable |
 | `tick_cache_manifest_path` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L23) | stable |
-| `write_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L139) | stable |
+| `write_bar_cache` | function | [market_data.cache.bars](../../market_data/cache/bars.py#L145) | stable |
 | `write_parquet_cache` | function | [market_data.cache.storage](../../market_data/cache/storage.py#L184) | stable |
-| `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L125) | stable |
+| `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L128) | stable |
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L45) | stable |
-| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L489) | stable |
-| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L925) | stable |
+| `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L632) | stable |
+| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L1119) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
 | `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L192) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L141) | stable |
-| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L691) | stable |
-| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L654) | stable |
-| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L750) | stable |
-| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L714) | stable |
-| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L563) | stable |
-| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L590) | stable |
-| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L674) | stable |
-| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L517) | stable |
-| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L536) | stable |
-| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L814) | stable |
-| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L117) | stable |
-| `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L137) | stable |
-| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L153) | stable |
+| `TickBook.bar_arrays` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L853) | stable |
+| `TickBook.bar_quote_ns` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L834) | stable |
+| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L871) | stable |
+| `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L797) | stable |
+| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L930) | stable |
+| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L894) | stable |
+| `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L706) | stable |
+| `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L733) | stable |
+| `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L817) | stable |
+| `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L660) | stable |
+| `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L679) | stable |
+| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L994) | stable |
+| `CalendarEvent` | class | [market_data.news.calendar](../../market_data/news/calendar.py#L60) | stable |
+| `NewsGuardConfig` | class | [market_data.news.guard](../../market_data/news/guard.py#L30) | stable |
+| `blackout_mask` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L255) | stable |
+| `causal_atr5` | function | [market_data.news.guard](../../market_data/news/guard.py#L179) | stable |
+| `classify` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L152) | stable |
+| `events_from_ics` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L179) | stable |
+| `fomc_events` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L198) | stable |
+| `load_release_times` | function | [market_data.news.guard](../../market_data/news/guard.py#L42) | stable |
+| `news_block_mask` | function | [market_data.news.guard](../../market_data/news/guard.py#L97) | stable |
+| `news_guard_config` | function | [market_data.news.guard](../../market_data/news/guard.py#L154) | stable |
+| `get_split_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L125) | stable |
+| `get_train_start_config` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L145) | stable |
+| `make_train_mask` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L161) | stable |
 | `split_bars` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L77) | stable |
 | `split_train_test` | function | [market_data.splits.definitions](../../market_data/splits/definitions.py#L16) | stable |
-| `add_session_id` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L162) | stable |
-| `add_session_labels` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L104) | stable |
+| `add_session_id` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L246) | stable |
+| `add_session_labels` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L182) | stable |
 | `align_timeframes` | function | [market_data.transforms.align](../../market_data/transforms/align.py#L83) | stable |
 | `clean` | function | [market_data.transforms.cleaning](../../market_data/transforms/cleaning.py#L10) | stable |
-| `ny_session_mask` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L83) | stable |
+| `ny_session_mask` | function | [market_data.transforms.sessions](../../market_data/transforms/sessions.py#L139) | stable |
 | `resample` | function | [market_data.transforms.resample](../../market_data/transforms/resample.py#L35) | stable |
 | `scheduled_session_close_map` | function | [market_data.transforms.session_schedule](../../market_data/transforms/session_schedule.py#L13) | stable |
 | `timeframe_close_times` | function | [market_data.transforms.align](../../market_data/transforms/align.py#L25) | stable |
@@ -533,7 +545,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `M1TCNHTFLiteReasoningEncoder.forward` | method | [models.encoders.mtf_m1_htf_lite_reasoning](../../models/encoders/mtf_m1_htf_lite_reasoning.py#L97) | stable |
 | `M1TCNHTFSnapshotReasoningEncoder.encoder_provenance` | method | [models.encoders.mtf_m1_htf_snapshot_reasoning](../../models/encoders/mtf_m1_htf_snapshot_reasoning.py#L79) | stable |
 | `M1TCNHTFSnapshotReasoningEncoder.forward` | method | [models.encoders.mtf_m1_htf_snapshot_reasoning](../../models/encoders/mtf_m1_htf_snapshot_reasoning.py#L97) | stable |
-| `MTFReasoningEncoder.forward` | method | [models.encoders.mtf_reasoning](../../models/encoders/mtf_reasoning.py#L75) | stable |
+| `MTFReasoningEncoder.forward` | method | [models.encoders.mtf_reasoning](../../models/encoders/mtf_reasoning.py#L80) | stable |
 | `SharedTCNMTFReasoningEncoder.encoder_provenance` | method | [models.encoders.mtf_shared_tcn_reasoning](../../models/encoders/mtf_shared_tcn_reasoning.py#L131) | stable |
 | `SharedTCNMTFReasoningEncoder.forward` | method | [models.encoders.mtf_shared_tcn_reasoning](../../models/encoders/mtf_shared_tcn_reasoning.py#L149) | stable |
 | `LegacyTCNEncoderV1.forward` | method | [models.encoders.tcn](../../models/encoders/tcn.py#L125) | compatibility-only |
@@ -550,8 +562,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
-| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L33) | stable |
-| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L538) | stable |
+| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L34) | stable |
+| `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L599) | stable |
 | `CrossOverStrategy` | class | [simulation.backtest.cross_validation.strategies.cross_over](../../simulation/backtest/cross_validation/strategies/cross_over.py#L4) | stable |
 | `EMAMACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L130) | stable |
 | `MACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L6) | stable |
@@ -574,26 +586,26 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `SignalFollowingStrategy.notify_order` | method | [simulation.backtest.cross_validation.strategies.signal_following](../../simulation/backtest/cross_validation/strategies/signal_following.py#L42) | stable |
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
 | `SimulationTransition.as_gymnasium` | method | [simulation.contracts.transition](../../simulation/contracts/transition.py#L22) | stable |
-| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L33) | stable |
-| `build_eval_common` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L217) | stable |
-| `cost_model` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L523) | stable |
-| `eval_guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L112) | stable |
-| `fill_delay_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L361) | stable |
-| `guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L71) | stable |
-| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L551) | stable |
-| `max_episode_steps` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L127) | stable |
-| `max_loss_per_trade` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L54) | stable |
-| `max_tick_quote_wait_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L458) | stable |
-| `mtf_settings` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L476) | stable |
-| `randomized_fill_latency_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L403) | stable |
-| `regime_observation_enabled` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L434) | stable |
-| `scheduled_session_closes` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L509) | stable |
-| `strategy_from_cfg` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L144) | stable |
-| `strategy_risk_ranges` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L24) | stable |
-| `tick_execution_required` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L421) | stable |
-| `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L424) | stable |
-| `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L456) | stable |
-| `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L470) | stable |
+| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L34) | stable |
+| `build_eval_common` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L218) | stable |
+| `cost_model` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L527) | stable |
+| `eval_guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L113) | stable |
+| `fill_delay_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L365) | stable |
+| `guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L72) | stable |
+| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L555) | stable |
+| `max_episode_steps` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L128) | stable |
+| `max_loss_per_trade` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L55) | stable |
+| `max_tick_quote_wait_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L462) | stable |
+| `mtf_settings` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L480) | stable |
+| `randomized_fill_latency_ms` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L407) | stable |
+| `regime_observation_enabled` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L438) | stable |
+| `scheduled_session_closes` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L513) | stable |
+| `strategy_from_cfg` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L145) | stable |
+| `strategy_risk_ranges` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L25) | stable |
+| `tick_execution_required` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L425) | stable |
+| `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L439) | stable |
+| `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L471) | stable |
+| `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L485) | stable |
 
 ### `trading`
 
@@ -812,7 +824,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `save_dashboard_plots` | function | [training.reporting.training_curves](../../training/reporting/training_curves.py#L738) | stable |
 | `save_training_plots` | function | [training.reporting.training_curves](../../training/reporting/training_curves.py#L515) | stable |
 | `main` | function | [training.runner](../../training/runner/__init__.py#L1) | stable |
-| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L551) | stable |
+| `make_env` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L555) | stable |
 
 ## Installed commands
 

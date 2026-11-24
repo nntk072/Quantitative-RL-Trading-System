@@ -221,20 +221,25 @@ def build_pd_context_features(
     *,
     tz: str = "Etc/GMT-3",
     ny_end: str = "23:00",
+    source_clock_model: str = "native",
 ) -> pd.DataFrame:
     """Build fixed-width session-routed PD context columns.
 
     Args:
         bars: M1 (or any) OHLC frame with a tz-aware DatetimeIndex.
         atr: ATR series aligned to ``bars`` (zeros/NaN → distance features NaN).
-        tz: Broker timezone for session labels (must match ``get_session``).
+        tz: Session timezone for session labels (must match ``get_session``).
         ny_end: Inclusive NY end HH:MM forwarded to session labelling.
+        source_clock_model: Interpretation of source-index wall labels.
 
     Returns:
         DataFrame returned by ``build_pd_context_features``.
     """
     labeled = add_session_labels(
-        bars[["open", "high", "low", "close"]].copy(), tz=tz, ny_end=ny_end
+        bars[["open", "high", "low", "close"]].copy(),
+        tz=tz,
+        ny_end=ny_end,
+        source_clock_model=source_clock_model,
     )
     session = labeled["session"]
     close = bars["close"]

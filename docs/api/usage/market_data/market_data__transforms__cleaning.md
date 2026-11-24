@@ -44,7 +44,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert clean(bars).attrs["source_diagnostics"] == bars.attrs["source_diagnostics"]
 ```
 
-2. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L270)
+2. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L272)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -56,11 +56,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
                 return source_hashes[path]
 
             m1_clean = clean(m1_raw, tz=tz)
-            m1_full = add_session_labels(m1_clean, tz=tz, ny_end=ny_end)
-            m1_full = add_session_id(m1_full)
-            for tf in cfg.data.timeframes:
-                tf = str(tf)
-                cp = bar_cache_path(part_cache, str(symbol), tf, BAR_CACHE_VERSION)
+            m1_full = add_session_labels(
+                m1_clean,
+                tz=session_tz,
+                ny_end=ny_end,
+                source_clock_model=source_clock_model,
 # … caller assertions omitted …
 ```
 

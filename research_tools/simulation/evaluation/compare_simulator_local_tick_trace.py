@@ -19,9 +19,17 @@ import pandas as pd
 
 from artifacts.atomic import write_json_atomic
 from artifacts.identity import file_sha256
+from configuration import load_config
 from configuration.paths import repository_root
 from market_data.loading.bars import load_bars
 from market_data.loading.ticks import TickBook, build_tick_book
+from market_data.splits.definitions import inclusive_date_exclusive_end
+from market_data.transforms.sessions import (
+    add_session_id,
+    add_session_labels,
+    ny_session_mask,
+    session_reference_index,
+)
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import COST_US100
@@ -97,6 +105,9 @@ def _select_event_pair(
     bar_index = pd.DatetimeIndex(bars.index)
     if bar_index.tz is None:
         bar_index = bar_index.tz_localize(timezone)
+    decision_index = (
+        bar_index[bars["session"].eq("ny").to_numpy()] if "session" in bars else bar_index
+    )
     candidates: list[dict[str, Any]] = []
     for raw_event in alignment.get("events", []):
         if not isinstance(raw_event, Mapping):
@@ -110,7 +121,12 @@ def _select_event_pair(
             continue
         order_time = _time(order_time_value).tz_convert(timezone)
         event_time = _time(event_time_value)
-        if order_time != order_time.floor("min") or order_time not in bar_index:
+        decision_time = order_time - pd.Timedelta(minutes=1)
+        if (
+            order_time != order_time.floor("min")
+            or order_time not in bar_index
+            or decision_time not in decision_index
+        ):
             continue
         resolved = book.execution_quote_event_at(order_time)
         if resolved is None:
@@ -274,6 +290,8 @@ def _trade_event(event: Mapping[str, Any]) -> dict[str, Any]:
             "direction",
             "price",
             "pnl",
+            "reason",
+            "time",
             "fill_quote_source",
             "decision_bar_time",
             "decision_time",
@@ -315,14 +333,23 @@ def replay_local_tick_trace(
     window = bars.loc[start_time:stop].copy()
     if len(window) < 4:
         raise ValueError("local M1 trace is too short for entry and exit transitions")
-    window["session_id"] = 0
-    window["session"] = "ny"
-    price_range = float(window["high"].max() - window["low"].min())
-    padding = max(50.0, 2.0 * price_range + 1.0)
+    if "session_id" not in window:
+        window = add_session_id(window)
+    if "session" in window:
+        eligible_decisions = window.index[window["session"].eq("ny")]
+        if (
+            entry_signal_time not in eligible_decisions
+            or exit_signal_time not in eligible_decisions
+        ):
+            raise ValueError("both decision bars must be in the supplied NY session")
+    else:
+        # Direct synthetic replays may provide a preselected session without labels.
+        window["session"] = "ny"
+    # Use only the current completed bar for the controlled protective offsets.
     features = pd.DataFrame(
         {
-            "last_swing_low": float(window["low"].min()) - padding,
-            "last_swing_high": float(window["high"].max()) + padding,
+            "last_swing_low": window["low"] - 50.0,
+            "last_swing_high": window["high"] + 50.0,
         },
         index=window.index,
     )
@@ -338,12 +365,15 @@ def replay_local_tick_trace(
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=1_000.0,
         block_overnight=False,
         episodic=False,
         reward_mode="pnl",
         tickbook=tickbook,
         tick_execution_required=True,
+        session_timezone="America/Chicago",
+        source_clock_model="native",
     )
     env.reset(seed=7)
     while env._bar_time(env.step_idx) <= exit_signal_time:
@@ -357,7 +387,8 @@ def replay_local_tick_trace(
         )
         env.step(action)
 
-    policy_times = pd.DatetimeIndex(window.index[1:-1])
+    policy_rows = window.iloc[1:-1]
+    policy_times = pd.DatetimeIndex(policy_rows.index[policy_rows["session"].eq("ny")])
     policy_index = 0
 
     def policy(_observation: np.ndarray[Any, Any]) -> int:
@@ -392,13 +423,43 @@ def replay_local_tick_trace(
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        session_timezone="America/Chicago",
+        source_clock_model="native",
     )
-    env_open = next(event for event in env.trade_log if event["type"] == "open")
-    env_close = next(event for event in env.trade_log if event["type"] == "close")
-    backtest_open = result["trades"].loc[result["trades"]["type"] == "open"].iloc[0]
-    backtest_close = result["trades"].loc[result["trades"]["type"] == "close"].iloc[0]
-    env_events = env_open, env_close
-    backtest_events = backtest_open, backtest_close
+    # The environment's order_fill row is an annotation for the same fill
+    # that its open row records. Both engines stamp actual position fills.
+    env_events = [
+        event
+        for event in env.trade_log
+        if event.get("type") != "order_fill" and pd.notna(event.get("fill_time"))
+    ]
+    backtest_events = [
+        event
+        for event in result["trades"].to_dict(orient="records")
+        if event.get("type") != "order_fill" and pd.notna(event.get("fill_time"))
+    ]
+    actual_events = {"environment": env_events, "backtest": backtest_events}
+    expected_schedule = [("open", entry_order_time), ("close", exit_order_time)]
+    if any(
+        [(event["type"], pd.Timestamp(event.get("order_submission_time"))) for event in events]
+        != expected_schedule
+        for events in actual_events.values()
+    ):
+        return {
+            "trace_passed": False,
+            "direction": direction,
+            "entry_order_time": entry_order_time.isoformat(),
+            "exit_order_time": exit_order_time.isoformat(),
+            "schedule_miss": {
+                "expected_event_types": ["open", "close"],
+                "actual_events": {
+                    engine: [_trade_event(event) for event in events]
+                    for engine, events in actual_events.items()
+                },
+            },
+        }
+    env_open, env_close = env_events
+    backtest_open, backtest_close = backtest_events
     comparisons = []
     for env_event, backtest_event in zip(env_events, backtest_events, strict=True):
         comparisons.append(
@@ -468,7 +529,7 @@ def build_report(
     bars_path: Path,
     alignment_path: Path,
     *,
-    timezone: str = "Etc/GMT-3",
+    timezone: str | None = None,
     max_hold_minutes: int = 60,
     max_trace_pairs: int = 24,
     max_pairs_per_stratum: int = 1,
@@ -476,31 +537,66 @@ def build_report(
     end_month: str | None = None,
 ) -> dict[str, Any]:
     """Build source-verified quote pairs and replay each through both engines."""
+    cfg = load_config()
+    source_timezone = timezone or str(cfg.data.tz)
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
+    session_timezone = str(cfg.session.tz)
+    train_start = pd.Timestamp(str(cfg.data.split.train_start))
+    train_end_exclusive = min(
+        inclusive_date_exclusive_end(str(cfg.data.split.train_end), None),
+        pd.Timestamp(str(cfg.data.split.test_start)),
+    )
     alignment = json.loads(alignment_path.read_text(encoding="utf-8"))
+    join_timezone = alignment.get("source_timezone_used_for_timestamp_join")
+    if source_clock_model == "europe_helsinki":
+        expected_join_timezone = "Europe/Helsinki"
+    elif source_clock_model == "native":
+        expected_join_timezone = source_timezone
+    else:
+        raise ValueError(f"quote alignment does not support source clock {source_clock_model!r}")
+    if join_timezone != expected_join_timezone:
+        raise ValueError(
+            f"quote-alignment timestamp join timezone must be {expected_join_timezone!r} "
+            f"for {source_clock_model!r}, got {join_timezone!r}"
+        )
     recorded_hash = alignment.get("tick_source_sha256")
     current_hash = file_sha256(tick_path)
     if recorded_hash != current_hash:
         raise ValueError("tick source hash does not match the quote-alignment evidence")
-    bars_frame = load_bars(bars_path)
+    bars_frame = load_bars(
+        bars_path, start_inclusive=train_start, end_exclusive=train_end_exclusive
+    )
     bar_index = pd.DatetimeIndex(bars_frame.index)
     if bar_index.tz is None:
-        bar_index = bar_index.tz_localize(timezone)
+        bar_index = bar_index.tz_localize(source_timezone)
+    bar_index = session_reference_index(bar_index, source_clock_model).tz_convert(session_timezone)
     bars_frame.index = bar_index
+    eligible = ny_session_mask(
+        bar_index,
+        start=str(cfg.session.start),
+        end=str(cfg.session.end),
+        session_tz=session_timezone,
+    )
+    bars_frame = add_session_labels(bars_frame, tz=session_timezone, ny_end=str(cfg.session.end))
+    bars_frame.loc[~eligible & bars_frame["session"].eq("ny"), "session"] = "closed"
+    bars_frame.loc[eligible, "session"] = "ny"
+    bars_frame = add_session_id(bars_frame)
     grid = float((alignment.get("price_grid_application") or {}).get("increment", 0.0))
     if not np.isfinite(grid) or grid <= 0.0:
         raise ValueError("quote-alignment evidence lacks a valid price grid")
     book = build_tick_book(
         tick_path,
-        tz=timezone,
-        session_start="16:00",
-        session_end="23:59",
+        tz=source_timezone,
         price_grid_increment=grid,
+        start_inclusive=train_start.date().isoformat(),
+        end_exclusive=train_end_exclusive,
+        source_clock_model=source_clock_model,
     )
     pairs = _select_event_pairs(
         alignment,
         bars_frame,
         book,
-        timezone=timezone,
+        timezone=session_timezone,
         max_hold_minutes=max_hold_minutes,
         max_pairs=max_trace_pairs,
         max_pairs_per_stratum=max_pairs_per_stratum,
@@ -537,10 +633,6 @@ def build_report(
             exit_order_time=exit_event["_order_time"],
             direction=int(entry["_direction"]),
         )
-        if not replay["trace_passed"]:
-            raise AssertionError(
-                f"environment/backtest local tick trace {pair_index} did not reconcile"
-            )
         pair_reports.append(
             {
                 "pair_id": f"local_tick_pair_{pair_index:03d}",
@@ -566,7 +658,8 @@ def build_report(
         "source_event_reuse": False,
         "selection_rule": (
             f"At most {max_pairs_per_stratum} pairs per source month and direction, selected in "
-            "chronological order using unique complete quote groups reproduced by the current "
+            "chronological order from the training period using NY decision bars and unique "
+            "complete quote groups reproduced by the current "
             f"TickBook within {start_month or 'all'} through {end_month or 'all'}; no PnL-based "
             "selection and no source event reused."
         ),
@@ -576,7 +669,14 @@ def build_report(
             "source timestamp groups in the recorded local quote-alignment scan. These are not "
             "historical policy replays or provider-clock validation."
         ),
-        "timezone_label": timezone,
+        "timezone_label": session_timezone,
+        "source_timezone_carrier": source_timezone,
+        "source_clock_model": source_clock_model,
+        "alignment_join_timezone": join_timezone,
+        "training_source_dates": {
+            "start_inclusive": train_start.date().isoformat(),
+            "end_exclusive": train_end_exclusive.date().isoformat(),
+        },
         "timezone_limitation": "Configured local timestamp interpretation; no external clock authority assessed.",
         "inputs": {
             "tick_path": str(tick_path),
@@ -606,7 +706,7 @@ def main() -> None:
     parser.add_argument("--ticks-csv", type=Path, default=ROOT / DEFAULT_TICKS)
     parser.add_argument("--bars-csv", type=Path, default=ROOT / DEFAULT_BARS)
     parser.add_argument("--alignment-report", type=Path, default=ROOT / DEFAULT_ALIGNMENT)
-    parser.add_argument("--timezone", default="Etc/GMT-3")
+    parser.add_argument("--timezone", help="source wall-clock carrier override (default: data.tz)")
     parser.add_argument("--max-hold-minutes", type=int, default=60)
     parser.add_argument("--max-trace-pairs", type=int, default=24)
     parser.add_argument("--max-pairs-per-stratum", type=int, default=1)
@@ -628,6 +728,8 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     write_json_atomic(args.out, report)
     print(json.dumps({"out": str(args.out), "trace_passed": report["trace_passed"]}))
+    if not report["trace_passed"]:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

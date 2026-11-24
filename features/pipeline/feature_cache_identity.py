@@ -14,7 +14,7 @@ from omegaconf import DictConfig, OmegaConf
 from configuration.paths import repository_root
 
 # Increment when feature output or cache-key semantics change.
-FEATURE_CACHE_VERSION = "v45-close-aligned-mtf-swings"
+FEATURE_CACHE_VERSION = "v48-session-clock-dst"
 
 
 def feature_cache_content_hash(

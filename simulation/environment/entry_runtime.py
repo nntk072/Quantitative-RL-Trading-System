@@ -112,7 +112,12 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             session = str(label) if pd.notna(label) and str(label) else ""
         else:
             try:
-                session = get_session(pd.Timestamp(bar_time))
+                session = get_session(
+                    pd.Timestamp(bar_time),
+                    tz=self._session_timezone,
+                    ny_end=self._session_end,
+                    source_clock_model=self._source_clock_model,
+                )
             except (TypeError, ValueError):
                 session = ""
         tp_legs: list[dict[str, Any]] = []

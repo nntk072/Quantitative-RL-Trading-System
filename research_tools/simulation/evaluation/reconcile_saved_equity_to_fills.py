@@ -58,8 +58,17 @@ def _rebuild_frame(config_path: Path, raw_path: Path, partition: str) -> tuple[p
     bars = load_bars(raw_path)
     bars = quantize_bar_prices(bars, configured_price_grid_increment(cfg))
     bars = clean(bars, tz=str(cfg.data.tz))
-    bars = add_session_labels(bars, tz=str(cfg.data.tz), ny_end=str(cfg.session.end))
-    bars = add_session_id(bars)
+    bars = add_session_labels(
+        bars,
+        tz=str(cfg.session.tz),
+        ny_end=str(cfg.session.end),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+    )
+    bars = add_session_id(
+        bars,
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+    )
     train, test = split_bars(
         bars,
         str(cfg.data.split.train_end),

@@ -8,7 +8,7 @@ This page contains 6 public callable records owned by `features.context.reachabi
 
 **Purpose:** Append ``reachable_r`` after raw price columns have been dropped.
 
-**Exact API:** {py:obj}`features.context.reachability.attach_reachable_r` · **Source:** [features/context/reachability.py:161](../../../../features/context/reachability.py#L161)
+**Exact API:** {py:obj}`features.context.reachability.attach_reachable_r` · **Source:** [features/context/reachability.py:193](../../../../features/context/reachability.py#L193)
 
 **Inputs and outputs:**
 
@@ -19,6 +19,8 @@ This page contains 6 public callable records owned by `features.context.reachabi
   bars: Market bars to process.
   features: Feature values supplied to the operation.
   include_validity_mask: Append a sequence feature marking known reachability values.
+  session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+  source_clock_model: Interpretation of source index wall labels.
   ```
 
 - **Returns:**
@@ -34,7 +36,7 @@ This page contains 6 public callable records owned by `features.context.reachabi
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = attach_reachable_r(obs=..., bars=..., features=..., include_validity_mask=...)
+result = attach_reachable_r(obs=..., bars=..., features=..., include_validity_mask=..., session_tz=..., source_clock_model=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
@@ -52,7 +54,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Append ``reachable_r`` after raw price columns have been dropped.
 
-**Exact API:** {py:obj}`features.context.reachability.attach_reachable_r` · **Source:** [features/context/reachability.py:161](../../../../features/context/reachability.py#L161)
+**Exact API:** {py:obj}`features.context.reachability.attach_reachable_r` · **Source:** [features/context/reachability.py:193](../../../../features/context/reachability.py#L193)
 
 **Inputs and outputs:**
 
@@ -63,6 +65,8 @@ The input, output, and error contract above is the safe boundary for a caller. F
   bars: Market bars to process.
   features: Feature values supplied to the operation.
   include_validity_mask: Append a sequence feature marking known reachability values.
+  session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+  source_clock_model: Interpretation of source index wall labels.
   ```
 
 - **Returns:**
@@ -78,7 +82,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = attach_reachable_r(obs=..., bars=..., features=..., include_validity_mask=...)
+result = attach_reachable_r(obs=..., bars=..., features=..., include_validity_mask=..., session_tz=..., source_clock_model=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
@@ -107,6 +111,8 @@ The input, output, and error contract above is the safe boundary for a caller. F
   atr: Tabular data used for the atr.
   n_sessions: Numeric value used for the n sessions.
   quantile: Numeric value used for the quantile.
+  session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+  source_clock_model: Interpretation of source index wall labels.
   ```
 
 - **Returns:**
@@ -136,24 +142,26 @@ def test_rr_cap_scales_with_atr_not_a_fixed_point_distance() -> None:
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_reachable_r_values`](../../../../features/context/reachability.py#L99)
+2. [test fixture: `test_reachability_uses_dst_aware_new_york_session_window`](../../../../tests/unit/features/test_stage_a_observation.py#L272)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    if "atr_5" not in features.columns or "close" not in bars.columns:
-        return (
-            pd.Series(0.0, index=idx, name="reachable_r"),
-            pd.Series(False, index=idx, name="reachable_r_valid"),
-        )
-    dist = max_tp_distance(bars, features["atr_5"]).reindex(idx)
-    close = pd.to_numeric(bars["close"], errors="coerce")
-    atr = pd.to_numeric(features["atr_5"].reindex(idx), errors="coerce")
-    if "po3_manipulation_low" in features.columns and "po3_manipulation_high" in features.columns:
-        risk_long = (
-            close - pd.to_numeric(features["po3_manipulation_low"].reindex(idx), errors="coerce")
-# … caller assertions omitted …
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 5.0, "low": close - 5.0, "close": close}, index=idx
+    )
+    atr = pd.Series(1.0, index=idx)
+
+    distances = max_tp_distance(
+        bars,
+        atr,
+        session_tz="America/Chicago",
+        source_clock_model="europe_helsinki",
+    )
+
+    assert distances.iloc[:4].isna().all()
+    assert distances.iloc[4:].eq(10.0).all()
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -169,7 +177,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Causal reward room: max take-profit distance divided by structural stop.
 
-**Exact API:** {py:obj}`features.context.reachability.reachable_r_series` · **Source:** [features/context/reachability.py:144](../../../../features/context/reachability.py#L144)
+**Exact API:** {py:obj}`features.context.reachability.reachable_r_series` · **Source:** [features/context/reachability.py:163](../../../../features/context/reachability.py#L163)
 
 **Inputs and outputs:**
 
@@ -178,6 +186,8 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   ```text
   bars: Market bars to process.
   features: Feature values supplied to the operation.
+  session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+  source_clock_model: Interpretation of source index wall labels.
   ```
 
 - **Returns:**
@@ -193,7 +203,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = reachable_r_series(bars=..., features=...)
+result = reachable_r_series(bars=..., features=..., session_tz=..., source_clock_model=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
@@ -211,7 +221,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** True when ``rr_ratio * |entry - sl|`` fits inside ``max_distance``.
 
-**Exact API:** {py:obj}`features.context.reachability.rr_reaches` · **Source:** [features/context/reachability.py:187](../../../../features/context/reachability.py#L187)
+**Exact API:** {py:obj}`features.context.reachability.rr_reaches` · **Source:** [features/context/reachability.py:228](../../../../features/context/reachability.py#L228)
 
 **Inputs and outputs:**
 
@@ -252,7 +262,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_rr_fits`](../../../../simulation/environment/entry_runtime.py#L305)
+2. [production caller: `_rr_fits`](../../../../simulation/environment/entry_runtime.py#L310)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -276,7 +286,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Append ``reachable_r`` after raw price columns have been dropped.
 
-**Exact API:** {py:obj}`features.context.reachability.attach_reachable_r` · **Source:** [features/context/reachability.py:161](../../../../features/context/reachability.py#L161)
+**Exact API:** {py:obj}`features.context.reachability.attach_reachable_r` · **Source:** [features/context/reachability.py:193](../../../../features/context/reachability.py#L193)
 
 **Inputs and outputs:**
 
@@ -287,6 +297,8 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   bars: Market bars to process.
   features: Feature values supplied to the operation.
   include_validity_mask: Append a sequence feature marking known reachability values.
+  session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+  source_clock_model: Interpretation of source index wall labels.
   ```
 
 - **Returns:**
@@ -302,7 +314,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
 
 ```python
-result = attach_reachable_r(obs=..., bars=..., features=..., include_validity_mask=...)
+result = attach_reachable_r(obs=..., bars=..., features=..., include_validity_mask=..., session_tz=..., source_clock_model=...)
 ```
 
 **Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.

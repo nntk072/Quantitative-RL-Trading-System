@@ -181,6 +181,18 @@ def test_gate_rejection_counts_and_names_the_reason() -> None:
     assert info["entry_rejected_gate"] == 1
 
 
+def test_limit_entry_rejected_while_position_open_counts_as_execution_rejection() -> None:
+    bars = _bars()
+    feats = _features(bars)
+    env = _policy_env(feats, bars)
+    env.reset()
+
+    env._reject("limit_entry_requires_flat_account")
+
+    assert env._entry_diag["rejected_entry_execution"] == 1
+    assert env._entry_rejection_reason == "limit_entry_requires_flat_account"
+
+
 def test_rr_window_prefers_in_range_targets() -> None:
     from trading.orders.targets import target_menu
 

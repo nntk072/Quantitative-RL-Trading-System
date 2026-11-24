@@ -143,4 +143,24 @@ def build_train_parser() -> argparse.ArgumentParser:
         default=None,
         help="Fold selected by the walk_forward_fold campaign phase",
     )
+    parser.add_argument(
+        "--confirmatory",
+        action="store_true",
+        help="Require a protocol-registered confirmatory arm and frozen config identity",
+    )
+    parser.add_argument(
+        "--confirmatory-arm",
+        choices=(
+            "q0_control",
+            "q0_canonical",
+            "q0_price_geometry",
+            "representation_a",
+            "representation_b",
+            "representation_c",
+        ),
+        default=None,
+    )
+    parser.add_argument("--expected-config-sha256", default=None)
+    parser.add_argument("--expected-resolved-config-sha256", default=None)
+    parser.add_argument("--expected-source-commit", default=None)
     return parser

@@ -38,11 +38,11 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     if secondary is not None:
         secondary_timeframe_frames["M1"] = secondary
     scheduled_closes = scheduled_session_close_map(cfg)
-    session_start = str(OmegaConf.select(cfg, "session.start") or "16:30") if cfg else "16:30"
-
-    def primary_tf_bars(tf: str) -> pd.DataFrame:
-        """Return cached primary bars or derive them for one timeframe.
-
+    session_timezone = str(
+        (OmegaConf.select(cfg, "strategy.session.timezone") if cfg is not None else None)
+        or (OmegaConf.select(cfg, "session.timezone") if cfg is not None else None)
+        or (OmegaConf.select(cfg, "session.tz") if cfg is not None else None)
+        or (OmegaConf.select(cfg, "data.tz") if cfg is not None else None)
 # … caller assertions omitted …
 ```
 

@@ -9,6 +9,7 @@ import pandas as pd
 
 from decisioning.observations import OBSERVATION_SCHEMA_V1
 from market_data.loading.ticks import TickBook
+from market_data.news.guard import NewsGuardConfig
 from simulation.contracts import SimulationTransition
 from simulation.environment.diagnostics import DebugStepError
 from trading.execution import COST_US100, CostModel
@@ -127,6 +128,7 @@ class TradingEnv(
         fill_delay_ms: int = 0,
         randomized_fill_latency_ms: float = 0.0,
         max_tick_quote_wait_ms: int = 60_000,
+        news_guard: NewsGuardConfig | None = None,
         server_side_protective_orders: bool = False,
         tick_fill_slippage_points: float = 0.0,
         agent_direction_control: bool = False,
@@ -145,7 +147,10 @@ class TradingEnv(
         mtf_windows: dict[str, int] | None = None,
         target_timeframes: tuple[str, ...] = ("M5", "M15", "H1"),
         scheduled_session_closes: dict[str, str] | None = None,
-        session_start: str = "16:30",
+        session_start: str = "08:30",
+        session_end: str = "15:00",
+        session_timezone: str = "America/Chicago",
+        source_clock_model: str = "native",
         regime_observation: bool = False,
         entry_state_machine: bool = False,
         candidate_max_age_bars: int = 5,
@@ -243,6 +248,7 @@ class TradingEnv(
             fill_delay_ms: Numeric value used for the fill delay ms.
             randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
             max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
+            news_guard: News and spike guard settings; None disables the guard.
             server_side_protective_orders: Execute attached SL/TP orders on their
                 triggering tick without sampling a new EA/network latency.
             tick_fill_slippage_points: Numeric value used for the tick fill slippage points.
@@ -262,7 +268,10 @@ class TradingEnv(
             mtf_windows: Key-value data used for the mtf windows.
             target_timeframes: Items supplied for the target timeframes, in input order.
             scheduled_session_closes: Key-value data used for the scheduled session closes.
-            session_start: Text or path value identifying the session start.
+            session_start: Session open in ``session_timezone``.
+            session_end: Session close in ``session_timezone``.
+            session_timezone: IANA timezone used for session boundaries.
+            source_clock_model: Interpretation of raw chart-index wall labels.
             regime_observation: Whether to enable or require the regime observation.
             entry_state_machine: Whether to enable or require the entry state machine.
             candidate_max_age_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
@@ -278,6 +287,10 @@ class TradingEnv(
             feature_validity_channels: Whether to append per-feature finite-value masks.
             sequence_columns_override: Exact saved feature order for a bounded replay.
         """
+        self._session_start = str(session_start)
+        self._session_end = str(session_end)
+        self._session_timezone = str(session_timezone)
+        self._source_clock_model = str(source_clock_model)
         self._initialize_market_source(bars, features, bundle_data, strict_research_eligibility)
         self._initialize_account_policy(
             obs_window,
@@ -288,7 +301,7 @@ class TradingEnv(
             guardrail_kwargs,
             risk_frac_range,
             rr_ratio_range,
-            sl_buffer_pts,
+            swing_buffer_pts,
             sl_mode,
             tp_mode,
             tp_reference,
@@ -343,6 +356,8 @@ class TradingEnv(
             max_tick_quote_wait_ms,
             tick_fill_slippage_points,
         )
+        self._news_guard = news_guard
+        self._news_block_mask: Any = None
         if not isinstance(server_side_protective_orders, bool):
             raise ValueError("server_side_protective_orders must be boolean")
         if server_side_protective_orders and not tick_execution_required:

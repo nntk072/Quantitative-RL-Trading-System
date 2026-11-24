@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 from omegaconf import OmegaConf
 from scripts.research.audits.pretraining_parallel_readiness import (
+    _validate_run_root,
     run_plan,
 )
 from scripts.research.audits.pretraining_readiness_plan import load_plan, plan_summary
@@ -18,13 +19,21 @@ def _write_plan(
     tasks: list[dict[str, Any]],
     barriers: list[dict[str, Any]] | None = None,
 ) -> Path:
+    barrier_rows = barriers or [
+        {"id": "COMMON_TEST", "description": "common", "requires": [tasks[0]["id"]]},
+        {"id": "PRICE_TEST", "description": "PRICE", "requires": [tasks[0]["id"]]},
+    ]
     OmegaConf.save(
         OmegaConf.create(
             {
                 "schema_version": "pretraining-parallel-readiness-v1",
                 "scientific_training_authorization": "never_from_this_plan_alone",
+                "authorization_barriers": {
+                    "common": [barrier_rows[0]["id"]],
+                    "price": [barrier_rows[1]["id"]],
+                },
                 "tasks": tasks,
-                "barriers": barriers or [],
+                "barriers": barrier_rows,
                 "external_scientific_gates": ["review"],
             }
         ),
@@ -52,10 +61,22 @@ def _task(
     }
 
 
-def _clean_source(monkeypatch: pytest.MonkeyPatch, sha: str = "a" * 40) -> None:
+def _clean_source(monkeypatch: pytest.MonkeyPatch, repository: Path, sha: str = "a" * 40) -> None:
+    from research_tools.compute.audits import pretraining_parallel_readiness as runner
+
+    repository.mkdir(parents=True)
+    monkeypatch.setattr(runner, "ROOT", repository)
+    monkeypatch.setattr(runner, "_is_ignored_path", lambda _path: True)
     monkeypatch.setattr(
-        "scripts.research.audits.pretraining_parallel_readiness._git_state",
+        "research_tools.compute.audits.pretraining_parallel_readiness._git_state",
         lambda: (sha, []),
+    )
+
+
+def _run_root(tmp_path: Path) -> Path:
+    return (
+        tmp_path
+        / ".pytest-readiness-repository/outputs/pre_experiment_readiness/test/execution/attempt"
     )
 
 
@@ -93,9 +114,9 @@ def test_failed_task_blocks_only_dependants(
             ],
         )
     )
-    _clean_source(monkeypatch)
+    _clean_source(monkeypatch, tmp_path / ".pytest-readiness-repository")
 
-    manifest = run_plan(plan, run_root=tmp_path / "run", python=sys.executable, max_workers=2)
+    manifest = run_plan(plan, run_root=_run_root(tmp_path), python=sys.executable, max_workers=2)
 
     rows = {row["task_id"]: row for row in manifest["tasks"]}
     assert rows["fails"]["status"] == "fail"
@@ -103,9 +124,9 @@ def test_failed_task_blocks_only_dependants(
     assert rows["independent"]["status"] == "pass"
     assert manifest["scientific_training_authorized"] is False
     assert manifest["price_training_authorized"] is False
-    assert (tmp_path / "run/tasks/fails/result.json").is_file()
-    assert (tmp_path / "run/tasks/blocked/result.json").is_file()
-    assert (tmp_path / "run/tasks/independent/result.json").is_file()
+    assert (_run_root(tmp_path) / "tasks/fails/result.json").is_file()
+    assert (_run_root(tmp_path) / "tasks/blocked/result.json").is_file()
+    assert (_run_root(tmp_path) / "tasks/independent/result.json").is_file()
 
 
 def test_tasks_with_shared_resource_lock_never_overlap(
@@ -127,9 +148,9 @@ def test_tasks_with_shared_resource_lock_never_overlap(
             ],
         )
     )
-    _clean_source(monkeypatch)
+    _clean_source(monkeypatch, tmp_path / ".pytest-readiness-repository")
 
-    manifest = run_plan(plan, run_root=tmp_path / "run", python=sys.executable, max_workers=2)
+    manifest = run_plan(plan, run_root=_run_root(tmp_path), python=sys.executable, max_workers=2)
 
     assert manifest["execution_status"] == "pass"
     assert events.read_text(encoding="utf-8").splitlines() == [
@@ -143,22 +164,22 @@ def test_tasks_with_shared_resource_lock_never_overlap(
 def test_declared_missing_artifact_fails_and_result_keeps_provenance(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    artifact = tmp_path / "run" / "missing.json"
+    artifact = _run_root(tmp_path) / "missing.json"
     plan = load_plan(
         _write_plan(
             tmp_path / "missing.yaml",
             [_task("producer", "print('completed')", artifact=str(artifact))],
         )
     )
-    _clean_source(monkeypatch, "b" * 40)
+    _clean_source(monkeypatch, tmp_path / ".pytest-readiness-repository", "b" * 40)
 
-    manifest = run_plan(plan, run_root=tmp_path / "run", python=sys.executable, max_workers=1)
+    manifest = run_plan(plan, run_root=_run_root(tmp_path), python=sys.executable, max_workers=1)
 
     result = manifest["tasks"][0]
     assert manifest["execution_status"] == "fail"
     assert result["status"] == "fail"
     assert result["return_code"] == 0
-    assert result["log_path"] == str(tmp_path / "run/tasks/producer/run.log")
+    assert result["log_path"] == str(_run_root(tmp_path) / "tasks/producer/run.log")
     assert len(result["log_sha256"]) == 64
     assert result["artifact_sha256"][f"MISSING::{artifact}"] == ""
 
@@ -166,7 +187,7 @@ def test_declared_missing_artifact_fails_and_result_keeps_provenance(
 def test_artifact_hash_and_dependency_closure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    artifact = tmp_path / "run" / "artifact.txt"
+    artifact = _run_root(tmp_path) / "artifact.txt"
     code = (
         "from pathlib import Path; "
         f"p=Path({str(artifact)!r}); p.parent.mkdir(parents=True, exist_ok=True); "
@@ -181,11 +202,11 @@ def test_artifact_hash_and_dependency_closure(
             ],
         )
     )
-    _clean_source(monkeypatch, "b" * 40)
+    _clean_source(monkeypatch, tmp_path / ".pytest-readiness-repository", "b" * 40)
 
     manifest = run_plan(
         plan,
-        run_root=tmp_path / "run",
+        run_root=_run_root(tmp_path),
         python=sys.executable,
         max_workers=2,
         selected_tasks={"consumer"},
@@ -194,26 +215,67 @@ def test_artifact_hash_and_dependency_closure(
     rows = {row["task_id"]: row for row in manifest["tasks"]}
     assert set(rows) == {"producer", "consumer"}
     assert len(rows["producer"]["artifact_sha256"][str(artifact)]) == 64
-    saved = json.loads((tmp_path / "run/pretraining_parallel_readiness_manifest.json").read_text())
+    saved = json.loads(
+        (_run_root(tmp_path) / "pretraining_parallel_readiness_manifest.json").read_text()
+    )
     assert saved["source_commit"] == "b" * 40
     assert saved["execution_status"] == "pass"
     assert saved["scientific_training_authorized"] is False
     assert saved["price_training_authorized"] is False
 
 
-def test_run_root_must_be_fresh_and_outside_repository(
+def test_run_root_must_be_fresh_and_under_canonical_outputs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     plan = load_plan(_write_plan(tmp_path / "plan.yaml", [_task("task", "print('ok')")]))
-    _clean_source(monkeypatch)
-    existing = tmp_path / "existing"
-    existing.mkdir()
+    _clean_source(monkeypatch, tmp_path / ".pytest-readiness-repository")
+    from research_tools.compute.audits import pretraining_parallel_readiness as runner
+
+    monkeypatch.setattr(runner, "ROOT", tmp_path / "repository")
+    monkeypatch.setattr(runner, "_is_ignored_path", lambda _path: True)
+    existing = tmp_path / "repository/outputs/pre_experiment_readiness/run/execution/existing"
+    existing.mkdir(parents=True)
     with pytest.raises(ValueError, match="must not already exist"):
         run_plan(plan, run_root=existing, python=sys.executable, max_workers=1)
 
-    repository_path = Path(__file__).resolve().parents[3] / "outputs/readiness-test"
-    with pytest.raises(ValueError, match="outside the repository"):
-        run_plan(plan, run_root=repository_path, python=sys.executable, max_workers=1)
+    repository = tmp_path / "repository"
+    repository.mkdir(exist_ok=True)
+    monkeypatch.setattr(runner, "ROOT", repository)
+    monkeypatch.setattr(runner, "_is_ignored_path", lambda _path: True)
+    valid = repository / "outputs/pre_experiment_readiness/run-1/execution/attempt-1"
+    assert _validate_run_root(valid) == valid
+    with pytest.raises(ValueError, match="canonical execution output"):
+        _validate_run_root(
+            repository / "outputs/pre_experiment_readiness/run-1/readiness/attempt-1"
+        )
+    with pytest.raises(ValueError, match="canonical execution output"):
+        _validate_run_root(repository / "tests/run")
+    with pytest.raises(ValueError, match="canonical execution output"):
+        _validate_run_root(tmp_path / "outside/run")
+
+
+def test_run_root_rejects_symlink_escape_and_collision(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from research_tools.compute.audits import pretraining_parallel_readiness as runner
+
+    repository = tmp_path / "repository"
+    repository.mkdir()
+    monkeypatch.setattr(runner, "ROOT", repository)
+    monkeypatch.setattr(runner, "_is_ignored_path", lambda _path: True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    output = repository / "outputs"
+    output.symlink_to(outside, target_is_directory=True)
+    candidate = output / "pre_experiment_readiness/run/execution/task"
+    with pytest.raises(ValueError, match="symlinks"):
+        _validate_run_root(candidate)
+
+    output.unlink()
+    candidate = repository / "outputs/pre_experiment_readiness/run/execution/task"
+    candidate.mkdir(parents=True)
+    with pytest.raises(ValueError, match="must not already exist"):
+        _validate_run_root(candidate)
 
 
 def test_repository_plan_serializes_memory_heavy_feature_builds() -> None:
@@ -231,6 +293,41 @@ def test_repository_plan_serializes_memory_heavy_feature_builds() -> None:
     } == {"feature_build_memory"}
     for name in ("candidate_policy_contract", "simulator_accounting_contract"):
         assert set(by_id[name]["depends_on"]) == {"static_contract", "prospective_protocol"}
+    assert by_id["common_implementation_release"]["depends_on"] == [
+        "candidate_policy_contract",
+        "observation_validity",
+        "opportunity_census",
+        "simulator_accounting_contract",
+    ]
+    assert by_id["price_implementation_release"]["depends_on"] == [
+        "common_implementation_release",
+        "candidate_geometry_support",
+    ]
+    closures = summary["authorization_dependency_closures"]
+    assert "candidate_geometry_support" not in closures["common"]["tasks"]
+    assert "candidate_geometry_support" in closures["price"]["tasks"]
+    assert (
+        "candidate_geometry_empirical_acceptance_review"
+        not in closures["common"]["external_scientific_gates"]
+    )
+    assert (
+        "candidate_geometry_empirical_acceptance_review"
+        in closures["price"]["external_scientific_gates"]
+    )
     assert summary["executes_commands"] is False
     assert summary["scientific_training_authorized"] is False
     assert summary["price_training_authorized"] is False
+
+
+def test_plan_rejects_scientific_gate_shared_by_common_and_price(tmp_path: Path) -> None:
+    path = _write_plan(tmp_path / "plan.yaml", [_task("task", "print('ok')")])
+    config = OmegaConf.load(path)
+    config.schema_version = "pretraining-parallel-readiness-v2"
+    config.external_scientific_gates = {
+        "common": ["shared_gate"],
+        "price": ["shared_gate"],
+    }
+    OmegaConf.save(config, path)
+
+    with pytest.raises(ValueError, match="must be disjoint"):
+        load_plan(path)

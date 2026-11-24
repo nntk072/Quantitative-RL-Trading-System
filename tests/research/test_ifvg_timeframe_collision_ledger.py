@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
 import pytest
-import scripts.research.analysis.features.ifvg_timeframe_collision_ledger as ledger_module
 from omegaconf import OmegaConf
 from scripts.research.analysis.features.ifvg_timeframe_collision_ledger import (
     _collision_table,
@@ -138,7 +138,8 @@ def test_input_identity_includes_native_timeframes_for_dotted_symbol_names(
             }
         }
     )
-    monkeypatch.setattr(ledger_module, "ROOT", tmp_path)
-    monkeypatch.setattr(ledger_module, "RAW_MANIFEST", manifest_path)
+    implementation = sys.modules[_input_identity.__module__]
+    monkeypatch.setattr(implementation, "ROOT", tmp_path)
+    monkeypatch.setattr(implementation, "RAW_MANIFEST", manifest_path)
 
     assert _input_identity(cfg, "US100.cash", ["M1", "M3"]) == expected

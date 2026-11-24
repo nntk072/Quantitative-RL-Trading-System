@@ -262,7 +262,12 @@ def build_ledger(
     features["atr"] = calculate_atr(bars, int(cfg.features.atr_period))
     if "atr_5" not in features:
         raise ValueError("production structural order geometry requires atr_5")
-    reachable = max_tp_distance(bars, features["atr_5"]).reindex(bars.index)
+    reachable = max_tp_distance(
+        bars,
+        features["atr_5"],
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+    ).reindex(bars.index)
 
     tickbook = build_tick_books(
         cfg,

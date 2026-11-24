@@ -84,8 +84,17 @@ def m1_from_source(cfg: Any, symbol: str) -> pd.DataFrame:
     source = (raw_dir / str(training_data.m1_files[symbol])).resolve()
     source.relative_to(ROOT)
     bars = clean(load_bars(source), tz=str(cfg.data.tz))
-    bars = add_session_labels(bars, tz=str(cfg.data.tz), ny_end=str(cfg.session.end))
-    return add_session_id(bars)
+    bars = add_session_labels(
+        bars,
+        tz=str(cfg.session.tz),
+        ny_end=str(cfg.session.end),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+    )
+    return add_session_id(
+        bars,
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+    )
 
 
 def _same_tickbook(left: TickBook, right: TickBook) -> bool:
@@ -133,6 +142,7 @@ def audit_symbol(
     rebuilt_book = build_tick_book(
         tick_source,
         tz=str(cfg.data.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         session_start=None,
         session_end=None,
         cache_path=None,
@@ -149,6 +159,8 @@ def audit_symbol(
         train_mask,
         str(test_start),
         session_labels=m1_cache["session"],
+        session_timezone=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         max_latency_ns_exclusive=int(latency_ms * 1_000_000),
         max_quote_wait_ms=max_quote_wait_ms,
     )
@@ -158,6 +170,8 @@ def audit_symbol(
         train_mask,
         str(test_start),
         session_labels=m1_cache["session"],
+        session_timezone=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         max_latency_ns_exclusive=int(latency_ms * 1_000_000),
         max_quote_wait_ms=max_quote_wait_ms,
     )

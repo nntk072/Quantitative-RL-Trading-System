@@ -27,7 +27,7 @@ This page contains 1 public callable records owned by `evaluation.metrics.limit_
 
 **Observed usage:**
 
-1. [test fixture: `test_limit_touch_and_trade_through_assumptions_are_explicit_sensitivities`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L643)
+1. [test fixture: `test_limit_touch_and_trade_through_assumptions_are_explicit_sensitivities`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L784)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -1,7 +1,7 @@
 """Bounded deterministic real TickBook/Broker/TradingEnv fill reconciliation."""
 
 from types import MethodType, SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -324,6 +324,8 @@ def test_tick_and_bar_match_for_identical_unambiguous_target_crossings() -> None
             "_adverse_tick_fill_quote",
             "_close_at_quote",
             "_exit_side_bar_range",
+            "_tick_fill_mode",
+            "_untriggered_level_quote",
         ):
             setattr(env, method, MethodType(getattr(TradingEnv, method), env))
         return env
@@ -506,7 +508,7 @@ def test_tick_mode_uses_correct_ask_and_records_actual_entry_quote(latency_ms: f
 
 @pytest.mark.parametrize("latency_ms", [0.0, 30.0])
 @pytest.mark.parametrize("tick_in_bar", [False, True])
-def test_tick_only_mode_rejects_ohlc_stop_without_matching_tick(
+def test_tick_only_mode_fills_ohlc_stop_without_crossing_tick(
     latency_ms: float, tick_in_bar: bool
 ) -> None:
     index = pd.date_range("2026-01-05T14:30:00Z", periods=4, freq="min")
@@ -543,10 +545,14 @@ def test_tick_only_mode_rejects_ohlc_stop_without_matching_tick(
     env.position = pos
     bar = BarView(open=100.0, low=99.0, high=100.5, close=100.0)
 
-    with pytest.raises(TickExecutionUnavailable, match="no matching tick trigger"):
-        env._check_sl_tp(bar, 100.0, 100.2, env.step_idx)
-    assert env.position is pos
-    assert not any(row.get("type") == "stop_close" for row in env.trade_log)
+    # With no tick in the bar, the nearest tick in time (100.0 bid, better than the
+    # stop) is not used; the fill is priced at the stop level, not at that gain.
+    # The tape never crossed 99.5 in either case.
+    env._check_sl_tp(bar, 100.0, 100.2, env.step_idx)
+    assert env.position is None
+    closes = [row for row in env.trade_log if row.get("type") == "stop_close"]
+    assert len(closes) == 1
+    assert closes[0]["price"] <= 99.5
 
 
 if __name__ == "__main__":
@@ -555,3 +561,105 @@ if __name__ == "__main__":
     test_tick_crosses_three_tp_slots_once_with_exact_remaining_quantity()
     test_tick_and_bar_match_for_identical_unambiguous_target_crossings()
     print("4 bounded tick/broker/env trace cases PASSED")
+
+
+def test_tick_only_stop_beyond_wait_cap_fills_at_level() -> None:
+    index = pd.date_range("2026-01-05T14:30:00Z", periods=4, freq="min")
+    close = np.full(len(index), 100.0)
+    bars = pd.DataFrame(
+        {
+            "open": close,
+            "high": close + 0.5,
+            "low": close - 0.5,
+            "close": close,
+            "volume": np.full(len(index), 1000.0),
+            "spread": np.zeros(len(index)),
+            "session_id": np.ones(len(index), dtype=np.int64),
+        },
+        index=index,
+    )
+    features = pd.DataFrame(index=index)
+    # The only tick is 5 minutes after the window: beyond the 60 s wait cap.
+    tick_time = index[-1] + pd.Timedelta(minutes=5)
+    book = TickBook(np.array([tick_time.value]), np.array([100.0]), np.array([100.2]))
+    env = TradingEnv(
+        bars,
+        features,
+        obs_window=1,
+        block_overnight=False,
+        tickbook=book,
+        tick_execution_required=True,
+    )
+    env.reset(seed=73)
+    pos = env.broker.open_position(env.account, (100.0, 100.0), 1.0, 1)
+    assert pos is not None
+    pos.entry_timestamp = env._bar_time(env.step_idx) - pd.Timedelta(minutes=1)
+    pos.sl_price = 99.5
+    env.position = pos
+    bar = BarView(open=100.0, low=99.0, high=100.5, close=100.0)
+
+    env._check_sl_tp(bar, 100.0, 100.2, env.step_idx)
+
+    assert env.position is None
+    closes = [row for row in env.trade_log if row.get("type") == "stop_close"]
+    assert len(closes) == 1
+    assert closes[0]["price"] <= 99.5
+
+
+def test_market_entry_without_tick_in_wait_cap_is_rejected_not_raised(monkeypatch: Any) -> None:
+    index = pd.date_range("2026-01-05T14:30:00Z", periods=4, freq="min")
+    close = np.full(len(index), 100.0)
+    bars = pd.DataFrame(
+        {
+            "open": close,
+            "high": close + 0.5,
+            "low": close - 0.5,
+            "close": close,
+            "volume": np.full(len(index), 1000.0),
+            "spread": np.zeros(len(index)),
+            "session_id": np.ones(len(index), dtype=np.int64),
+        },
+        index=index,
+    )
+    features = pd.DataFrame(index=index)
+    # The only tick is 5 minutes after the order: beyond the 60 s wait cap.
+    book = TickBook(
+        np.array([(index[1] + pd.Timedelta(minutes=5)).value]),
+        np.array([100.0]),
+        np.array([100.2]),
+    )
+    env = TradingEnv(
+        bars,
+        features,
+        obs_window=1,
+        block_overnight=False,
+        tickbook=book,
+        tick_execution_required=True,
+    )
+    env.reset(seed=73)
+
+    def no_quote(*_args: Any, **_kwargs: Any) -> None:
+        raise TickExecutionUnavailable("no executable quote within 60000ms")
+
+    monkeypatch.setattr(env, "_resolve_entry_execution_quote", no_quote)
+    env._try_enter_position(
+        discrete_action=1,
+        risk_frac=0.01,
+        rr_ratio=2.0,
+        bar=cast(Any, None),
+        feat_row=cast(Any, None),
+        bar_time=index[1],
+        session_id=1,
+        fill_bid=100.0,
+        fill_ask=100.2,
+        fill_time=index[1],
+        entry_candidate=None,
+        fill_bar_idx=1,
+        order_submission_time=index[1],
+        decision_bar_idx=1,
+        signal_bar_idx=1,
+        order_id=None,
+    )
+
+    assert env.position is None
+    assert env._entry_diag["rejected_entry_execution"] == 1

@@ -32,6 +32,7 @@ from market_data.splits.definitions import (
     split_bars,
     split_train_test,
 )
+from market_data.transforms import scheduled_session_close_map
 from training.configuration.survival_gate import validate_portfolio_data, validate_portfolio_gate
 from training.setup.environments import (
     max_tick_quote_wait_ms,
@@ -42,7 +43,11 @@ from training.setup.environments import (
 from training.setup.environments import (
     tick_execution_required as resolve_tick_execution_required,
 )
-from training.setup.tick_execution_preflight import tick_execution_split_coverage
+from training.setup.tick_execution_preflight import (
+    registered_no_fill_quote_anchors,
+    tick_execution_split_coverage,
+    validate_registered_no_fill_anchors,
+)
 
 from .stages import TrainingConfigurationStage, TrainingDataStage
 
@@ -124,9 +129,18 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
             train_mask,
             test_start,
             session_labels=(primary_m1["session"] if "session" in primary_m1.columns else None),
+            session_timezone=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+            session_start=str(cfg.session.start),
+            session_end=str(cfg.session.end),
+            scheduled_session_closes=scheduled_session_close_map(cfg),
             max_latency_ns_exclusive=int(randomized_fill_latency_ms * 1_000_000),
             max_quote_wait_ms=max_tick_quote_wait_ms(cfg),
             include_report_only_split=not development_only,
+        )
+        registered_anchors = registered_no_fill_quote_anchors(
+            OmegaConf.select(cfg, "execution.approved_no_fill_quote_anchors", default={}),
+            str(primary_sym),
         )
         for split_name, report in execution_coverage.items():
             log.info(
@@ -136,14 +150,21 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
                 report["order_count"],
                 100.0 * report["coverage_fraction"],
             )
-            if report["unavailable_count"]:
+            try:
+                validate_registered_no_fill_anchors(
+                    report["unavailable_order_times_utc"],
+                    registered_anchors if split_name == "train" else [],
+                )
+            except ValueError as exc:
                 raise SystemExit(
                     "Tick-only execution preflight failed for "
-                    f"{split_name}: {report['unavailable_count']}/"
-                    f"{report['order_count']} candidate order times lack a quote "
-                    "that is available for every allowed latency draw within "
-                    f"{max_tick_quote_wait_ms(cfg)} ms; first unavailable order "
-                    f"time={report['first_unavailable_order_time']}. Training not started."
+                    f"{split_name}: {exc}. Training not started."
+                ) from exc
+            if split_name == "train" and report["unavailable_count"]:
+                log.warning(
+                    "Registered fail-closed no-fill anchors [%s]: %d",
+                    primary_sym,
+                    report["unavailable_count"],
                 )
     prebuilt_cache_value = OmegaConf.select(cfg, "data.prebuilt_feature_cache")
     if prebuilt_cache_value:
@@ -212,6 +233,8 @@ def _prepare_training_data(stage: TrainingConfigurationStage) -> TrainingDataSta
         schedule_path=schedule_path,
         session_start=str(cfg.session.start),
         session_end=str(cfg.session.end),
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
     feature_columns = [str(column) for column in features.columns]
 

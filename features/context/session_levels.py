@@ -7,9 +7,10 @@ resolved per bar via tz-aware conversion (``DatetimeIndex.tz_convert``), so
 US DST transitions are handled by the tz database on every bar. Never map a
 CT ``HH:MM`` boundary into the data timezone once and reuse the result as a
 static string. A fixed-offset index cannot represent source DST rules. For
-FTMO MT4/5 server wall timestamps, pass
-``source_clock_model="ftmo_mt5_us_dst"`` so conversion uses the documented
-GMT+2/+3 platform clock.
+Helsinki-local chart timestamps carried on the repository's fixed-offset
+index, pass ``source_clock_model="europe_helsinki"`` so conversion applies
+the Helsinki calendar and then resolves each bar against New York/Chicago
+session time.
 
 These CT-anchored features use per-session-date semantics: O/H/L/C update
 bar-by-bar from the current session date's rows and are then held until the
@@ -50,12 +51,13 @@ def _session_reference_index(
 ) -> pd.DatetimeIndex:
     """Return an index with the instants implied by its source clock model.
 
-    FTMO MT4/MT5 exports use server wall time at GMT+2 in US standard time
-    and GMT+3 in US daylight time. The repository index keeps those wall-clock
-    values in a fixed-offset timezone for compatibility. Subtracting seven
-    hours and localizing to New York reconstructs the corresponding NY clock
-    and UTC instants for CT session calculations. Ambiguous/nonexistent source
-    wall times fail closed because the export alone cannot resolve them.
+    ``europe_helsinki`` interprets the index's wall-clock labels in the
+    Europe/Helsinki timezone. The repository index keeps those labels in a
+    fixed-offset timezone for compatibility, so localize its naive values to
+    Helsinki before converting to the requested session timezone. Ambiguous
+    or nonexistent source wall times fail closed because the index has no fold
+    marker and cannot resolve them. The legacy ``ftmo_mt5_us_dst`` model is
+    retained for explicit compatibility with earlier runs.
 
     Args:
         index: Position or label identifying the requested item.
@@ -68,6 +70,10 @@ def _session_reference_index(
         raise ValueError("index must be timezone-aware (data tz), got naive index")
     if source_clock_model == "native":
         return index
+    if source_clock_model == "europe_helsinki":
+        return index.tz_localize(None).tz_localize(
+            "Europe/Helsinki", ambiguous="raise", nonexistent="raise"
+        )
     if source_clock_model != "ftmo_mt5_us_dst":
         raise ValueError(f"unsupported source clock model: {source_clock_model!r}")
 

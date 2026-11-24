@@ -33,10 +33,12 @@ def build_fvg_zone_features(
     """Build causal scalar FVG zone features for one timeframe's own bars.
 
     Features include active-zone proximity, retest flags, current bounds, and
-    the candle-one origin. When overlapping same-side retests confirm on one
-    row, the newest zone in source-time order supplies the scalar event time
-    and origin. Use :func:`build_fvg_zone_features_with_event_ledger` to inspect
-    all same-row confirmations without changing this model-facing output.
+    the candle-one origin. Retest confirmation time is an event pulse, while
+    retest origin time tracks the selected active zone. When overlapping
+    same-side retests confirm on one row, the newest zone in source-time order
+    supplies the scalar event time and origin. Use
+    :func:`build_fvg_zone_features_with_event_ledger` to inspect all same-row
+    confirmations without changing this model-facing output.
 
     Args:
         bars: OHLC bars indexed by their decision timestamps.
@@ -196,6 +198,8 @@ def _build_fvg_zone_features(
     # access, so keep the same ordered updates in a local homogeneous array
     # and wrap it back into the original column schema once at the end.
     values = out.to_numpy(copy=True)
+    bull_active_zone_origin = np.full(n, np.nan)
+    bear_active_zone_origin = np.full(n, np.nan)
     event_records: list[dict[str, object]] = []
 
     # Zones are source-time sorted. If several same-side retests confirm on
@@ -232,6 +236,7 @@ def _build_fvg_zone_features(
                 values[i, bull_active] = 1.0
                 values[i, bull_lo] = zone.zone_low
                 values[i, bull_hi] = zone.zone_high
+                bull_active_zone_origin[i] = pd.Timestamp(zone.start_ts).value
                 if origin_i >= 0:
                     values[i, bull_origin] = low[origin_i]
                 if (
@@ -269,6 +274,7 @@ def _build_fvg_zone_features(
                 values[i, bear_active] = 1.0
                 values[i, bear_lo] = zone.zone_low
                 values[i, bear_hi] = zone.zone_high
+                bear_active_zone_origin[i] = pd.Timestamp(zone.start_ts).value
                 if origin_i >= 0:
                     values[i, bear_origin] = high[origin_i]
                 if (
@@ -302,6 +308,14 @@ def _build_fvg_zone_features(
                     )
                 if high[i] < zone.zone_low:
                     left = True
+    bull_no_retest_pulse = values[:, bull_retest] == 0.0
+    bear_no_retest_pulse = values[:, bear_retest] == 0.0
+    values[bull_no_retest_pulse, bull_retest_origin_time] = bull_active_zone_origin[
+        bull_no_retest_pulse
+    ]
+    values[bear_no_retest_pulse, bear_retest_origin_time] = bear_active_zone_origin[
+        bear_no_retest_pulse
+    ]
     features = pd.DataFrame(values, index=idx, columns=out.columns)
     if not event_records:
         return features, pd.DataFrame(columns=_FVG_EVENT_COLUMNS)

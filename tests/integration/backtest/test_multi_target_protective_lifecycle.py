@@ -11,7 +11,6 @@ import pandas as pd
 
 from market_data.loading.ticks import (
     TickBook,
-    TickExecutionUnavailable,
     event_keyed_execution_rng,
     resolve_tick_execution,
 )
@@ -110,6 +109,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             fill_delay_ms=0,
             randomized_fill_latency_ms=randomized_fill_latency_ms,
             tick_execution_required=require_tick_execution,
+            max_tick_quote_wait_ms=60_000,
             server_side_protective_orders=server_side_protective_orders,
             _breakeven_trigger_r=breakeven_trigger_r,
             _breakeven_buffer_pts=breakeven_buffer_pts,
@@ -127,7 +127,6 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             step_idx=0,
             _maybe_ema_exit=lambda *_args: None,
             _resolve_randomized_tick_quote=resolve_randomized_quote,
-            tick_protective_assertion_calls=[],
         )
         for name in (
             "_stamp_exit",
@@ -136,18 +135,12 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             "_sl_tp_fill_quote",
             "_exit_side_bar_range",
             "_check_multi_tp_ticks",
-            "_assert_tick_protective_events_observed",
             "_adverse_tick_fill_quote",
             "_close_at_quote",
+            "_tick_fill_mode",
+            "_untriggered_level_quote",
         ):
             setattr(env, name, MethodType(getattr(TradingEnv, name), env))
-        original_assertion = env._assert_tick_protective_events_observed
-
-        def record_assertion(self: SimpleNamespace, *args: object, **kwargs: object) -> None:
-            self.tick_protective_assertion_calls.append((args, kwargs))
-            original_assertion(*args, **kwargs)
-
-        env._assert_tick_protective_events_observed = MethodType(record_assertion, env)
         bar = SimpleNamespace(
             open=100.0,
             low=low if direction == 1 else 98.0,
@@ -312,6 +305,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         ]
         for record, expected_size in zip(closes, (0.3, 0.3, 0.4), strict=True):
             self.assertAlmostEqual(record["size"], expected_size)
+        self.assertEqual([record["price"] for record in closes], [100.5, 101.0, 101.5])
         self.assertTrue(all(record["fill_quote_source"] == "tick" for record in closes))
         self.assertIsNone(state.position)
         for actual, reference in zip(closes, env_closes, strict=True):
@@ -340,8 +334,35 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         )
 
         self.assertIsNotNone(env.position)
-        self.assertEqual(len(env.tick_protective_assertion_calls), 1)
         self.assertEqual([record.get("type") for record in env.trade_log], ["tp_partial_close"])
+
+    def test_runner_stop_touched_by_bar_range_without_crossing_tick_still_fills(self) -> None:
+        start = pd.Timestamp("2026-01-05T10:00:00Z")
+        book = TickBook(
+            np.array(
+                [
+                    (start + pd.Timedelta(seconds=10)).value,
+                    (start + pd.Timedelta(seconds=20)).value,
+                ],
+                dtype=np.int64,
+            ),
+            np.array([100.6, 99.2]),
+            np.array([100.61, 99.21]),
+        )
+        env = self._run_environment(
+            tickbook=book,
+            fractions=(0.8,),
+            runner_fraction=0.2,
+            low=98.9,
+            high=100.6,
+            require_tick_execution=True,
+        )
+
+        self.assertIsNone(env.position)
+        self.assertEqual(
+            [record.get("type") for record in env.trade_log], ["tp_partial_close", "stop_close"]
+        )
+        self.assertAlmostEqual(env.trade_log[-1]["price"], 99.0)
 
     def test_multi_target_replay_does_not_apply_new_stop_to_prior_ohlc_range(self) -> None:
         start = pd.Timestamp("2026-01-05T10:00:00Z")
@@ -371,10 +392,8 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
         self.assertIsNotNone(env.position)
         self.assertAlmostEqual(env.position.size, 0.2)
         self.assertAlmostEqual(env.position.sl_price, 99.9)
-        self.assertEqual(len(env.tick_protective_assertion_calls), 1)
         self.assertEqual(
-            env.tick_protective_assertion_calls[0][1]["protective_levels"],
-            (None, (None, None, None)),
+            [record.get("type") for record in env.trade_log], ["tp_partial_close", "sl_update"]
         )
 
     def test_randomized_tick_latency_matches_across_all_partial_targets(self) -> None:
@@ -500,6 +519,7 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             record for record in env.trade_log if record.get("type", "").startswith("tp_")
         ]
         self.assertEqual(len(closes), 3)
+        self.assertEqual([record["price"] for record in closes], [99.5, 99.0, 98.5])
         for actual, reference in zip(closes, env_closes, strict=True):
             self.assertEqual(actual["reason"], reference["reason"])
             for field in ("size", "pnl", "price"):
@@ -532,18 +552,37 @@ class MultiTargetProtectiveLifecycleTest(unittest.TestCase):
             self.assertEqual(actual["position_complete"], reference["position_complete"])
         self.assertAlmostEqual(state.account.balance, env.account.balance)
 
-    def test_strict_tick_mode_rejects_ohlc_target_without_matching_tick(self) -> None:
+    def test_tick_mode_fills_ohlc_target_at_nearest_tick_without_crossing_tick(self) -> None:
         start = pd.Timestamp("2026-01-05T10:00:00Z")
         tick_time = start + pd.Timedelta(seconds=10)
         book = TickBook(
             np.array([tick_time.value], dtype=np.int64),
-            np.array([100.5]),
-            np.array([100.51]),
+            np.array([100.4]),
+            np.array([100.41]),
         )
-        with self.assertRaisesRegex(TickExecutionUnavailable, "no matching tick trigger"):
-            self._run(tickbook=book)
-        with self.assertRaisesRegex(TickExecutionUnavailable, "no matching tick trigger"):
-            self._run_environment(tickbook=book, require_tick_execution=True)
+        state = self._run(tickbook=book)
+
+        # The bar's nearest tick (bid 100.4) is below the 100.5 target, so it is the
+        # worse-than-level quote and the target fills there, not at the level.
+        self.assertIsNone(state.position)
+        tp_records = [r for r in state.trade_log if r.get("type", "").startswith("tp_")]
+        self.assertTrue(tp_records)
+        self.assertLessEqual(tp_records[-1]["price"], 100.4)
+        # Tick mode: the bar's nearest tick (bid 100.4) is worse than the target
+        # and is the fill, with any adverse slippage applied on top.
+        filled = self._run_environment(tickbook=book, require_tick_execution=True)
+        self.assertIsNone(filled.position)
+        tp_fills = [r for r in filled.trade_log if r.get("type", "").startswith("tp_")]
+        self.assertTrue(tp_fills)
+        self.assertLessEqual(tp_fills[-1]["price"], 100.4)
+
+        short_filled = self._run_environment(
+            tickbook=book, direction=-1, require_tick_execution=True
+        )
+        self.assertIsNone(short_filled.position)
+        short_tp = [r for r in short_filled.trade_log if r.get("type", "").startswith("tp_")]
+        self.assertTrue(short_tp)
+        self.assertGreaterEqual(short_tp[-1]["price"], 100.41)
 
     def test_stop_remains_first_when_bar_also_reaches_targets(self) -> None:
         state = self._run(low=98.5)

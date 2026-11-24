@@ -617,7 +617,7 @@ def __init__(self, script: dict[int, int], default: int = 0):
     self._action_schema: dict[str, object] = build_discrete_trading_action_schema().to_dict()
 ```
 
-2. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L403)
+2. [test fixture: `test_evaluate_provider_uses_the_same_trading_rollout`](../../../../tests/unit/evaluation/test_rollout.py#L405)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

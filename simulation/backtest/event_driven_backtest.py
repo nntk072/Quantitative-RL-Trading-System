@@ -8,7 +8,8 @@ Every order fill uses a ``(bid, ask)`` quote obtained in this priority:
 2. **Bar-spread fallback**: the next bar's open quote, timestamped at its open.
 
 Mark-to-market and per-trade stop checks use the bar-close quote (long @ bid,
-short @ ask).
+short @ ask). A decision-boundary snapshot is refreshed after its policy order
+fills, using the fill quote and timestamp when execution is tick-backed.
 
 When ``randomized_fill_latency_ms`` is positive, submitted orders instead use
 the first recorded quote at or after a seeded random arrival time strictly
@@ -16,10 +17,10 @@ below the configured latency bound. That mode fails closed when no timely tick
 exists and never substitutes a candle quote for an execution.
 
 Bar indexes are left-labeled. Equity observations are marked at each bar's
-close timestamp, after current-bar protective events and session liquidation,
-but before policy orders that execute on a later quote. OHLC-only protective
-fills retain their triggering bar interval because their exact intrabar time
-is not observable without ticks.
+close timestamp, after current-bar protective events and session liquidation.
+The decision-boundary mark is refreshed after the policy order executes at
+the next quote. OHLC-only protective fills retain their triggering bar interval
+because their exact intrabar time is not observable without ticks.
 """
 
 from __future__ import annotations
@@ -66,8 +67,15 @@ from market_data.loading.ticks import (
     TickExecutionUnavailable,
     event_keyed_execution_rng,
     limit_entry_execution_rng,
+    nearest_tick_execution,
     resolve_tick_execution,
     resolve_tick_limit_execution,
+)
+from market_data.news.guard import (
+    NewsGuardConfig,
+    causal_atr5,
+    load_release_times,
+    news_block_mask,
 )
 from simulation.entry_evidence import build_entry_evidence
 from simulation.entry_state import EntryStateMachine
@@ -106,6 +114,46 @@ PolicyAction = int | np.ndarray[Any, Any]
 ActionFn = Callable[[PolicyObservation], PolicyAction]
 ArrayActionFn = Callable[[np.ndarray[Any, Any]], PolicyAction]
 BacktestActionFn = ActionFn | ArrayActionFn
+
+
+def _decision_valuation_time(
+    bar_boundary: Any,
+    trade_events: list[dict[str, Any]],
+    bar_index: int,
+) -> Any:
+    """Choose the timestamp that values a bar's decision-boundary state.
+
+    Args:
+        bar_boundary: Scheduled end timestamp for the bar.
+        trade_events: Execution and position events recorded so far.
+        bar_index: Bar whose resulting account state is being valued.
+
+    Returns:
+        The latest matching fill timestamp, or ``bar_boundary`` when no fill
+        occurred on the requested bar.
+    """
+    for event in reversed(trade_events):
+        if event.get("type") not in {
+            "open",
+            "close",
+            "forced_close",
+            "stop_close",
+            "tp_close",
+            "tp_partial_close",
+            "eod_close",
+        }:
+            continue
+        try:
+            event_bar = int(event.get("bar", -1))
+        except (TypeError, ValueError):
+            continue
+        if event_bar != bar_index:
+            continue
+        for key in ("actual_tick_time", "fill_time", "time"):
+            value = event.get(key)
+            if value is not None:
+                return pd.Timestamp(value)
+    return bar_boundary
 
 
 def _scalar_policy_action(policy: BacktestActionFn, observation: PolicyObservation) -> int:
@@ -439,9 +487,17 @@ def _fill_quote_event(
             max_quote_wait_ns=max_tick_quote_wait_ms * 1_000_000,
         )
         if execution is None:
-            raise TickExecutionUnavailable(
-                f"no executable tick within {max_tick_quote_wait_ms}ms of {fill_instant}"
+            # No tick follows the arrival within the cap: the nearest tick in time, within the same cap.
+            nearest = nearest_tick_execution(
+                tickbook,
+                pd.Timestamp(fill_instant),
+                max_gap_ns=int(max_tick_quote_wait_ms * 1_000_000),
             )
+            if nearest is None:
+                raise TickExecutionUnavailable(
+                    f"no executable tick within {max_tick_quote_wait_ms}ms of {fill_instant}"
+                )
+            execution = nearest
         return (
             (execution.bid, execution.ask),
             execution.tick_time,
@@ -507,10 +563,15 @@ def _is_last_ny_bar(bars: pd.DataFrame, i: int, is_ny: bool) -> bool:
         return False
     if i + 1 >= len(bars):
         return True
+    current = bars.iloc[i]
     nxt = bars.iloc[i + 1]
     next_ny = "session" not in nxt.index or str(nxt["session"]) == "ny"
     if not next_ny:
         return True
+    current_session_id = current.get("session_id")
+    next_session_id = nxt.get("session_id")
+    if pd.notna(current_session_id) and current_session_id == next_session_id:
+        return False
     return pd.Timestamp(bars.index[i + 1]) - pd.Timestamp(bars.index[i]) > pd.Timedelta(minutes=1)
 
 
@@ -552,6 +613,7 @@ def run_backtest(
     randomized_fill_latency_ms: float = 0.0,
     max_tick_quote_wait_ms: int = 60_000,
     tick_execution_required: bool = False,
+    news_guard: NewsGuardConfig | None = None,
     server_side_protective_orders: bool = False,
     execution_seed: int = 0,
     fill_latency_bars: int = 0,
@@ -605,6 +667,9 @@ def run_backtest(
     vae: Any | None = None,
     pre_ny_by_date: Mapping[Any, np.ndarray[Any, Any]] | None = None,
     pre_ny_data: pd.DataFrame | None = None,
+    open_manipulation_bars: int = 0,
+    session_timezone: str | None = None,
+    source_clock_model: str = "native",
 ) -> dict[str, Any]:
     """Run a full backtest over aligned bars + features.
 
@@ -629,6 +694,7 @@ def run_backtest(
         randomized_fill_latency_ms: Numeric value used for the randomized fill latency ms.
         max_tick_quote_wait_ms: Numeric value used for the max tick quote wait ms.
         tick_execution_required: Whether to enable or require the tick execution required.
+        news_guard: News and spike guard settings; None disables the guard.
         server_side_protective_orders: Execute attached SL/TP orders on their triggering
             tick without sampling a new EA/network latency.
         execution_seed: Numeric value used for the execution seed.
@@ -678,6 +744,10 @@ def run_backtest(
         vae: Optional frozen encoder used to emit the environment's ``vae_z`` input.
         pre_ny_by_date: Per-session VAE input sequences keyed by local market date.
         pre_ny_data: Legacy row-aligned flattened VAE inputs.
+        open_manipulation_bars: Number of NY session opening bars during which new
+            entries are rejected. Zero preserves callers that do not configure this gate.
+        session_timezone: IANA timezone used for session boundaries and reachability.
+        source_clock_model: Interpretation of raw chart-index wall labels.
         daily_pnl_basis: Optional daily-loss basis override. Session net equity
             includes realized and open PnL since the supplied session reset;
             legacy gross closed losses does not offset wins or include open PnL.
@@ -964,6 +1034,13 @@ def run_backtest(
         if resolved_policy_risk_frac_range[1] > resolved_trading_policy.max_agent_risk_frac:
             raise ValueError("policy_risk_frac_range exceeds the repeated-payout policy risk limit")
 
+    if (
+        isinstance(open_manipulation_bars, bool)
+        or int(open_manipulation_bars) != open_manipulation_bars
+        or open_manipulation_bars < 0
+    ):
+        raise ValueError("open_manipulation_bars must be a non-negative integer")
+
     common_idx = bars.index.intersection(features.index)
     bars = bars.loc[common_idx]
     features = features.loc[common_idx]
@@ -977,7 +1054,12 @@ def run_backtest(
         if "atr_5" in features.columns:
             from features.context.reachability import max_tp_distance
 
-            geometry_max_tp_dist = max_tp_distance(bars, features["atr_5"]).reindex(bars.index)
+            geometry_max_tp_dist = max_tp_distance(
+                bars,
+                features["atr_5"],
+                session_tz=session_timezone,
+                source_clock_model=source_clock_model,
+            ).reindex(bars.index)
 
     broker_options = dict(broker_kwargs or {})
     if "contract_size" in broker_options and float(broker_options["contract_size"]) != float(
@@ -1056,6 +1138,7 @@ def run_backtest(
         allow_multi_tp=bool(setup_action_schema and setup_action_schema.has_multi_tp),
         allow_simplex=bool(setup_action_schema and setup_action_schema.has_simplex),
         ema_runner_fraction=float(ema_runner_fraction),
+        open_manipulation_bars=int(open_manipulation_bars),
     )
     state = BacktestState(
         account=AccountState(
@@ -1094,8 +1177,9 @@ def run_backtest(
         valuation_time: Any,
         session_id: int,
         breach_reason: str = "",
+        state_phase: str = "pre_action_valuation",
     ) -> dict[str, Any]:
-        """Snapshot account state at the same boundary as a saved equity mark.
+        """Snapshot account state at a saved decision or pre-action boundary.
 
         Args:
             bar_index: Position of the current bar in the backtest input.
@@ -1104,8 +1188,10 @@ def run_backtest(
             session_id: Identifier of the active trading session.
             breach_reason: Optional reason associated with a risk breach.
 
+            state_phase: Label identifying the side of the policy action.
+
         Returns:
-            Account-state fields for this pre-action valuation boundary.
+            Account-state fields for this decision-time valuation boundary.
         """
         return {
             "backtest_bar_index": int(bar_index),
@@ -1114,7 +1200,7 @@ def run_backtest(
                 valuation_time=valuation_time,
                 decision_time=decision_time,
                 session_id=session_id,
-                state_phase="pre_action_valuation",
+                state_phase=state_phase,
                 daily_loss_limit_usd=guardrails.daily_limit_for(state.account),
                 soft_daily_loss_limit_usd=guardrails.soft_daily_limit_for(state.account),
                 max_loss_limit_usd=guardrails.max_loss_limit_for(state.account),
@@ -1138,6 +1224,35 @@ def run_backtest(
             ),
         }
 
+    def refresh_account_state_trace(
+        *,
+        bar_index: int,
+        bar_time: pd.Timestamp,
+        session_id: int,
+    ) -> None:
+        """Refresh the current bar's account mark after a state-changing action.
+
+        Args:
+            bar_index: Position of the current bar in the backtest input.
+            bar_time: Left-labeled timestamp of the current bar.
+            session_id: Identifier of the active trading session.
+        """
+        if not account_state_trace_rows:
+            return
+        boundary = pd.Timestamp(bar_time) + bar_duration
+        state.equity_curve[-1] = float(state.account.equity)
+        state.total_economic_value_curve[-1] = float(
+            state.account.equity + state.cumulative_payouts
+        )
+        account_state_trace_rows[-1] = build_account_state_trace_row(
+            bar_index=bar_index,
+            decision_time=boundary,
+            valuation_time=_decision_valuation_time(boundary, state.trade_log, bar_index),
+            session_id=session_id,
+            breach_reason=str(account_state_trace_rows[-1].get("breach_reason", "")),
+            state_phase="post_action_valuation",
+        )
+
     if setup_action_schema is None:
         observation_features = select_obs_columns(features)
     else:
@@ -1145,6 +1260,8 @@ def run_backtest(
             select_obs_columns(features, getattr(resolved_strategy, "raw_columns", ())),
             bars,
             features,
+            session_tz=session_timezone,
+            source_clock_model=source_clock_model,
         )
         setup_feature_names = {name for _, name in trade_setup_candidate_feature_columns()}
         observation_features = observation_features.drop(
@@ -1201,6 +1318,32 @@ def run_backtest(
         else {}
     )
     ny_gap_guard = _ny_gap_guard_mask(bars)
+    news_blocked_bars: np.ndarray[Any, Any] = (
+        np.zeros(len(bars), dtype=bool)
+        if news_guard is None
+        else news_block_mask(
+            list(pd.DatetimeIndex(bars.index).to_pydatetime()),
+            bars["close"].to_numpy(dtype=float),
+            (
+                features["atr_5"].to_numpy(dtype=float)
+                if "atr_5" in features.columns
+                else causal_atr5(bars["high"], bars["low"], bars["close"])
+            ),
+            (
+                bars["session_id"].to_numpy(dtype=np.int64)
+                if "session_id" in bars.columns
+                else np.zeros(len(bars), dtype=np.int64)
+            ),
+            (
+                bars["session"].to_numpy().astype(str)
+                if "session" in bars.columns
+                else np.full(len(bars), "all")
+            ),
+            load_release_times(news_guard.calendar_path),
+            news_guard,
+            open_manipulation_bars=settings.open_manipulation_bars,
+        )
+    )
     bar_duration = _bar_duration(bar_times)
     feat_array: np.ndarray[Any, Any] = features.values.astype(np.float32)
     feat_array = np.nan_to_num(feat_array, nan=0.0).astype(np.float32)
@@ -1212,6 +1355,10 @@ def run_backtest(
         else np.arange(n_bars, dtype=int)
     )
     ny_position_by_index = {int(index): position for position, index in enumerate(ny_indices)}
+    ny_session_open_index: dict[int, int] = {}
+    for index in ny_indices:
+        session_id = int(bars.iloc[int(index)].get("session_id", 0))
+        ny_session_open_index.setdefault(session_id, int(index))
     if (tick_execution_required or randomized_fill_latency_ms > 0) and tickbook is None:
         raise TickExecutionUnavailable("tick-only execution requires a TickBook")
 
@@ -1686,24 +1833,34 @@ def run_backtest(
 
         execution_event: tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]] | None = None
 
-        def resolve_bar_execution() -> tuple[
-            tuple[float, float], pd.Timestamp, str, dict[str, Any]
-        ]:
-            """Resolve and cache the execution quote for this bar's fill time.
+        def resolve_bar_execution(
+            order_submission_time: pd.Timestamp | None = None,
+        ) -> tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]:
+            """Resolve and cache the quote using its fill or active order time.
+
+            Args:
+                order_submission_time: Optional order time used when tick-based
+                    execution or randomized latency controls the fill schedule.
 
             Returns:
-                Mapping from ``str`` keys to ``Any]`` values.
+                The execution quote, its timestamp, the resolution reason, and
+                execution metadata.
             """
             nonlocal execution_event
             if execution_event is None:
+                execution_time = fill_instant
+                if order_submission_time is not None and (
+                    tick_execution_required or randomized_fill_latency_ms > 0
+                ):
+                    execution_time = pd.Timestamp(order_submission_time)
                 execution_event = _fill_quote_event(
-                    fill_instant,
+                    execution_time,
                     fill_row,
                     cost_model,
                     tickbook,
                     rng=(
                         event_keyed_execution_rng(
-                            int(execution_seed), f"bar_fill:{pd.Timestamp(fill_instant).value}"
+                            int(execution_seed), f"bar_fill:{pd.Timestamp(execution_time).value}"
                         )
                         if randomized_fill_latency_ms > 0
                         else execution_rng
@@ -1767,7 +1924,9 @@ def run_backtest(
             build_account_state_trace_row(
                 bar_index=i,
                 decision_time=pd.Timestamp(bar_time) + bar_duration,
-                valuation_time=pd.Timestamp(bar_time) + bar_duration,
+                valuation_time=_decision_valuation_time(
+                    pd.Timestamp(bar_time) + bar_duration, state.trade_log, i
+                ),
                 session_id=session,
                 breach_reason=(
                     str(current_breach_events[0].get("reason", "")) if current_breach_events else ""
@@ -1804,6 +1963,8 @@ def run_backtest(
                     block_reason = "session_changed_before_limit_fill"
                 elif session in state.breached_sessions or state.year_failed:
                     block_reason = "account_guardrail_before_limit_fill"
+                elif news_blocked_bars[i]:
+                    block_reason = "news_spike_before_limit_fill"
                 elif guardrails.check_soft_daily(
                     state.account
                 ) or guardrails.check_soft_trailing_dd(state.account):
@@ -1837,7 +1998,7 @@ def run_backtest(
                             "order_submission_time": pending_order["order_submission_time"],
                             "expiry_time": pending_order["expiry_time"],
                             "limit_price": pending_order["limit_price"],
-                            "time": bar_time,
+                            "time": bar_end,
                         }
                     )
                     if str(block_reason).startswith("source_setup_"):
@@ -1860,6 +2021,7 @@ def run_backtest(
                         "execution_order_time": pd.Timestamp(fill_quote.order_time),
                         "execution_arrival_time": pd.Timestamp(fill_quote.arrival_time),
                         "execution_latency_ns": int(fill_quote.latency_ns),
+                        "actual_tick_time": pd.Timestamp(fill_quote.tick_time),
                         "fill_time": pd.Timestamp(fill_quote.tick_time),
                         "fill_quote_source": "tick",
                     }
@@ -1921,35 +2083,65 @@ def run_backtest(
                         entry_reference_price=float(pending_order["limit_price"]),
                     )
                     if state.position_sequence == position_sequence_before:
-                        state.trade_log.append(
-                            {
-                                "type": "order_cancel",
-                                "decision_id": pending_order.get("decision_id"),
-                                "order_id": pending_order["order_id"],
-                                "order_type": "limit",
-                                "reason": "entry_rejected_at_limit_fill",
-                                "session_id": int(session),
-                                "decision_time": pending_order["order_submission_time"],
-                                "trade_setup_candidate_id": pending_order.get(
-                                    "trade_setup_candidate_id"
-                                ),
-                                **trade_setup_event_identity_record(
-                                    pending_order.get("trade_setup_event_identity")
-                                ),
-                                "decision_bar_time": pending_order["decision_bar_time"],
-                                "order_submission_time": pending_order["order_submission_time"],
-                                "expiry_time": pending_order["expiry_time"],
-                                "limit_price": pending_order["limit_price"],
-                                "trigger_quote_time": pd.Timestamp(fill_quote.tick_time),
-                                "trigger_quote_bid": float(fill_quote.bid),
-                                "trigger_quote_ask": float(fill_quote.ask),
-                                "trigger_quote_price": float(
-                                    fill_quote.ask
-                                    if int(pending_order["action"]) == 1
-                                    else fill_quote.bid
-                                ),
-                                "time": pd.Timestamp(fill_quote.tick_time),
-                            }
+                        cancel_event = {
+                            "type": "order_cancel",
+                            "decision_id": pending_order.get("decision_id"),
+                            "order_id": pending_order["order_id"],
+                            "order_type": "limit",
+                            "direction": int(pending_order["action"]),
+                            "reason": "entry_rejected_at_limit_fill",
+                            "session_id": int(session),
+                            "decision_time": pending_order["order_submission_time"],
+                            "trade_setup_candidate_id": pending_order.get(
+                                "trade_setup_candidate_id"
+                            ),
+                            **trade_setup_event_identity_record(
+                                pending_order.get("trade_setup_event_identity")
+                            ),
+                            "decision_bar_time": pending_order["decision_bar_time"],
+                            "order_submission_time": pending_order["order_submission_time"],
+                            "expiry_time": pending_order["expiry_time"],
+                            "limit_price": pending_order["limit_price"],
+                            "trigger_quote_time": pd.Timestamp(fill_quote.tick_time),
+                            "trigger_quote_bid": float(fill_quote.bid),
+                            "trigger_quote_ask": float(fill_quote.ask),
+                            "trigger_quote_price": float(
+                                fill_quote.ask
+                                if int(pending_order["action"]) == 1
+                                else fill_quote.bid
+                            ),
+                            "time": pd.Timestamp(fill_quote.tick_time),
+                        }
+                        rejection_index = next(
+                            (
+                                index
+                                for index in range(len(state.trade_log) - 1, -1, -1)
+                                if state.trade_log[index].get("type") == "reject"
+                                and state.trade_log[index].get("order_id")
+                                == pending_order["order_id"]
+                            ),
+                            None,
+                        )
+                        if rejection_index is None:
+                            state.trade_log.append(cancel_event)
+                        else:
+                            rejection = state.trade_log[rejection_index]
+                            rejection.update(
+                                {
+                                    "order_type": "limit",
+                                    "expiry_time": pending_order["expiry_time"],
+                                    "limit_price": pending_order["limit_price"],
+                                    "trigger_quote_time": pd.Timestamp(fill_quote.tick_time),
+                                    "trigger_quote_bid": float(fill_quote.bid),
+                                    "trigger_quote_ask": float(fill_quote.ask),
+                                    "trigger_quote_price": cancel_event["trigger_quote_price"],
+                                }
+                            )
+                            state.trade_log.insert(rejection_index, cancel_event)
+                        refresh_account_state_trace(
+                            bar_index=i,
+                            bar_time=pd.Timestamp(bar_time),
+                            session_id=session,
                         )
                     else:
                         open_index = next(
@@ -1966,6 +2158,12 @@ def run_backtest(
                                 "limit fill opened without a matching position event"
                             )
                         state.trade_log.insert(open_index, limit_fill_event)
+                        # The quote already executed within this valuation interval.
+                        refresh_account_state_trace(
+                            bar_index=i,
+                            bar_time=pd.Timestamp(bar_time),
+                            session_id=session,
+                        )
                     continue
                 elif block_reason is None and bar_end >= pd.Timestamp(pending_order["expiry_time"]):
                     state.pending_entry_order = None
@@ -2015,6 +2213,7 @@ def run_backtest(
                     continue
             else:
                 # Fixed-delay market orders retain the existing scheduled-fill contract.
+                assert pending_order is not None
                 action = int(action)
                 due_fill_index = i + 1
                 block_reason = None
@@ -2063,6 +2262,23 @@ def run_backtest(
                         )
                     state.pending_entry_order = None
                     position_sequence_before = state.position_sequence
+                    scheduled_fill_time = pd.Timestamp(pending_order["scheduled_fill_time"])
+
+                    def resolve_scheduled_market_fill(
+                        _order_submission_time: pd.Timestamp | None = None,
+                    ) -> tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]:
+                        """Resolve delayed-market execution from its scheduled fill instant.
+
+                        Args:
+                            _order_submission_time: Unused compatibility argument; the
+                                pending order's recorded schedule is authoritative.
+
+                        Returns:
+                            The execution quote, its timestamp, the resolution reason,
+                            and execution metadata.
+                        """
+                        return resolve_bar_execution(scheduled_fill_time)
+
                     apply_policy_action(
                         state,
                         settings,
@@ -2077,7 +2293,7 @@ def run_backtest(
                         selected_risk_frac=float(
                             pending_order.get("risk_frac", settings.risk_frac)
                         ),
-                        resolve_bar_execution=resolve_bar_execution,
+                        resolve_bar_execution=resolve_scheduled_market_fill,
                         is_last_ny_bar=_is_last_ny_bar,
                         feature_index=int(pending_order["decision_index"]),
                         decision_bar_time=pd.Timestamp(pending_order["decision_bar_time"]),
@@ -2187,6 +2403,45 @@ def run_backtest(
             )
             setup_identity = identities[0] if identities else None
         if (
+            action in (1, -1)
+            and state.position is None
+            and settings.open_manipulation_bars > 0
+            and i - ny_session_open_index.get(session, i) < settings.open_manipulation_bars
+        ):
+            state.trade_log.append(
+                {
+                    "type": "reject",
+                    "decision_id": current_policy_decision_id,
+                    "reason": "open_blackout",
+                    "trade_setup_candidate_id": (
+                        None if selected_trade_setup is None else selected_trade_setup.candidate_id
+                    ),
+                    **trade_setup_event_identity_record(setup_identity),
+                    "decision_bar": i,
+                    "decision_bar_time": bar_time,
+                    "decision_time": bar_time + bar_duration,
+                    "direction": action,
+                }
+            )
+            continue
+        if action in (1, -1) and state.position is None and news_blocked_bars[i]:
+            state.trade_log.append(
+                {
+                    "type": "reject",
+                    "decision_id": current_policy_decision_id,
+                    "reason": "news_spike_blocked",
+                    "trade_setup_candidate_id": (
+                        None if selected_trade_setup is None else selected_trade_setup.candidate_id
+                    ),
+                    **trade_setup_event_identity_record(setup_identity),
+                    "decision_bar": i,
+                    "decision_bar_time": bar_time,
+                    "decision_time": bar_time + bar_duration,
+                    "direction": action,
+                }
+            )
+            continue
+        if (
             execution_choice is not None
             and execution_choice.order_type == "limit"
             and action in (1, -1)
@@ -2227,6 +2482,9 @@ def run_backtest(
                         "decision_time": bar_time + bar_duration,
                         "direction": action,
                     }
+                )
+                refresh_account_state_trace(
+                    bar_index=i, bar_time=pd.Timestamp(bar_time), session_id=session
                 )
                 continue
             if selected_trade_setup is not None:
@@ -2329,6 +2587,9 @@ def run_backtest(
                 "risk_frac": (
                     settings.risk_frac if selected_risk_frac is None else float(selected_risk_frac)
                 ),
+                "rr_ratio": (
+                    None if geometry_choice is None else float(geometry_choice.target_fraction)
+                ),
                 "geometry_choice": geometry_choice,
                 "trade_setup_candidate_id": (
                     None if selected_trade_setup is None else selected_trade_setup.candidate_id
@@ -2368,6 +2629,7 @@ def run_backtest(
                     "decision_bar_time": pd.Timestamp(bar_time),
                     "decision_time": order_submission_time,
                     "order_submission_time": order_submission_time,
+                    "time": order_submission_time,
                     "limit_price": limit_price,
                     "selected_geometry_action": _geometry_action_record(geometry_choice),
                     "limit_offset_atr": execution_choice.limit_offset_atr,
@@ -2375,6 +2637,9 @@ def run_backtest(
                     "expiry_time": expiry_time,
                     "session_id": session,
                 }
+            )
+            refresh_account_state_trace(
+                bar_index=i, bar_time=pd.Timestamp(bar_time), session_id=session
             )
             continue
         if settings.fill_latency_bars > 0 and action in (1, -1):
@@ -2484,6 +2749,9 @@ def run_backtest(
                     "session_id": session,
                 }
             )
+            refresh_account_state_trace(
+                bar_index=i, bar_time=pd.Timestamp(bar_time), session_id=session
+            )
             continue
         immediate_order_id: str | None = None
         if (
@@ -2493,6 +2761,7 @@ def run_backtest(
         ):
             state.pending_order_sequence += 1
             immediate_order_id = f"bt:o{state.pending_order_sequence}"
+            immediate_order_submission_time = pd.Timestamp(bar_time) + bar_duration
             state.trade_log.append(
                 {
                     "type": "order_submit",
@@ -2514,12 +2783,16 @@ def run_backtest(
                     **trade_setup_event_identity_record(setup_identity),
                     "decision_bar": i,
                     "decision_bar_time": pd.Timestamp(bar_time),
-                    "decision_time": pd.Timestamp(bar_time) + bar_duration,
-                    "order_submission_time": pd.Timestamp(bar_time) + bar_duration,
+                    "decision_time": immediate_order_submission_time,
+                    "order_submission_time": immediate_order_submission_time,
                     "selected_geometry_action": _geometry_action_record(geometry_choice),
                     "session_id": session,
                 }
             )
+            immediate_order_event_start = len(state.trade_log)
+        else:
+            immediate_order_submission_time = None
+            immediate_order_event_start = None
         apply_policy_action(
             state,
             settings,
@@ -2540,6 +2813,56 @@ def run_backtest(
             selected_geometry=geometry_choice,
             order_id=immediate_order_id,
             decision_id=current_policy_decision_id,
+        )
+        if immediate_order_id is not None and immediate_order_event_start is not None:
+            rejected_order_index = next(
+                (
+                    event_index
+                    for event_index in range(immediate_order_event_start, len(state.trade_log))
+                    if state.trade_log[event_index].get("type") == "reject"
+                    and state.trade_log[event_index].get("order_id") == immediate_order_id
+                ),
+                None,
+            )
+            if (
+                rejected_order_index is not None
+                and state.trade_log[rejected_order_index].get("reason")
+                != "no_executable_tick_within_wait"
+            ):
+                fill_quote, fill_time, _, _ = resolve_bar_execution()
+                rejected_order_cancel = {
+                    "type": "order_cancel",
+                    "decision_id": current_policy_decision_id,
+                    "order_id": immediate_order_id,
+                    "order_type": "market",
+                    "direction": int(action),
+                    "reason": "entry_rejected_at_market_fill",
+                    "session_id": int(session),
+                    "decision_time": immediate_order_submission_time,
+                    "trade_setup_candidate_id": (
+                        None
+                        if selected_trade_setup is None
+                        else int(selected_trade_setup.candidate_id)
+                    ),
+                    **trade_setup_event_identity_record(setup_identity),
+                    "decision_bar_time": pd.Timestamp(bar_time),
+                    "order_submission_time": immediate_order_submission_time,
+                    "trigger_quote_time": pd.Timestamp(fill_time),
+                    "trigger_quote_bid": float(fill_quote[0]),
+                    "trigger_quote_ask": float(fill_quote[1]),
+                    "trigger_quote_price": float(
+                        fill_quote[1] if int(action) > 0 else fill_quote[0]
+                    ),
+                    "time": pd.Timestamp(fill_time),
+                }
+                state.trade_log.insert(rejected_order_index, rejected_order_cancel)
+        # The environment exposes its account snapshot after processing the
+        # decision action. Refresh this bar's boundary after the backtest action
+        # so accepted positions, closes, and pending-order state share that
+        # same decision-time valuation. Position sizing above still uses the
+        # pre-entry account equity.
+        refresh_account_state_trace(
+            bar_index=i, bar_time=pd.Timestamp(bar_time), session_id=session
         )
 
     if state.pending_entry_order is not None:
@@ -2602,10 +2925,53 @@ def run_backtest(
         account_state_trace_rows[-1] = build_account_state_trace_row(
             bar_index=int(final_trace["backtest_bar_index"]),
             decision_time=pd.Timestamp(bar_times[-1]) + bar_duration,
-            valuation_time=state.equity_times[-1],
+            valuation_time=_decision_valuation_time(
+                pd.Timestamp(bar_times[-1]) + bar_duration,
+                state.trade_log,
+                int(final_trace["backtest_bar_index"]),
+            ),
             session_id=(int(bars.iloc[-1]["session_id"]) if "session_id" in bars.columns else 0),
             breach_reason=str(final_trace.get("breach_reason", "")),
         )
+        terminal_close = next(
+            (
+                event
+                for event in reversed(state.trade_log)
+                if event.get("type") in {"eod_close", "forced_close"}
+                and event.get("bar") is not None
+            ),
+            None,
+        )
+        if terminal_close is not None:
+            try:
+                terminal_bar_index = int(terminal_close["bar"])
+            except (TypeError, ValueError):
+                terminal_bar_index = -1
+            if 0 <= terminal_bar_index < n_bars:
+                for trace_index, trace_row in enumerate(account_state_trace_rows):
+                    if int(trace_row.get("backtest_bar_index", -1)) != terminal_bar_index:
+                        continue
+                    if trace_row.get("breach_reason"):
+                        # Preserve the risk basis captured when this row
+                        # latched the breach. Rebuilding it from the final
+                        # account state can use a later session anchor.
+                        break
+                    boundary = pd.Timestamp(bar_times[terminal_bar_index]) + bar_duration
+                    account_state_trace_rows[trace_index] = build_account_state_trace_row(
+                        bar_index=terminal_bar_index,
+                        decision_time=boundary,
+                        valuation_time=_decision_valuation_time(
+                            boundary, state.trade_log, terminal_bar_index
+                        ),
+                        session_id=(
+                            int(bars.iloc[terminal_bar_index]["session_id"])
+                            if "session_id" in bars.columns
+                            else 0
+                        ),
+                        breach_reason=str(trace_row.get("breach_reason", "")),
+                        state_phase="post_action_valuation",
+                    )
+                    break
 
     trades_df = pd.DataFrame(state.trade_log)
     if "type" not in trades_df.columns:

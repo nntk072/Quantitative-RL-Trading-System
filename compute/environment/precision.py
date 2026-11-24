@@ -28,18 +28,35 @@ def _resolve_device(device: str | torch.device | None) -> torch.device:
         raise ValueError(f"Invalid device value {device!r}") from exc
 
 
-def get_autocast_dtype(device: str | torch.device | None = None) -> torch.dtype | None:
-    """Choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it.
+def get_autocast_dtype(
+    device: str | torch.device | None = None, override: str = "auto"
+) -> torch.dtype | None:
+    """Choose the encoder autocast dtype for a CUDA device.
+
+    ``auto`` keeps the device default: fp16 for pre-Ampere GPUs and bf16 when a newer GPU
+    supports it. ``fp16``, ``bf16`` and ``fp32`` (no autocast) are explicit GPU-specific
+    overrides from ``compute.autocast_dtype``.
 
     Args:
         device: Compute device on which to perform the operation.
+        override: One of auto, fp16, bf16, fp32.
 
     Returns:
-        Result of choose fp16 for pre-Ampere GPUs and bf16 when a newer GPU supports it.
+        The autocast dtype, or None for no autocast.
     """
+    if override not in ("auto", "fp16", "bf16", "fp32"):
+        raise ValueError(
+            f"compute.autocast_dtype must be auto, fp16, bf16 or fp32, got {override!r}"
+        )
     resolved = _resolve_device(device)
     if resolved.type != "cuda" or not torch.cuda.is_available():
         return None
+    if override == "fp32":
+        return None
+    if override == "fp16":
+        return torch.float16
+    if override == "bf16":
+        return torch.bfloat16
     capabilities = discover_device_capabilities(str(resolved))
     if capabilities.compute_capability is not None and capabilities.compute_capability[0] < 8:
         return torch.float16

@@ -12,7 +12,32 @@ This page contains 12 public callable records owned by `decisioning.contracts`. 
 
 **Observed usage:**
 
-1. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L163)
+1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L209)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    tickbook = TickBook(
+        np.asarray([tick_time.value], dtype=np.int64),
+        np.asarray([19_999.5]),
+        np.asarray([19_999.75]),
+    )
+    action_schema_ref = ActionSchemaRef(
+        version=schema.version,
+        key=schema.key,
+        coordinates=schema.names,
+        kind="continuous",
+    )
+    checkpoint = SimpleNamespace(
+        action_space=spaces.Box(-1.0, 1.0, (schema.width,), dtype=np.float32),
+        policy=SimpleNamespace(),
+        _action_schema_version=schema.version,
+        _action_layout_key=schema.key,
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_structured_conversion_requires_exact_coordinate_set`](../../../../tests/integration/test_sb3_adapter.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -29,18 +54,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     )
     with pytest.raises(ValueError, match="coordinates disagree"):
         to_policy_action(inconsistent)
-```
-
-2. [test fixture: `test_policy_action_conversion_rejects_actions_that_disagree_with_schema`](../../../../tests/integration/test_sb3_adapter.py#L176)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
-    decision: Decision,
-) -> None:
-    with pytest.raises(ValueError):
-        to_policy_action(decision)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -343,11 +356,11 @@ def test_rule_and_sb3_providers_share_the_same_rollout_boundary() -> None:
         input_schema_version="obs-v1",
         action_schema=action_schema,
     )
-    rule_provider = RuleBasedDecisionProvider(
-        lambda _: Decision(DiscreteAction(1, "enter"), action_schema), metadata
-    )
+    rule_inputs: list[DecisionInput] = []
 
-    class _SB3Policy:
+    def _rule(input: DecisionInput) -> Decision:
+        rule_inputs.append(input)
+        return Decision(DiscreteAction(1, "enter"), action_schema)
 # … caller assertions omitted …
 ```
 

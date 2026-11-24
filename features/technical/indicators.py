@@ -11,6 +11,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from market_data.transforms.sessions import session_reference_index
+
 
 def ema(s: pd.Series, span: int) -> pd.Series:
     """Compute a causal exponentially weighted moving average.
@@ -317,6 +319,9 @@ def ny_session_clock(
     index: pd.DatetimeIndex,
     start: str = "16:30",
     end: str = "23:00",
+    *,
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
 ) -> pd.DataFrame:
     """NY-session sin/cos and minutes-to-close, clipped to the session.
 
@@ -329,6 +334,8 @@ def ny_session_clock(
         index: Position or label identifying the requested item.
         start: Text or path value identifying the start.
         end: Text or path value identifying the end.
+        session_tz: IANA timezone for session boundaries; ``None`` keeps index wall time.
+        source_clock_model: Interpretation of source-index wall labels.
 
     Returns:
         DataFrame returned by ``ny_session_clock``.
@@ -340,7 +347,16 @@ def ny_session_clock(
     duration = end_min - start_min
     if duration <= 0:
         duration += 24 * 60
-    minute_of_day = np.asarray(index.hour * 60 + index.minute, dtype=float)
+    local = session_reference_index(index, source_clock_model) if session_tz is not None else index
+    if session_tz is not None:
+        if local.tz is None:
+            if source_clock_model != "native":
+                raise ValueError(
+                    f"source clock {source_clock_model!r} requires a timezone-aware index"
+                )
+            local = local.tz_localize(session_tz)
+        local = local.tz_convert(session_tz)
+    minute_of_day = np.asarray(local.hour * 60 + local.minute, dtype=float)
     minute_idx = minute_of_day - start_min
     if end_min <= start_min:
         minute_idx = np.where(minute_of_day < start_min, minute_idx + 24 * 60, minute_idx)

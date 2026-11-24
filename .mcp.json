@@ -7,6 +7,18 @@
       "command": "./tools/crgraph",
       "cwd": ".",
       "type": "stdio"
+    },
+    "serena": {
+      "args": [
+        "start-mcp-server",
+        "--context",
+        "claude-code",
+        "--project",
+        "."
+      ],
+      "command": "./outputs/maintenance/agent_tools/serena/bin/serena",
+      "cwd": ".",
+      "type": "stdio"
     }
   }
 }

@@ -465,7 +465,10 @@ def evaluate_model(
     feature_validity_channels: bool = False,
     target_timeframes: tuple[str, ...] = ("M5", "M15", "H1"),
     scheduled_session_closes: dict[str, str] | None = None,
-    session_start: str = "16:30",
+    session_start: str = "08:30",
+    session_end: str = "15:00",
+    session_timezone: str = "America/Chicago",
+    source_clock_model: str = "native",
     env: TradingEnv | None = None,
     legacy_sequence_columns: bool = False,
     sequence_columns_override: tuple[str, ...] | None = None,
@@ -584,6 +587,9 @@ def evaluate_model(
         target_timeframes: Items supplied for the target timeframes, in input order.
         scheduled_session_closes: Key-value data used for the scheduled session closes.
         session_start: Text or path value identifying the session start.
+        session_end: Session close in the configured session timezone.
+        session_timezone: IANA timezone used for session boundaries.
+        source_clock_model: Interpretation of raw chart-index wall labels.
         env: Environment whose state is read or updated.
         legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
         sequence_columns_override: Exact saved input coordinates for a bounded replay.
@@ -719,6 +725,9 @@ def evaluate_model(
             target_timeframes=target_timeframes,
             scheduled_session_closes=scheduled_session_closes,
             session_start=session_start,
+            session_end=session_end,
+            session_timezone=session_timezone,
+            source_clock_model=source_clock_model,
             trading_policy=trading_policy,
             limit_order_max_offset_atr=limit_order_max_offset_atr,
             limit_order_max_ttl_bars=limit_order_max_ttl_bars,

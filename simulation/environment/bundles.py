@@ -18,6 +18,7 @@ from features import (
 )
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 from market_data.loading.ticks import TickBook
+from market_data.transforms.sessions import session_reference_index
 
 from .shared_bundle import build_bundle, load_bundle
 
@@ -30,6 +31,8 @@ def observation_features(
     legacy_sequence_columns: bool = False,
     reachable_r_validity_mask: bool = False,
     exclude_trade_setup_candidates: bool = False,
+    session_timezone: str | None = None,
+    source_clock_model: str = "native",
 ) -> tuple[NDArray[np.float32], list[str]]:
     """Build the same contiguous float32 observation matrix used by training.
 
@@ -40,6 +43,8 @@ def observation_features(
         legacy_sequence_columns: Whether to enable or require the legacy sequence columns.
         reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
         exclude_trade_setup_candidates: Whether candidate features are kept out of model history.
+        session_timezone: IANA timezone used for NY-session reachability.
+        source_clock_model: Interpretation of raw chart-index wall labels.
 
     Returns:
         Array returned by ``observation_features``.
@@ -50,6 +55,8 @@ def observation_features(
         bars,
         features,
         include_validity_mask=reachable_r_validity_mask,
+        session_tz=session_timezone,
+        source_clock_model=source_clock_model,
     )
     if exclude_trade_setup_candidates:
         candidate_columns = {name for _, name in trade_setup_candidate_feature_columns()}
@@ -277,6 +284,8 @@ def build_env_bundle(
         legacy_sequence_columns=legacy_sequence_columns,
         reachable_r_validity_mask=bool(cfg.env.get("reachable_r_validity_mask", False)),
         exclude_trade_setup_candidates=bool(cfg.env.get("trade_setup_actions", False)),
+        session_timezone=str(cfg.get("session", {}).get("tz", "Etc/GMT-3")),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
     feature_values, feature_columns = _numeric_feature_array(features)
     session_codes, session_labels = _session_codes(bars)
@@ -287,6 +296,17 @@ def build_env_bundle(
         else np.zeros(len(bars), dtype=np.int64)
     )
     index = pd.DatetimeIndex(bars.index)
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
+    bar_instant_index = session_reference_index(index, source_clock_model)
+    bar_time_ns = (
+        bar_instant_index.tz_convert("UTC")
+        .tz_localize(None)
+        .to_numpy(dtype="datetime64[ns]")
+        .view(np.int64)
+        .copy()
+        if bar_instant_index.tz is not None
+        else bar_instant_index.to_numpy(dtype="datetime64[ns]").view(np.int64).copy()
+    )
     arrays: dict[str, NDArray[Any]] = {
         "obs_features": obs_features,
         "features_num": feature_values,
@@ -306,10 +326,12 @@ def build_env_bundle(
             if "tickvol" in bars
             else np.full(len(bars), np.nan, dtype=np.float64)
         ),
-        "bar_time_ns": index.to_numpy(dtype="datetime64[ns]").view(np.int64).copy(),
+        "bar_time_ns": bar_time_ns,
         "bar_session": session_codes,
         "bar_session_id": session_ids,
-        "bar_day_ord": np.asarray([day.toordinal() for day in index.date], dtype=np.int32),
+        "bar_day_ord": np.asarray(
+            [day.toordinal() for day in bar_instant_index.date], dtype=np.int32
+        ),
         "atr_5": _numeric_column(features, "atr_5"),
         "ema_21": _numeric_column(features, "ema_21"),
         "pre_ny_seq": pre_ny_sequences,
@@ -318,7 +340,12 @@ def build_env_bundle(
     if bool(cfg.env.get("strategy_actions", False)) and "atr_5" in features:
         from features.context.reachability import max_tp_distance
 
-        max_tp = max_tp_distance(bars, features["atr_5"]).reindex(bars.index)
+        max_tp = max_tp_distance(
+            bars,
+            features["atr_5"],
+            session_tz=str(cfg.get("session", {}).get("tz", "Etc/GMT-3")),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+        ).reindex(bars.index)
         arrays["max_tp_dist"] = max_tp.to_numpy(dtype=np.float64, copy=True)
     else:
         arrays["max_tp_dist"] = np.empty(0, dtype=np.float64)
@@ -336,8 +363,8 @@ def build_env_bundle(
     config["feature_config_hash"] = feature_config_hash
     input_signature = {
         "rows": len(bars),
-        "first_bar_ns": int(index[0].value) if len(index) else None,
-        "last_bar_ns": int(index[-1].value) if len(index) else None,
+        "first_bar_ns": int(bar_time_ns[0]) if len(bar_time_ns) else None,
+        "last_bar_ns": int(bar_time_ns[-1]) if len(bar_time_ns) else None,
         # Content digest: endpoints alone miss corrected bars in the middle (plan E3).
         "bars_sha256": _bars_digest(bars),
     }
@@ -353,9 +380,7 @@ def build_env_bundle(
             "session": session_labels,
             "has_session": "session" in bars,
             "has_session_id": "session_id" in bars,
-            "bar_timezone": str(bars.index.tz)
-            if isinstance(bars.index, pd.DatetimeIndex)
-            else None,
+            "bar_timezone": str(bar_instant_index.tz) if bar_instant_index.tz is not None else None,
             "pre_ny_day_to_row": pre_ny_rows,
         },
         reuse_only=reuse_only,

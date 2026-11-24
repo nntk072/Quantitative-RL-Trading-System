@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
 from typing import Any, cast
 
 import torch
@@ -11,9 +12,66 @@ from torch import nn
 from torch.distributions import Categorical, Normal
 
 from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT, trade_setup_center
+from learning.rl.feature_graph import FeatureGraphCache, GraphedForwardCache
 from learning.rl.ppo import ClampedStdMultiInputPolicy, clip_policy_log_std
 
 _SETUP_COORDINATES = {"trade_setup"}
+_PREVALIDATED_MASKS = {"active": False}
+
+
+@contextmanager
+def masks_prevalidated() -> Iterator[None]:
+    """Skip per-call eligibility checks while the whole rollout has been validated once.
+
+    Yields:
+        Control returns to the caller with the checks skipped.
+    """
+    previous = _PREVALIDATED_MASKS["active"]
+    _PREVALIDATED_MASKS["active"] = True
+    try:
+        yield
+    finally:
+        _PREVALIDATED_MASKS["active"] = previous
+
+
+@contextmanager
+def distribution_validation_off() -> Iterator[None]:
+    """Turn off torch distribution argument checks, which force host syncs inside capture.
+
+    Yields:
+        Control returns to the caller with distribution validation disabled.
+    """
+    previous = torch.distributions.Distribution._validate_args
+    torch.distributions.Distribution.set_default_validate_args(False)
+    try:
+        yield
+    finally:
+        torch.distributions.Distribution.set_default_validate_args(previous)
+
+
+def _eligibility_mask(
+    mask_values: torch.Tensor, logits_shape: tuple[int, ...], name: str
+) -> torch.Tensor:
+    """Return the boolean eligibility mask, failing closed on bad values.
+
+    Args:
+        mask_values: Eligibility values aligned with the logits.
+        logits_shape: Shape the mask must match.
+        name: Coordinate name used in error messages.
+
+    Returns:
+        Boolean mask of the eligible categories.
+    """
+    mask = mask_values > 0.0
+    if _PREVALIDATED_MASKS["active"]:
+        return mask
+    if not bool(torch.isfinite(mask_values).all()):
+        raise ValueError(f"{name} eligibility mask must contain only finite values")
+    if tuple(mask.shape) != logits_shape or not bool(mask.any(dim=1).all()):
+        raise ValueError(f"{name} eligibility mask must match logits and allow a category")
+    return mask
+
+
 _CATEGORICAL_COORDINATES = {*_SETUP_COORDINATES, "entry_execution", "sl_mode", "tp_mode", "exit"}
 
 
@@ -193,11 +251,8 @@ class HybridBoxDistribution(SB3Distribution):
                     raise ValueError(
                         f"{name} categorical distribution requires its eligibility mask"
                     )
-                mask = masks[name].to(device=values.device) > 0.0
-                if mask.shape != values.shape or not bool(mask.any(dim=1).all()):
-                    raise ValueError(
-                        f"{name} eligibility mask must match logits and allow a category"
-                    )
+                mask_values = masks[name].to(device=values.device)
+                mask = _eligibility_mask(mask_values, tuple(values.shape), name)
                 values = values.masked_fill(~mask, torch.finfo(values.dtype).min)
             self.categorical[name] = _categorical_distribution(values)
         return self
@@ -427,6 +482,50 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         self.last_trade_setup_entropy: torch.Tensor | None = None
         self.last_trade_setup_probabilities: torch.Tensor | None = None
         super().__init__(*args, **kwargs)
+        self._feature_graph: FeatureGraphCache | None = None
+        self._rollout_graph: GraphedForwardCache | None = None
+        self._collecting_rollout = False
+
+    def enable_feature_graph(self) -> None:
+        """Replay the shared feature extractor from a CUDA graph in no-grad forward passes.
+
+        Raises:
+            ValueError: If the policy is not on CUDA or its features extractor is not shared.
+        """
+        if self.device.type != "cuda":
+            raise ValueError("rollout feature graph requires the policy on a CUDA device")
+        if not self.share_features_extractor:
+            raise ValueError("rollout feature graph requires a shared features extractor")
+        self._feature_graph = FeatureGraphCache(self._eager_features)
+
+    def _eager_features(self, obs: Any, features_extractor: Any) -> torch.Tensor:
+        """Run the features extractor eagerly on preprocessed observations.
+
+        Args:
+            obs: Observation tensors for the policy.
+            features_extractor: Feature extractor to apply.
+
+        Returns:
+            Features extracted from ``obs``.
+        """
+        return cast(torch.Tensor, super().extract_features(obs, features_extractor))
+
+    def extract_features(  # type: ignore[override]
+        self, obs: Any, features_extractor: Any = None
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+        """Extract features, replaying a captured graph for no-grad rollout batches.
+
+        Args:
+            obs: Observation tensors for the policy.
+            features_extractor: Feature extractor to apply; the shared one when omitted.
+
+        Returns:
+            Features from the eager path, or from the captured graph when enabled.
+        """
+        if self._feature_graph is None or torch.is_grad_enabled():
+            return super().extract_features(obs, features_extractor)
+        extractor = self.features_extractor if features_extractor is None else features_extractor
+        return self._feature_graph(obs, extractor)
 
     def _build(self, lr_schedule: Any) -> None:
         """Build HybridClampedStdMultiInputPolicy.
@@ -499,10 +598,74 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
             raise ValueError("setup hybrid policy requires its configured eligibility mask")
         self._distribution_masks = {self.setup_coordinate: obs[self.trade_setup_mask_key]}
 
+    def enable_rollout_policy_graph(self) -> None:
+        """Replay the whole rollout forward from a CUDA graph while a rollout is collected.
+
+        Raises:
+            ValueError: If the policy is not on CUDA or its features extractor is not shared.
+        """
+        if self.device.type != "cuda":
+            raise ValueError("rollout policy graph requires the policy on a CUDA device")
+        if not self.share_features_extractor:
+            raise ValueError("rollout policy graph requires a shared features extractor")
+        self._rollout_graph = GraphedForwardCache(self._forward_for_graph, self._capture_context)
+
+    @contextmanager
+    def _capture_context(self) -> Iterator[None]:
+        """Context for capturing the rollout forward: no feature-cache nesting, no device checks.
+
+        Yields:
+            Control returns to the caller while the forward is captured.
+        """
+        saved_feature_graph = self._feature_graph
+        self._feature_graph = None
+        try:
+            with distribution_validation_off(), masks_prevalidated():
+                yield
+        finally:
+            self._feature_graph = saved_feature_graph
+
+    def _forward_for_graph(
+        self, obs: Any, deterministic: bool
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Eager forward used as the captured callable.
+
+        Args:
+            obs: Observation tensors for the policy.
+            deterministic: Whether to take deterministic actions.
+
+        Returns:
+            Actions, values, and log probabilities.
+        """
+        return self._forward_eager(obs, deterministic)
+
     def forward(
         self, obs: Any, deterministic: bool = False
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Run the PPO policy with the observation's setup eligibility mask.
+        """Run the PPO policy, replaying the captured rollout forward while collecting.
+
+        Args:
+            obs: Obs used by the operation described above.
+            deterministic: Whether to enable or require the deterministic.
+
+        Returns:
+            Values returned by ``forward``, in the declared order.
+        """
+        if (
+            self._rollout_graph is not None
+            and self._collecting_rollout
+            and not torch.is_grad_enabled()
+        ):
+            return cast(
+                tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+                self._rollout_graph(obs, bool(deterministic)),
+            )
+        return self._forward_eager(obs, deterministic)
+
+    def _forward_eager(
+        self, obs: Any, deterministic: bool = False
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Run the PPO policy with the observation's setup eligibility mask, eagerly.
 
         Args:
             obs: Obs used by the operation described above.
@@ -634,7 +797,43 @@ class TradeSetupConditionedActorHeads(nn.Module):
                 for name in self.execution_categorical_indices
             }
         )
+        self._device_constants: dict[tuple[Any, ...], torch.Tensor] = {}
         self.reset_parameters()
+
+    def center_tensor(self, name: str, like: torch.Tensor) -> torch.Tensor:
+        """Return the encoded centers of one categorical coordinate on ``like``'s device.
+
+        Cached per device and dtype, so no host-to-device copy happens inside a captured step.
+
+        Args:
+            name: Categorical coordinate name.
+            like: Tensor whose device and dtype the centers must match.
+
+        Returns:
+            Center values as a tensor.
+        """
+        key = ("centers", name, like.device, like.dtype)
+        cached = self._device_constants.get(key)
+        if cached is None:
+            cached = torch.tensor(self.centers[name], device=like.device, dtype=like.dtype)
+            self._device_constants[key] = cached
+        return cached
+
+    def continuous_index_tensor(self, like: torch.Tensor) -> torch.Tensor:
+        """Return the continuous coordinate indices on ``like``'s device, cached.
+
+        Args:
+            like: Tensor whose device the indices must live on.
+
+        Returns:
+            Long tensor of continuous action indices.
+        """
+        key = ("continuous", like.device)
+        cached = self._device_constants.get(key)
+        if cached is None:
+            cached = torch.as_tensor(self.continuous_indices, dtype=torch.long, device=like.device)
+            self._device_constants[key] = cached
+        return cached
 
     def reset_parameters(self) -> None:
         """Initialize setup, embedding, and conditioned execution layers."""
@@ -739,9 +938,8 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         self.log_std = log_std
         if masks is None or self.setup_coordinate not in masks:
             raise ValueError("setup-conditioned distribution requires its eligibility mask")
-        mask = masks[self.setup_coordinate].to(device=trade_setup_logits.device) > 0.0
-        if mask.shape != trade_setup_logits.shape or not bool(mask.any(dim=1).all()):
-            raise ValueError("setup eligibility mask must match logits and allow a category")
+        mask_values = masks[self.setup_coordinate].to(device=trade_setup_logits.device)
+        mask = _eligibility_mask(mask_values, tuple(trade_setup_logits.shape), "setup")
         self.mask = mask
         self.trade_setup = _categorical_distribution(
             trade_setup_logits.masked_fill(~mask, torch.finfo(trade_setup_logits.dtype).min)
@@ -778,7 +976,7 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         """
         result: dict[str, torch.Tensor] = {}
         for name, index in self.actor.categorical_indices.items():
-            centers = actions.new_tensor(self.actor.centers[name])
+            centers = self.actor.center_tensor(name, actions)
             result[name] = (actions[:, index : index + 1] - centers[None, :]).abs().argmin(dim=1)
         return result
 
@@ -795,13 +993,11 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         if self.market_latent is None:
             raise RuntimeError("call proba_distribution before packing actions")
         output = self.market_latent.new_zeros((self.market_latent.shape[0], self.action_width))
-        continuous_index = torch.as_tensor(
-            self.actor.continuous_indices, dtype=torch.long, device=output.device
-        )
+        continuous_index = self.actor.continuous_index_tensor(output)
         output = output.index_copy(1, continuous_index, continuous)
         for name, class_ids in classes.items():
             index = self.actor.categorical_indices[name]
-            output[:, index] = output.new_tensor(self.actor.centers[name])[class_ids]
+            output[:, index] = self.actor.center_tensor(name, output)[class_ids]
         return output
 
     def sample(self) -> torch.Tensor:
@@ -903,9 +1099,7 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         classes = self._class_ids(actions)
         trade_setup_ids = classes[self.setup_coordinate]
         normal, categorical = self._selected_distributions(trade_setup_ids)
-        continuous_index = torch.as_tensor(
-            self.actor.continuous_indices, dtype=torch.long, device=actions.device
-        )
+        continuous_index = self.actor.continuous_index_tensor(actions)
         result = cast(
             torch.Tensor,
             self.trade_setup.log_prob(trade_setup_ids),  # type: ignore[no-untyped-call]
@@ -972,7 +1166,11 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
         ):
             raise RuntimeError("call proba_distribution before evaluating entropy")
         batch = self.market_latent.shape[0]
-        row_ids, trade_setup_ids = self.mask.nonzero(as_tuple=True)
+        # Fixed shape over every (row, category) pair: masked categories carry exactly zero
+        # probability, and the form stays capturable in a CUDA graph.
+        width = int(self.mask.shape[1])
+        row_ids = torch.arange(batch, device=self.market_latent.device).repeat_interleave(width)
+        trade_setup_ids = torch.arange(width, device=self.market_latent.device).repeat(batch)
         means, logits = self.actor.execution(self.market_latent[row_ids], trade_setup_ids)
         normal = _normal_distribution(means, self.log_std.exp().expand_as(means))
         conditional = cast(torch.Tensor, normal.entropy()).sum(dim=1)  # type: ignore[no-untyped-call]
@@ -983,9 +1181,7 @@ class TradeSetupConditionedHybridBoxDistribution(SB3Distribution):
                 dist.entropy(),  # type: ignore[no-untyped-call]
             )
         conditional_weight = self.trade_setup.probs[row_ids, trade_setup_ids] * conditional
-        conditional_by_row = conditional_weight.new_zeros(batch).index_add(
-            0, row_ids, conditional_weight
-        )
+        conditional_by_row = conditional_weight.reshape(batch, width).sum(dim=1)
         return self.trade_setup_entropy() + conditional_by_row
 
 
@@ -1012,6 +1208,20 @@ class TradeSetupConditionedClampedStdMultiInputPolicy(HybridClampedStdMultiInput
         self.conditioned_actor: TradeSetupConditionedActorHeads | None = None
         self.conditioned_distribution: TradeSetupConditionedHybridBoxDistribution | None = None
         super().__init__(*args, **kwargs)
+
+    def validate_rollout_masks(self, observations: dict[str, torch.Tensor]) -> None:
+        """Run the trade_setup eligibility checks once over a flattened rollout.
+
+        Args:
+            observations: Flattened rollout observations, one row per transition.
+
+        Raises:
+            ValueError: If any row of the trade_setup mask is non-finite or has no eligible category.
+        """
+        mask_values = observations[self.trade_setup_mask_key]
+        logits_layer = cast(nn.Linear, self.action_net.trade_setup_logits)
+        width = int(logits_layer.out_features)
+        _eligibility_mask(mask_values, (int(mask_values.shape[0]), width), "setup")
 
     def _build(self, lr_schedule: Any) -> None:
         # Build the shared critic and extractor, then install the conditioned actor.

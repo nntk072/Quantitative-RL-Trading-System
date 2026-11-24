@@ -13,6 +13,7 @@ from features.context.trade_setup_candidates import (
     TradeSetupEventIdentity,
     trade_setup_event_identity_record,
 )
+from market_data.loading.ticks import TickExecutionUnavailable
 from trading.execution import (
     FILL_COST_PROVENANCE_SCHEMA_VERSION,
     TRADE_CASHFLOW_SCHEMA_VERSION,
@@ -34,7 +35,7 @@ from .accounting import _record_close
 from .runtime import BacktestSettings, BacktestState
 
 ExecutionEvent = tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]
-ResolveExecution = Callable[[], ExecutionEvent]
+ResolveExecution = Callable[..., ExecutionEvent]
 
 
 def _finite_feature(row: pd.Series, name: str) -> float | None:
@@ -193,7 +194,7 @@ def apply_policy_action(
             **trade_setup_event_identity_record(trade_setup_event_identity),
         }
     if action == settings.exit_action and state.position is not None:
-        fq, execution_time, fill_source, _ = resolve_bar_execution()
+        fq, execution_time, fill_source, _ = resolve_bar_execution(order_submission_time)
         _record_close(
             state,
             settings,
@@ -216,7 +217,7 @@ def apply_policy_action(
 
     if action in (1, -1):
         if state.position is not None and state.position.direction != action:
-            fq, execution_time, fill_source, _ = resolve_bar_execution()
+            fq, execution_time, fill_source, _ = resolve_bar_execution(order_submission_time)
             _record_close(
                 state,
                 settings,
@@ -245,7 +246,27 @@ def apply_policy_action(
         ):
             return
 
-        fq, execution_time, fill_source, execution_meta = resolve_bar_execution()
+        try:
+            fq, execution_time, fill_source, execution_meta = resolve_bar_execution(
+                order_submission_time
+            )
+        except TickExecutionUnavailable:
+            if settings.tickbook is None:
+                raise
+            # No tick within the wait cap of the order: refuse the entry, as the environment does.
+            state.trade_log.append(
+                {
+                    "type": "reject",
+                    "decision_id": decision_id,
+                    "order_id": order_id,
+                    **selected_setup_context,
+                    "reason": "no_executable_tick_within_wait",
+                    "bar": i,
+                    "time": bar_time,
+                    "direction": action,
+                }
+            )
+            return
         entry_order_type = str(execution_meta.get("order_type", "market"))
         pre_execution_quote = tuple(map(float, fq))
         market_entry_slippage_applied = (
@@ -368,6 +389,15 @@ def apply_policy_action(
                             "bar": i,
                             "time": execution_time,
                             "direction": action,
+                            "decision_bar_time": (
+                                bar_time if decision_bar_time is None else decision_bar_time
+                            ),
+                            "decision_time": (
+                                order_submission_time
+                                if order_submission_time is not None
+                                else bar_time
+                            ),
+                            "order_submission_time": order_submission_time,
                             "selected_geometry_action": {
                                 "stop_anchor_fraction": selected_geometry.stop_anchor_fraction,
                                 "target_fraction": selected_geometry.target_fraction,
@@ -607,8 +637,9 @@ def apply_policy_action(
                     settings.cost_model.point_value,
                 )
             position.risk_frac = risk_frac
-            position.rr_ratio = settings.rr_ratio
+            position.rr_ratio = None if placed_geometry is not None else settings.rr_ratio
             state.position = position
+            broker.mark_to_market(state.account, position, entry_quote)
             submitted_at = (
                 pd.Timestamp(order_submission_time)
                 if order_submission_time is not None
@@ -636,7 +667,7 @@ def apply_policy_action(
                 "sl_mode_overridden": position.sl_mode_overridden,
                 "tp_mode": position.tp_mode,
                 "tp_mode_overridden": position.tp_mode_overridden,
-                "rr_ratio": settings.rr_ratio,
+                "rr_ratio": position.rr_ratio,
                 "bar": i,
                 "time": execution_time,
                 "decision_time": submitted_at,
@@ -713,6 +744,37 @@ def apply_policy_action(
                         "tp3_price": placed_geometry.tp3_price,
                         "tp_lot_fractions": placed_geometry.tp_lot_fractions,
                         "ema_runner_fraction": placed_geometry.ema_runner_fraction,
+                    }
+                )
+            if order_id is not None and entry_order_type == "market":
+                state.trade_log.append(
+                    {
+                        "type": "order_fill",
+                        "order_id": order_id,
+                        "order_type": "market",
+                        "decision_id": decision_id,
+                        "direction": int(action),
+                        "price": float(position.entry_price),
+                        "bid": pre_execution_quote[0],
+                        "ask": pre_execution_quote[1],
+                        "time": pd.Timestamp(execution_time),
+                        "fill_time": pd.Timestamp(execution_time),
+                        "order_submission_time": execution_meta.get("order_submission_time"),
+                        "actual_tick_time": execution_meta.get("actual_tick_time"),
+                        "fill_quote_source": fill_source,
+                        "execution_order_time": execution_meta.get("execution_order_time"),
+                        "execution_arrival_time": execution_meta.get("execution_arrival_time"),
+                        "execution_latency_ns": execution_meta.get("execution_latency_ns"),
+                        **trade_setup_event_identity_record(trade_setup_event_identity),
+                        **(
+                            {}
+                            if trade_setup is None
+                            else {
+                                "trade_setup_candidate_id": trade_setup.candidate_id,
+                                "trade_setup_idea": trade_setup.idea,
+                                "trade_setup_timeframe": trade_setup.setup_timeframe,
+                            }
+                        ),
                     }
                 )
             state.trade_log.append(open_event)

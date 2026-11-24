@@ -69,6 +69,7 @@ class BacktestSettings:
     allow_simplex: bool = False
     ema_runner_fraction: float = 0.0
     server_side_protective_orders: bool = False
+    open_manipulation_bars: int = 0
 
 
 @dataclass

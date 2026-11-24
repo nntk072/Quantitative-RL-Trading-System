@@ -7,6 +7,7 @@ from typing import Any
 from omegaconf import OmegaConf
 
 from decisioning.observations import OBSERVATION_SCHEMA_REPEATED_PAYOUT
+from market_data.news.guard import news_guard_config
 from trading.execution import CostModel
 from trading.policy import resolve_trading_policy_mapping
 from trading.strategies import BaselineStrategy, DistributionStrategy, PO3IFVGStrategy
@@ -223,6 +224,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
     from market_data.transforms import scheduled_session_close_map
 
     session = _block(cfg, "session")
+    data = _block(cfg, "data")
     return TradingEnv.from_bundle(
         spec.bundle_dir,
         obs_window=int(env.get("obs_window", 60)),
@@ -308,6 +310,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
         ),
         randomized_fill_latency_ms=float(execution.get("randomized_fill_latency_ms", 0.0)),
         max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
+        news_guard=news_guard_config(execution.get("news_spike_guard")),
         server_side_protective_orders=bool(execution.get("server_side_protective_orders", False)),
         mtf=spec.arch
         in {
@@ -324,6 +327,9 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
             str(value) for value in risk.get("target_timeframes", ["M5", "M15", "H1"])
         ),
         scheduled_session_closes=scheduled_session_close_map(OmegaConf.create(cfg)),
-        session_start=str(session.get("start", "16:30")),
+        session_start=str(session.get("start", "08:30")),
+        session_end=str(session.get("end", "15:00")),
+        session_timezone=str(session.get("tz", "America/Chicago")),
+        source_clock_model=str(data.get("timestamp_clock", "native")),
         trading_policy=policy.to_dict(),
     )

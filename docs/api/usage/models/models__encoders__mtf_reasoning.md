@@ -29,24 +29,22 @@ def test_efficient_encoders_reduce_parameters_and_keep_production_output_width()
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_candidate_masks_are_history_independent_and_timeframe_scoped`](../../../../tests/unit/simulation/test_environment/test_trade_setup_observation.py#L138)
+2. [test fixture: `test_reasoning_batch_matches_each_row_alone`](../../../../tests/unit/models/test_mtf_masked_suffix.py#L50)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        "channels": (4, 8),
-        "attention_heads": 2,
-        "feedforward_dim": 16,
-        "dropout": 0.0,
-    }
-    b_encoder = MTFReasoningEncoder(b_env.observation_space, **encoder_kwargs)
-    c_encoder = MTFReasoningEncoder(c_env.observation_space, **encoder_kwargs)
-    assert sum(parameter.numel() for parameter in b_encoder.parameters()) == sum(
-        parameter.numel() for parameter in c_encoder.parameters()
-    )
-    import torch
-# … caller assertions omitted …
+def test_reasoning_batch_matches_each_row_alone() -> None:
+    torch.manual_seed(2)
+    encoder = MTFReasoningEncoder(
+        _space(), latent_dim=128, channels=(8, 8), dropout=0.0, account_dim=6
+    ).eval()
+    obs = _observations()
+    with torch.no_grad():
+        batched = encoder(obs)
+        for row in range(3):
+            alone = encoder({k: v[row : row + 1] for k, v in obs.items()})
+            assert torch.allclose(batched[row : row + 1], alone, atol=1e-5), row
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -62,7 +60,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Encode available timeframe streams while respecting each stream's validity mask.
 
-**Exact API:** {py:obj}`models.encoders.mtf_reasoning.MTFReasoningEncoder.forward` · **Source:** [models/encoders/mtf_reasoning.py:75](../../../../models/encoders/mtf_reasoning.py#L75)
+**Exact API:** {py:obj}`models.encoders.mtf_reasoning.MTFReasoningEncoder.forward` · **Source:** [models/encoders/mtf_reasoning.py:80](../../../../models/encoders/mtf_reasoning.py#L80)
 
 **Inputs and outputs:**
 

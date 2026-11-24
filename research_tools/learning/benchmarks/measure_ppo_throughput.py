@@ -59,7 +59,7 @@ from simulation.environment.spec import EnvSpec
 from simulation.environment.worker import make_bundle_env
 from training.configuration.cli import load_merged_config
 from training.runner.seed import _setup_rngs
-from training.setup.environments import strategy_from_cfg
+from training.setup.environments import _training_episodic, strategy_from_cfg
 
 
 class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
@@ -101,7 +101,27 @@ def _process_tree_cpu_seconds() -> float:
 
 @contextmanager
 def _time_method_calls(instance: Any, method_name: str, samples: list[float]) -> Iterator[None]:
-    """Time a class method without adding a closure to the serialized instance."""
+    """Time a method without adding a closure to the serialized instance.
+
+    An instance-level override (set by an installed wrapper) is timed in place of the class method.
+    """
+    if method_name in vars(instance):
+        instance_method = vars(instance)[method_name]
+
+        def timed_instance(*args: Any, **kwargs: Any) -> Any:
+            started = time.perf_counter()
+            try:
+                return instance_method(*args, **kwargs)
+            finally:
+                samples.append(time.perf_counter() - started)
+
+        setattr(instance, method_name, timed_instance)
+        try:
+            yield
+        finally:
+            setattr(instance, method_name, instance_method)
+        return
+
     owner = type(instance)
     original_method = getattr(owner, method_name)
 
@@ -393,6 +413,7 @@ def _train_probe(
         reward=str(cfg.env.get("reward_mode", "dsr")),
         arch=arch,
         bundle_dir=str(bundle_path),
+        episodic=_training_episodic(cfg),
     )
     cfg_text = OmegaConf.to_yaml(cfg, resolve=True)
     config_sha256 = hashlib.sha256(cfg_text.encode("utf-8")).hexdigest()
@@ -421,7 +442,9 @@ def _train_probe(
     env_fn: Callable[[], gym.Env[Any, Any]] = partial(make_bundle_env, spec)
     if measure_env_steps:
         env_fn = partial(_timed_env_from_factory, env_fn)
-    model = build_agent(parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn)
+    model = build_agent(
+        parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn, seed=seed
+    )
     vec_env = model.get_env()
     compile_warmup_seconds = 0.0
     if torch_compile_mode is not None:
@@ -606,10 +629,18 @@ def _train_probe(
         "arch": arch,
         "algo": algo,
         "seed": seed,
+        "model_seed": model.seed,
+        "episodic": spec.episodic,
         "n_envs": int(model.n_envs),
         "vector_backend": vector_backend,
         "rollout_buffer_class": type(model.rollout_buffer).__name__,
         "rollout_buffer_on_device": bool(cfg.ppo.get("rollout_buffer_on_device", False)),
+        "rollout_feature_graph": bool(cfg.ppo.get("rollout_feature_graph", False)),
+        "update_graph": bool(cfg.ppo.get("update_graph", False)),
+        "torch_compile_features": bool(cfg.ppo.get("torch_compile_features", False)),
+        "overlap_collect": bool(cfg.ppo.get("overlap_collect", False)),
+        "rollout_host_mask_check": bool(cfg.ppo.get("rollout_host_mask_check", False)),
+        "rollout_policy_graph": bool(cfg.ppo.get("rollout_policy_graph", False)),
         "defer_metric_sync": bool(cfg.ppo.get("defer_metric_sync", False)),
         "ppo_class": type(model).__name__,
         "torch_compile_mode": torch_compile_mode,

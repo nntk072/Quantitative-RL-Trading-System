@@ -271,11 +271,15 @@ def test_d_e_f_g_fixed_action_simulator_trace_is_identical(use_tick_execution: b
     features["last_swing_high"] = bars["close"] + 60.0
     tickbook = None
     if use_tick_execution:
-        tick_times = (
+        # The bars use Etc/GMT-3 as a carrier for Helsinki wall labels.
+        # Reconstruct the broker's DST-aware instant before building quotes.
+        helsinki_times = (
             pd.DatetimeIndex(bars.index)
-            .tz_convert("UTC")
-            .to_numpy(dtype="datetime64[ns]")
-            .astype(np.int64)
+            .tz_localize(None)
+            .tz_localize("Europe/Helsinki", ambiguous="raise", nonexistent="raise")
+        )
+        tick_times = (
+            helsinki_times.tz_convert("UTC").to_numpy(dtype="datetime64[ns]").astype(np.int64)
             + 100_000_000
         )
         tick_mid = bars["close"].to_numpy(dtype=np.float64)

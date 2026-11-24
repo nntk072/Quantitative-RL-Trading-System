@@ -234,3 +234,24 @@ def test_csv_geometry_fields_must_coexist_on_one_decision_row(tmp_path: Path) ->
 
     assert report["per_decision_setup_trace_status"] == "found"
     assert report["per_decision_price_geometry_trace_status"] == ("not_found_in_scanned_artifacts")
+
+
+def test_root_inventory_excludes_temporary_test_fixtures(tmp_path: Path) -> None:
+    """Ephemeral pytest decision fixtures are not persisted model artifacts."""
+    persisted_trace = tmp_path / "policy_setup_trace.csv"
+    persisted_trace.write_text(
+        "decision_id,trade_setup_candidate_id,decision_time\nrun-1:d1,4,2025-01-01T00:00:00Z\n",
+        encoding="utf-8",
+    )
+    temporary = tmp_path / "tmp" / "pytest-of-user" / "fixture"
+    temporary.mkdir(parents=True)
+    (temporary / "decisions.csv").write_text(
+        ",step,trade_setup_candidate_id,decision_id,decision_time\n"
+        "0,1,7,fixture:d1,2025-01-01T00:00:00Z\n",
+        encoding="utf-8",
+    )
+
+    report = build_report([tmp_path])
+
+    assert report["artifact_count"] == 1
+    assert report["per_decision_setup_trace_paths"] == [f"{persisted_trace}::file_rows"]

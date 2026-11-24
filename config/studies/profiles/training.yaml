@@ -1,6 +1,8 @@
 module_id: training
 source_roots: [training, research_tools/training]
 api_paths:
+- training/setup/observation_memmap.py
+- training/setup/tick_execution_preflight.py
 - training/artifacts/__init__.py
 - training/artifacts/aggregation.py
 - training/artifacts/manifests.py
@@ -41,6 +43,8 @@ api_paths:
 - training/setup/model_state.py
 - training/setup/policy_diagnostics.py
 caller_paths:
+- tests/unit/training/test_observation_memmap.py
+- tests/unit/training/test_tick_execution_preflight.py
 - experiments/runs/baseline_cache_rebuild.py
 - experiments/runs/named_cache_rebuild.py
 - experiments/runs/variant_worker.py

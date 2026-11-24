@@ -1,4 +1,4 @@
-> **Current operating boundary (2026-11-15).** This is the sole active campaign plan. The canonical checkout is `/scratch/work/nguyenl37/Quantitative-RL-Trading-System`. Keep plans, agent logs, evidence, outputs, and recycle material inside that repository; role-owned agent logs belong under `logs/agents/<role_name>/`. Use `outputs/maintenance/recycle_bin/` for in-repository recycling. The current user instruction prohibits subagent delegation; follow it until the user changes it. Preserve existing dirty work and Slurm jobs. Do not commit or push without explicit authorization.
+> **Current operating boundary (2026-11-21).** This is the sole active campaign plan. The canonical checkout is `/scratch/work/nguyenl37/Quantitative-RL-Trading-System`. Keep plans, agent logs, evidence, outputs, and recycle material inside that repository; role-owned agent logs belong under `logs/agents/<role_name>/`. Use `outputs/maintenance/recycle_bin/` for in-repository recycling. Bounded parallel reviews for the 2026-11-18 readiness plan have been user-authorized; keep independent work lanes and their evidence traceable. Preserve existing dirty work and Slurm jobs. Do not commit or push without explicit authorization.
 
 # Canonical Quant Repository Cleanup, Refactor, and Thesis Research Campaign
 
@@ -1057,6 +1057,11 @@ After refactor:
 ```
 
 Run relevant behavioral tests during implementation.
+
+The pretraining readiness runner must write to a fresh, Git-ignored leaf under
+`outputs/pre_experiment_readiness/<RUN_ID>/execution/<attempt-id>`. Reject
+outside paths, source-tree paths, existing targets, and symlink escapes. Runner
+completion is implementation evidence only and never authorizes training.
 
 Regenerate generated documentation.
 

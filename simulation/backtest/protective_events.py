@@ -11,6 +11,8 @@ import pandas as pd
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
     event_keyed_execution_rng,
+    last_tick_quote_before,
+    nearest_exit_tick_quote,
     resolve_tick_execution_by_deadline,
     resolve_tick_exit,
 )
@@ -22,6 +24,7 @@ from trading.execution import (
     adverse_tick_fill_quote,
     bar_stop_trigger_price,
     exit_side_bar_range,
+    protective_level_fill_quote,
 )
 from trading.positions import reorder_remaining_targets, target_close_size
 from trading.risk import (
@@ -354,6 +357,53 @@ def _record_target_slot(
         position.tp_price = getattr(position, f"tp{next_slots[0]}_price") if next_slots else None
 
 
+def _tick_touch_quote(
+    settings: BacktestSettings,
+    bar_time: pd.Timestamp,
+    direction: int,
+    level: float,
+    entry_time: pd.Timestamp | None,
+    bar_duration: pd.Timedelta,
+) -> tuple[float, float]:
+    """Fill quote for a stop or target that OHLC reached with no crossing tick.
+
+    Mirrors the environment's rule: the nearest tick in the bar window, within the
+    wait cap; the level quote when no such tick exists or when the tick is better
+    than the level for the position.
+
+    Args:
+        settings: Backtest settings holding the tick book and wait cap.
+        bar_time: Start of the bar whose OHLC reached the level.
+        direction: Signed position direction.
+        level: Stop or target price.
+        entry_time: Position entry time, a lower bound for the window.
+        bar_duration: Bar length.
+
+    Returns:
+        ``(bid, ask)`` of the fill.
+    """
+    book = settings.tickbook
+    if book is None:
+        return protective_level_fill_quote(direction, level, settings.cost_model)
+    quote = nearest_exit_tick_quote(
+        book,
+        pd.Timestamp(bar_time),
+        direction,
+        level,
+        bar_minutes=max(1, int(round(bar_duration.total_seconds() / 60.0))),
+        earliest_time=entry_time,
+        max_gap_ns=settings.max_tick_quote_wait_ms * 1_000_000,
+    )
+    if quote is None:
+        return protective_level_fill_quote(direction, level, settings.cost_model)
+    bid, ask = quote
+    exit_price = bid if direction == 1 else ask
+    tick_is_worse = exit_price <= level if direction == 1 else exit_price >= level
+    if not tick_is_worse:
+        return protective_level_fill_quote(direction, level, settings.cost_model)
+    return quote
+
+
 def process_protective_and_account_events(
     state: BacktestState,
     settings: BacktestSettings,
@@ -431,6 +481,7 @@ def process_protective_and_account_events(
             getattr(position, f"tp{active_slots[0]}_price") if active_slots else None
         )
         cursor_time = entry_time
+        sl_before_replay = position.sl_price
         while state.position is position and position.size > 0.0:
             if settings.tick_execution_required or settings.randomized_fill_latency_ms > 0:
                 resolved_exit = resolve_tick_exit(
@@ -485,7 +536,6 @@ def process_protective_and_account_events(
                     "actual_tick_time": fill_time,
                     "fill_quote_source": "tick",
                 }
-            multi_target_tick_fill = True
             if kind == "sl":
                 _record_close(
                     state,
@@ -520,6 +570,11 @@ def process_protective_and_account_events(
                 metadata=metadata,
             )
             cursor_time = fill_time
+        # A tick exit ended the position, or the stop moved mid-bar: the bar's OHLC cannot be
+        # ordered against those ticks. Otherwise a runner keeps the bar's OHLC touches.
+        multi_target_tick_fill = state.position is not position or (
+            position.sl_price != sl_before_replay
+        )
 
     if (
         position is not None
@@ -602,44 +657,8 @@ def process_protective_and_account_events(
             spread_price,
             settings.cost_model,
         )
-    if (
-        (settings.tick_execution_required or settings.randomized_fill_latency_ms > 0)
-        and position is not None
-        and (tick_hit is None or multi_target_tick_fill)
-        and full_bar_available_after_entry
-    ):
-        sl_touched = position.sl_price is not None and (
-            exit_low <= position.sl_price
-            if position.direction == 1
-            else exit_high >= position.sl_price
-        )
-        active_targets = (
-            [getattr(position, f"tp{slot}_price") for slot in _active_target_slots(position)]
-            if multi_target_position
-            else [position.tp_price]
-        )
-        tp_touched = any(
-            target is not None
-            and (
-                (position.direction == 1 and exit_high >= target)
-                or (position.direction == -1 and exit_low <= target)
-            )
-            for target in active_targets
-        )
-        if sl_touched or tp_touched:
-            target_text = ", ".join(
-                f"tp{slot}={getattr(position, f'tp{slot}_price')}" for slot in (1, 2, 3)
-            )
-            raise TickExecutionUnavailable(
-                "OHLC indicates a protective level was reached, but no matching "
-                "tick trigger was found; candle fallback is disabled "
-                f"(bar_idx={i}, bar_time={bar_time.isoformat()}, "
-                f"direction={position.direction}, open={row['open']}, "
-                f"high={row['high']}, low={row['low']}, close={row['close']}, "
-                f"exit_low={exit_low}, exit_high={exit_high}, "
-                f"sl={position.sl_price}, {target_text})"
-            )
-
+    # Candle OHLC and a bar-level spread estimate are not executable quote
+    # evidence; only a crossing bid/ask tick can trigger a tick-mode exit.
     position = state.position
     if (
         position is not None
@@ -647,7 +666,6 @@ def process_protective_and_account_events(
         and full_bar_available_after_entry
         and tick_hit is None
         and not multi_target_tick_fill
-        and not tick_only_execution
     ):
         sl_hit = False
         if position.sl_price is not None:
@@ -659,20 +677,33 @@ def process_protective_and_account_events(
         if sl_hit:
             assert position.sl_price is not None
             stop_price = float(position.sl_price)
-            raw_spread = bar_spread_price_units(row, settings.cost_model)
-            opening_spread = settings.cost_model.spread_points if raw_spread is None else raw_spread
-            stop_price = bar_stop_trigger_price(
-                position.direction,
-                stop_price,
-                float(row["open"]),
-                opening_spread,
-            )
+            if tick_only_execution:
+                stop_quote = _tick_touch_quote(
+                    settings,
+                    bar_time,
+                    int(position.direction),
+                    stop_price,
+                    entry_time,
+                    bar_duration,
+                )
+            else:
+                raw_spread = bar_spread_price_units(row, settings.cost_model)
+                opening_spread = (
+                    settings.cost_model.spread_points if raw_spread is None else raw_spread
+                )
+                stop_price = bar_stop_trigger_price(
+                    position.direction,
+                    stop_price,
+                    float(row["open"]),
+                    opening_spread,
+                )
+                stop_quote = sl_tp_fill_quote(position.direction, stop_price, settings.cost_model)
             _record_close(
                 state,
                 settings,
                 broker,
                 position,
-                sl_tp_fill_quote(position.direction, stop_price, settings.cost_model),
+                stop_quote,
                 {
                     "type": "stop_close",
                     "reason": "structure_sl",
@@ -693,7 +724,6 @@ def process_protective_and_account_events(
         and position_active_in_bar
         and full_bar_available_after_entry
         and not multi_target_tick_fill
-        and not tick_only_execution
     ):
         for slot in _active_target_slots(position):
             if state.position is not position:
@@ -710,8 +740,19 @@ def process_protective_and_account_events(
                     position,
                     bar_index=i,
                     slot=slot,
-                    quote=sl_tp_fill_quote(
-                        int(position.direction), target_price, settings.cost_model
+                    quote=(
+                        _tick_touch_quote(
+                            settings,
+                            bar_time,
+                            int(position.direction),
+                            target_price,
+                            entry_time,
+                            bar_duration,
+                        )
+                        if tick_only_execution
+                        else sl_tp_fill_quote(
+                            int(position.direction), target_price, settings.cost_model
+                        )
                     ),
                     fill_time=bar_time,
                     session=session,
@@ -725,7 +766,6 @@ def process_protective_and_account_events(
         and tick_hit is None
         and not multi_target_position
         and position.tp_price is not None
-        and not tick_only_execution
     ):
         if position.direction == 1 and exit_high >= position.tp_price:
             tp_hit = True
@@ -740,7 +780,18 @@ def process_protective_and_account_events(
             settings,
             broker,
             position,
-            sl_tp_fill_quote(position.direction, position.tp_price, settings.cost_model),
+            (
+                _tick_touch_quote(
+                    settings,
+                    bar_time,
+                    int(position.direction),
+                    float(position.tp_price),
+                    entry_time,
+                    bar_duration,
+                )
+                if tick_only_execution
+                else sl_tp_fill_quote(position.direction, position.tp_price, settings.cost_model)
+            ),
             {
                 "type": "tp_close",
                 "reason": "structure_tp",
@@ -1235,23 +1286,29 @@ def liquidate_terminal_position(
     last_time = bar_times[-1]
     terminal_close_time = last_time + bar_duration
     if settings.tick_execution_required or settings.randomized_fill_latency_ms > 0:
-        terminal_rng = (
-            event_keyed_execution_rng(
-                settings.execution_seed, f"bar_fill:{terminal_close_time.value}"
-            )
-            if settings.randomized_fill_latency_ms > 0
-            else execution_rng
+        # Close at the last tick of the final minute of data. With no tick in that
+        # minute, the final bar close is the fill, as in non-tick mode.
+        if settings.tickbook is None:
+            raise TickExecutionUnavailable("tick-only fills require a TickBook")
+        last_tick = last_tick_quote_before(
+            settings.tickbook, terminal_close_time, pd.Timedelta(minutes=1)
         )
-        last_fq, terminal_close_time, terminal_source, terminal_execution_meta = fill_quote_event(
-            terminal_close_time,
-            last_row,
-            settings.cost_model,
-            settings.tickbook,
-            rng=terminal_rng,
-            randomized_fill_latency_ms=settings.randomized_fill_latency_ms,
-            max_tick_quote_wait_ms=settings.max_tick_quote_wait_ms,
-            tick_execution_required=settings.tick_execution_required,
-        )
+        if last_tick is not None:
+            last_fq = (last_tick.bid, last_tick.ask)
+            terminal_close_time = last_tick.tick_time
+            terminal_source = "tick"
+            terminal_execution_meta = {
+                "order_submission_time": last_tick.order_time,
+                "execution_order_time": last_tick.order_time,
+                "execution_arrival_time": last_tick.arrival_time,
+                "execution_latency_ns": last_tick.latency_ns,
+                "actual_tick_time": last_tick.tick_time,
+                "fill_quote_source": "tick",
+            }
+        else:
+            last_fq = bar_quote(last_row, settings.cost_model)
+            terminal_source = "terminal_bar_close"
+            terminal_execution_meta = {}
         state.current_execution_meta = terminal_execution_meta
     else:
         last_fq = bar_quote(last_row, settings.cost_model)

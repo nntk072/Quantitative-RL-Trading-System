@@ -25,6 +25,7 @@ and broker integration can evolve independently.
   training, evaluation, experiment runs, and live/paper execution.
 - [Deployment](deployment.md) describes local, cluster, artifact, and broker
   boundaries.
+- [Coverage policy](coverage-policy.md) lists the reviewed coverage exclusions and their reasons.
 - [Migration records](migrations/README.md) document completed interface and
   path changes without creating a parallel work queue.
 - [Cross-cutting concerns](cross_cutting_concerns.md),
@@ -63,6 +64,7 @@ quality_attributes
 risks_and_technical_debt
 deployment
 cross_cutting_concerns
+coverage-policy
 runtime/README
 runtime/data_and_features
 runtime/environment_step

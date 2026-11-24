@@ -27,6 +27,7 @@ from configuration import load_config
 from evaluation import PerformanceMetrics, account_path_metric_inputs, calculate_metrics
 from evaluation.reporting.run_artifact_writer import save_run
 from market_data.loading import build_tick_books, run_pipeline
+from market_data.news.guard import news_guard_config
 from market_data.splits.definitions import (
     get_split_config,
     get_train_start_config,
@@ -182,6 +183,7 @@ def main() -> None:
             cost_model=cost_model(cfg),
             initial_balance=cfg.account.initial_balance,
             guardrail_kwargs=eval_guardrail_kwargs(cfg),
+            news_guard=news_guard_config(cfg.execution.get("news_spike_guard")),
             max_loss_per_trade_usd=max_loss_per_trade,
             take_profit_per_trade_usd=take_profit_per_trade,
             eod_risk=dict(cfg.env.get("eod_risk", {})),
@@ -210,6 +212,9 @@ def main() -> None:
             randomized_fill_latency_ms=cfg.execution.randomized_fill_latency_ms,
             max_tick_quote_wait_ms=cfg.execution.max_tick_quote_wait_ms,
             execution_seed=args.seed,
+            open_manipulation_bars=int(cfg.env.get("open_manipulation_bars", 10)),
+            session_timezone=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         )
         result["initial_balance"] = cfg.account.initial_balance
         metric_equity = (

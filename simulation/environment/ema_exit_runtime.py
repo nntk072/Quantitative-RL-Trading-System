@@ -101,7 +101,7 @@ class EmaExitRuntimeMixin(RuntimeMixinBase):
             "reason": "ema_21_exit",
             "fill_quote_source": "tick" if execution_meta else "bar_close",
             "bar": idx,
-            "time": log_time,
+            "time": fill_time,
             "decision_time": log_time,
             "fill_time": fill_time,
             "equity": self.account.equity,

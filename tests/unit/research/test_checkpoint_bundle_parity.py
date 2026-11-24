@@ -5,8 +5,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 from omegaconf import OmegaConf
-from scripts.research.analysis.evidence import audit_checkpoint_frame_bundle_parity as parity
-from scripts.research.analysis.evidence.audit_checkpoint_frame_bundle_parity import (
+from research_tools.artifacts.evidence import audit_checkpoint_frame_bundle_parity as parity
+from research_tools.artifacts.evidence.audit_checkpoint_frame_bundle_parity import (
     compare_results,
     select_split,
 )

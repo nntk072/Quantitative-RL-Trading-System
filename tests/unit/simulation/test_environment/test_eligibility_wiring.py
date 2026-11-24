@@ -221,19 +221,23 @@ def test_development_only_tick_preflight_never_builds_report_only_schedule() -> 
 
 
 def test_zero_latency_tick_preflight_checks_the_immediate_order_time() -> None:
-    order_time = pd.Timestamp("2025-12-31T14:30:00Z")
+    decision_time = pd.Timestamp("2025-12-31T14:30:00Z")
+    order_time = decision_time + pd.Timedelta(minutes=1)
     tickbook = TickBook(
         np.asarray([(order_time + pd.Timedelta(milliseconds=5)).value], dtype=np.int64),
         np.asarray([100.0]),
         np.asarray([100.2]),
     )
+    index = pd.DatetimeIndex([decision_time, order_time])
+    train_mask = pd.Series([True, False], index=index)
+    session_labels = pd.Series(["ny", "closed"], index=index)
 
     report = tick_preflight.tick_execution_split_coverage(
         tickbook,
-        pd.DatetimeIndex([order_time]),
-        pd.Series([True], index=pd.DatetimeIndex([order_time])),
+        index,
+        train_mask,
         "2026-01-01",
-        session_labels=pd.Series(["ny"], index=pd.DatetimeIndex([order_time])),
+        session_labels=session_labels,
         max_latency_ns_exclusive=0,
         max_quote_wait_ms=1_000,
     )

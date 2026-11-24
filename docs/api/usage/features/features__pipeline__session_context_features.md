@@ -27,7 +27,7 @@ This page contains 2 public callable records owned by `features.pipeline.session
 
 **Observed usage:**
 
-1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L780)
+1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L801)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -77,7 +77,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L780)
+1. [production caller: `build_features`](../../../../features/pipeline/feature_matrix_builder.py#L801)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

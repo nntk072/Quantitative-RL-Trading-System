@@ -133,7 +133,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L36)
+1. [test fixture: `_write_alignment`](../../../../tests/integration/backtest/test_local_trace_source_clock.py#L120)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+                        "stable_parser_first_valid_ask": 100.25,
+                    },
+                }
+            )
+    alignment = {
+        "tick_source_sha256": file_sha256(ticks),
+        "price_grid_application": {"increment": 0.25},
+        "events": events,
+    }
+    if source_timezone is not None:
+        alignment["source_timezone_used_for_timestamp_join"] = source_timezone
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L36)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -149,26 +169,6 @@ def test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files(
 
     assert file_sha256(nonempty) == hashlib.sha256(payload).hexdigest()
     assert file_sha256(empty) == hashlib.sha256(b"").hexdigest()
-```
-
-2. [test fixture: `test_evaluation_manifest_hashes_numerical_artifacts_and_parent_manifest`](../../../../tests/unit/evaluation/test_evaluation_manifest.py#L45)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    )
-
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest["schema_version"] == "evaluation-artifacts-v1"
-    assert manifest["partitions"] == ["training"]
-    assert manifest["parent_manifests"]["run_manifest"]["sha256"] == file_sha256(parent_path)
-    assert manifest["numerical_artifacts"] == [
-        {"path": "training/metrics.json", "sha256": file_sha256(metrics_path)},
-        {
-            "path": "training/evaluation_diagnostics.json",
-            "sha256": file_sha256(diagnostics_path),
-# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

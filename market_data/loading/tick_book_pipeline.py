@@ -67,6 +67,8 @@ def build_tick_books(
         return result
 
     cache_dir = Path(cfg.data.cache_dir)
+    source_clock_model = str(cfg.data.get("timestamp_clock", "native"))
+    source_timezone = str(cfg.data.tz)
     if end_inclusive is None:
         cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -135,7 +137,9 @@ def build_tick_books(
                 ):
                     continue
                 source_end = (
-                    inclusive_date_exclusive_end(str(source_end_date), str(cfg.data.tz))
+                    inclusive_date_exclusive_end(
+                        str(source_end_date), source_timezone, source_clock_model
+                    )
                     if source_end_date is not None
                     else None
                 )
@@ -151,6 +155,7 @@ def build_tick_books(
                     end_exclusive=source_end,
                     end_date_inclusive=str(source_end_date) if source_end_date else None,
                     end_inclusive=end_inclusive,
+                    source_clock_model=source_clock_model,
                 )
                 if book is not None and (len(book) > 0 or end_inclusive is not None):
                     books.append(book)
@@ -178,7 +183,9 @@ def build_tick_books(
                 np.concatenate([book._ask for book in books]),
             )
             if end_inclusive is not None:
-                end = inclusive_date_exclusive_end(end_inclusive, str(cfg.data.tz))
+                end = inclusive_date_exclusive_end(
+                    end_inclusive, source_timezone, source_clock_model
+                )
                 if len(combined_book):
                     start = pd.Timestamp(int(combined_book._ts[0]), unit="ns", tz="UTC")
                     combined_book = combined_book.slice(start, end)

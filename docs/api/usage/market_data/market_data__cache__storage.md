@@ -70,7 +70,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `load_bar_cache`](../../../../market_data/cache/bars.py#L136)
+1. [production caller: `load_bar_cache`](../../../../market_data/cache/bars.py#L142)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -81,7 +81,7 @@ def load_bar_cache(
     return load_parquet_cache(cache_path, expected_identity, unique_order=True)
 ```
 
-2. [production caller: `load_tick_cache`](../../../../market_data/cache/ticks.py#L118)
+2. [production caller: `load_tick_cache`](../../../../market_data/cache/ticks.py#L121)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -294,7 +294,7 @@ def bar_cache_manifest_path(cache_path: str | Path) -> Path:
 
 **Observed usage:**
 
-1. [production caller: `write_bar_cache`](../../../../market_data/cache/bars.py#L156)
+1. [production caller: `write_bar_cache`](../../../../market_data/cache/bars.py#L162)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -309,7 +309,7 @@ def write_bar_cache(
     return write_parquet_cache(cache_path, frame, identity)
 ```
 
-2. [production caller: `write_tick_cache`](../../../../market_data/cache/ticks.py#L146)
+2. [production caller: `write_tick_cache`](../../../../market_data/cache/ticks.py#L149)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

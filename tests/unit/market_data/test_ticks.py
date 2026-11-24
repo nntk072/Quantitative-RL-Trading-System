@@ -17,15 +17,17 @@ from market_data.loading.ticks import (
     TICK_CACHE_VERSION,
     TickBook,
     TickBookBuildDiagnostics,
-    TickExecutionUnavailable,
     _ffill_inplace,
     build_tick_book,
     limit_entry_execution_rng,
+    nearest_exit_tick_quote,
+    nearest_tick_execution,
     resolve_tick_execution,
     resolve_tick_execution_by_deadline,
     resolve_tick_exit,
     resolve_tick_limit_execution,
     tick_execution_coverage,
+    ticks_covering,
 )
 from market_data.transforms.price_grid import tick_cache_filename
 
@@ -53,6 +55,31 @@ def test_quote_at_exact_tick():
     bid, ask = quote
     assert bid == pytest.approx(100.5)
     assert ask == pytest.approx(101.1)
+
+
+@pytest.mark.parametrize(
+    ("source_wall_time", "expected_tick_utc"),
+    (
+        ("2025-12-31 22:49:00", "2025-12-31 20:50:30+00:00"),
+        ("2025-07-01 22:49:00", "2025-07-01 19:50:30+00:00"),
+    ),
+)
+def test_ticks_covering_interprets_helsinki_source_clock_for_dst(
+    source_wall_time: str, expected_tick_utc: str
+) -> None:
+    bar_time = pd.Timestamp(source_wall_time, tz="Etc/GMT-3")
+    tick_time = pd.Timestamp(expected_tick_utc)
+    book = TickBook(
+        np.array([tick_time.value], dtype=np.int64),
+        np.array([100.0]),
+        np.array([100.5]),
+    )
+    bars = pd.DataFrame({"close": [100.0]}, index=pd.DatetimeIndex([bar_time]))
+
+    sliced = ticks_covering(book, bars, source_clock_model="europe_helsinki")
+
+    assert sliced is not None
+    assert sliced.content_sha256() == book.content_sha256()
 
 
 def test_tickbook_content_hash_includes_stable_quote_order() -> None:
@@ -619,23 +646,29 @@ def test_tick_exit_respects_multi_minute_bar_window():
     assert result.quote.bid == 94.0
 
 
-def test_randomized_tick_exit_fails_closed_when_trigger_has_no_later_quote():
+def test_randomized_tick_exit_fills_at_trigger_tick_when_no_later_quote():
     start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    trigger = start + pd.Timedelta(seconds=5)
     book = TickBook(
-        np.array([(start + pd.Timedelta(seconds=5)).value], dtype=np.int64),
+        np.array([trigger.value], dtype=np.int64),
         np.array([94.0]),
         np.array([94.5]),
     )
 
-    with pytest.raises(TickExecutionUnavailable, match="no timely quote"):
-        resolve_tick_exit(
-            book,
-            start,
-            direction=1,
-            sl=95.0,
-            tp=None,
-            rng=np.random.default_rng(1729),
-        )
+    result = resolve_tick_exit(
+        book,
+        start,
+        direction=1,
+        sl=95.0,
+        tp=None,
+        rng=np.random.default_rng(1729),
+        max_quote_wait_ns=1,
+    )
+
+    assert result is not None
+    assert result.kind == "sl"
+    assert result.quote.tick_time == trigger
+    assert result.quote.bid == 94.0
 
 
 def test_ffill_inplace_fills_internal_nans():
@@ -765,6 +798,48 @@ def test_tick_cache_identity_tracks_source_timezone_and_session_filter(tmp_path:
     )
 
 
+def test_tick_book_honors_helsinki_source_clock_and_cache_identity(tmp_path: Path) -> None:
+    csv_path = tmp_path / "helsinki_clock_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.01.06", "16:30:00.000", 100.0, 100.6),
+            ("2025.01.06", "23:30:00.000", 100.5, 101.1),
+            ("2025.07.07", "16:30:00.000", 101.0, 101.6),
+        ],
+    )
+    cache_path = tmp_path / "tick_cache.parquet"
+
+    helsinki = build_tick_book(
+        csv_path,
+        tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
+        cache_path=cache_path,
+    )
+    fixed_carrier = build_tick_book(csv_path, tz="Etc/GMT-3", cache_path=cache_path)
+
+    expected_helsinki = pd.DatetimeIndex(
+        ["2025-01-06 16:30", "2025-01-06 23:30", "2025-07-07 16:30"],
+        tz="Europe/Helsinki",
+    ).tz_convert("UTC")
+    expected_fixed = pd.DatetimeIndex(
+        ["2025-01-06 16:30", "2025-01-06 23:30", "2025-07-07 16:30"],
+        tz="Etc/GMT-3",
+    ).tz_convert("UTC")
+    expected_helsinki_ns = expected_helsinki.to_numpy(dtype="datetime64[ns]").view(np.int64)
+    expected_fixed_ns = expected_fixed.to_numpy(dtype="datetime64[ns]").view(np.int64)
+    assert np.array_equal(helsinki._ts, expected_helsinki_ns)
+    assert np.array_equal(fixed_carrier._ts, expected_fixed_ns)
+
+    winter_day = build_tick_book(
+        csv_path,
+        tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
+        end_inclusive="2025-01-06",
+    )
+    assert np.array_equal(winter_day._ts, expected_helsinki_ns[:2])
+
+
 def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) -> None:
     symbol = "US100.cash"
     csv_path = tmp_path / f"{symbol}.csv"
@@ -782,6 +857,7 @@ def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) ->
                 "tick_files": {symbol: csv_path.name},
                 "symbols": [symbol],
                 "tz": "Etc/GMT-3",
+                "timestamp_clock": "europe_helsinki",
                 "price_discretization": {
                     "enabled": True,
                     "increment": 0.25,
@@ -796,7 +872,7 @@ def test_build_tick_books_uses_grid_specific_cache_and_quotes(tmp_path: Path) ->
     assert (cache_dir / tick_cache_filename(symbol, 0.25, TICK_CACHE_VERSION)).is_file()
     book = books[symbol]
     assert book is not None
-    quote = book.quote_at(pd.Timestamp("2025-01-06 16:30:00", tz="Etc/GMT-3"))
+    quote = book.quote_at(pd.Timestamp("2025-01-06T14:30:00Z"))
     assert quote == pytest.approx((25633.75, 25634.0))
 
 
@@ -817,7 +893,8 @@ def test_build_tick_books_selects_registered_windows_from_one_source(tmp_path: P
             "data": {
                 "cache_dir": str(tmp_path / "cache"),
                 "symbols": [symbol],
-                "tz": "UTC",
+                "tz": "Etc/GMT-3",
+                "timestamp_clock": "europe_helsinki",
                 "datasets": {
                     "training": {
                         "raw_dir": str(tmp_path),
@@ -841,9 +918,9 @@ def test_build_tick_books_selects_registered_windows_from_one_source(tmp_path: P
     book = books[symbol]
     assert book is not None
     assert len(book) == 2
-    assert book.quote_at(pd.Timestamp("2025-12-31T23:59:59Z")) == pytest.approx((100.0, 100.6))
-    assert book.quote_at(pd.Timestamp("2026-01-01T00:00:00Z")) == pytest.approx((200.0, 200.6))
-    assert book.quote_at(pd.Timestamp("2026-01-02T00:00:00Z")) is None
+    assert book.quote_at(pd.Timestamp("2025-12-31T21:59:59Z")) == pytest.approx((100.0, 100.6))
+    assert book.quote_at(pd.Timestamp("2025-12-31T22:00:00Z")) == pytest.approx((200.0, 200.6))
+    assert book.quote_at(pd.Timestamp("2026-01-01T22:00:00Z")) is None
     for dataset, start, end in (
         ("training", "2025-12-31", "2025-12-31"),
         ("testing", "2026-01-01", "2026-01-01"),
@@ -1344,3 +1421,72 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
         write_tick_cache(cache_path, empty, {"cache_id": "empty"})
 
     assert not cache_path.exists()
+
+
+def test_nearest_exit_tick_quote_picks_window_tick_closest_to_level() -> None:
+    start = pd.Timestamp("2026-01-05T10:00:00Z")
+    times = np.array([(start + pd.Timedelta(seconds=s)).value for s in (5, 20, 40)], dtype=np.int64)
+    book = TickBook(times, np.array([99.4, 99.8, 99.6]), np.array([99.5, 99.9, 99.7]))
+    # Long exit uses bid; closest to 99.6 is the tick at 40s (bid 99.6).
+    assert nearest_exit_tick_quote(book, start, 1, 99.6, bar_minutes=1) == (99.6, 99.7)
+
+
+def test_nearest_exit_tick_quote_empty_window_uses_nearest_tick_in_time() -> None:
+    start = pd.Timestamp("2026-01-05T10:00:00Z")
+    before = (start - pd.Timedelta(seconds=30)).value
+    after = (start + pd.Timedelta(minutes=2)).value
+    book = TickBook(
+        np.array([before, after], dtype=np.int64),
+        np.array([100.0, 101.0]),
+        np.array([100.1, 101.1]),
+    )
+    # Window [10:00, 10:01) is empty; the tick 30s before is nearer than the one 1m after the window.
+    assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1) == (100.0, 100.1)
+    # An entry time after the earlier tick excludes it, leaving the later tick.
+    entry = start - pd.Timedelta(seconds=5)
+    assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1, earliest_time=entry) == (
+        101.0,
+        101.1,
+    )
+
+
+def test_nearest_exit_tick_quote_empty_book_returns_none() -> None:
+    book = TickBook(np.array([], dtype=np.int64), np.array([]), np.array([]))
+    assert (
+        nearest_exit_tick_quote(
+            book, pd.Timestamp("2026-01-05T10:00:00Z"), -1, 100.0, bar_minutes=1
+        )
+        is None
+    )
+
+
+def test_nearest_exit_tick_quote_gap_cap_rejects_far_tick() -> None:
+    start = pd.Timestamp("2026-01-05T10:00:00Z")
+    far = (start + pd.Timedelta(minutes=5)).value
+    book = TickBook(np.array([far], dtype=np.int64), np.array([101.0]), np.array([101.1]))
+    # The only tick is 4 minutes after the window, beyond a 60 s cap.
+    assert (
+        nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1, max_gap_ns=60_000_000_000)
+        is None
+    )
+    # Without a cap the same tick is used.
+    assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1) == (101.0, 101.1)
+
+
+def test_nearest_tick_execution_is_first_tick_after_order_within_cap() -> None:
+    order = pd.Timestamp("2026-01-05T10:00:00Z")
+    before = (order - pd.Timedelta(seconds=20)).value
+    after = (order + pd.Timedelta(seconds=40)).value
+    book = TickBook(
+        np.array([before, after], dtype=np.int64),
+        np.array([100.0, 101.0]),
+        np.array([100.1, 101.1]),
+    )
+    quote = nearest_tick_execution(book, order, max_gap_ns=60_000_000_000)
+    assert quote is not None
+    # The tick before submission is never eligible for an order.
+    assert quote.tick_time == pd.Timestamp(after, unit="ns", tz="UTC")
+    assert (quote.bid, quote.ask) == (101.0, 101.1)
+    assert quote.latency_ns == 0
+    # Beyond the cap there is no fill.
+    assert nearest_tick_execution(book, order, max_gap_ns=10_000_000_000) is None

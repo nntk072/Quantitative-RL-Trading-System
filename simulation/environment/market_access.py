@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -17,11 +17,11 @@ class MarketAccessMixin(RuntimeMixinBase):
     def _bar_time(self, idx: int) -> pd.Timestamp:
         """Return bar ``idx`` as a tz-aware Timestamp in the broker timezone.
 
-        Frames mode stores tz-aware Timestamps; bundle mode stores a naive
-        ``datetime64[ns]`` array whose values are the UTC epoch of each bar, so
-        the naive value is localised to UTC and converted to the broker
-        timezone. This keeps the two data paths emitting identical (value +
-        timezone) timestamps for the equity curve and trade log.
+        Frame-mode Helsinki source labels may carry the fixed ``Etc/GMT-3``
+        chart carrier; interpret those wall labels with the DST-aware Helsinki
+        zone. Bundle mode stores UTC epoch values in a naive ``datetime64[ns]``
+        array, which must be localized to UTC. Already-aware frame instants are
+        preserved. All paths return the broker timezone representation.
 
         Args:
             idx: Numeric value used for the idx.
@@ -29,11 +29,32 @@ class MarketAccessMixin(RuntimeMixinBase):
         Returns:
             Result of return bar ``idx`` as a tz-aware Timestamp in the broker timezone.
         """
-        value = self._bar_times[idx]
+        # The conversion depends only on the bar index and the immutable bar-time array, and the
+        # step path asks for the same bar several times, so results are cached per array object.
+        source = self._bar_times
+        cache: tuple[Any, dict[int, pd.Timestamp]] | None = getattr(self, "_bar_time_cache", None)
+        if cache is None or cache[0] is not source:
+            cache = (source, {})
+            setattr(self, "_bar_time_cache", cache)
+        cached = cache[1].get(idx)
+        if cached is not None:
+            return cached
+        value = source[idx]
         ts = pd.Timestamp(value)
-        if ts.tzinfo is None:
+        source_is_helsinki_wall = (
+            self._bundle_arrays is None
+            and self._source_clock_model == "europe_helsinki"
+            and (ts.tzinfo is None or str(ts.tz) == "Etc/GMT-3")
+        )
+        if source_is_helsinki_wall:
+            ts = ts.tz_localize(None).tz_localize("Europe/Helsinki")
+        elif ts.tzinfo is None:
             ts = ts.tz_localize("UTC")
-        return ts.tz_convert(BAR_TIME_TZ)
+        result = ts.tz_convert(BAR_TIME_TZ)
+        if len(cache[1]) >= 4096:
+            cache[1].clear()
+        cache[1][idx] = result
+        return result
 
     def _create_account(self) -> AccountState:
         """Factory for fresh account state.

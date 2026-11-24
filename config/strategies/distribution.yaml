@@ -19,7 +19,7 @@ strategy:
   name: "distribution"
   variant_id: "distribution_prev_session_pd_mtf_v1"
   session:
-    timezone: "Etc/GMT-3"
+    timezone: "America/Chicago"
   liquidity:
     swing_period: 5
     require_reclaim: true

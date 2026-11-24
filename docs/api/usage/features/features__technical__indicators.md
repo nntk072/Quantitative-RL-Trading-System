@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `features.technical.indica
 
 **Purpose:** Calculate the exponentially smoothed average true range.
 
-**Exact API:** {py:obj}`features.technical.indicators.atr` · **Source:** [features/technical/indicators.py:109](../../../../features/technical/indicators.py#L109)
+**Exact API:** {py:obj}`features.technical.indicators.atr` · **Source:** [features/technical/indicators.py:111](../../../../features/technical/indicators.py#L111)
 
 **Inputs and outputs:**
 
@@ -71,7 +71,7 @@ full.tail()
 
 **Purpose:** Compute all indicators and return a wide feature DataFrame.
 
-**Exact API:** {py:obj}`features.technical.indicators.build_indicators` · **Source:** [features/technical/indicators.py:468](../../../../features/technical/indicators.py#L468)
+**Exact API:** {py:obj}`features.technical.indicators.build_indicators` · **Source:** [features/technical/indicators.py:484](../../../../features/technical/indicators.py#L484)
 
 **Inputs and outputs:**
 

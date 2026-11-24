@@ -12,7 +12,6 @@ from models.encoders.sequence_encoder_components import (
     ACCOUNT_EMB_DIM,
     AccountMLP,
     BaseFeaturesExtractor,
-    _encode_valid_suffix,
     _resolve_account_dim,
     _valid_lengths,
 )
@@ -59,6 +58,9 @@ class _CausalTCN(nn.Module):
     def forward(self, seq: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         """Encode each row's valid sequence suffix into its final latent state.
 
+        Leading invalid steps are zeroed before every block. That gives each block the same
+        zero left-padding a suffix-only run sees, without grouping rows by length or syncing.
+
         Args:
             seq: Batched timeframe features with shape ``[batch, time, features]``.
             mask: Valid-timestep mask aligned with ``seq``.
@@ -67,20 +69,18 @@ class _CausalTCN(nn.Module):
             One ``latent_dim`` vector per batch row.
         """
         lengths = _valid_lengths(seq, {"seq_mask": mask})
-
-        def _encode(valid: torch.Tensor) -> torch.Tensor:
-            """Process _CausalTCN.
-
-            Args:
-                valid: Valid used by the operation described above.
-
-            Returns:
-                Result of process _CausalTCN.
-            """
-            hidden = self.tcn(valid.transpose(1, 2))
-            return cast(torch.Tensor, self.proj(hidden[:, :, -1]))
-
-        return _encode_valid_suffix(seq, lengths, _encode)
+        steps = seq.shape[1]
+        starts = steps - lengths
+        is_valid = torch.arange(steps, device=seq.device).unsqueeze(0) >= starts.unsqueeze(1)
+        keep = is_valid.unsqueeze(1).to(dtype=seq.dtype)
+        hidden = seq.transpose(1, 2) * keep
+        for block in self.tcn:
+            temporal = cast(_TemporalBlock, block)
+            residual = hidden if temporal.downsample is None else temporal.downsample(hidden)
+            hidden = temporal.net[:4](hidden) * keep
+            hidden = temporal.net[4:](hidden) * keep
+            hidden = temporal.relu(hidden + residual) * keep
+        return cast(torch.Tensor, self.proj(hidden[:, :, -1]))
 
 
 class MTFEncoder(BaseFeaturesExtractor):

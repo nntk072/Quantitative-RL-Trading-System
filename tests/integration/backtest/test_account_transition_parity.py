@@ -12,7 +12,7 @@ import pytest
 from evaluation.reporting.account_state_trace_reconciliation import (
     reconcile_account_state_trace,
 )
-from market_data.loading.ticks import TickBook, TickExecutionUnavailable
+from market_data.loading.ticks import TickBook
 from simulation.backtest import run_backtest
 from simulation.environment.env import TradingEnv
 from trading.execution import CostModel
@@ -106,6 +106,7 @@ def test_prague_midnight_resets_flat_account_without_session_transition() -> Non
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         hold_on_zero=True,
         block_overnight=False,
@@ -302,7 +303,8 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
     assert result["account_state_trace_complete"] is True
     assert len(account_trace) == len(result["equity"])
     assert account_trace["schema_version"].eq("account_state_trace.v3").all()
-    assert account_trace["state_phase"].eq("pre_action_valuation").all()
+    assert account_trace["state_phase"].iloc[:-1].eq("post_action_valuation").all()
+    assert account_trace["state_phase"].iloc[-1] == "pre_action_valuation"
     env_account_trace = pd.DataFrame.from_records(env_account_trace_rows)
     assert len(env_account_trace) == len(actions)
     assert env_account_trace["state_phase"].eq("post_action_valuation").all()
@@ -324,9 +326,12 @@ def test_environment_and_backtest_reconcile_realized_and_open_account_transition
         atol=1e-9,
         err_msg="cross-engine equity marks differ at the shared synthetic boundaries",
     )
-    assert np.any(
-        env_account_trace["balance"].to_numpy(dtype=float)
-        != backtest_shared_marks["balance"].to_numpy(dtype=float)
+    np.testing.assert_allclose(
+        env_account_trace["balance"].to_numpy(dtype=float),
+        backtest_shared_marks["balance"].to_numpy(dtype=float),
+        rtol=0.0,
+        atol=1e-9,
+        err_msg="cross-engine balance marks differ at the shared synthetic boundaries",
     )
     for trace in (env_account_trace, backtest_shared_marks):
         np.testing.assert_allclose(
@@ -477,6 +482,23 @@ def test_environment_and_backtest_match_on_one_shared_tick_execution_trace(
     )
     env.reset(seed=7)
     env.step(env_action)
+    env_open = next(event for event in env.trade_log if event["type"] == "open")
+    assert env.position is not None
+    expected_open_price = 100.2 + tick_slippage if direction == 1 else 100.0 - tick_slippage
+    expected_mark_price = 100.0 if direction == 1 else 100.2
+    expected_entry_equity = (
+        50_000.0
+        - cost_model.total_cost(float(env.position.size))
+        + (
+            (expected_mark_price - expected_open_price)
+            * direction
+            * float(env.position.size)
+            * env.contract_size
+            * cost_model.point_value
+        )
+    )
+    assert env.position.mark_price == pytest.approx(expected_mark_price)
+    assert env.account.equity == pytest.approx(expected_entry_equity)
     env.step(19)
 
     actions = iter((direction, 19))
@@ -509,13 +531,13 @@ def test_environment_and_backtest_match_on_one_shared_tick_execution_trace(
         contract_size=1.0,
     )
 
-    env_open = next(event for event in env.trade_log if event["type"] == "open")
     env_close = next(event for event in env.trade_log if event["type"] == "close")
     backtest_open = result["trades"].loc[result["trades"]["type"] == "open"].iloc[0]
     backtest_close = result["trades"].loc[result["trades"]["type"] == "close"].iloc[0]
-    expected_open_price = 100.2 + tick_slippage if direction == 1 else 100.0 - tick_slippage
     expected_close_price = 99.5 - tick_slippage if direction == 1 else 99.7 + tick_slippage
     assert env_open["price"] == pytest.approx(expected_open_price)
+    assert env_open["equity"] == pytest.approx(expected_entry_equity)
+    assert backtest_open["equity"] == pytest.approx(expected_entry_equity)
     assert env_close["price"] == pytest.approx(expected_close_price)
 
     for env_event, backtest_event in (
@@ -680,8 +702,8 @@ def test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending
     assert action_index == len(actions) - 1  # the final bar has no next fill bar
 
 
-def test_environment_and_backtest_both_fail_closed_on_quote_wait_gap() -> None:
-    """A late first quote cannot become a candle-priced entry in either engine."""
+def test_environment_and_backtest_both_reject_entry_on_quote_wait_gap() -> None:
+    """A late first quote cannot become a candle-priced entry; both engines refuse the order."""
     index = pd.date_range("2025-01-06T14:30:00Z", periods=6, freq="1min")
     prices = np.full(len(index), 100.0)
     bars = pd.DataFrame(
@@ -730,33 +752,36 @@ def test_environment_and_backtest_both_fail_closed_on_quote_wait_gap() -> None:
         max_tick_quote_wait_ms=1,
     )
     env.reset(seed=7)
-    with pytest.raises(TickExecutionUnavailable, match="no executable quote within 1ms"):
-        env.step(1)
+    env.step(1)
+    assert env.position is None
+    assert env._entry_diag["rejected_entry_execution"] == 1
 
     actions = iter([1, 0, 0, 0, 0])
-    with pytest.raises(TickExecutionUnavailable, match="no executable tick within 1ms"):
-        run_backtest(
-            bars,
-            features,
-            lambda _observation: next(actions),
-            obs_window=1,
-            cost_model=cost_model,
-            initial_balance=50_000.0,
-            risk_frac=0.001,
-            rr_ratio=1.0,
-            use_structure_sl_tp=True,
-            swing_buffer_pts=0.0,
-            min_lot=0.01,
-            max_lot=1.0,
-            contract_size=1.0,
-            max_loss_per_trade_usd=100.0,
-            hold_on_zero=True,
-            block_overnight=False,
-            fill_latency_bars=1,
-            tickbook=tickbook,
-            tick_execution_required=True,
-            max_tick_quote_wait_ms=1,
-        )
+    result = run_backtest(
+        bars,
+        features,
+        lambda _observation: next(actions),
+        obs_window=1,
+        cost_model=cost_model,
+        initial_balance=50_000.0,
+        risk_frac=0.001,
+        rr_ratio=1.0,
+        use_structure_sl_tp=True,
+        swing_buffer_pts=0.0,
+        min_lot=0.01,
+        max_lot=1.0,
+        contract_size=1.0,
+        max_loss_per_trade_usd=100.0,
+        hold_on_zero=True,
+        block_overnight=False,
+        fill_latency_bars=1,
+        tickbook=tickbook,
+        tick_execution_required=True,
+        max_tick_quote_wait_ms=1,
+    )
+    rejects = result["trades"][result["trades"]["type"].eq("reject")]
+    assert not result["trades"]["type"].eq("open").any()
+    assert rejects["reason"].eq("no_executable_tick_within_wait").any()
 
 
 def test_environment_and_backtest_use_first_source_order_for_tied_stop_target_ticks() -> None:
@@ -991,6 +1016,7 @@ def test_environment_and_backtest_size_to_the_same_trade_risk_cap(
         min_lot=0.01,
         max_lot=1.0,
         contract_size=1.0,
+        swing_buffer_pts=0.0,
         max_loss_per_trade_usd=100.0,
         block_overnight=False,
     )

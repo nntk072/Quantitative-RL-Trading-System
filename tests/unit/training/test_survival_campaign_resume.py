@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
 import sys
 from argparse import Namespace
 from pathlib import Path
@@ -8,6 +10,7 @@ from pathlib import Path
 import pytest
 from omegaconf import OmegaConf
 
+from configuration import load_config
 from training.artifacts.walk_forward import (
     _write_walk_forward_fold_receipt,
     build_walk_forward_identity,
@@ -33,6 +36,62 @@ def _args() -> Namespace:
         embargo_bars=20,
         wf_steps=None,
     )
+
+
+def _confirmatory_argv(
+    config: Path,
+    *,
+    purge_bars: int = 60,
+    config_sha: str | None = None,
+) -> list[str]:
+    cfg = load_config(config_path=config)
+    resolved = OmegaConf.to_container(cfg, resolve=True)
+    resolved_sha = hashlib.sha256(
+        json.dumps(resolved, sort_keys=True, separators=(",", ":"), default=str).encode()
+    ).hexdigest()
+    return [
+        "training",
+        "--confirmatory",
+        "--confirmatory-arm",
+        "q0_canonical",
+        "--expected-config-sha256",
+        config_sha or hashlib.sha256(config.read_bytes()).hexdigest(),
+        "--expected-resolved-config-sha256",
+        resolved_sha,
+        "--expected-source-commit",
+        "a" * 40,
+        "--config",
+        str(config),
+        "--algo",
+        "ppo",
+        "--arch",
+        "mtf_reasoning",
+        "--seeds",
+        "42",
+        "43",
+        "44",
+        "45",
+        "46",
+        "47",
+        "--walk-forward",
+        "--wf-splits",
+        "5",
+        "--purge-bars",
+        str(purge_bars),
+        "--embargo-bars",
+        "20",
+    ]
+
+
+def _mock_clean_source(monkeypatch: pytest.MonkeyPatch) -> None:
+    def check_output(command: list[str], **_: object) -> str:
+        if command == ["git", "rev-parse", "HEAD"]:
+            return "a" * 40
+        if command == ["git", "status", "--porcelain"]:
+            return ""
+        raise AssertionError(command)
+
+    monkeypatch.setattr(subprocess, "check_output", check_output)
 
 
 def test_walk_forward_identities_bind_seed_run_protocol_and_fold_positions(tmp_path: Path) -> None:
@@ -243,3 +302,92 @@ def test_campaign_cli_selects_one_walk_forward_fold(monkeypatch: pytest.MonkeyPa
     assert args.survival_campaign_phase == "walk_forward_fold"
     assert args.survival_campaign_seed == 42
     assert args.survival_campaign_fold == 0
+
+
+def test_campaign_cli_rejects_non_protocol_seed_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "training",
+            "--seeds",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "50",
+            "--walk-forward",
+            "--survival-campaign-dir",
+            "/tmp/survival-campaign",
+            "--survival-campaign-phase",
+            "walk_forward_fold",
+            "--survival-campaign-seed",
+            "42",
+            "--survival-campaign-fold",
+            "0",
+        ],
+    )
+    with pytest.raises(SystemExit):
+        parse_train_args()
+
+
+def test_campaign_finalize_rejects_six_non_protocol_seeds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "training",
+            "--seeds",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "--walk-forward",
+            "--survival-campaign-dir",
+            "/tmp/survival-campaign",
+            "--survival-campaign-phase",
+            "finalize",
+        ],
+    )
+
+    with pytest.raises(SystemExit):
+        parse_train_args()
+
+
+def test_confirmatory_cli_accepts_registered_arm_and_exact_config_hash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _mock_clean_source(monkeypatch)
+    config = Path("config/research/survival_trade_setup_mtf_conditioned.yaml")
+    monkeypatch.setattr(sys, "argv", _confirmatory_argv(config))
+
+    args = parse_train_args()
+
+    assert args.confirmatory is True
+    assert args.confirmatory_arm == "q0_canonical"
+    assert args.seeds == [42, 43, 44, 45, 46, 47]
+
+
+def test_confirmatory_cli_rejects_changed_config_hash(monkeypatch: pytest.MonkeyPatch) -> None:
+    _mock_clean_source(monkeypatch)
+    config = Path("config/research/survival_trade_setup_mtf_conditioned.yaml")
+    monkeypatch.setattr(sys, "argv", _confirmatory_argv(config, config_sha="0" * 64))
+
+    with pytest.raises(SystemExit):
+        parse_train_args()
+
+
+def test_confirmatory_cli_rejects_protocol_budget_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _mock_clean_source(monkeypatch)
+    config = Path("config/research/survival_trade_setup_mtf_conditioned.yaml")
+    monkeypatch.setattr(sys, "argv", _confirmatory_argv(config, purge_bars=61))
+
+    with pytest.raises(SystemExit):
+        parse_train_args()

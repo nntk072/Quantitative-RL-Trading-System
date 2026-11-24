@@ -11,6 +11,7 @@ Typical use
     tick_book = build_tick_book(
         path,
         tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
         cache_path=f"cache/US100.cash_ticks_{TICK_CACHE_VERSION}.parquet",
     )
     train_ticks = tick_book.slice(pd.Timestamp("2025-01-01", tz="Etc/GMT-3"),
@@ -21,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,14 +30,16 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from artifacts.identity import file_sha256
 from market_data.cache.ticks import build_tick_cache_identity, load_tick_cache, write_tick_cache
 from market_data.loading.bars import iter_ticks_chunks
 from market_data.transforms.price_grid import price_grid_identity, quantize_prices
+from market_data.transforms.sessions import session_reference_index
 
 log = logging.getLogger(__name__)
-TICK_CACHE_VERSION = "v7-source-precision-quotes"
+TICK_CACHE_VERSION = "v8-source-clock-quotes"
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,8 +105,141 @@ def tick_price_reaches_level(price: float, level: float, *, direction: int) -> b
     """
     if direction not in (-1, 1):
         raise ValueError("direction must be -1 or +1")
-    boundary = float(np.nextafter(float(level), -np.inf if direction == 1 else np.inf))
+    boundary = math.nextafter(float(level), -math.inf if direction == 1 else math.inf)
     return float(price) >= boundary if direction == 1 else float(price) <= boundary
+
+
+def nearest_exit_tick_quote(
+    book: TickBook,
+    bar_start: pd.Timestamp,
+    direction: int,
+    level: float,
+    *,
+    bar_minutes: int,
+    earliest_time: pd.Timestamp | None = None,
+    max_gap_ns: int | None = None,
+) -> tuple[float, float] | None:
+    """Executable (bid, ask) for a level that OHLC reached but no tick crossed.
+
+    With ticks in the bar window, the fill is the one whose exit-side price is
+    closest to ``level``, so its distance from the level is the slippage. A bar
+    with no ticks has nothing executed inside it, so the fill is the tick nearest
+    in time to the window, before or after, with ties going to the earlier tick.
+
+    Args:
+        book: TickBook with sorted timestamps and bid/ask arrays.
+        bar_start: Start of the bar window.
+        direction: +1 for a long exit (bid), -1 for a short exit (ask).
+        level: Protective level that OHLC reached.
+        bar_minutes: Window length in minutes.
+        earliest_time: Optional lower bound, such as the entry time.
+        max_gap_ns: Largest distance from the window allowed for an empty-window
+            fill; a farther tick is not used. ``None`` means no limit.
+
+    Returns:
+        ``(bid, ask)`` of the chosen tick, or ``None`` when no eligible tick is
+        within ``max_gap_ns`` (or the book has no tick at or after ``earliest_time``).
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    ts = book._ts
+    start_ns = pd.Timestamp(bar_start).value
+    earliest_ns = None if earliest_time is None else pd.Timestamp(earliest_time).value
+    if earliest_ns is not None:
+        start_ns = max(start_ns, earliest_ns)
+    end_ns = pd.Timestamp(bar_start).value + int(pd.Timedelta(minutes=bar_minutes).value)
+    i0 = int(np.searchsorted(ts, start_ns, side="left"))
+    i1 = int(np.searchsorted(ts, end_ns, side="left"))
+    side = book._bid if direction == 1 else book._ask
+    if i0 < i1:
+        j = i0 + int(np.argmin(np.abs(side[i0:i1] - float(level))))
+    else:
+        # Empty window: the tick nearest in time, before or after the window.
+        candidates: list[tuple[int, int]] = []
+        if i1 < len(ts):
+            candidates.append((int(ts[i1]) - end_ns, i1))
+        before = i0 - 1
+        if before >= 0 and (earliest_ns is None or int(ts[before]) >= earliest_ns):
+            candidates.append((start_ns - int(ts[before]), before))
+        if max_gap_ns is not None:
+            candidates = [item for item in candidates if item[0] <= max_gap_ns]
+        if not candidates:
+            return None
+        # Equal distances keep the earlier tick, the one already known when the bar ended.
+        j = min(candidates, key=lambda item: (item[0], item[1]))[1]
+    return float(book._bid[j]), float(book._ask[j])
+
+
+def nearest_tick_execution(
+    book: TickBook,
+    order_time: pd.Timestamp,
+    *,
+    max_gap_ns: int,
+) -> TickExecutionQuote | None:
+    """First executable tick at or after an order, within a gap cap.
+
+    Used when no tick follows the sampled arrival within the wait. Orders never fill
+    on a tick that predates submission, so only ticks at or after the order are
+    eligible; the nearest such tick within ``max_gap_ns`` is the fill.
+    shortcut: no latency is sampled on this fallback; upgrade if the wait must apply.
+
+    Args:
+        book: TickBook with sorted timestamps and bid/ask arrays.
+        order_time: Order submission time.
+        max_gap_ns: Largest allowed distance from the order to the tick.
+
+    Returns:
+        The eligible tick's quote, or ``None`` when no tick is within the cap.
+    """
+    submitted = pd.Timestamp(order_time)
+    t_ns = submitted.value
+    ts = book._ts
+    i = int(np.searchsorted(ts, t_ns, side="left"))
+    if i >= len(ts) or int(ts[i]) - t_ns > max_gap_ns:
+        return None
+    tick_time = pd.Timestamp(int(ts[i]), unit="ns", tz="UTC")
+    return TickExecutionQuote(
+        order_time=submitted,
+        arrival_time=submitted,
+        tick_time=tick_time,
+        bid=float(book._bid[i]),
+        ask=float(book._ask[i]),
+        latency_ns=0,
+    )
+
+
+def last_tick_quote_before(
+    book: TickBook,
+    end_time: pd.Timestamp,
+    lookback: pd.Timedelta,
+) -> TickExecutionQuote | None:
+    """Latest executable tick at or before ``end_time`` and no older than ``lookback``.
+
+    Used to close a position at the end of the data from the last tick in its final window.
+
+    Args:
+        book: TickBook with sorted timestamps and bid/ask arrays.
+        end_time: End of the data window; ticks after it are not eligible.
+        lookback: Largest allowed age of the tick at ``end_time``.
+
+    Returns:
+        The tick's quote, or ``None`` when no tick falls in the window.
+    """
+    end = pd.Timestamp(end_time)
+    end_ns = end.value
+    ts = book._ts
+    j = int(np.searchsorted(ts, end_ns, side="right")) - 1
+    if j < 0 or int(ts[j]) < end_ns - int(pd.Timedelta(lookback).value):
+        return None
+    tick_time = pd.Timestamp(int(ts[j]), unit="ns", tz="UTC")
+    return TickExecutionQuote(
+        order_time=end,
+        arrival_time=end,
+        tick_time=tick_time,
+        bid=float(book._bid[j]),
+        ask=float(book._ask[j]),
+        latency_ns=0,
+    )
 
 
 @dataclass(slots=True)
@@ -392,9 +529,8 @@ def resolve_tick_exit(
     """Resolve the first tick-triggered SL/TP after randomized execution latency.
 
     Stop wins if a single tick is beyond both levels. Once a trigger is found,
-    execution uses the first quote at or after the sampled arrival time. A
-    triggered order without a timely subsequent quote raises rather than
-    silently becoming a candle-priced fill.
+    execution uses the first quote at or after the sampled arrival time. When no
+    timely quote follows that arrival, the fill is the triggering tick itself.
 
     Args:
         book: Book used by the operation described above.
@@ -464,9 +600,16 @@ def resolve_tick_exit(
             max_quote_wait_ns=max_quote_wait_ns,
         )
         if quote is None:
-            raise TickExecutionUnavailable(
-                f"{kind.upper()} triggered at {trigger_time}, but no timely quote "
-                "exists after its sampled order-arrival time"
+            # No tick follows the sampled arrival within the wait. The nearest tick is the
+            # one that triggered the exit, so it is the fill.
+            # shortcut: no sampled latency on this fallback fill; upgrade if the wait must apply.
+            quote = TickExecutionQuote(
+                order_time=trigger_time,
+                arrival_time=trigger_time,
+                tick_time=trigger_time,
+                bid=float(book._bid[i]),
+                ask=float(book._ask[i]),
+                latency_ns=0,
             )
         return TickExitExecution(kind=kind, trigger_time=trigger_time, quote=quote)
     return None
@@ -688,6 +831,43 @@ class TickBook:
         i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
         return i0 < len(self._ts) and int(self._ts[i0]) < end_ns
 
+    def bar_quote_ns(
+        self, bar_start: pd.Timestamp, bar_minutes: int = 1
+    ) -> Iterator[tuple[int, float, float]]:
+        """Yield (UTC ns, bid, ask) for the same quotes as ``bar_quotes``, without Timestamps.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+
+        Yields:
+            Quote nanoseconds (UTC), bid and ask, in the same order as ``bar_quotes``.
+        """
+        start_ns = pd.Timestamp(bar_start).value
+        end_ns = start_ns + int(pd.Timedelta(minutes=bar_minutes).value)
+        i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
+        i1 = int(np.searchsorted(self._ts, end_ns, side="left"))
+        for idx in range(i0, i1):
+            yield (int(self._ts[idx]), float(self._bid[idx]), float(self._ask[idx]))
+
+    def bar_arrays(
+        self, bar_start: pd.Timestamp, bar_minutes: int = 1
+    ) -> tuple[NDArray[np.int64], NDArray[np.float64], NDArray[np.float64]]:
+        """Return the quote arrays for the same half-open bar interval as ``bar_quote_ns``.
+
+        Args:
+            bar_start: Bar start used by the operation described above.
+            bar_minutes: Numeric value used for the bar minutes.
+
+        Returns:
+            Quote nanoseconds (UTC), bid and ask arrays, in timestamp order.
+        """
+        start_ns = pd.Timestamp(bar_start).value
+        end_ns = start_ns + int(pd.Timedelta(minutes=bar_minutes).value)
+        i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
+        i1 = int(np.searchsorted(self._ts, end_ns, side="left"))
+        return self._ts[i0:i1], self._bid[i0:i1], self._ask[i0:i1]
+
     def bar_quotes(
         self, bar_start: pd.Timestamp, bar_minutes: int = 1
     ) -> Iterator[tuple[pd.Timestamp, float, float]]:
@@ -830,7 +1010,12 @@ class TickBook:
         )
 
 
-def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None:
+def ticks_covering(
+    book: TickBook | None,
+    bars: pd.DataFrame,
+    *,
+    source_clock_model: str = "native",
+) -> TickBook | None:
     """Slice *book* to the bars, plus one extra minute for the fill delay.
 
     An empty slice means this window has no tape, so the caller keeps the
@@ -839,6 +1024,7 @@ def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None
     Args:
         book: Book used by the operation described above.
         bars: Market bars to process.
+        source_clock_model: Interpretation of source bar wall times before slicing the UTC tick book.
 
     Returns:
         Result of slice *book* to the bars, plus one extra minute for the fill delay.
@@ -847,6 +1033,9 @@ def ticks_covering(book: TickBook | None, bars: pd.DataFrame) -> TickBook | None
         return None
     start = pd.Timestamp(bars.index[0])
     end = pd.Timestamp(bars.index[-1]) + pd.Timedelta(minutes=2)
+    if source_clock_model != "native":
+        converted = session_reference_index(pd.DatetimeIndex([start, end]), source_clock_model)
+        start, end = converted[0], converted[1]
     sliced = book.slice(start, end)
     if len(sliced) == 0:
         return None
@@ -892,6 +1081,7 @@ def tick_execution_coverage(
             "unavailable_count": 0,
             "coverage_fraction": 1.0,
             "first_unavailable_order_time": None,
+            "unavailable_order_times_utc": [],
         }
 
     covered = np.zeros(order_ns.size, dtype=bool)
@@ -913,12 +1103,16 @@ def tick_execution_coverage(
         if unavailable.size == 0
         else pd.Timestamp(int(order_ns[unavailable[0]]), unit="ns", tz="UTC").isoformat()
     )
+    unavailable_times = [
+        pd.Timestamp(int(order_ns[pos]), unit="ns", tz="UTC").isoformat() for pos in unavailable
+    ]
     return {
         "order_count": int(order_ns.size),
         "covered_count": int(covered.sum()),
         "unavailable_count": int(unavailable.size),
         "coverage_fraction": float(covered.mean()),
         "first_unavailable_order_time": first_missing,
+        "unavailable_order_times_utc": unavailable_times,
     }
 
 
@@ -936,6 +1130,7 @@ def build_tick_book(
     end_exclusive: pd.Timestamp | None = None,
     end_date_inclusive: str | None = None,
     end_inclusive: str | None = None,
+    source_clock_model: str | None = None,
 ) -> TickBook:
     """Load an MT5 tick CSV, optionally session-filter, forward-fill, build a TickBook.
 
@@ -970,6 +1165,7 @@ def build_tick_book(
     Args:
         path: Path to the input file or directory.
         tz: Text or path value identifying the tz.
+        source_clock_model: Optional interpretation of source wall-clock labels.
         session_start: Session start used by the operation described above.
         session_end: Session end used by the operation described above.
         cache_path: Path or filename identifying the cache.
@@ -988,19 +1184,37 @@ def build_tick_book(
     path = Path(path)
     cache_identity: dict[str, Any] | None = None
     cutoff_end = end_exclusive
-    start_date = pd.Timestamp(start_inclusive).normalize() if start_inclusive else None
+    source_clock = source_clock_model or "native"
+
+    def source_timestamp(value: pd.Timestamp | str) -> pd.Timestamp:
+        """Interpret naive bounds in the source clock and preserve aware instants.
+
+        Args:
+            value: Timestamp bound from the caller.
+
+        Returns:
+            Timestamp represented in the configured source clock.
+        """
+        timestamp = pd.Timestamp(value)
+        if timestamp.tzinfo is not None:
+            return timestamp
+        carrier_index = pd.DatetimeIndex([timestamp.tz_localize(tz)])
+        return session_reference_index(carrier_index, source_clock)[0]
+
+    start_date = (
+        source_timestamp(pd.Timestamp(start_inclusive).normalize()) if start_inclusive else None
+    )
     end_date = end_date_inclusive
     if end_inclusive is not None:
         end_date = end_inclusive
-        configured_end = pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
-        configured_end = configured_end.tz_localize(tz)
+        configured_end = source_timestamp(
+            pd.Timestamp(end_inclusive).normalize() + pd.DateOffset(days=1)
+        )
         if cutoff_end is None or configured_end < cutoff_end:
             cutoff_end = configured_end
         cache_path = None
-    if start_date is not None:
-        start_date = start_date.tz_localize(tz)
     if cutoff_end is not None and cutoff_end.tzinfo is None:
-        cutoff_end = cutoff_end.tz_localize(tz)
+        cutoff_end = source_timestamp(cutoff_end)
     if cache_path:
         if diagnostics is not None:
             raise ValueError("pass cache_path=None when collecting TickBook build diagnostics")
@@ -1009,6 +1223,7 @@ def build_tick_book(
             source_path=path,
             source_sha256=file_sha256(path),
             timezone=tz,
+            source_clock_model=source_clock_model,
             session_start=session_start,
             session_end=session_end,
             price_grid_identity=price_grid_identity(price_grid_increment),
@@ -1042,15 +1257,13 @@ def build_tick_book(
     n_rows_kept = 0
 
     for raw_chunk in iter_ticks_chunks(path, chunksize=chunksize, end_exclusive=cutoff_end):
-        # Chunk-local datetime parse (bounded memory) — Etc/GMT-3 etc. are
-        # fixed-offset zones (no DST), so tz_localize here is unambiguous
-        # regardless of how the file happens to be chunked.  MT5 tick time
-        # includes milliseconds (HH:MM:SS.fff), unlike bar files.
+        # MT5 tick time includes milliseconds, unlike bar files. Interpret the
+        # wall labels with the same source-clock model used for bar timestamps.
         dt = pd.to_datetime(
             raw_chunk["date"].to_numpy() + " " + raw_chunk["time"].to_numpy(),
             format="%Y.%m.%d %H:%M:%S.%f",
         )
-        dt = dt.tz_localize(tz)
+        dt = session_reference_index(dt.tz_localize(tz), source_clock)
 
         n_rows_total += len(raw_chunk)
         if diagnostics is not None:
@@ -1070,7 +1283,7 @@ def build_tick_book(
         dt = dt[mask]
         bid = raw_chunk["bid"].to_numpy(dtype=np.float64, copy=True)[mask]
         ask = raw_chunk["ask"].to_numpy(dtype=np.float64, copy=True)[mask]
-        ts_ns = dt.values.astype("int64")
+        ts_ns: np.ndarray[Any, np.dtype[np.int64]] = dt.values.astype("int64")
 
         raw_bid_valid = np.isfinite(bid) & (bid > 0.0)
         raw_ask_valid = np.isfinite(ask) & (ask > 0.0)

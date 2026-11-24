@@ -131,9 +131,13 @@ def test_rule_and_sb3_providers_share_the_same_rollout_boundary() -> None:
         input_schema_version="obs-v1",
         action_schema=action_schema,
     )
-    rule_provider = RuleBasedDecisionProvider(
-        lambda _: Decision(DiscreteAction(1, "enter"), action_schema), metadata
-    )
+    rule_inputs: list[DecisionInput] = []
+
+    def _rule(input: DecisionInput) -> Decision:
+        rule_inputs.append(input)
+        return Decision(DiscreteAction(1, "enter"), action_schema)
+
+    rule_provider = RuleBasedDecisionProvider(_rule, metadata)
 
     class _SB3Policy:
         action_space: spaces.Space[Any] = spaces.Discrete(2)
@@ -144,12 +148,21 @@ def test_rule_and_sb3_providers_share_the_same_rollout_boundary() -> None:
             "coordinates": ("hold", "enter"),
         }
 
+        def __init__(self) -> None:
+            self.observations: list[dict[str, Any]] = []
+
         def predict(self, _observation, *, deterministic):
             del deterministic
+            self.observations.append(_observation)
             return 0, None
 
-    sb3_provider = SB3DecisionProvider(_SB3Policy(), input_schema_version="obs-v1")
-    observation = {"seq": np.ones((2, 3), dtype=np.float32)}
+    sb3_policy = _SB3Policy()
+    sb3_provider = SB3DecisionProvider(sb3_policy, input_schema_version="obs-v1")
+    observation = {
+        "seq": np.ones((2, 3), dtype=np.float32),
+        "account": np.asarray([0.25, 0.0, 0.0], dtype=np.float32),
+        "trade_setup_mask": np.asarray([1.0, 0.0, 1.0], dtype=np.float32),
+    }
 
     actions = tuple(
         make_provider_action_fn(provider, input_schema_version="obs-v1")(observation)
@@ -157,6 +170,11 @@ def test_rule_and_sb3_providers_share_the_same_rollout_boundary() -> None:
     )
 
     assert actions == (1, 0)
+    assert len(rule_inputs) == len(sb3_policy.observations) == 1
+    assert rule_inputs[0].schema_version == "obs-v1"
+    for key, expected in observation.items():
+        np.testing.assert_array_equal(rule_inputs[0].observation[key], expected)
+        np.testing.assert_array_equal(sb3_policy.observations[0][key], expected)
 
 
 def test_evaluation_rollout_routes_providers_through_semantic_adapter() -> None:

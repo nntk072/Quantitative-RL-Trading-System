@@ -102,7 +102,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_tick_chunk_parser_yields_only_development_rows`](../../../../tests/unit/market_data/test_ticks.py#L956)
+1. [test fixture: `test_tick_chunk_parser_yields_only_development_rows`](../../../../tests/unit/market_data/test_ticks.py#L1033)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -120,7 +120,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert chunks[0]["bid"].tolist() == [100.0]
 ```
 
-2. [test fixture: `test_tick_chunk_parser_continues_until_start_date_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L1017)
+2. [test fixture: `test_tick_chunk_parser_continues_until_start_date_across_chunks`](../../../../tests/unit/market_data/test_ticks.py#L1094)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

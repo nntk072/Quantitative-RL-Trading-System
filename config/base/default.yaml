@@ -9,9 +9,11 @@ data:
     increment: 0.25                     # .00/.25/.50/.75 price grid when enabled
     rounding: "nearest_half_away_from_zero"
   prebuilt_feature_cache: null          # optional named cache path; content hash is verified
+  # Date-specific index-CFD closes use the Helsinki source-wall clock; source notices use MetaTrader time.
+  # A close at the session open represents a full-day instrument closure.
   session_schedule_file: "config/ny_session_schedule.csv"
-  tz: "Etc/GMT-3"                      # fixed-offset carrier for server wall-clock labels
-  timestamp_clock: "ftmo_mt5_us_dst"    # FTMO MT4/5: GMT+2 standard / GMT+3 US DST
+  tz: "Etc/GMT-3"                      # fixed-offset carrier for Helsinki wall-clock labels
+  timestamp_clock: "europe_helsinki"    # source chart timestamps are Helsinki local time
   bar_timestamp_convention: "open"      # bar export timestamp marks the interval open
   require_native_timeframes: true        # missing native bars fail unless explicitly derived
   symbols: ["US100.cash", "US500.cash"]
@@ -98,10 +100,10 @@ data:
         US500.cash: "US500.cash_202412300105_202610162349.csv"
 
 session:
-  tz: "Etc/GMT-3"                      # wall-clock labels; not an absolute-timezone rule
-  start: "16:30"                       # NY open proxy
-  end:   "23:00"                       # NY close proxy
-  # Session times are FTMO server wall time; CT feature conversion uses timestamp_clock.
+  tz: "America/Chicago"                # exchange clock; DST follows New York
+  start: "08:30"                       # NY cash-market open
+  end:   "15:00"                       # NY cash-market close
+  # Source chart labels are interpreted through data.timestamp_clock.
   dst_flag: true
 
 account:
@@ -175,6 +177,21 @@ costs:
   use_tick_execution: true
 
 execution:
+  # News and spike guard: block new entries and cancel resting limits while a USD high-impact
+  # release is within the blackout, or when the 5-bar move exceeds the session-baseline ATR
+  # multiple (NY open manipulation window exempt). On by default: the USD release blackout and spike rule are part of the research setup.
+  news_spike_guard:
+    enabled: true
+    calendar_path: data/news/usd_high_impact_calendar.csv
+    blackout_minutes_before: 5
+    blackout_minutes_after: 5
+    spike_window_bars: 5
+    spike_atr_multiple: 2.0
+    baseline_lookback_sessions: 20
+    exempt_open_manipulation: true
+  approved_no_fill_quote_anchors:
+    US100.cash: []
+    US500.cash: []
   # Fill on the tick that crosses SL or TP. 0 = that tick, not a later one.
   # A prop-firm stop fills at the level or worse; a later tick can bounce back.
   fill_delay_ms: 0
@@ -462,6 +479,12 @@ ppo:
   batch_size: 512
   n_epochs: 15
   rollout_buffer_on_device: true  # stage each completed PPO rollout on the learner device
+  rollout_feature_graph: false  # CUDA-graph replay of the shared feature extractor during rollouts
+  update_graph: false  # CUDA-graph replay of each PPO minibatch step (forward, loss, backward, clip)
+  torch_compile_features: false  # torch.compile the features extractor forward on CUDA (needs a C compiler)
+  overlap_collect: false  # collect rollout k+1 on a policy snapshot while the learner updates on rollout k (one-update data lag)
+  rollout_host_mask_check: false  # check trade_setup masks on the host in the vector env, not per call on the device
+  rollout_policy_graph: false  # replay the whole rollout policy forward from a CUDA graph (needs rollout_host_mask_check)
   learning_rate: 3.0e-4
   gamma: 0.99
   gae_lambda: 0.95
@@ -575,6 +598,9 @@ agent:
 
 compute:
   cudnn_benchmark: true # shape autotuning; disable when variable MTF suffix shapes make it costly
+  # GPU-specific encoder autocast: auto keeps the device default (bf16 on Ampere+ and newer).
+  # fp16 or fp32 may be faster on some GPUs (e.g. MI210, where bf16 convolutions use slow kernels).
+  autocast_dtype: auto
 
 device: "auto"
 
@@ -692,7 +718,7 @@ strategy:
   variant_id: null
   manipulation_filter: "against"  # "against" | "follow"
   session:
-    timezone: "Etc/GMT-3"
+    timezone: "America/Chicago"
   liquidity:
     swing_period: 5
     require_reclaim: true

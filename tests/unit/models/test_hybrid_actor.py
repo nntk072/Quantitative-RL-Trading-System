@@ -141,6 +141,76 @@ def test_trade_setup_hybrid_distribution_samples_only_each_rows_valid_candidates
         assert selected[2] == 2
 
 
+def test_trade_setup_distribution_rejects_nonfinite_eligibility_mask() -> None:
+    coordinates = ("trade_setup", "risk", "exit")
+    actor = HybridActorHeads(4, coordinates, {})
+    distribution = HybridBoxDistribution(actor, len(coordinates))
+    means, logits = actor(torch.zeros(1, 4))
+    mask = torch.zeros((1, TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
+    mask[0, 0] = 1.0
+    mask[0, 5] = float("nan")
+
+    with pytest.raises(ValueError, match="finite"):
+        distribution.proba_distribution(
+            means,
+            torch.zeros(len(actor.continuous_indices)),
+            logits,
+            masks={"trade_setup": mask},
+        )
+
+
+def test_setup_conditioned_distribution_rejects_nonfinite_eligibility_mask() -> None:
+    coordinates = ("trade_setup", "risk", "sl_mode", "entry_execution", "exit")
+    actor = TradeSetupConditionedActorHeads(4, coordinates, {"sl_mode": 0.1})
+    distribution = TradeSetupConditionedHybridBoxDistribution(actor, len(coordinates))
+    latent = torch.zeros(1, 4)
+    setup_logits = actor.trade_setup(latent)
+    mask = torch.zeros((1, TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
+    mask[0, 0] = 1.0
+    mask[0, 5] = float("nan")
+
+    with pytest.raises(ValueError, match="finite"):
+        distribution.proba_distribution(
+            latent,
+            torch.zeros(len(actor.continuous_indices)),
+            setup_logits,
+            masks={"trade_setup": mask},
+        )
+
+
+def test_trade_setup_distribution_rejects_all_masked_candidates() -> None:
+    coordinates = ("trade_setup", "risk", "exit")
+    actor = HybridActorHeads(4, coordinates, {})
+    distribution = HybridBoxDistribution(actor, len(coordinates))
+    means, logits = actor(torch.zeros(1, 4))
+    mask = torch.zeros((1, TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
+
+    with pytest.raises(ValueError, match="allow a category"):
+        distribution.proba_distribution(
+            means,
+            torch.zeros(len(actor.continuous_indices)),
+            logits,
+            masks={"trade_setup": mask},
+        )
+
+
+def test_setup_conditioned_distribution_rejects_all_masked_candidates() -> None:
+    coordinates = ("trade_setup", "risk", "sl_mode", "entry_execution", "exit")
+    actor = TradeSetupConditionedActorHeads(4, coordinates, {"sl_mode": 0.1})
+    distribution = TradeSetupConditionedHybridBoxDistribution(actor, len(coordinates))
+    latent = torch.zeros(1, 4)
+    setup_logits = actor.trade_setup(latent)
+    mask = torch.zeros((1, TRADE_SETUP_CATEGORY_COUNT), dtype=torch.float32)
+
+    with pytest.raises(ValueError, match="allow a category"):
+        distribution.proba_distribution(
+            latent,
+            torch.zeros(len(actor.continuous_indices)),
+            setup_logits,
+            masks={"trade_setup": mask},
+        )
+
+
 def test_trade_setup_entry_execution_is_a_categorical_policy_choice() -> None:
     schema = build_trade_setup_action_schema(has_entry_execution=True)
     actor = HybridActorHeads(8, schema.names, {})

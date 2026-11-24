@@ -174,7 +174,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L110)
+1. [test fixture: `test_action_selected_partial_tp_uses_first_source_tick_and_reconciles_ledger`](../../../../tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py#L79)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M1", 1)
+    features.loc[index[1:], "entry_idea_fvg_retest_M1_long"] = 1.0
+    features.loc[index[1:], "fvg_bull_active"] = 1.0
+    features.loc[index[1:], "fvg_bull_retest_confirmed_at_time_ns"] = index[1].value
+    features.loc[index[1:], "fvg_bull_retest_origin_time_ns"] = index[0].value
+    schema = build_trade_setup_action_schema(has_sl_mode=True, has_multi_tp=True)
+    market_action, no_trade_action = _actions(schema, candidate_id)
+
+    entry_tick = index[2] + pd.Timedelta(milliseconds=1)
+    first_tp_crossing = index[2] + pd.Timedelta(seconds=20)
+    terminal_tick = index[-1] + pd.Timedelta(minutes=1, milliseconds=2)
+# … caller assertions omitted …
+```
+
+2. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L119)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -191,22 +211,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         bars,
         features,
         TickBook(np.array([], dtype=np.int64), np.array([]), np.array([])),
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_trading_env_episode_end_cancellation_preserves_limit_setup_identity`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L362)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_trading_env_episode_end_cancellation_preserves_limit_setup_identity() -> None:
-    bars, features, tickbook, _, candidate_id, _ = _backtest_inputs()
-    schema = build_trade_setup_action_schema(has_sl_mode=True, has_entry_execution=True)
-    action = _action(schema, candidate_id=candidate_id, limit=True)
-    env = TradingEnv(
-        bars=bars,
-        features=features,
-        obs_window=1,
 # … caller assertions omitted …
 ```
 
@@ -371,7 +375,7 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
 ```
 
-2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L123)
+2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L125)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -436,7 +440,7 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
 ```
 
-2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L125)
+2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L127)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -711,7 +715,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L105)
+1. [test fixture: `test_action_selected_partial_tp_uses_first_source_tick_and_reconciles_ledger`](../../../../tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py#L74)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    features["atr_5"] = 1.0
+    features["last_swing_low"] = 19_990.0
+    features["last_swing_high"] = 20_012.0
+    features["asian_high"] = 20_014.0
+    features["london_high"] = 20_016.0
+    candidate_id = trade_setup_candidate_id("fvg_retest", "M1", 1)
+    features.loc[index[1:], "entry_idea_fvg_retest_M1_long"] = 1.0
+    features.loc[index[1:], "fvg_bull_active"] = 1.0
+    features.loc[index[1:], "fvg_bull_retest_confirmed_at_time_ns"] = index[1].value
+    features.loc[index[1:], "fvg_bull_retest_origin_time_ns"] = index[0].value
+    schema = build_trade_setup_action_schema(has_sl_mode=True, has_multi_tp=True)
+# … caller assertions omitted …
+```
+
+2. [test fixture: `_backtest_inputs`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L114)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -728,26 +752,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     features.loc[index[1:], "fvg_bull_retest_confirmed_at_time_ns"] = index[1].value
     features.loc[index[1:], "fvg_bull_retest_origin_time_ns"] = index[0].value
     schema = build_trade_setup_action_schema(has_sl_mode=True, has_entry_execution=True)
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_event_backtest_ifvg_limit_follows_zone_lifetime_after_retest_pulse`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L407)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    zone_change: str,
-    expected_cancel_reason: str | None,
-) -> None:
-    bars, features, _, schema, _, _ = _backtest_inputs()
-    index = bars.index
-    candidate_id = trade_setup_candidate_id("ifvg_retest", "M1", 1)
-    features["entry_idea_fvg_retest_M1_long"] = 0.0
-    features["entry_idea_ifvg_retest_M1_long"] = 0.0
-    features.loc[index[1], "entry_idea_ifvg_retest_M1_long"] = 1.0
-    features["ifvg_bull_active"] = 1.0
-    features["ifvg_bull_confirmed_at_time_ns"] = index[0].value
 # … caller assertions omitted …
 ```
 
@@ -782,7 +786,28 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L67)
+1. [test fixture: `_actions`](../../../../tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py#L33)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def _actions(schema: Any, candidate_id: int) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    action = np.zeros(schema.width, dtype=np.float32)
+    action[schema.indices["trade_setup"]] = trade_setup_center(candidate_id)
+    action[schema.indices["stop"]] = -0.4
+    action[schema.indices["risk"]] = -1.0
+    action[schema.indices["tp1_sel"]] = -1.0
+    action[schema.indices["tp2_sel"]] = -0.3
+    action[schema.indices["tp3_sel"]] = 1.0
+    if "sl_mode" in schema.indices:
+        action[schema.indices["sl_mode"]] = -1.0
+    action[schema.indices["exit"]] = -1.0
+    no_trade = np.zeros(schema.width, dtype=np.float32)
+    no_trade[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
+    return action, no_trade
+```
+
+2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L76)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -799,23 +824,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     values[indices["limit_ttl_bars"]] = -1.0  # one bar
     values[indices["stop"]] = -0.4
     values[indices["target"]] = 0.8
-# … caller assertions omitted …
-```
-
-2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L604)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-    def execute(require_trade_through: bool):
-        selected = False
-        no_trade_action = np.zeros(schema.width, dtype=np.float32)
-        no_trade_action[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
-        no_trade_action[schema.indices["entry_execution"]] = -1.0
-
-        def policy(observation: Any) -> Array:
-            nonlocal selected
-            mask = np.asarray(observation["trade_setup_mask"])
 # … caller assertions omitted …
 ```
 
@@ -1098,7 +1106,28 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L66)
+1. [test fixture: `_actions`](../../../../tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py#L33)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def _actions(schema: Any, candidate_id: int) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    action = np.zeros(schema.width, dtype=np.float32)
+    action[schema.indices["trade_setup"]] = trade_setup_center(candidate_id)
+    action[schema.indices["stop"]] = -0.4
+    action[schema.indices["risk"]] = -1.0
+    action[schema.indices["tp1_sel"]] = -1.0
+    action[schema.indices["tp2_sel"]] = -0.3
+    action[schema.indices["tp3_sel"]] = 1.0
+    if "sl_mode" in schema.indices:
+        action[schema.indices["sl_mode"]] = -1.0
+    action[schema.indices["exit"]] = -1.0
+    no_trade = np.zeros(schema.width, dtype=np.float32)
+    no_trade[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
+    return action, no_trade
+```
+
+2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L75)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1115,23 +1144,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     values[indices["limit_offset_atr"]] = -1.0  # at the causal decision close
     values[indices["limit_ttl_bars"]] = -1.0  # one bar
     values[indices["stop"]] = -0.4
-# … caller assertions omitted …
-```
-
-2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L604)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-    def execute(require_trade_through: bool):
-        selected = False
-        no_trade_action = np.zeros(schema.width, dtype=np.float32)
-        no_trade_action[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
-        no_trade_action[schema.indices["entry_execution"]] = -1.0
-
-        def policy(observation: Any) -> Array:
-            nonlocal selected
-            mask = np.asarray(observation["trade_setup_mask"])
 # … caller assertions omitted …
 ```
 
@@ -1160,7 +1172,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `to_dict`](../../../../decisioning/trade_setup.py#L252)
+1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L211)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        np.asarray([19_999.5]),
+        np.asarray([19_999.75]),
+    )
+    action_schema_ref = ActionSchemaRef(
+        version=schema.version,
+        key=schema.key,
+        coordinates=schema.names,
+        kind="continuous",
+    )
+    checkpoint = SimpleNamespace(
+        action_space=spaces.Box(-1.0, 1.0, (schema.width,), dtype=np.float32),
+# … caller assertions omitted …
+```
+
+2. [production caller: `to_dict`](../../../../decisioning/trade_setup.py#L252)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1176,6 +1208,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
                 for name in ("trade_setup", "sl_mode", "tp_mode", "entry_execution", "exit")
 # … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -1200,7 +1234,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_matched_runner_accepts_deterministic_structure_rule_without_checkpoint`](../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L322)
+1. [test fixture: `test_versioned_provider_action_keeps_one_contract_through_env_and_backtest`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L220)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    checkpoint = SimpleNamespace(
+        action_space=spaces.Box(-1.0, 1.0, (schema.width,), dtype=np.float32),
+        policy=SimpleNamespace(),
+        _action_schema_version=schema.version,
+        _action_layout_key=schema.key,
+        _action_schema=schema.to_dict(),
+        predict=lambda _observation, *, deterministic: (limit_action, None),
+    )
+    validate_model_action_schema(checkpoint, schema)
+    assert checkpoint._action_schema == schema.to_dict() | {"checkpoint_metadata": "versioned"}
+    provider = SB3DecisionProvider(checkpoint, input_schema_version="trade-setup-observation-v2")
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_matched_runner_accepts_deterministic_structure_rule_without_checkpoint`](../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L322)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1217,26 +1271,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
     bundle_path = write_matched_setup_baseline_bundle(
         outputs,
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_tier0_baselines_record_dollar_band_budget_and_fixed_coordinate`](../../../../tests/integration/evaluation/test_matched_setup_baselines.py#L434)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-                    "checkpoint_source_key": "checkpoint",
-                    "training_seed": 3,
-                    "training_total_steps": 10,
-                    "policy_action_mode": "stochastic",
-                    "policy_action_seed": 9,
-                    "action_schema": action_schema.to_dict(),
-                },
-            )
-        },
-    )
-    assert (
 # … caller assertions omitted …
 ```
 
@@ -1265,7 +1299,28 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L65)
+1. [test fixture: `_actions`](../../../../tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py#L32)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def _actions(schema: Any, candidate_id: int) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    action = np.zeros(schema.width, dtype=np.float32)
+    action[schema.indices["trade_setup"]] = trade_setup_center(candidate_id)
+    action[schema.indices["stop"]] = -0.4
+    action[schema.indices["risk"]] = -1.0
+    action[schema.indices["tp1_sel"]] = -1.0
+    action[schema.indices["tp2_sel"]] = -0.3
+    action[schema.indices["tp3_sel"]] = 1.0
+    if "sl_mode" in schema.indices:
+        action[schema.indices["sl_mode"]] = -1.0
+    action[schema.indices["exit"]] = -1.0
+    no_trade = np.zeros(schema.width, dtype=np.float32)
+    no_trade[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
+    return action, no_trade
+```
+
+2. [test fixture: `_action`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L74)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1282,22 +1337,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     values[indices["entry_execution"]] = 1.0 if limit else -1.0
     values[indices["limit_offset_atr"]] = -1.0  # at the causal decision close
     values[indices["limit_ttl_bars"]] = -1.0  # one bar
-# … caller assertions omitted …
-```
-
-2. [test fixture: `execute`](../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L603)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-    def execute(require_trade_through: bool):
-        selected = False
-        no_trade_action = np.zeros(schema.width, dtype=np.float32)
-        no_trade_action[schema.indices["trade_setup"]] = trade_setup_center(NO_TRADE_ID)
-        no_trade_action[schema.indices["entry_execution"]] = -1.0
-
-        def policy(observation: Any) -> Array:
-            nonlocal selected
 # … caller assertions omitted …
 ```
 

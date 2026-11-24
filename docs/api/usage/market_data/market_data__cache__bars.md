@@ -165,15 +165,15 @@ def bar_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L275)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L284)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            m1_clean = clean(m1_raw, tz=tz)
-            m1_full = add_session_labels(m1_clean, tz=tz, ny_end=ny_end)
-            m1_full = add_session_id(m1_full)
+            m1_full = add_session_id(
+                m1_full, session_tz=session_tz, source_clock_model=source_clock_model
+            )
             for tf in cfg.data.timeframes:
                 tf = str(tf)
                 cp = bar_cache_path(part_cache, str(symbol), tf, BAR_CACHE_VERSION)
@@ -208,6 +208,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   timeframe: Text or path value identifying the timeframe.
   source_identity: Text or path value identifying the source identity.
   timezone: Text or path value identifying the timezone.
+  session_timezone: IANA timezone used for session labels.
+  source_clock_model: Interpretation of source timestamp wall labels.
   ny_session_end: Text or path value identifying the ny session end.
   timestamp_convention: Text or path value identifying the timestamp convention.
   price_grid_identity: Price grid identity used by the operation described above.
@@ -223,7 +225,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L303)
+1. [production caller: `run_pipeline`](../../../../market_data/loading/market_data_ingestion.py#L312)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -240,6 +242,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
                         timeframe=tf,
                         source_identity=source_identity,
                         timezone=tz,
+                        session_timezone=session_tz,
+                        source_clock_model=source_clock_model,
                         ny_session_end=ny_end,
                         timestamp_convention=timestamp_convention,
                         start_inclusive=str(start_date) if start_date else None,
@@ -269,7 +273,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Load a complete cache only when its semantic identity and shape match.
 
-**Exact API:** {py:obj}`market_data.cache.bars.load_bar_cache` · **Source:** [market_data/cache/bars.py:124](../../../../market_data/cache/bars.py#L124)
+**Exact API:** {py:obj}`market_data.cache.bars.load_bar_cache` · **Source:** [market_data/cache/bars.py:130](../../../../market_data/cache/bars.py#L130)
 
 **Inputs and outputs:**
 
@@ -331,7 +335,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Atomically publish a parquet cache, then its completion manifest.
 
-**Exact API:** {py:obj}`market_data.cache.bars.write_bar_cache` · **Source:** [market_data/cache/bars.py:139](../../../../market_data/cache/bars.py#L139)
+**Exact API:** {py:obj}`market_data.cache.bars.write_bar_cache` · **Source:** [market_data/cache/bars.py:145](../../../../market_data/cache/bars.py#L145)
 
 **Inputs and outputs:**
 

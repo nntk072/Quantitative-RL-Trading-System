@@ -99,7 +99,9 @@ class TestSACAgentBuild:
         def record_extractor(extractor: Any, dtype: torch.dtype | None) -> None:
             observed.append((extractor, dtype))
 
-        monkeypatch.setattr(agent, "get_autocast_dtype", lambda _device: torch.bfloat16)
+        monkeypatch.setattr(
+            agent, "get_autocast_dtype", lambda _device, _override="auto": torch.bfloat16
+        )
         monkeypatch.setattr(agent, "enable_extractor_autocast", record_extractor)
 
         assert agent._finalize_cuda_policy(model, "cuda") is model

@@ -8,7 +8,7 @@ This page contains 5 public callable records owned by `simulation.environment.en
 
 **Purpose:** RL trading environment with structure-aware SL/TP and hybrid action space.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv` · **Source:** [simulation/environment/env.py:33](../../../../simulation/environment/env.py#L33)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv` · **Source:** [simulation/environment/env.py:34](../../../../simulation/environment/env.py#L34)
 
 **Observed usage:**
 
@@ -43,7 +43,7 @@ def test_prague_midnight_resets_flat_account_without_session_transition() -> Non
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L132)
+2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L133)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -87,7 +87,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** RL trading environment with structure-aware SL/TP and hybrid action space.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv` · **Source:** [simulation/environment/env.py:33](../../../../simulation/environment/env.py#L33)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv` · **Source:** [simulation/environment/env.py:34](../../../../simulation/environment/env.py#L34)
 
 **Observed usage:**
 
@@ -122,7 +122,7 @@ def test_prague_midnight_resets_flat_account_without_session_transition() -> Non
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L132)
+2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L133)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -166,7 +166,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Create an environment whose persistent market arrays are read-only mmaps.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:424](../../../../simulation/environment/env.py#L424)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.from_bundle` · **Source:** [simulation/environment/env.py:439](../../../../simulation/environment/env.py#L439)
 
 **Inputs and outputs:**
 
@@ -238,7 +238,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Gymnasium adapter for :meth:`transition`.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:456](../../../../simulation/environment/env.py#L456)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.step` · **Source:** [simulation/environment/env.py:471](../../../../simulation/environment/env.py#L471)
 
 **Inputs and outputs:**
 
@@ -276,7 +276,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L152)
+2. [test fixture: `test_open_position_crossing_prague_midnight_fails_closed_in_both_engines`](../../../../tests/integration/backtest/test_account_transition_parity.py#L153)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -309,7 +309,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Advance the simulator through its framework-neutral transition API.
 
-**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:470](../../../../simulation/environment/env.py#L470)
+**Exact API:** {py:obj}`simulation.environment.env.TradingEnv.transition` · **Source:** [simulation/environment/env.py:485](../../../../simulation/environment/env.py#L485)
 
 **Inputs and outputs:**
 
@@ -346,7 +346,7 @@ def test_native_transition_matches_gymnasium_step() -> None:
     _assert_same(native.as_gymnasium(), gym_result)
 ```
 
-2. [production caller: `step`](../../../../simulation/environment/env.py#L468)
+2. [production caller: `step`](../../../../simulation/environment/env.py#L483)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

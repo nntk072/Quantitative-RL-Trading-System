@@ -7,6 +7,8 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
+from market_data.transforms.sessions import session_reference_index
+
 from .mixin_base import RuntimeMixinBase
 
 
@@ -40,12 +42,18 @@ class MarketSourceInitializationMixin(RuntimeMixinBase):
                 np.int64, copy=False
             )
         else:
-            self._feature_time_ms = (
-                pd.DatetimeIndex(self.features.index)
+            feature_index = session_reference_index(
+                pd.DatetimeIndex(self.features.index), self._source_clock_model
+            )
+            feature_time_ns = (
+                feature_index.tz_convert("UTC")
+                .tz_localize(None)
                 .to_numpy(dtype="datetime64[ns]")
                 .view(np.int64)
-                // 1_000_000
-            ).astype(np.int64, copy=False)
+                if feature_index.tz is not None
+                else feature_index.to_numpy(dtype="datetime64[ns]").view(np.int64)
+            )
+            self._feature_time_ms = (feature_time_ns // 1_000_000).astype(np.int64, copy=False)
         bundle_labels = bundle_data.manifest.get("labels", {}) if bundle_data is not None else {}
         self._n_bars = (
             len(self._bundle_arrays["bar_time_ns"])

@@ -18,7 +18,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-BUNDLE_VERSION = 6
+BUNDLE_VERSION = 7
 _ARRAY_NAME = re.compile(r"^[A-Za-z0-9_]+$")
 _RELEVANT_CONFIG_PATHS = (
     "env.obs_window",
@@ -32,6 +32,7 @@ _RELEVANT_CONFIG_PATHS = (
     "features",
     "feature_config_hash",
     "data.tz",
+    "data.timestamp_clock",
     "data.primary",
     "data.secondary",
     "data.symbols",

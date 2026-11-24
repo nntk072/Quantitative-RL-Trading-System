@@ -128,6 +128,8 @@ def main() -> int:
             make_train_mask(index, train_end, train_start),
             test_start,
             session_labels=session_labels,
+            session_timezone=str(cfg.session.tz),
+            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
         )
         symbol_coverage = prior_symbol_report["training_tick_cache_coverage"]
         split_rows: dict[str, Any] = {}
@@ -144,7 +146,7 @@ def main() -> int:
                 "decision_positions_sha256_int64_le": position_fingerprint(
                     values["decision_positions"]
                 ),
-                "next_market_quote_anchor_timestamps": timestamp_fingerprint(
+                "scheduled_order_quote_anchor_timestamps": timestamp_fingerprint(
                     values["quote_anchor_times"]
                 ),
                 "quote_anchor_positions_sha256_int64_le": position_fingerprint(

@@ -106,10 +106,15 @@ def _partition_report(
                         source_bars = clean(source_bars, tz=str(cfg.data.tz))
                         source_bars = add_session_labels(
                             source_bars,
-                            tz=str(cfg.data.tz),
+                            tz=str(cfg.session.tz),
                             ny_end=str(cfg.session.end),
+                            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
                         )
-                        source_bars = add_session_id(source_bars)
+                        source_bars = add_session_id(
+                            source_bars,
+                            session_tz=str(cfg.session.tz),
+                            source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
+                        )
                         train_bars, test_bars = split_bars(
                             source_bars,
                             str(cfg.data.split.train_end),

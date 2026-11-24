@@ -34,7 +34,7 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
         close_reason: str,
         reward: float,
         reward_parts: dict[str, float],
-        obs: dict[str, np.ndarray[Any, Any]],
+        obs: dict[str, np.ndarray[Any, Any]] | None,
         info: dict[str, Any],
         done: bool,
         truncated: bool,
@@ -65,11 +65,14 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
                 info["entry_state"] = entry_machine.state
                 if self.entry_state_observation:
                     entry_start = self.observation_schema.width - ENTRY_STATE_DIM
-                    obs["account"][entry_start:] = np.asarray(
-                        entry_state_one_hot(entry_machine.state), dtype=np.float32
-                    )
+                    if obs is not None:
+                        obs["account"][entry_start:] = np.asarray(
+                            entry_state_one_hot(entry_machine.state), dtype=np.float32
+                        )
         if self._ny_pos < len(self._ny_indices) and self.step_idx < self._n_bars:
             obs = self._get_observation()
+        elif obs is None:
+            raise RuntimeError("observation rebuild prediction disagreed with the step advance")
         self.episode_step_count += 1
 
         # Data end is normally a truncation; survival training treats it as the

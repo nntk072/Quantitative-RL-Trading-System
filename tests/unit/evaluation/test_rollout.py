@@ -53,7 +53,9 @@ class _ScriptedModel:
 
 def _make_bars(n: int, session_split: int | None = None) -> pd.DataFrame:
     """Flat-price synthetic M1 bars (deterministic transaction costs)."""
-    idx = pd.date_range("2025-01-06 16:30", periods=n, freq="1min", tz="Etc/GMT-3")
+    # 17:30 in this fixed +03:00 carrier is 08:30 America/Chicago in January,
+    # the configured US cash-session open used by evaluation.
+    idx = pd.date_range("2025-01-06 17:30", periods=n, freq="1min", tz="Etc/GMT-3")
     close = np.full(n, 20000.0)
     session_id = np.zeros(n, dtype=int)
     if session_split is not None:

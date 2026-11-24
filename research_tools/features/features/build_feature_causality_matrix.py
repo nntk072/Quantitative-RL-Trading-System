@@ -1964,6 +1964,25 @@ def _reviewed_contract(
     }
 
 
+REVIEWED_FUNCTION_METADATA[("market_data/transforms/sessions.py", "session_reference_index")] = (
+    _reviewed_contract(
+        output="timezone-aware instants implied by the configured source wall-clock model",
+        source="raw chart timestamp labels and the selected source-clock model",
+        event="current input timestamp only; Helsinki labels use IANA DST rules",
+        available="same timestamp; ambiguous or nonexistent Helsinki wall labels fail closed",
+        units="timezone-aware timestamps",
+        lifetime="stateless row-wise conversion",
+        missing="no fitted state or warmup; invalid source clocks raise",
+        masked="legacy FTMO conversion requires timezone-aware input; unsupported models raise",
+        fixture="tests/unit/market_data/test_helsinki_ny_sessions.py",
+        prefix="stateless timestamp conversion does not read future rows",
+        tests="tests/unit/market_data/test_helsinki_ny_sessions.py",
+        status="source_and_dst_fixtures_reviewed",
+        note="Helsinki wall labels are reinterpreted with Europe/Helsinki DST rules; the fixed-offset carrier does not supply provider timezone evidence.",
+    )
+)
+
+
 REVIEWED_FUNCTION_METADATA.update(
     {
         (

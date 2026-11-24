@@ -396,6 +396,8 @@ def main() -> int:
         schedule_path=schedule_path,
         session_start=str(cfg.session.start),
         session_end=str(cfg.session.end),
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
     train_bars, test_bars, train_features, test_features = split_train_test(
         primary_m1, features, train_end, test_start, train_start

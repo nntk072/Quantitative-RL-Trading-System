@@ -8,7 +8,7 @@ This page contains 1 public callable records owned by `features.context.policy_m
 
 **Purpose:** Attach policy-session context derived from bars and the tick schedule.
 
-**Exact API:** {py:obj}`features.context.policy_market.attach_policy_market_context` · **Source:** [features/context/policy_market.py:130](../../../../features/context/policy_market.py#L130)
+**Exact API:** {py:obj}`features.context.policy_market.attach_policy_market_context` · **Source:** [features/context/policy_market.py:154](../../../../features/context/policy_market.py#L154)
 
 **Inputs and outputs:**
 
@@ -21,6 +21,8 @@ This page contains 1 public callable records owned by `features.context.policy_m
   schedule_path: Session schedule used to resolve policy windows.
   session_start: Local session start time in HH:MM form.
   session_end: Local session end time in HH:MM form.
+  session_tz: IANA timezone for NY schedule features.
+  source_clock_model: Interpretation of source-index wall labels.
   ```
 
 - **Returns:**
@@ -31,7 +33,7 @@ This page contains 1 public callable records owned by `features.context.policy_m
 
 **Observed usage:**
 
-1. [test fixture: `test_attach_policy_market_context_preserves_features_and_appends_context`](../../../../tests/unit/features/test_policy_market_context.py#L89)
+1. [test fixture: `test_attach_policy_market_context_preserves_features_and_appends_context`](../../../../tests/unit/features/test_policy_market_context.py#L109)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -54,7 +56,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert result["tick_quote_available"].eq(1.0).all()
 ```
 
-2. [test fixture: `test_attach_policy_market_context_rejects_duplicate_context_columns`](../../../../tests/unit/features/test_policy_market_context.py#L112)
+2. [test fixture: `test_attach_policy_market_context_rejects_duplicate_context_columns`](../../../../tests/unit/features/test_policy_market_context.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -4,6 +4,7 @@ from typing import Any
 
 import pandas as pd
 
+from market_data.loading.ticks import TickExecutionUnavailable
 from simulation.entry_state import EntryCandidate
 from trading.execution import FILL_COST_PROVENANCE_SCHEMA_VERSION, Position
 
@@ -165,6 +166,8 @@ class EntryExecutionRuntimeMixin(
             )
             if self.position is None:
                 self._reject("insufficient_margin")
+            else:
+                self.broker.mark_to_market(self.account, self.position, (fill_bid, fill_ask))
         else:
             self.position = None
             self._reject("sl_already_hit")
@@ -209,9 +212,17 @@ class EntryExecutionRuntimeMixin(
             signal_bar_idx: Signal bar idx used by the operation described above.
             order_id: Pending order identity, when the entry came from a resting order.
         """
-        fill_bid, fill_ask, fill_time, execution_meta = self._resolve_entry_execution_quote(
-            fill_bid, fill_ask, fill_time, order_submission_time
-        )
+        try:
+            fill_bid, fill_ask, fill_time, execution_meta = self._resolve_entry_execution_quote(
+                fill_bid, fill_ask, fill_time, order_submission_time
+            )
+        except TickExecutionUnavailable:
+            # No tick within the wait cap of the order: refuse the entry rather than end the run.
+            # A missing TickBook is a configuration error and still raises.
+            if self._tickbook is None:
+                raise
+            self._reject("no_executable_tick_within_wait")
+            return
         self._close_opposing_position(
             discrete_action,
             fill_bid,

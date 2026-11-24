@@ -10,19 +10,26 @@ This page contains 2 public callable records owned by `models.encoders.mtf`. Sta
 
 **Exact API:** {py:obj}`models.encoders.mtf.MTFEncoder` · **Source:** [models/encoders/mtf.py:86](../../../../models/encoders/mtf.py#L86)
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_plain_mtf_batch_matches_each_row_alone`](../../../../tests/unit/models/test_mtf_masked_suffix.py#L63)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = MTFEncoder(observation_space=..., latent_dim=..., channels=..., kernel_size=..., dropout=..., account_dim=...)
+def test_plain_mtf_batch_matches_each_row_alone() -> None:
+    torch.manual_seed(4)
+    encoder = MTFEncoder(_space(), latent_dim=128, channels=(8, 8), dropout=0.0, account_dim=6)
+    encoder.eval()
+    obs = _observations()
+    with torch.no_grad():
+        batched = encoder(obs)
+        for row in range(3):
+            alone = encoder({k: v[row : row + 1] for k, v in obs.items()})
+            assert torch.allclose(batched[row : row + 1], alone, atol=1e-5), row
 ```
 
-**Lifecycle context:** One causal TCN per configured timeframe window, fused to one latent.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

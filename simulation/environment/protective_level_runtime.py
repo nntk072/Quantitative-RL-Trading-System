@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import math
+from collections.abc import Iterator
 from typing import Any, cast
 
+import numpy as np
 import pandas as pd
 
 from market_data.loading.ticks import (
     TickExecutionUnavailable,
+    nearest_exit_tick_quote,
     tick_price_reaches_level,
 )
 from trading.execution import Position, exit_side_bar_range, raw_spread_to_price
@@ -38,83 +42,73 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             direction, float(bar.low), float(bar.high), spread, self.cost_model
         )
 
-    def _assert_tick_protective_events_observed(
-        self,
-        bar: BarView,
-        bar_idx: int | None = None,
-        *,
-        protective_levels: tuple[float | None, tuple[float | None, ...]] | None = None,
-    ) -> None:
-        """Reject OHLC protective crossings that have no matching executable tick.
+    def _tick_fill_mode(self) -> bool:
+        """Whether protective exits fill from executable ticks instead of OHLC levels.
+
+        Returns:
+            True when tick execution or randomized fill latency is configured.
+        """
+        return bool(
+            getattr(self, "tick_execution_required", False)
+            or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
+        )
+
+    def _untriggered_level_quote(
+        self, bar_time: pd.Timestamp, direction: int, level: float
+    ) -> tuple[float, float] | None:
+        """Executable quote for a stop or target that OHLC reached with no crossing tick.
+
+        The fill is the bar window's tick closest to the level, so the distance
+        from the level is the slippage. A bar with no ticks fills at the tick
+        nearest in time, if it is within max_tick_quote_wait_ms; otherwise at the
+        level. Tick tolerance is not applied to fills.
+        Returns ``None`` outside tick mode, where the level-based quote applies.
+
+        shortcut: fills at that tick's own quote without sampling execution
+        latency; upgrade if latency must also apply to these fills.
 
         Args:
-            bar: Market bar whose stop and target crossings are checked.
-            bar_idx: Optional bar index; defaults to the current environment step.
-            protective_levels: Optional stop and target levels to validate.
+            bar_time: Start of the bar whose OHLC reached the level.
+            direction: Signed position direction.
+            level: Stop or target price that OHLC reached.
+
+        Returns:
+            ``(bid, ask)`` of the nearest executable tick, or ``None`` outside tick mode
+            or when the book has no usable tick.
+
+        Raises:
+            TickExecutionUnavailable: In tick mode without a TickBook.
         """
-        position = self.position
-        if position is None:
-            return
-        idx = self.step_idx if bar_idx is None else bar_idx
-        bar_time = self._bar_time(idx)
-        entry_time = (
+        if not self._tick_fill_mode():
+            return None
+        if self._tickbook is None:
+            raise TickExecutionUnavailable("tick fill mode requires a TickBook")
+        pos = self.position
+        entry = (
             None
-            if position.entry_timestamp is None
-            else pd.Timestamp(cast(Any, position.entry_timestamp))
+            if pos is None or pos.entry_timestamp is None
+            else pd.Timestamp(cast(Any, pos.entry_timestamp))
         )
-        if entry_time is not None and entry_time > bar_time:
-            return
-        exit_low, exit_high = self._exit_side_bar_range(bar, int(position.direction))
-        sl_price, target_levels = protective_levels or (
-            position.sl_price,
-            tuple(getattr(position, f"tp{slot}_price") for slot in (1, 2, 3)),
+        quote = nearest_exit_tick_quote(
+            self._tickbook,
+            pd.Timestamp(bar_time),
+            direction,
+            level,
+            bar_minutes=max(1, int(round(self._minutes_per_step))),
+            earliest_time=entry,
+            max_gap_ns=int(self.max_tick_quote_wait_ms) * 1_000_000,
         )
-        if protective_levels is None and not any(target is not None for target in target_levels):
-            target_levels = (position.tp_price,)
-        stop_touched = sl_price is not None and (
-            exit_low <= sl_price if position.direction == 1 else exit_high >= sl_price
-        )
-        target_touched = any(
-            target is not None
-            and (
-                (position.direction == 1 and exit_high >= target)
-                or (position.direction == -1 and exit_low <= target)
-            )
-            for target in target_levels
-        )
-        if stop_touched or target_touched:
-            tick_window = "unavailable"
-            if self._tickbook is not None:
-                window_end = bar_time + pd.Timedelta(
-                    minutes=max(1, int(round(self._minutes_per_step)))
-                )
-                tick_start = int(self._tickbook._ts.searchsorted(bar_time.value, side="left"))
-                tick_end = int(self._tickbook._ts.searchsorted(window_end.value, side="left"))
-                executable_side = (
-                    self._tickbook._bid if position.direction == 1 else self._tickbook._ask
-                )
-                window_prices = executable_side[tick_start:tick_end]
-                tick_window = (
-                    f"count={tick_end - tick_start}, "
-                    f"side_min={float(window_prices.min()) if len(window_prices) else None}, "
-                    f"side_max={float(window_prices.max()) if len(window_prices) else None}, "
-                    f"start={pd.Timestamp(int(self._tickbook._ts[tick_start]), unit='ns', tz='UTC') if tick_start < len(self._tickbook) else None}"
-                )
-            target_text = ", ".join(
-                f"tp{slot}={getattr(position, f'tp{slot}_price')}" for slot in (1, 2, 3)
-            )
-            raise TickExecutionUnavailable(
-                "OHLC indicates a protective level was reached, but no matching "
-                "tick trigger was found; candle fallback is disabled "
-                f"(bar_idx={idx}, bar_time={bar_time.isoformat()}, "
-                f"entry_time={entry_time}, "
-                f"direction={position.direction}, open={bar.open}, high={bar.high}, "
-                f"low={bar.low}, close={bar.close}, exit_low={exit_low}, "
-                f"exit_high={exit_high}, sl={sl_price}, "
-                f"tick_window=({tick_window}), "
-                f"multi_target_replay={getattr(self, '_last_multi_target_replay', None)}, "
-                f"{target_text})"
-            )
+        if quote is None:
+            # No eligible tick within the wait cap, so the level-based quote applies.
+            return None
+        bid, ask = quote
+        exit_price = bid if direction == 1 else ask
+        tick_is_worse = exit_price <= level if direction == 1 else exit_price >= level
+        if not tick_is_worse:
+            # The nearest tick is better than the level (a stop the tape never
+            # crossed), so pricing at it would turn a stop into a gain. Use the level.
+            return cast(tuple[float, float], self._sl_tp_fill_quote(direction, level))
+        return quote
 
     def _check_sl_tp(
         self,
@@ -129,10 +123,11 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
         level is the fill. ``fill_delay_ms`` is 0, so a later tick is not
         used: a stop cannot bounce back to a better price. That crossing
         tick is already through the level, so a loss can exceed $100 and a
-        target can pay more than $100. With no crossing tick, the fill stays
-        at the level. Slippage, when configured, moves that level fill only
-        against the position. If both levels sit inside one bar and there is
-        no tick, the stop wins.
+        target can pay more than $100. A bar-range touch with no crossing tick
+        fills at the nearest in-window tick, or at the level when that tick
+        would be better for the position. Slippage, when configured, moves
+        that level fill only against the position. If both levels sit inside
+        one bar and there is no tick, the stop wins.
 
         Args:
             bar: Bar used by the operation described above.
@@ -182,33 +177,12 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                         )
                     ),
                 }
-                # Replay may leave a runner with updated protective levels.
-                # Check only that live position after replay; a fully closed
-                # position has no remaining event to validate.
-                if self.position is not None and (
-                    getattr(self, "tick_execution_required", False)
-                    or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
-                ):
-                    replayed_targets = before_replay[2]
-                    remaining_targets = tuple(
-                        current if current is not None and current == previous else None
-                        for current, previous in zip(
-                            (getattr(self.position, f"tp{slot}_price") for slot in (1, 2, 3)),
-                            replayed_targets,
-                            strict=True,
-                        )
-                    )
-                    unchanged_stop = (
-                        self.position.sl_price
-                        if self.position.sl_price == before_replay[1]
-                        else None
-                    )
-                    self._assert_tick_protective_events_observed(
-                        bar,
-                        idx,
-                        protective_levels=(unchanged_stop, remaining_targets),
-                    )
-                return
+                # A tick exit ended the position, or a stop moved mid-bar. Such a stop
+                # cannot be ordered against the bar's earlier OHLC range, so stop here.
+                if self.position is None or self.position.sl_price != before_replay[1]:
+                    return
+                # A partial exit left a runner whose stop no tick crossed. The bar's
+                # OHLC touches still apply to it below, priced at the nearest tick.
 
         tick_hit = None if has_tick_slots else self._tick_exit_quote(log_time)
         if tick_hit is not None:
@@ -232,16 +206,6 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             self._note_close(pnl)
             return
 
-        if (
-            getattr(self, "tick_execution_required", False)
-            or getattr(self, "randomized_fill_latency_ms", 0.0) > 0
-        ):
-            self._assert_tick_protective_events_observed(bar, idx)
-            # Intrabar OHLC extrema are not executable bid/ask evidence. Keep
-            # the position open when no matching executable tick was observed.
-            self._maybe_ema_exit(bar, idx, log_time)
-            return
-
         sl_hit = False
         if self.position.sl_price is not None:
             if self.position.direction == 1 and exit_low <= self.position.sl_price:
@@ -254,7 +218,10 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             pnl, fill_price = self.broker.close_position(
                 self.account,
                 self.position,
-                self._stop_fill_quote(
+                self._untriggered_level_quote(
+                    log_time, int(self.position.direction), float(self.position.sl_price)
+                )
+                or self._stop_fill_quote(
                     bar, int(self.position.direction), float(self.position.sl_price)
                 ),
             )
@@ -312,7 +279,9 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                     is_final = len(remaining_slots) == 0
                     close_size = target_close_size(pos, slot_num, is_final=is_final)
 
-                    quote = self._sl_tp_fill_quote(int(pos.direction), float(slot_px))
+                    quote = self._untriggered_level_quote(
+                        log_time, int(pos.direction), float(slot_px)
+                    ) or self._sl_tp_fill_quote(int(pos.direction), float(slot_px))
                     pnl, fill_price = self._close_at_quote(pos, quote, size=close_size)
                     pos.tp_hit_mask |= hit_mask_bit
                     setattr(pos, f"tp{slot_num}_price", None)
@@ -381,7 +350,10 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 assert self.position.tp_price is not None
                 pnl, fill_price = self._close_at_quote(
                     self.position,
-                    self._sl_tp_fill_quote(
+                    self._untriggered_level_quote(
+                        log_time, int(self.position.direction), float(self.position.tp_price)
+                    )
+                    or self._sl_tp_fill_quote(
                         int(self.position.direction), float(self.position.tp_price)
                     ),
                 )
@@ -429,21 +401,26 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
         last_fill_ns = -1
         randomized_by_trigger: dict[int, tuple[Any, dict[str, Any]]] = {}
         bar_minutes = max(1, int(round(getattr(self, "_minutes_per_step", 1.0))))
-        for tick_time, bid, ask in book.bar_quotes(bar_time, bar_minutes=bar_minutes):
+        # Entry time is fixed for this position, so convert it once, not per tick.
+        entry_ts = (
+            None if pos.entry_timestamp is None else pd.Timestamp(cast(Any, pos.entry_timestamp))
+        )
+        for tick_ns, bid, ask in _pending_tp_sl_quotes(pos, book, bar_time, bar_minutes):
             if self.position is not pos or pos.size <= 0:
                 break
-            if tick_time.value < last_fill_ns:
+            if tick_ns < last_fill_ns:
                 continue
-            if pos.entry_timestamp is not None and tick_time < pd.Timestamp(
-                cast(Any, pos.entry_timestamp)
-            ):
+            if entry_ts is not None and tick_ns < entry_ts.value:
                 continue
+            # Timestamps are built only on a hit; the tick itself is raw nanoseconds.
+            tick_time: pd.Timestamp | None = None
             exit_side = bid if pos.direction == 1 else ask
             sl = pos.sl_price
             stop_hit = sl is not None and (
                 tick_price_reaches_level(exit_side, sl, direction=-int(pos.direction))
             )
             if stop_hit:
+                tick_time = pd.Timestamp(tick_ns, unit="ns", tz="UTC")
                 execution_meta: dict[str, Any] = {}
                 if getattr(self, "server_side_protective_orders", False):
                     execution_time = tick_time
@@ -521,6 +498,8 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 )
                 if not target_hit:
                     continue
+                if tick_time is None:
+                    tick_time = pd.Timestamp(tick_ns, unit="ns", tz="UTC")
                 execution_meta = {}
                 if getattr(self, "server_side_protective_orders", False):
                     execution_time = tick_time
@@ -633,3 +612,60 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                             bar_idx=idx,
                         )
         return had_fill
+
+
+def _pending_tp_sl_quotes(
+    pos: Any, book: Any, bar_time: pd.Timestamp, bar_minutes: int
+) -> Iterator[tuple[int, float, float]]:
+    """Yield only the bar quotes that could stop out or fill a target for the open position.
+
+    A quote that reaches neither the stop nor an open target does nothing in the replay loop,
+    so skipping it changes no state. The candidate is re-evaluated from the position's current
+    levels after every yielded quote, so a fill that moves a level is respected. Entry and
+    last-fill filters stay in the replay loop.
+
+    Args:
+        pos: Open position whose levels decide which quotes can act.
+        book: TickBook for the instrument.
+        bar_time: Bar start time.
+        bar_minutes: Bar length in minutes.
+
+    Yields:
+        Quote nanoseconds (UTC), bid and ask, in timestamp order.
+    """
+    ts, bid_arr, ask_arr = book.bar_arrays(bar_time, bar_minutes=bar_minutes)
+    count = int(ts.shape[0])
+    cursor = 0
+    while cursor < count:
+        exit_side = bid_arr if pos.direction == 1 else ask_arr
+        hit = np.zeros(count - cursor, dtype=bool)
+        if pos.sl_price is not None:
+            hit |= _level_reached(exit_side[cursor:], pos.sl_price, -int(pos.direction))
+        for slot_num in (1, 2, 3):
+            slot_px = getattr(pos, f"tp{slot_num}_price")
+            if slot_px is None or pos.tp_hit_mask & (1 << (slot_num - 1)):
+                continue
+            hit |= _level_reached(exit_side[cursor:], slot_px, int(pos.direction))
+        found = np.flatnonzero(hit)
+        if found.size == 0:
+            return
+        index = cursor + int(found[0])
+        yield (int(ts[index]), float(bid_arr[index]), float(ask_arr[index]))
+        cursor = index + 1
+
+
+def _level_reached(prices: Any, level: float, direction: int) -> Any:
+    """Vector form of ``tick_price_reaches_level`` over a slice of exit prices.
+
+    Args:
+        prices: Executable exit prices, one per tick.
+        level: Protective price level.
+        direction: +1 for an upward crossing, -1 for a downward crossing.
+
+    Returns:
+        Boolean array, True where the tick reaches or crosses the level.
+    """
+    if direction not in (-1, 1):
+        raise ValueError("direction must be -1 or +1")
+    boundary = math.nextafter(float(level), -math.inf if direction == 1 else math.inf)
+    return prices >= boundary if direction == 1 else prices <= boundary

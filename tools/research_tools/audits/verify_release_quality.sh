@@ -38,6 +38,7 @@ run_gate "full-tree Mypy" "$PYTHON_BIN" -m mypy .
 
 run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest \
   tests/unit/features \
+  tests/integration/backtest/test_account_transition_parity.py \
   tests/unit/trading/test_risk_properties.py \
   tests/unit/trading/test_guardrails.py \
   tests/unit/trading/test_risk.py \
@@ -184,7 +185,6 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/unit/live/test_rl_robot.py \
   tests/unit/live/test_multi_symbol_risk_stops.py \
   tests/integration/test_scripts_smoke.py::TestBaselineAndReportScripts::test_run_baseline_eval \
-  tests/unit/research/test_current_market_inputs.py \
   tests/unit/research/test_paired_seed_statistics.py \
   tests/unit/research/test_policy_trade_lifecycle_summary.py \
   tests/unit/research/test_candidate_limit_fill_packet_comparison.py \
@@ -203,7 +203,6 @@ run_gate "scoped unit, integration, and research tests" "$PYTHON_BIN" -m pytest 
   tests/research/test_trade_setup_opportunity_census.py \
   tests/research/test_candidate_event_cardinality_register.py \
   tests/research/test_candidate_outcome_independent_arithmetic.py \
-  tests/research/test_real_market_feature_prefix_launcher.py \
   tests/research/test_research_provenance_byte_verification.py \
   tests/research/test_score_rule_baselines_period_scope.py \
   tests/research/test_candidate_geometry_support.py \

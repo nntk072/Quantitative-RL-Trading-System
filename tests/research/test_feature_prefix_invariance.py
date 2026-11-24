@@ -248,7 +248,9 @@ def test_preprocessed_market_bars_are_reused_without_sharing_mutable_frames(
     monkeypatch.setattr(AUDIT, "configured_price_grid_increment", lambda _cfg: None)
     monkeypatch.setattr(AUDIT, "load_bars", load)
     raw_cache: dict[Path, pd.DataFrame] = {}
-    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame] = {}
+    preprocessed_cache: dict[
+        tuple[Path, str, str, str, str, float | None, str | None], pd.DataFrame
+    ] = {}
     cache_metrics: dict[str, float | int] = {
         "raw_loads": 0,
         "raw_load_seconds": 0.0,
@@ -318,7 +320,9 @@ def test_preprocessed_market_cache_key_tracks_transform_semantics(
     )
     monkeypatch.setattr(AUDIT, "load_bars", lambda _path: raw.copy())
     raw_cache: dict[Path, pd.DataFrame] = {}
-    preprocessed_cache: dict[tuple[Path, str, str, float | None, str | None], pd.DataFrame] = {}
+    preprocessed_cache: dict[
+        tuple[Path, str, str, str, str, float | None, str | None], pd.DataFrame
+    ] = {}
 
     AUDIT.load_market_bars(cfg, "US100", raw_cache=raw_cache, preprocessed_cache=preprocessed_cache)
     OmegaConf.update(cfg, config_path, changed_value)

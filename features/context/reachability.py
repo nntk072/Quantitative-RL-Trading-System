@@ -20,6 +20,8 @@ def max_tp_distance(
     *,
     n_sessions: int = 20,
     quantile: float = 0.90,
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
 ) -> pd.Series:
     """Price distance a take-profit may sit from entry at each bar.
 
@@ -33,6 +35,8 @@ def max_tp_distance(
         atr: Tabular data used for the atr.
         n_sessions: Numeric value used for the n sessions.
         quantile: Numeric value used for the quantile.
+        session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+        source_clock_model: Interpretation of source index wall labels.
 
     Returns:
         Result of price distance a take-profit may sit from entry at each bar.
@@ -41,7 +45,9 @@ def max_tp_distance(
     atr_a = pd.to_numeric(atr.reindex(idx), errors="coerce").to_numpy(dtype=float)
     high = pd.to_numeric(bars["high"], errors="coerce").to_numpy(dtype=float)
     low = pd.to_numeric(bars["low"], errors="coerce").to_numpy(dtype=float)
-    ny = ny_session_mask(idx).to_numpy()
+    ny = ny_session_mask(
+        idx, session_tz=session_tz, source_clock_model=source_clock_model
+    ).to_numpy()
     out = pd.Series(np.nan, index=idx, name="max_tp_distance")
     if not ny.any():
         return out
@@ -80,12 +86,20 @@ def max_tp_distance(
     return out
 
 
-def _reachable_r_values(bars: pd.DataFrame, features: pd.DataFrame) -> tuple[pd.Series, pd.Series]:
+def _reachable_r_values(
+    bars: pd.DataFrame,
+    features: pd.DataFrame,
+    *,
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
+) -> tuple[pd.Series, pd.Series]:
     """Return causal reachable reward room and whether its value is known.
 
     Args:
         bars: Market bars to process.
         features: Feature values supplied to the operation.
+        session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+        source_clock_model: Interpretation of source index wall labels.
 
     Returns:
         Reachable reward-room values and a boolean validity series.
@@ -96,7 +110,12 @@ def _reachable_r_values(bars: pd.DataFrame, features: pd.DataFrame) -> tuple[pd.
             pd.Series(0.0, index=idx, name="reachable_r"),
             pd.Series(False, index=idx, name="reachable_r_valid"),
         )
-    dist = max_tp_distance(bars, features["atr_5"]).reindex(idx)
+    dist = max_tp_distance(
+        bars,
+        features["atr_5"],
+        session_tz=session_tz,
+        source_clock_model=source_clock_model,
+    ).reindex(idx)
     close = pd.to_numeric(bars["close"], errors="coerce")
     atr = pd.to_numeric(features["atr_5"].reindex(idx), errors="coerce")
     if "po3_manipulation_low" in features.columns and "po3_manipulation_high" in features.columns:
@@ -141,7 +160,13 @@ def _reachable_r_values(bars: pd.DataFrame, features: pd.DataFrame) -> tuple[pd.
     )
 
 
-def reachable_r_series(bars: pd.DataFrame, features: pd.DataFrame) -> pd.Series:
+def reachable_r_series(
+    bars: pd.DataFrame,
+    features: pd.DataFrame,
+    *,
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
+) -> pd.Series:
     """Causal reward room: max take-profit distance divided by structural stop.
 
     The side is the distribution direction when it is set, otherwise the
@@ -151,11 +176,18 @@ def reachable_r_series(bars: pd.DataFrame, features: pd.DataFrame) -> pd.Series:
     Args:
         bars: Market bars to process.
         features: Feature values supplied to the operation.
+        session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+        source_clock_model: Interpretation of source index wall labels.
 
     Returns:
         Result of causal reward room: max take-profit distance divided by structural stop.
     """
-    return _reachable_r_values(bars, features)[0]
+    return _reachable_r_values(
+        bars,
+        features,
+        session_tz=session_tz,
+        source_clock_model=source_clock_model,
+    )[0]
 
 
 def attach_reachable_r(
@@ -164,6 +196,8 @@ def attach_reachable_r(
     features: pd.DataFrame,
     *,
     include_validity_mask: bool = False,
+    session_tz: str | None = None,
+    source_clock_model: str = "native",
 ) -> pd.DataFrame:
     """Append ``reachable_r`` after raw price columns have been dropped.
 
@@ -172,12 +206,19 @@ def attach_reachable_r(
         bars: Market bars to process.
         features: Feature values supplied to the operation.
         include_validity_mask: Append a sequence feature marking known reachability values.
+        session_tz: IANA session timezone; ``None`` keeps legacy fixed-clock behavior.
+        source_clock_model: Interpretation of source index wall labels.
 
     Returns:
         DataFrame returned by ``attach_reachable_r``.
     """
     out = obs.copy()
-    reachable, valid = _reachable_r_values(bars, features)
+    reachable, valid = _reachable_r_values(
+        bars,
+        features,
+        session_tz=session_tz,
+        source_clock_model=source_clock_model,
+    )
     out["reachable_r"] = reachable.reindex(obs.index).fillna(0.0).astype(float)
     if include_validity_mask:
         out["reachable_r_valid"] = valid.reindex(obs.index).fillna(False).astype(float)

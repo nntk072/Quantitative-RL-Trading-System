@@ -91,6 +91,7 @@ def test_run_asset_preparation_respects_development_only_test_bundle_scope(
         {
             "evaluation": {"development_only": development_only},
             "env": {"data_source": "bundle", "reward_mode": "survival"},
+            "data": {"timestamp_clock": "native"},
         }
     )
     args = SimpleNamespace(
@@ -145,7 +146,9 @@ def test_run_asset_preparation_respects_development_only_test_bundle_scope(
         "training.runner.run_assets_stage.strategy_from_cfg",
         lambda _cfg: (SimpleNamespace(raw_columns=["close"]), None),
     )
-    monkeypatch.setattr("training.runner.run_assets_stage.ticks_covering", lambda *_args: None)
+    monkeypatch.setattr(
+        "training.runner.run_assets_stage.ticks_covering", lambda *_args, **_kwargs: None
+    )
     monkeypatch.setattr("training.runner.run_assets_stage._training_episodic", lambda _cfg: True)
     monkeypatch.setattr("training.runner.run_assets_stage._dashboard_block", lambda _cfg: {})
     monkeypatch.setattr("simulation.environment.bundles.build_env_bundle", build_bundle)
@@ -627,6 +630,7 @@ def test_evaluate_train_split_persists_json_safe_fail_time(
     cfg = SimpleNamespace(
         account=SimpleNamespace(initial_balance=100_000.0, currency="USD"),
         env={"reward_mode": "survival"},
+        data={"timestamp_clock": "native"},
     )
     preparation = SimpleNamespace(
         configuration=SimpleNamespace(cfg=cfg),
@@ -650,7 +654,10 @@ def test_evaluate_train_split_persists_json_safe_fail_time(
     runner.test_m = None
 
     monkeypatch.setattr("training.runner.seed_runtime._setup_rngs", lambda _seed: None)
-    monkeypatch.setattr("training.runner.seed_runtime.ticks_covering", lambda _ticks, _bars: None)
+    monkeypatch.setattr(
+        "training.runner.seed_runtime.ticks_covering",
+        lambda _ticks, _bars, **_kwargs: None,
+    )
     monkeypatch.setattr(
         "training.runner.seed_runtime._evaluate_final_split",
         lambda *_args, **_kwargs: train_result,

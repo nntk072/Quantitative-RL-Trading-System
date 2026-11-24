@@ -60,6 +60,11 @@ class MTFReasoningEncoder(MTFEncoder):
             "seq_d1": 8,
         }
         self._timeframe_ids = tuple(stream_order[seq_key] for seq_key, _ in self._keys)
+        self.register_buffer(
+            "_timeframe_id_tensor",
+            torch.tensor(self._timeframe_ids, dtype=torch.long),
+            persistent=False,
+        )
         self.timeframe_embedding = nn.Embedding(len(stream_order), latent_dim)
         layer = nn.TransformerEncoderLayer(
             d_model=latent_dim,
@@ -92,12 +97,12 @@ class MTFReasoningEncoder(MTFEncoder):
             [observations[mask_key].sum(dim=1) > 0.0 for _, mask_key in self._keys],
             dim=1,
         )
+        # Rows with no valid stream keep stream 0 valid; done without a device sync.
         empty_rows = ~valid.any(dim=1)
-        if bool(empty_rows.any()):
-            valid = valid.clone()
-            valid[empty_rows, 0] = True
-        ids = torch.as_tensor(self._timeframe_ids, device=tokens.device, dtype=torch.long)
-        tokens = tokens + self.timeframe_embedding(ids).unsqueeze(0)
+        first_stream = torch.zeros_like(valid)
+        first_stream[:, 0] = True
+        valid = valid | (empty_rows.unsqueeze(1) & first_stream)
+        tokens = tokens + self.timeframe_embedding(self._timeframe_id_tensor).unsqueeze(0)
         tokens = self.cross_timeframe(tokens, src_key_padding_mask=~valid)
         weights = valid.to(dtype=tokens.dtype).unsqueeze(-1)
         pooled = (tokens * weights).sum(dim=1) / weights.sum(dim=1).clamp_min(1.0)

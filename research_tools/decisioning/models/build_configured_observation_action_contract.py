@@ -88,6 +88,7 @@ def _implementation_sources(root: Path) -> list[dict[str, str]]:
     """Hash the code that resolves data and constructs the reported contract."""
     paths = (
         "scripts/research/analysis/models/build_configured_observation_action_contract.py",
+        "research_tools/decisioning/models/build_configured_observation_action_contract.py",
         "configuration/configuration_loader.py",
         "training/configuration/cli.py",
         "training/runner/data_stage.py",
@@ -192,6 +193,8 @@ def build_report(config_path: Path, output_path: Path, cache_root: Path) -> dict
         schedule_path=schedule,
         session_start=str(cfg.session.start),
         session_end=str(cfg.session.end),
+        session_tz=str(cfg.session.tz),
+        source_clock_model=str(cfg.data.get("timestamp_clock", "native")),
     )
 
     train_bars = primary_m1.loc[train_mask]

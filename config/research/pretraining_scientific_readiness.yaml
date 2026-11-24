@@ -1,4 +1,4 @@
-schema_version: pretraining-scientific-readiness-plan-v1
+schema_version: pretraining-scientific-readiness-plan-v2
 
 common_gates:
   - raw_data_identity_and_denominator_register_current_source
@@ -13,11 +13,14 @@ common_gates:
 price_gates:
   - candidate_geometry_empirical_acceptance_review
 
-required_execution_barriers:
+common_execution_barriers:
   - B0
   - B2_IMPLEMENTATION_EVIDENCE
+  - COMMON_IMPLEMENTATION_RELEASE
+
+price_execution_barriers:
   - B3_PRICE_IMPLEMENTATION
-  - B4_IMPLEMENTATION_RELEASE
+  - PRICE_IMPLEMENTATION_RELEASE
 
 forbidden_review_states:
   exposed_report_period_used_for_selection: true
