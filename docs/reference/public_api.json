@@ -16540,7 +16540,7 @@
       "name": "_REPO_ROOT",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 150,
+      "source_line": 151,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
