@@ -5,6 +5,7 @@ api_paths:
 - models/auxiliary/heads.py
 - models/auxiliary/vae.py
 - models/encoders/__init__.py
+- models/encoders/mtf.py
 - models/encoders/mtf_m1_htf_lite_reasoning.py
 - models/encoders/mtf_m1_htf_snapshot_reasoning.py
 - models/encoders/mtf_reasoning.py
@@ -31,6 +32,7 @@ caller_paths:
 - tests/unit/models/test_legacy_checkpoint_migration.py
 - tests/unit/models/test_lite_tcn_agent.py
 - tests/unit/models/test_mtf_efficient_encoders.py
+- tests/unit/models/test_mtf_masked_suffix.py
 - tests/unit/models/test_mtf_encoder_registration.py
 - tests/unit/models/test_sac_agent.py
 - tests/unit/models/test_semantic_actor.py
