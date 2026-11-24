@@ -141,6 +141,10 @@ caller_paths:
 - training/runner/seed_runtime.py
 - training/setup/environments.py
 - training/setup/observation_memmap.py
+- tests/integration/backtest/test_news_spike_guard_backtest.py
+- tests/unit/learning/test_overlap_collect.py
+- tests/unit/learning/test_update_graph.py
+- tests/unit/simulation/test_environment/test_news_spike_guard_env.py
 source_scopes:
   - {path: simulation/environment, study_ids: [simulation.transition_and_episode_contract, simulation.tick_fills_and_protective_orders, simulation.accounting_reward_and_telemetry, simulation.bar_decisions_with_tick_fills, simulation.limit_entry_price_bound_and_expiry, simulation.accounting_reward_and_cost_attribution, simulation.episode_end_and_session_liquidation, simulation.vectorized_environment_parity, simulation.protective_order_priority_and_ties]}
   - {path: simulation/contracts, study_ids: [simulation.transition_and_episode_contract]}
