@@ -45,7 +45,7 @@ def test_fetch_requests_each_configured_release_with_the_key() -> None:
     payload = fetch_release_dates("KEY", "2025-01-01", "2025-12-31", session=session)
 
     assert sorted(call["release_id"] for call in session.calls) == [10, 46, 50, 53, 192]
-    assert all(call["api_key"] == "KEY" for call in session.calls)
+    assert all(call["api_key"] == "KEY" for call in session.calls)  # pragma: allowlist secret
     assert len(payload["release_dates"]) == 5
 
 
