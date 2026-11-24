@@ -7,6 +7,7 @@ api_paths:
 - simulation/backtest/cross_validation/main.py
 - simulation/backtest/cross_validation/run.py
 - simulation/backtest/event_driven_backtest.py
+- simulation/backtest/quotes.py
 - simulation/backtest/protective_events.py
 - simulation/backtest/runtime.py
 - simulation/contracts/__init__.py
