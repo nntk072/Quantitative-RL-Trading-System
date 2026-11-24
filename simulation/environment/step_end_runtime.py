@@ -59,16 +59,17 @@ class StepEndRuntimeMixin(RuntimeMixinBase):
             Whether resolve step end meets the requested condition.
         """
         self._advance_ny_step()
-        if entry_machine is not None and entry_machine.state == "IN_POSITION":
-            if self.position is None:
-                entry_machine.mark_closed()
-                info["entry_state"] = entry_machine.state
-                if self.entry_state_observation:
-                    entry_start = self.observation_schema.width - ENTRY_STATE_DIM
-                    if obs is not None:
-                        obs["account"][entry_start:] = np.asarray(
-                            entry_state_one_hot(entry_machine.state), dtype=np.float32
-                        )
+        if (
+            entry_machine is not None and entry_machine.state == "IN_POSITION"
+        ) and self.position is None:
+            entry_machine.mark_closed()
+            info["entry_state"] = entry_machine.state
+            if self.entry_state_observation:
+                entry_start = self.observation_schema.width - ENTRY_STATE_DIM
+                if obs is not None:
+                    obs["account"][entry_start:] = np.asarray(
+                        entry_state_one_hot(entry_machine.state), dtype=np.float32
+                    )
         if self._ny_pos < len(self._ny_indices) and self.step_idx < self._n_bars:
             obs = self._get_observation()
         elif obs is None:

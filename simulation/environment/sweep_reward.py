@@ -138,12 +138,9 @@ class SweepConfirmationReward:
         )
 
         # Compute transaction cost
-        if position_changed:
-            total_cost = cost + self.cost_per_trade
-        else:
-            total_cost = cost
+        total_cost = cost + self.cost_per_trade if position_changed else cost
 
-            # Final reward: R_t = ΔPnL_t - Cost_t + α·C_t - β·T_t
+        # Final reward: R_t = ΔPnL_t - Cost_t + α·C_t - β·T_t
         reward = pnl_step - total_cost + (self.alpha * c_t) - (self.beta * t_t)
 
         # Update previous price
@@ -431,15 +428,14 @@ class CompositeReward:
             parts = dict(base_parts)
 
             # Optional strategy-alignment component (event-based; see PO3Reward).
-        if self.strategy_reward is not None and total is not None:
-            if strategy_context:
-                sr = self.strategy_reward
-                required = getattr(sr, "required_inputs", ())
-                inputs = {k: v for k, v in strategy_context.items() if k in required}
-                if inputs:
-                    shaped = self.strategy_weight * float(sr(**inputs))
-                    total = float(total) + shaped
-                    parts["strategy"] = parts.get("strategy", 0.0) + shaped
+        if self.strategy_reward is not None and total is not None and strategy_context:
+            sr = self.strategy_reward
+            required = getattr(sr, "required_inputs", ())
+            inputs = {k: v for k, v in strategy_context.items() if k in required}
+            if inputs:
+                shaped = self.strategy_weight * float(sr(**inputs))
+                total = float(total) + shaped
+                parts["strategy"] = parts.get("strategy", 0.0) + shaped
         self.last_parts = empty_reward_parts()
         self.last_parts.update({key: float(value) for key, value in parts.items()})
         return total

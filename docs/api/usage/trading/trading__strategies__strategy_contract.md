@@ -71,7 +71,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Intended trade side from HTF/PO3 context: -1, 0, or +1.
 
-**Exact API:** {py:obj}`trading.strategies.strategy_contract.TradingStrategy.context_direction` · **Source:** [trading/strategies/strategy_contract.py:88](../../../../trading/strategies/strategy_contract.py#L88)
+**Exact API:** {py:obj}`trading.strategies.strategy_contract.TradingStrategy.context_direction` · **Source:** [trading/strategies/strategy_contract.py:89](../../../../trading/strategies/strategy_contract.py#L89)
 
 **Inputs and outputs:**
 
@@ -113,7 +113,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Named SL levels for the trader action ``sl_anchor`` picker.
 
-**Exact API:** {py:obj}`trading.strategies.strategy_contract.TradingStrategy.sl_candidates` · **Source:** [trading/strategies/strategy_contract.py:101](../../../../trading/strategies/strategy_contract.py#L101)
+**Exact API:** {py:obj}`trading.strategies.strategy_contract.TradingStrategy.sl_candidates` · **Source:** [trading/strategies/strategy_contract.py:102](../../../../trading/strategies/strategy_contract.py#L102)
 
 **Inputs and outputs:**
 

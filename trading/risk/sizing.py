@@ -321,10 +321,7 @@ def resolve_tp_target(
     """
     risk = (entry_price - sl_price) if direction == 1 else (sl_price - entry_price)
     rr_tp = entry_price + direction * rr_ratio * risk
-    if risk > 0 and direction in (1, -1):
-        fallback_ok = True
-    else:
-        fallback_ok = False
+    fallback_ok = bool(risk > 0 and direction in (1, -1))
 
     if target_mode == "rr":
         if not fallback_ok:

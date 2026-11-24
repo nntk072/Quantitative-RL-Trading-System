@@ -83,12 +83,13 @@ class PO3IFVGStrategy(TradingStrategy):
         if int(candidate_max_age_bars) < 1:
             raise ValueError("candidate_max_age_bars must be positive for PO3/IFVG modes")
         expected_retest = entry_mode == "confirmed_retest"
-        if entry_mode != "legacy" and require_price_retest is not None:
-            if bool(require_price_retest) != expected_retest:
-                raise ValueError(
-                    "strategy.ifvg.require_price_retest conflicts with "
-                    f"strategy.entry.mode={entry_mode!r}"
-                )
+        if (entry_mode != "legacy" and require_price_retest is not None) and bool(
+            require_price_retest
+        ) != expected_retest:
+            raise ValueError(
+                "strategy.ifvg.require_price_retest conflicts with "
+                f"strategy.entry.mode={entry_mode!r}"
+            )
         self.enforce_gate = enforce_gate
         self.require_asian_context = require_asian_context
         self.entry_mode = entry_mode

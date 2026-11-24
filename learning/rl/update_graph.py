@@ -88,10 +88,7 @@ class _StepGraph:
         policy_loss = -torch.min(policy_loss_1, policy_loss_2).mean()
         clip_fraction = torch.mean((torch.abs(ratio - 1) > clip).float())
         value_loss = F.mse_loss(self.returns, values)
-        if entropy is None:
-            entropy_loss = -torch.mean(-log_prob)
-        else:
-            entropy_loss = -torch.mean(entropy)
+        entropy_loss = -torch.mean(-log_prob) if entropy is None else -torch.mean(entropy)
         loss = policy_loss + model.ent_coef * entropy_loss + model.vf_coef * value_loss
         with torch.no_grad():
             log_ratio = log_prob - self.old_log_prob

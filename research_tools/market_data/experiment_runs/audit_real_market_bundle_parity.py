@@ -177,7 +177,7 @@ def _compare(left: Any, right: Any, path: str = "root", *, atol: float = 1e-12) 
         return max(
             (
                 _compare(a, b, f"{path}[{index}]", atol=atol)
-                for index, (a, b) in enumerate(zip(left, right))
+                for index, (a, b) in enumerate(zip(left, right, strict=False))
             ),
             default=0.0,
         )

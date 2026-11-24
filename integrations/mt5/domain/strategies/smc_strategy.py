@@ -51,25 +51,23 @@ class SMCStrategy(TradingStrategy):
                 candle_range = df.iloc[i]["high"] - df.iloc[i]["low"]
 
                 # Strong bullish candle (body > 60% of range)
-                if body_size > 0.6 * candle_range and candle_range > 0:
-                    # Check if followed by consolidation or small moves
-                    if i < len(df) - 1:
-                        next_candle_range = df.iloc[i + 1]["high"] - df.iloc[i + 1]["low"]
-                        if next_candle_range < 0.5 * candle_range:
-                            bullish_blocks.iloc[i] = True
+                # Check if followed by consolidation or small moves
+                if (body_size > 0.6 * candle_range and candle_range > 0) and i < len(df) - 1:
+                    next_candle_range = df.iloc[i + 1]["high"] - df.iloc[i + 1]["low"]
+                    if next_candle_range < 0.5 * candle_range:
+                        bullish_blocks.iloc[i] = True
 
-                            # Look for strong bearish candle
+                        # Look for strong bearish candle
             if df.iloc[i]["close"] < df.iloc[i]["open"]:
                 body_size = abs(df.iloc[i]["close"] - df.iloc[i]["open"])
                 candle_range = df.iloc[i]["high"] - df.iloc[i]["low"]
 
                 # Strong bearish candle (body > 60% of range)
-                if body_size > 0.6 * candle_range and candle_range > 0:
-                    # Check if followed by consolidation
-                    if i < len(df) - 1:
-                        next_candle_range = df.iloc[i + 1]["high"] - df.iloc[i + 1]["low"]
-                        if next_candle_range < 0.5 * candle_range:
-                            bearish_blocks.iloc[i] = True
+                # Check if followed by consolidation
+                if (body_size > 0.6 * candle_range and candle_range > 0) and i < len(df) - 1:
+                    next_candle_range = df.iloc[i + 1]["high"] - df.iloc[i + 1]["low"]
+                    if next_candle_range < 0.5 * candle_range:
+                        bearish_blocks.iloc[i] = True
 
         return bullish_blocks, bearish_blocks
 
@@ -184,22 +182,26 @@ class SMCStrategy(TradingStrategy):
         symbol = self.data.get_symbol()
 
         # Buy signal: Bullish structure + bullish order block/FVG + price above EMAs
-        if market_structure == "bullish":
-            if (recent_bullish_blocks or recent_bullish_fvg) and price_above_ema_fast:
-                return symbol, Signal.BUY
+        if market_structure == "bullish" and (
+            (recent_bullish_blocks or recent_bullish_fvg) and price_above_ema_fast
+        ):
+            return symbol, Signal.BUY
 
-                # Sell signal: Bearish structure + bearish order block/FVG + price below EMAs
-        if market_structure == "bearish":
-            if (recent_bearish_blocks or recent_bearish_fvg) and not price_above_ema_fast:
-                return symbol, Signal.SELL
+            # Sell signal: Bearish structure + bearish order block/FVG + price below EMAs
+        if market_structure == "bearish" and (
+            (recent_bearish_blocks or recent_bearish_fvg) and not price_above_ema_fast
+        ):
+            return symbol, Signal.SELL
 
-                # Additional confirmation: EMA crossover
-        if ema_fast.iloc[-1] > ema_slow.iloc[-1] and ema_fast.iloc[-2] <= ema_slow.iloc[-2]:
-            if recent_bullish_blocks or recent_bullish_fvg:
-                return symbol, Signal.BUY
+            # Additional confirmation: EMA crossover
+        if (ema_fast.iloc[-1] > ema_slow.iloc[-1] and ema_fast.iloc[-2] <= ema_slow.iloc[-2]) and (
+            recent_bullish_blocks or recent_bullish_fvg
+        ):
+            return symbol, Signal.BUY
 
-        if ema_fast.iloc[-1] < ema_slow.iloc[-1] and ema_fast.iloc[-2] >= ema_slow.iloc[-2]:
-            if recent_bearish_blocks or recent_bearish_fvg:
-                return symbol, Signal.SELL
+        if (ema_fast.iloc[-1] < ema_slow.iloc[-1] and ema_fast.iloc[-2] >= ema_slow.iloc[-2]) and (
+            recent_bearish_blocks or recent_bearish_fvg
+        ):
+            return symbol, Signal.SELL
 
         return symbol, Signal.NONE

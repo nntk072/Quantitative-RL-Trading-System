@@ -211,10 +211,7 @@ def _plot_matrix(
             else:
                 count = 0 if not np.isfinite(support[row, column]) else int(support[row, column])
             text = "—" if not np.isfinite(value) else format_value(float(value))
-            if support is not None:
-                annotation = f"{text}\nn={count}"
-            else:
-                annotation = f"{text}"
+            annotation = f"{text}\nn={count}" if support is not None else f"{text}"
             axis.text(column, row, annotation, ha="center", va="center", fontsize=7)
     fig.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)

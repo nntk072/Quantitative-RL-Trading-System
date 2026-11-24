@@ -830,7 +830,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert source_tick is not None
     assert source_tick[1] == env_partial["price"] == bt_partial["price"]
 
-    for engine_name, events, final_balance, open_event in (
+    for engine_name, events, final_balance, _open_event in (
         ("environment", environment_events, env.account.balance, env_open),
 # … caller assertions omitted …
 ```

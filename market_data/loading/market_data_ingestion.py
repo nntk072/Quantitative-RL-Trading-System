@@ -256,11 +256,12 @@ def run_pipeline(
                     )
                 continue
 
-            def input_hash(path: Path) -> str:
+            def input_hash(path: Path, *, source_hashes: dict[Path, str] = source_hashes) -> str:
                 """Return a memoized content hash for a source file.
 
                 Args:
                     path: Raw market-data file to fingerprint.
+                    source_hashes: Memo table bound when the function is defined.
 
                 Returns:
                     SHA-256 digest used in the cache identity.
@@ -301,9 +302,7 @@ def run_pipeline(
                             "declare an intentional M1-derived timeframe explicitly to proceed"
                         )
                 if exclusive_end is None:
-                    if tf == "M1":
-                        source_identity = f"native:{input_hash(source_path)}{grid_identity}"
-                    elif native_file:
+                    if tf == "M1" or native_file:
                         source_identity = f"native:{input_hash(source_path)}{grid_identity}"
                     else:
                         source_identity = (

@@ -10,7 +10,7 @@ PPO training is required.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -573,8 +573,8 @@ def test_evaluate_model_counts_daily_breach_as_full_evaluation_failure(
     survived: bool,
 ) -> None:
     env = _ExposureEnv()
-    setattr(env, "episodic", episodic)
-    setattr(env, "repeated_payout_policy", repeated_payout)
+    cast(Any, env).episodic = episodic
+    cast(Any, env).repeated_payout_policy = repeated_payout
     breach_time = "2025-01-06T16:41:00+03:00"
     detection_time = "2025-01-06T16:41:00.218+03:00"
     env.breach_events = [
@@ -627,7 +627,7 @@ def test_randomized_tick_evaluation_requires_execution_seed() -> None:
 
 def test_constrained_evaluation_reports_discounted_constraint_costs() -> None:
     model = _ScriptedModel({})
-    setattr(model, "_constrained_rl_state", {"version": 2, "gamma": 0.9})
+    cast(Any, model)._constrained_rl_state = {"version": 2, "gamma": 0.9}
     result = evaluate_model(
         model,
         bars=pd.DataFrame(),
@@ -646,17 +646,13 @@ def test_constrained_evaluation_reports_discounted_constraint_costs() -> None:
 
 def test_evaluate_model_reports_max_loss_fraction_normalized_constraint_costs() -> None:
     model = _ScriptedModel({})
-    setattr(
-        model,
-        "_constrained_rl_state",
-        {
-            "version": 3,
-            "cost_discount_gamma": 1.0,
-            "daily_loss_limit_usd": 5_000.0,
-            "max_loss_limit_usd": 10_000.0,
-            "trailing_dd_limit_usd": 0.0,
-        },
-    )
+    cast(Any, model)._constrained_rl_state = {
+        "version": 3,
+        "cost_discount_gamma": 1.0,
+        "daily_loss_limit_usd": 5000.0,
+        "max_loss_limit_usd": 10000.0,
+        "trailing_dd_limit_usd": 0.0,
+    }
     result = evaluate_model(
         model,
         bars=pd.DataFrame(),

@@ -86,7 +86,7 @@ def verify(report_path: Path) -> dict[str, Any]:
         )
         latency_limit = float(scenario["randomized_fill_latency_ms"])
 
-        def valid_close(event: dict[str, Any]) -> bool:
+        def valid_close(event: dict[str, Any], *, latency_limit: Any = latency_limit) -> bool:
             if not event:
                 return False
             submitted = pd.Timestamp(event["order_submission_time"])

@@ -35,7 +35,7 @@ class MarketAccessMixin(RuntimeMixinBase):
         cache: tuple[Any, dict[int, pd.Timestamp]] | None = getattr(self, "_bar_time_cache", None)
         if cache is None or cache[0] is not source:
             cache = (source, {})
-            setattr(self, "_bar_time_cache", cache)
+            self._bar_time_cache = cache
         cached = cache[1].get(idx)
         if cached is not None:
             return cached

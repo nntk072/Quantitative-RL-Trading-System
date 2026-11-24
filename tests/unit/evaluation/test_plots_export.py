@@ -5,6 +5,7 @@ Uses the matplotlib Agg backend so tests run headless in CI.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import time
 
@@ -431,10 +432,8 @@ def test_plot_returns_dist(synthetic_equity, tmp_path):
     from evaluation.plotting.plots import plot_returns_dist
 
     # scipy may not be available; function should not crash
-    try:
+    with contextlib.suppress(ImportError):
         plot_returns_dist(synthetic_equity, out_path=tmp_path / "returns_dist.png")
-    except ImportError:
-        pass  # scipy optional
     # At minimum should not raise other exceptions
 
 

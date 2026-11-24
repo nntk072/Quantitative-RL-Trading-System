@@ -473,10 +473,7 @@ def _sweep_lines(
     events = sweeps[col].to_numpy(dtype=float)
     levels = sweeps[lvl_col].to_numpy(dtype=float)
     wick = None
-    if side == "high":
-        wick = sweeps.get("sweep_high_wick")
-    else:
-        wick = sweeps.get("sweep_low_wick")
+    wick = sweeps.get("sweep_high_wick") if side == "high" else sweeps.get("sweep_low_wick")
     lines: list[SweepLine] = []
     origin_i_arr = np.array([o[0] for o in origins], dtype=int)
     origin_prices = np.array([o[1] for o in origins], dtype=float)

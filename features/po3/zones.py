@@ -95,11 +95,8 @@ def build_fvg_zones(
             continue
 
         sig = signals[sig_col]
-        if signals_are_events:
-            starts = sig == 1
-        else:
-            # Only start a zone on the 0 -> 1 edge (handles forward-filled runs).
-            starts = (sig == 1) & (sig.shift(1, fill_value=0) == 0)
+        # Only start a zone on the 0 -> 1 edge (handles forward-filled runs) unless the signals are events.
+        starts = sig == 1 if signals_are_events else (sig == 1) & (sig.shift(1, fill_value=0) == 0)
         if low_col not in signals.columns or high_col not in signals.columns:
             continue
 

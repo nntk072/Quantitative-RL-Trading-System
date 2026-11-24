@@ -287,7 +287,7 @@ def test_build_agent_discrete_keeps_categorical_ent_coef() -> None:
     assert model.ent_coef == pytest.approx(0.01)
     assert getattr(model.policy, "log_std", None) is None
     assert env.action_schema.to_dict() == schema.to_dict()
-    assert getattr(model, "_action_schema") == schema.to_dict()
+    assert model._action_schema == schema.to_dict()
     assert action_schema_manifest(env) == schema.to_dict()
 
 

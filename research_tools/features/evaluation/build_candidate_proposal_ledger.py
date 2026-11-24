@@ -344,7 +344,7 @@ def build_ledger(
             if int(position) not in quote_cache:
                 quotes = tickbook.bar_quotes(bar_start, bar_minutes=1)
                 last_quote = None
-                for last_quote in quotes:
+                for _last_quote in quotes:
                     pass
                 quote_cache[int(position)] = last_quote
             quote = quote_cache[int(position)]

@@ -83,5 +83,5 @@ def test_method_usage_resolves_a_public_base_class_method(monkeypatch) -> None:
 
 def test_function_usage_generator_is_repository_relative() -> None:
     """Generated source and destination paths stay within the checked-out project."""
-    assert ROOT == Path(__file__).resolve().parents[3]
+    assert Path(__file__).resolve().parents[3] == ROOT
     assert OUTPUT.is_relative_to(ROOT / "docs" / "api")

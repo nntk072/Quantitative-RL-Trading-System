@@ -66,7 +66,7 @@ def probe(run: Path, bars, feat, n_steps=2000):
     obs, _ = env.reset()
     intensities = []
     actions_u0 = []
-    for i in range(n_steps):
+    for _i in range(n_steps):
         action, _ = model.predict(obs, deterministic=True)
         a = np.asarray(action, dtype=np.float32).reshape(-1)
         u = 0.5 * (np.clip(a, -1, 1) + 1)
@@ -95,7 +95,7 @@ def probe(run: Path, bars, feat, n_steps=2000):
     )
     print("frac intensity>=0.25", float(np.mean(np.asarray(intensities) >= 0.25)))
     print("entry_diag", diag)
-    print("opens_in_probe", opens, "steps", i + 1)
+    print("opens_in_probe", opens, "steps", n_steps)
     print()
 
 

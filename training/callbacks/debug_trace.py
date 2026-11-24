@@ -7,6 +7,7 @@ ordinary functions, so a later bug does not need a new log format.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import math
 import sys
@@ -383,10 +384,8 @@ class FlightRecorder:
         if current is not None and getattr(current, "_debug_captured", False):
             return
         if current is not None:
-            try:
+            with contextlib.suppress(Exception):
                 current._debug_captured = True  # type: ignore[attr-defined]
-            except Exception:
-                pass
         text = traceback.format_exc()
         if text and text != "NoneType: None\n" and text == self._last_tb:
             return
@@ -485,7 +484,7 @@ def install_flight_recorder(
         except DebugStepError as exc:
             recorder.capture(exc.reason, exc.snapshot)
             if exc.original is not None:
-                raise exc.original
+                raise exc.original from None
             raise
         except Exception:
             recorder.capture("train exception", rollout)
@@ -517,7 +516,7 @@ def install_flight_recorder(
         except DebugStepError as exc:
             recorder.capture(exc.reason, exc.snapshot)
             if exc.original is not None:
-                raise exc.original
+                raise exc.original from None
             raise
         except Exception:
             recorder.capture("learn exception", {})

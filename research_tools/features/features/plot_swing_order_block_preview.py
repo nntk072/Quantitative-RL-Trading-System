@@ -63,10 +63,7 @@ def _load_bars(path: Path, timezone: str, timeframe: TF) -> pd.DataFrame:
 
 def _end_boundary(value: str, timezone: str) -> pd.Timestamp:
     end = pd.Timestamp(value)
-    if end.tzinfo is None:
-        end = end.tz_localize(timezone)
-    else:
-        end = end.tz_convert(timezone)
+    end = end.tz_localize(timezone) if end.tzinfo is None else end.tz_convert(timezone)
     if end == end.normalize():
         return end + pd.Timedelta(days=1)
     return end

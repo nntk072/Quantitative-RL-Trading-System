@@ -320,8 +320,8 @@ def finalize_training_run(
     if args.wandb:
         try:
             import wandb
-        except ImportError:
-            raise SystemExit("--wandb requires the wandb package: pip install wandb")
+        except ImportError as exc:
+            raise SystemExit("--wandb requires the wandb package: pip install wandb") from exc
         wandb.init(
             project="aalto-liquidity-sweep",
             name=run_dir.name,

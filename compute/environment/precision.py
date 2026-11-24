@@ -111,11 +111,12 @@ def configure_accelerator_for_training(
         return
 
     capabilities = discover_device_capabilities(str(resolved))
-    if capabilities.accelerator_backend == "cuda":
-        if capabilities.compute_capability is not None and capabilities.compute_capability[0] >= 8:
-            torch.backends.cuda.matmul.allow_tf32 = True
-            torch.backends.cudnn.allow_tf32 = True
-            torch.set_float32_matmul_precision("high")
+    if capabilities.accelerator_backend == "cuda" and (
+        capabilities.compute_capability is not None and capabilities.compute_capability[0] >= 8
+    ):
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+        torch.set_float32_matmul_precision("high")
     torch.backends.cudnn.benchmark = bool(cudnn_benchmark)
 
 

@@ -195,37 +195,37 @@ class TrendBreakoutStrategy(TradingStrategy):
         symbol = self.data.get_symbol()
 
         # Bullish breakout signal
-        if is_breakout and direction == "bullish":
-            # Confirm with trend strength and moving averages
-            if trend_strength > 25:  # Strong trend
-                if price_above_sma_fast and price_above_sma_slow:
-                    return symbol, Signal.BUY
+        # Confirm with trend strength and moving averages
+        if (is_breakout and direction == "bullish") and (
+            trend_strength > 25 and (price_above_sma_fast and price_above_sma_slow)
+        ):
+            return symbol, Signal.BUY
 
-                    # Bearish breakout signal
-        if is_breakout and direction == "bearish":
-            # Confirm with trend strength and moving averages
-            if trend_strength > 25:  # Strong trend
-                if not price_above_sma_fast and not price_above_sma_slow:
-                    return symbol, Signal.SELL
+            # Bearish breakout signal
+        # Confirm with trend strength and moving averages
+        if (is_breakout and direction == "bearish") and (
+            trend_strength > 25 and (not price_above_sma_fast and not price_above_sma_slow)
+        ):
+            return symbol, Signal.SELL
 
-                    # Trend continuation signals (if already in a trend)
+            # Trend continuation signals (if already in a trend)
         if trend_strength > 30:
             # Bullish trend continuation
-            if price_above_sma_fast and price_above_sma_slow and price_above_vwap:
-                if sma_fast.iloc[-1] > sma_slow.iloc[-1]:
-                    # Check if price is near support (potential bounce)
-                    distance_to_support = (current_price - support) / support if support > 0 else 0
-                    if 0 < distance_to_support < 0.005:  # Within 0.5% of support
-                        return symbol, Signal.BUY
+            if (
+                price_above_sma_fast and price_above_sma_slow and price_above_vwap
+            ) and sma_fast.iloc[-1] > sma_slow.iloc[-1]:
+                distance_to_support = (current_price - support) / support if support > 0 else 0
+                if 0 < distance_to_support < 0.005:  # Within 0.5% of support
+                    return symbol, Signal.BUY
 
-                        # Bearish trend continuation
-            if not price_above_sma_fast and not price_above_sma_slow and not price_above_vwap:
-                if sma_fast.iloc[-1] < sma_slow.iloc[-1]:
-                    # Check if price is near resistance (potential rejection)
-                    distance_to_resistance = (
-                        (resistance - current_price) / current_price if current_price > 0 else 0
-                    )
-                    if 0 < distance_to_resistance < 0.005:  # Within 0.5% of resistance
-                        return symbol, Signal.SELL
+                    # Bearish trend continuation
+            if (
+                not price_above_sma_fast and not price_above_sma_slow and not price_above_vwap
+            ) and sma_fast.iloc[-1] < sma_slow.iloc[-1]:
+                distance_to_resistance = (
+                    (resistance - current_price) / current_price if current_price > 0 else 0
+                )
+                if 0 < distance_to_resistance < 0.005:  # Within 0.5% of resistance
+                    return symbol, Signal.SELL
 
         return symbol, Signal.NONE

@@ -456,7 +456,7 @@ def test_prior_period_high_low_lastweek() -> None:
     ct = idx.tz_convert(SESSION_TZ)
     iso = ct.isocalendar()
     week_keys = pd.Series(
-        [f"{y}-W{w:02d}" for y, w in zip(iso.year, iso.week)],
+        [f"{y}-W{w:02d}" for y, w in zip(iso.year, iso.week, strict=False)],
         index=idx,
     )
     # Week 1 has no prior week: all NaN.

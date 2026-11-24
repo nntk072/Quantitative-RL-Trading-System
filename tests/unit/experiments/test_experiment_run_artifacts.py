@@ -8,6 +8,7 @@ import sys
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -516,7 +517,7 @@ def test_failed_attempt_artifacts_are_hashed_and_remain_terminal_on_resume(
             str(worker),
         ],
     )
-    setattr(controller, "STOP", False)
+    cast(Any, controller).STOP = False
     assert controller.main() == 1
 
     out = root / "outputs" / "gpu_experiment_runs" / "test_failed_attempt_resume"
@@ -553,7 +554,7 @@ def test_failed_attempt_artifacts_are_hashed_and_remain_terminal_on_resume(
             "--resume",
         ],
     )
-    setattr(controller, "STOP", False)
+    cast(Any, controller).STOP = False
     assert controller.main() == 1
     resumed = controller.read_manifest(out / "experiment_run.json")["jobs"][0]
     assert resumed["status"] == "failed"

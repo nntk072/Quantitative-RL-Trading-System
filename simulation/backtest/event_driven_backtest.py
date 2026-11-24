@@ -1030,9 +1030,10 @@ def run_backtest(
             or high_risk < low_risk
         ):
             raise ValueError("policy_risk_frac_range must be finite, non-negative, and ordered")
-    if repeated_payout and resolved_trading_policy is not None:
-        if resolved_policy_risk_frac_range[1] > resolved_trading_policy.max_agent_risk_frac:
-            raise ValueError("policy_risk_frac_range exceeds the repeated-payout policy risk limit")
+    if (
+        repeated_payout and resolved_trading_policy is not None
+    ) and resolved_policy_risk_frac_range[1] > resolved_trading_policy.max_agent_risk_frac:
+        raise ValueError("policy_risk_frac_range exceeds the repeated-payout policy risk limit")
 
     if (
         isinstance(open_manipulation_bars, bool)
@@ -1767,11 +1768,12 @@ def run_backtest(
                 manipulation_end = 0.0
             if np.isfinite(manipulation_end) and manipulation_end > 0.0:
                 confirmed_manipulation_sessions.add(prior_session)
-            if getattr(resolved_strategy, "name", "") == "po3_ifvg":
-                setattr(
-                    resolved_strategy,
-                    "_session_manip_confirmed",
-                    prior_session in confirmed_manipulation_sessions,
+            if (
+                resolved_strategy is not None
+                and getattr(resolved_strategy, "name", "") == "po3_ifvg"
+            ):
+                resolved_strategy._session_manip_confirmed = (
+                    prior_session in confirmed_manipulation_sessions
                 )
             evidence = build_entry_evidence(
                 strategy=resolved_strategy,
@@ -1835,12 +1837,17 @@ def run_backtest(
 
         def resolve_bar_execution(
             order_submission_time: pd.Timestamp | None = None,
+            *,
+            fill_instant: Any = fill_instant,
+            fill_row: Any = fill_row,
         ) -> tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]:
             """Resolve and cache the quote using its fill or active order time.
 
             Args:
                 order_submission_time: Optional order time used when tick-based
                     execution or randomized latency controls the fill schedule.
+                fill_instant: Fill instant of the bar, bound when the closure is defined.
+                fill_row: Bar row used for the fill, bound when the closure is defined.
 
             Returns:
                 The execution quote, its timestamp, the resolution reason, and
@@ -2266,12 +2273,16 @@ def run_backtest(
 
                     def resolve_scheduled_market_fill(
                         _order_submission_time: pd.Timestamp | None = None,
+                        *,
+                        scheduled_fill_time: Any = scheduled_fill_time,
                     ) -> tuple[tuple[float, float], pd.Timestamp, str, dict[str, Any]]:
                         """Resolve delayed-market execution from its scheduled fill instant.
 
                         Args:
                             _order_submission_time: Unused compatibility argument; the
                                 pending order's recorded schedule is authoritative.
+                            scheduled_fill_time: Fill time of the scheduled order, bound when
+                                the closure is defined.
 
                         Returns:
                             The execution quote, its timestamp, the resolution reason,

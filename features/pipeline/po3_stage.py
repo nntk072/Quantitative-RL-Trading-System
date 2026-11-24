@@ -133,7 +133,7 @@ def append_po3_state_features(
         """
         block = getattr(feature_config, key, None)
         configured = (
-            getattr(block, "timeframes")
+            block.timeframes
             if block is not None and hasattr(block, "timeframes")
             else getattr(feature_config, f"{key}_timeframes", None)
         )
@@ -154,7 +154,7 @@ def append_po3_state_features(
         """
         block = getattr(feature_config, key, None)
         if block is not None and hasattr(block, "enabled"):
-            return bool(getattr(block, "enabled"))
+            return bool(block.enabled)
         value = getattr(feature_config, f"{key}_enabled", None)
         return bool(value) if value is not None else default
 

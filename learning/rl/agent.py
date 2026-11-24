@@ -54,14 +54,14 @@ def bind_discrete_action_schema(model: Any, schema: DiscreteActionSchema) -> Non
     if not isinstance(action_space, spaces.Discrete) or action_space.n != schema.width:
         raise ValueError("discrete action schema width differs from the model action space")
     manifest = schema.to_dict()
-    setattr(model, "_action_schema_version", schema.version)
-    setattr(model, "_action_layout_key", schema.key)
-    setattr(model, "_action_schema", manifest)
+    model._action_schema_version = schema.version
+    model._action_layout_key = schema.key
+    model._action_schema = manifest
     policy = getattr(model, "policy", None)
     if policy is not None:
-        setattr(policy, "_action_schema_version", schema.version)
-        setattr(policy, "_action_layout_key", schema.key)
-        setattr(policy, "_action_schema", manifest)
+        policy._action_schema_version = schema.version
+        policy._action_layout_key = schema.key
+        policy._action_schema = manifest
 
 
 def persist_action_schema(model: Any, env: Any) -> None:
@@ -95,16 +95,16 @@ def persist_action_schema(model: Any, env: Any) -> None:
                 "action width alone cannot identify coordinate meanings"
             )
 
-        setattr(model, "_action_layout_key", layout_key)
+        model._action_layout_key = layout_key
         schema_version = schema.version if schema is not None else SCHEMA_VERSION
-        setattr(model, "_action_schema_version", schema_version)
+        model._action_schema_version = schema_version
         if policy is not None:
-            setattr(policy, "_action_layout_key", layout_key)
-            setattr(policy, "_action_schema_version", schema_version)
+            policy._action_layout_key = layout_key
+            policy._action_schema_version = schema_version
         if schema_manifest is not None:
-            setattr(model, "_action_schema", schema_manifest)
+            model._action_schema = schema_manifest
             if policy is not None:
-                setattr(policy, "_action_schema", schema_manifest)
+                policy._action_schema = schema_manifest
     elif isinstance(action_space, spaces.Discrete):
         schema = getattr(env, "action_schema", None)
         if not isinstance(schema, DiscreteActionSchema):
@@ -186,9 +186,9 @@ def validate_model_action_schema(
         manifest["checkpoint_metadata"] = "legacy_unversioned"
         manifest["legacy_layout_key"] = legacy_layout_key
         manifest["migration"] = migration
-        setattr(model, "_action_schema", manifest)
+        model._action_schema = manifest
         if policy is not None:
-            setattr(policy, "_action_schema", manifest)
+            policy._action_schema = manifest
         return migration
 
     if actual_width != expected_schema.width:
@@ -212,9 +212,9 @@ def validate_model_action_schema(
         # it does not change the serialized policy's action coordinates.
     manifest = expected_schema.to_dict()
     manifest["checkpoint_metadata"] = "versioned"
-    setattr(model, "_action_schema", manifest)
+    model._action_schema = manifest
     if policy is not None:
-        setattr(policy, "_action_schema", manifest)
+        policy._action_schema = manifest
     return None
 
 
@@ -282,9 +282,9 @@ def validate_model_discrete_action_schema(
         "versioned" if disposition == "verified" else "legacy_unverified"
     )
     bind_discrete_action_schema(model, expected_schema)
-    setattr(model, "_action_schema", manifest)
+    model._action_schema = manifest
     if policy is not None:
-        setattr(policy, "_action_schema", manifest)
+        policy._action_schema = manifest
     return disposition
 
 
@@ -305,7 +305,7 @@ def validate_model_observation_schema(
 
     actual = getattr(model, "_observation_schema", None)
     validate_observation_schema(actual, expected_schema, allow_legacy_v1=allow_legacy_v1)
-    setattr(model, "_observation_schema", expected_schema.to_dict())
+    model._observation_schema = expected_schema.to_dict()
 
 
 def validate_model_trade_setup_observation_schema(
@@ -730,10 +730,10 @@ def build_agent(
         )
         regime_schema = getattr(env, "regime_observation_schema", None)
         if isinstance(regime_schema, dict):
-            setattr(model, "_regime_observation_schema", regime_schema)
+            cast(Any, model)._regime_observation_schema = regime_schema
         setup_schema = getattr(env, "trade_setup_observation_schema", None)
         if isinstance(setup_schema, dict):
-            setattr(model, "_trade_setup_observation_schema", setup_schema)
+            cast(Any, model)._trade_setup_observation_schema = setup_schema
         persist_action_schema(model, env)
         return _finalize_cuda_policy(model, device, _autocast_override(cfg))
         # Default to PPO
@@ -775,18 +775,18 @@ def build_agent(
     observation_schema = getattr(env, "observation_schema", None)
     if observation_schema is not None:
         schema_manifest = observation_schema.to_dict()
-        setattr(ppo_model, "_observation_schema", schema_manifest)
-        setattr(ppo_model.policy, "_observation_schema", schema_manifest)
+        cast(Any, ppo_model)._observation_schema = schema_manifest
+        ppo_model.policy._observation_schema = schema_manifest
     regime_schema = getattr(env, "regime_observation_schema", None)
     if isinstance(regime_schema, dict):
-        setattr(ppo_model, "_regime_observation_schema", regime_schema)
+        cast(Any, ppo_model)._regime_observation_schema = regime_schema
     setup_schema = getattr(env, "trade_setup_observation_schema", None)
     if isinstance(setup_schema, dict):
-        setattr(ppo_model, "_trade_setup_observation_schema", setup_schema)
+        cast(Any, ppo_model)._trade_setup_observation_schema = setup_schema
     candidate_schema = getattr(env, "candidate_geometry_observation_schema", None)
     if isinstance(candidate_schema, dict):
-        setattr(ppo_model, "_candidate_geometry_observation_schema", candidate_schema)
-        setattr(ppo_model.policy, "_candidate_geometry_observation_schema", candidate_schema)
+        cast(Any, ppo_model)._candidate_geometry_observation_schema = candidate_schema
+        cast(Any, ppo_model.policy)._candidate_geometry_observation_schema = candidate_schema
     persist_action_schema(ppo_model, env)
     from learning.rl.rollout_buffer import install_single_copy_add
 
@@ -806,7 +806,7 @@ def build_agent(
         if not bool(cfg.ppo.get("rollout_host_mask_check", False)):
             raise ValueError("ppo.rollout_policy_graph requires ppo.rollout_host_mask_check")
         if on_cuda:
-            enable_policy_graph = getattr(ppo_model.policy, "enable_rollout_policy_graph")
+            enable_policy_graph = cast(Any, ppo_model.policy).enable_rollout_policy_graph
             enable_policy_graph()
     if bool(cfg.ppo.get("torch_compile_features", False)) and on_cuda:
         # Compile the extractor's forward in place: state-dict names and parameters stay unchanged.

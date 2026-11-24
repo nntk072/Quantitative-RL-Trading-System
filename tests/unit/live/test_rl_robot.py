@@ -44,38 +44,34 @@ for _attr in (
     if not hasattr(_mt5_stub, _attr):
         setattr(_mt5_stub, _attr, 1)  # all timeframes equal is fine headless
 if not hasattr(_mt5_stub, "ORDER_TYPE_BUY"):
-    setattr(_mt5_stub, "ORDER_TYPE_BUY", 0)
+    cast(Any, _mt5_stub).ORDER_TYPE_BUY = 0
 if not hasattr(_mt5_stub, "ORDER_TYPE_SELL"):
-    setattr(_mt5_stub, "ORDER_TYPE_SELL", 1)
+    cast(Any, _mt5_stub).ORDER_TYPE_SELL = 1
 if not hasattr(_mt5_stub, "TRADE_RETCODE_DONE"):
-    setattr(_mt5_stub, "TRADE_RETCODE_DONE", 10009)
+    cast(Any, _mt5_stub).TRADE_RETCODE_DONE = 10009
 if not hasattr(_mt5_stub, "TRADE_RETCODE_DONE_PARTIAL"):
-    setattr(_mt5_stub, "TRADE_RETCODE_DONE_PARTIAL", 10010)
+    cast(Any, _mt5_stub).TRADE_RETCODE_DONE_PARTIAL = 10010
 if not hasattr(_mt5_stub, "account_info"):
-    setattr(_mt5_stub, "account_info", lambda: SimpleNamespace(balance=100_000.0, equity=100_000.0))
+    cast(Any, _mt5_stub).account_info = lambda: SimpleNamespace(balance=100000.0, equity=100000.0)
 if not hasattr(_mt5_stub, "symbol_select"):
-    setattr(_mt5_stub, "symbol_select", lambda *a, **k: True)
+    cast(Any, _mt5_stub).symbol_select = lambda *a, **k: True
 if not hasattr(_mt5_stub, "symbol_info"):
-    setattr(
-        _mt5_stub,
-        "symbol_info",
-        lambda *a, **k: SimpleNamespace(
-            trade_tick_size=0.1,
-            trade_tick_value=1.0,
-            digits=5,
-            volume_min=0.01,
-            volume_max=100.0,
-            volume_step=0.01,
-        ),
+    cast(Any, _mt5_stub).symbol_info = lambda *a, **k: SimpleNamespace(
+        trade_tick_size=0.1,
+        trade_tick_value=1.0,
+        digits=5,
+        volume_min=0.01,
+        volume_max=100.0,
+        volume_step=0.01,
     )
 if not hasattr(_mt5_stub, "symbol_info_tick"):
-    setattr(_mt5_stub, "symbol_info_tick", lambda *a, **k: SimpleNamespace(bid=100.0, ask=100.1))
+    cast(Any, _mt5_stub).symbol_info_tick = lambda *a, **k: SimpleNamespace(bid=100.0, ask=100.1)
 if not hasattr(_mt5_stub, "positions_get"):
-    setattr(_mt5_stub, "positions_get", lambda *a, **k: [])
+    cast(Any, _mt5_stub).positions_get = lambda *a, **k: []
 if not hasattr(_mt5_stub, "order_send"):
-    setattr(_mt5_stub, "order_send", lambda *a, **k: None)
+    cast(Any, _mt5_stub).order_send = lambda *a, **k: None
 if not hasattr(_mt5_stub, "copy_rates_from_pos"):
-    setattr(_mt5_stub, "copy_rates_from_pos", lambda *a, **k: None)
+    cast(Any, _mt5_stub).copy_rates_from_pos = lambda *a, **k: None
 
 from integrations.mt5.domain.risk_manager import RiskManager  # noqa: E402
 

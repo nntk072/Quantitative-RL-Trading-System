@@ -668,11 +668,13 @@ def process_protective_and_account_events(
         and not multi_target_tick_fill
     ):
         sl_hit = False
-        if position.sl_price is not None:
-            if position.direction == 1 and exit_low <= position.sl_price:
-                sl_hit = True
-            elif position.direction == -1 and exit_high >= position.sl_price:
-                sl_hit = True
+        if position.sl_price is not None and (
+            position.direction == 1
+            and exit_low <= position.sl_price
+            or position.direction == -1
+            and exit_high >= position.sl_price
+        ):
+            sl_hit = True
 
         if sl_hit:
             assert position.sl_price is not None
@@ -766,11 +768,14 @@ def process_protective_and_account_events(
         and tick_hit is None
         and not multi_target_position
         and position.tp_price is not None
+        and (
+            position.direction == 1
+            and exit_high >= position.tp_price
+            or position.direction == -1
+            and exit_low <= position.tp_price
+        )
     ):
-        if position.direction == 1 and exit_high >= position.tp_price:
-            tp_hit = True
-        elif position.direction == -1 and exit_low <= position.tp_price:
-            tp_hit = True
+        tp_hit = True
 
     if tp_hit and state.position is not None:
         position = state.position

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import torch
 from torch import nn
@@ -65,8 +65,8 @@ def enable_extractor_autocast(extractor: nn.Module, dtype: torch.dtype | None) -
                 )
         return output.float()
 
-    setattr(extractor, "forward", forward_amp)
-    setattr(extractor, "_amp_wrapped", True)
+    extractor.forward = forward_amp
+    cast(Any, extractor)._amp_wrapped = True
 
 
 __all__ = [

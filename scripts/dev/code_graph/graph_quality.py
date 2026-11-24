@@ -271,9 +271,10 @@ def _string_parts(expr: ast.AST, assignments: dict[str, ast.AST]) -> list[str]:
             return ["."]
         if name.endswith("Path") and expr.args:
             return _string_parts(expr.args[0], assignments)
-        if name.endswith("read_text") or name.endswith("open"):
-            if isinstance(expr.func, ast.Attribute):
-                return _string_parts(expr.func.value, assignments)
+        if (name.endswith("read_text") or name.endswith("open")) and isinstance(
+            expr.func, ast.Attribute
+        ):
+            return _string_parts(expr.func.value, assignments)
         return []
     return []
 
@@ -378,9 +379,11 @@ def _function_default_config_paths(
             continue
         positional = list(n.args.posonlyargs) + list(n.args.args)
         defaults = [None] * (len(positional) - len(n.args.defaults)) + list(n.args.defaults)
-        pairs = [(a.arg, d) for a, d in zip(positional, defaults) if d is not None]
+        pairs = [(a.arg, d) for a, d in zip(positional, defaults, strict=False) if d is not None]
         pairs.extend(
-            (a.arg, d) for a, d in zip(n.args.kwonlyargs, n.args.kw_defaults) if d is not None
+            (a.arg, d)
+            for a, d in zip(n.args.kwonlyargs, n.args.kw_defaults, strict=False)
+            if d is not None
         )
         for param, default in pairs:
             path = _config_path(default, assignments)
@@ -429,7 +432,7 @@ def _registry_relations(
                 }
             )
         if isinstance(n.value, ast.Dict):
-            for key, value in zip(n.value.keys, n.value.values):
+            for key, value in zip(n.value.keys, n.value.values, strict=False):
                 if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
                     continue
                 path = _config_path(value, assignments)

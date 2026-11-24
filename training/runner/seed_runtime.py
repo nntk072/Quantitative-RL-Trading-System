@@ -375,7 +375,7 @@ class SeedRunner:
                 "resume checkpoint stop-candidate schema is missing or differs from the current "
                 "run config; do not resume under a silently changed stop menu"
             )
-        setattr(model, "stop_candidate_schema", stop_candidate_schema)
+        model.stop_candidate_schema = stop_candidate_schema
         _log_effective_ppo(model, cfg, algo=args.algo)
 
         aux_cb = None

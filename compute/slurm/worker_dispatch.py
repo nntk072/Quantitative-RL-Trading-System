@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import shlex
@@ -430,10 +431,8 @@ def _manager() -> int:
         for request_id, (process, cancel_sent_at) in list(running.items()):
             cancel_path = cancelled / f"{request_id}.cancel"
             if cancel_path.exists() and cancel_sent_at is None and process.poll() is None:
-                try:
+                with contextlib.suppress(ProcessLookupError):
                     os.killpg(process.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
                 cancel_sent_at = time.monotonic()
                 running[request_id] = (process, cancel_sent_at)
             elif (
@@ -441,10 +440,8 @@ def _manager() -> int:
                 and time.monotonic() - cancel_sent_at >= 60
                 and process.poll() is None
             ):
-                try:
+                with contextlib.suppress(ProcessLookupError):
                     os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
             returncode = process.poll()
             if returncode is None:
                 continue

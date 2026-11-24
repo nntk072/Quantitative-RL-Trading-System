@@ -14,6 +14,7 @@ import json
 import sys
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
+from typing import Any, cast
 
 import pytest
 from omegaconf import OmegaConf
@@ -38,9 +39,9 @@ for _attr in (
     if not hasattr(_mt5_stub, _attr):
         setattr(_mt5_stub, _attr, 1)  # all timeframes equal is fine headless
 if not hasattr(_mt5_stub, "ORDER_TYPE_BUY"):
-    setattr(_mt5_stub, "ORDER_TYPE_BUY", 0)
+    cast(Any, _mt5_stub).ORDER_TYPE_BUY = 0
 if not hasattr(_mt5_stub, "ORDER_TYPE_SELL"):
-    setattr(_mt5_stub, "ORDER_TYPE_SELL", 1)
+    cast(Any, _mt5_stub).ORDER_TYPE_SELL = 1
 
 import live_trading_rl  # noqa: E402
 
@@ -112,7 +113,7 @@ def test_load_risk_overrides_partial_block_warns_and_fills(monkeypatch: pytest.M
     """A dropped key must fall back explicitly, not silently shrink live risk."""
     warnings: list[str] = []
     monkeypatch.setattr(
-        getattr(live_trading_rl, "logger"),
+        cast(Any, live_trading_rl).logger,
         "warning",
         lambda msg, *a: warnings.append(str(msg)),
     )

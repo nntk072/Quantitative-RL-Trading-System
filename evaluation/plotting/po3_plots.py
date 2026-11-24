@@ -71,10 +71,7 @@ def _draw_candles(ax: Axes, ohlcv: pd.DataFrame) -> None:
         ohlcv: Tabular data used for the ohlcv.
     """
     xs = np.asarray(mdates.date2num(ohlcv.index), dtype=float)  # type: ignore[no-untyped-call,type-var]
-    if len(xs) >= 2:
-        spacing = float(np.median(np.diff(xs)))
-    else:
-        spacing = 1.0 / (24.0 * 60.0)
+    spacing = float(np.median(np.diff(xs))) if len(xs) >= 2 else 1.0 / (24.0 * 60.0)
     half = 0.3 * max(spacing, 1e-9)
     width = 2.0 * half
     for i, (_, row) in enumerate(ohlcv.iterrows()):
@@ -122,10 +119,7 @@ def _candle_half_width(ohlcv: pd.DataFrame) -> float:
         Numeric result returned by ``_candle_half_width``.
     """
     xs = np.asarray(mdates.date2num(ohlcv.index), dtype=float)  # type: ignore[no-untyped-call,type-var]
-    if len(xs) >= 2:
-        spacing = float(np.median(np.diff(xs)))
-    else:
-        spacing = 1.0 / (24.0 * 60.0)
+    spacing = float(np.median(np.diff(xs))) if len(xs) >= 2 else 1.0 / (24.0 * 60.0)
     return 0.3 * max(spacing, 1e-9)
 
 

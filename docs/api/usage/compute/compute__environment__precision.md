@@ -21,7 +21,7 @@ This page contains 4 public callable records owned by `compute.environment.preci
 
 **Observed usage:**
 
-1. [production caller: `configure_cuda_for_training`](../../../../compute/environment/precision.py#L131)
+1. [production caller: `configure_cuda_for_training`](../../../../compute/environment/precision.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -66,7 +66,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Backward-compatible alias for accelerator-wide training setup.
 
-**Exact API:** {py:obj}`compute.environment.precision.configure_cuda_for_training` · **Source:** [compute/environment/precision.py:122](../../../../compute/environment/precision.py#L122)
+**Exact API:** {py:obj}`compute.environment.precision.configure_cuda_for_training` · **Source:** [compute/environment/precision.py:123](../../../../compute/environment/precision.py#L123)
 
 **Inputs and outputs:**
 

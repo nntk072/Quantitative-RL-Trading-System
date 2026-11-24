@@ -86,10 +86,7 @@ def format_diversity_table(
             continue
         probs = shares.to_numpy(dtype=float)
         probs = probs[probs > 0]  # type: ignore[assignment]
-        if probs.size:
-            entropy = float(-(probs * np.log(probs)).sum())
-        else:
-            entropy = float("nan")
+        entropy = float(-(probs * np.log(probs)).sum()) if probs.size else float("nan")
         summary_rows.append(
             [
                 side,

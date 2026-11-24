@@ -326,9 +326,7 @@ def build_eval_common(
             cfg.execution.get("server_side_protective_orders", False)
         ),
         "execution_seed": (
-            int(getattr(args, "seed"))
-            if args is not None and getattr(args, "seed", None) is not None
-            else None
+            int(args.seed) if args is not None and getattr(args, "seed", None) is not None else None
         ),
         "allow_multi_tp": bool(cfg.env.get("allow_multi_tp", False)),
         "allow_simplex": bool(cfg.env.get("allow_simplex", True)),

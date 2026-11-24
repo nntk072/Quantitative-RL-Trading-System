@@ -181,7 +181,7 @@ def _markdown_table(value: Any, *, heading: str = "Measure") -> list[str]:
 
 def _counter(rows: list[dict[str, str]], field: str) -> dict[str, int]:
     counts = Counter((row.get(field) or "unavailable").strip() or "unavailable" for row in rows)
-    return dict(sorted(counts.items(), key=lambda item: (-item[1], item[0])))
+    return dict(sorted(counts.items(), key=lambda pair: (-pair[1], pair[0])))
 
 
 def _multi_counter(rows: list[dict[str, str]], field: str) -> dict[str, int]:
@@ -192,7 +192,7 @@ def _multi_counter(rows: list[dict[str, str]], field: str) -> dict[str, int]:
         for value in values:
             if value not in (None, ""):
                 counts[str(value)] += 1
-    return dict(sorted(counts.items(), key=lambda item: (-item[1], item[0])))
+    return dict(sorted(counts.items(), key=lambda pair: (-pair[1], pair[0])))
 
 
 def _distribution(values: list[float]) -> dict[str, float | int | None]:
@@ -2052,7 +2052,7 @@ def _write_equity_figures(
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     figures["peak_drawdown"] = path
-    for name, figure_path in figures.items():
+    for _name, figure_path in figures.items():
         if not figure_path.is_file() or figure_path.stat().st_size == 0:
             raise RuntimeError(f"report figure generation failed: {figure_path}")
     return figures
@@ -2090,7 +2090,7 @@ def _plot_training_diagnostics(
         out_dir.mkdir(parents=True, exist_ok=True)
         fig, axes = plt.subplots(len(panels), 1, figsize=(12, 11), squeeze=False)
         plotted_any = False
-        for ax, (title, columns) in zip(axes[:, 0], panels):
+        for ax, (title, columns) in zip(axes[:, 0], panels, strict=False):
             plotted_panel = False
             for column in columns:
                 if column not in frame.columns:
@@ -2168,11 +2168,19 @@ def _plot_variant_figures(
                 )
             )
 
-            def save_counts(title: str, counts: dict[str, int], filename: str, color: str) -> None:
+            def save_counts(
+                title: str,
+                counts: dict[str, int],
+                filename: str,
+                color: str,
+                *,
+                out_dir: Any = out_dir,
+                charts: Any = charts,
+            ) -> None:
                 fig, ax = plt.subplots(figsize=(10, 5.5))
-                items = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:12]
+                items = sorted(counts.items(), key=lambda pair: (-pair[1], pair[0]))[:12]
                 if items:
-                    labels, values = zip(*items)
+                    labels, values = zip(*items, strict=False)
                     y = list(range(len(labels)))
                     ax.barh(y, values, color=color)
                     ax.set_yticks(y, labels=[str(label) for label in labels])
@@ -2262,7 +2270,7 @@ def _plot_variant_figures(
                 for group in groups:
                     values = [exit_data.get(group, {}).get(reason, 0) for reason in reasons]
                     ax.bar(x, values, bottom=bottom, label=group, color=colors[group])
-                    bottom = [a + b for a, b in zip(bottom, values)]
+                    bottom = [a + b for a, b in zip(bottom, values, strict=False)]
                 ax.set_xticks(x, labels=reasons, rotation=35, ha="right")
                 ax.set_ylabel("Completed positions")
                 ax.legend()
@@ -2297,7 +2305,7 @@ def _plot_variant_figures(
                 ("Planned reward/risk", "planned_rr"),
                 ("Risk sizing values", "risk_requested"),
             )
-            for ax, (title, key) in zip(axes, histogram_items):
+            for ax, (title, key) in zip(axes, histogram_items, strict=False):
                 distribution_groups: tuple[tuple[str, str], ...] = (
                     (
                         ("requested", "risk_requested"),

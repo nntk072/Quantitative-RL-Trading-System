@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import hashlib
 import json
@@ -98,14 +99,12 @@ def _daily_loss_event_reconciliation(
             event_local = _timestamp(row.get("time"))
             event_time = row.get("time")
             raw_local = None
-            try:
+            with contextlib.suppress(ValueError):
                 raw_local = (
                     datetime.fromisoformat(event_time.replace("Z", "+00:00"))
                     if event_time
                     else None
                 )
-            except ValueError:
-                pass
             event_equity = _finite(row.get("equity"))
             if event_local is None or raw_local is None or event_equity is None:
                 events.append(
@@ -407,7 +406,9 @@ def _session_equity_risk_screen(
         return {"status": "incomplete", "reason": "equity/session row counts differ"}
     if not values:
         return {"status": "incomplete", "reason": "equity series is empty"}
-    if any(current < previous for previous, current in zip(session_ids, session_ids[1:])):
+    if any(
+        current < previous for previous, current in zip(session_ids, session_ids[1:], strict=False)
+    ):
         return {"status": "mismatch", "reason": "session IDs decrease in equity chronology"}
 
     loss_allowance = initial_balance * daily_loss_limit_pct
@@ -653,7 +654,7 @@ def audit_recorded_equity_series(run_dir: Path) -> dict[str, Any]:
         values.append(value)
 
     chronology_failures = sum(
-        current <= previous for previous, current in zip(timestamps, timestamps[1:])
+        current <= previous for previous, current in zip(timestamps, timestamps[1:], strict=False)
     )
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
     initial_balance = _finite(str(metrics.get("initial_balance", "")))

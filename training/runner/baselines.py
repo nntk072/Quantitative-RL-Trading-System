@@ -90,10 +90,7 @@ def _make_indexed_policy(
             Numeric result returned by ``policy``.
         """
         i = state["i"]
-        if i < len(actions_series):
-            action = int(actions_series.iloc[i])
-        else:
-            action = 0
+        action = int(actions_series.iloc[i]) if i < len(actions_series) else 0
         state["i"] += 1
         return action
 
@@ -379,10 +376,7 @@ def main() -> None:
         # Use the precomputed policy if we built one (macd/ema/rsi), else
         # fall back to the generic STRATEGIES entry. This is the spot where
         # the placeholders are overridden with real indicator logic.
-        if indexed_policy is not None:
-            run_policy = indexed_policy
-        else:
-            run_policy = policy
+        run_policy = indexed_policy if indexed_policy is not None else policy
 
         result = run_backtest(
             bars=bars,

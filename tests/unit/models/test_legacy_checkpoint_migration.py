@@ -90,6 +90,6 @@ def test_pre_reorganization_checkpoint_modules_resolve_to_current_classes():
     from learning.rl.rollout_buffer import DeviceDictRolloutBuffer
     from models.encoders import TCNEncoder
 
-    assert getattr(legacy_encoder, "TCNEncoder") is TCNEncoder
-    assert getattr(legacy_policy, "ClampedStdMultiInputPolicy") is ClampedStdMultiInputPolicy
-    assert getattr(legacy_buffer, "DeviceDictRolloutBuffer") is DeviceDictRolloutBuffer
+    assert legacy_encoder.TCNEncoder is TCNEncoder
+    assert legacy_policy.ClampedStdMultiInputPolicy is ClampedStdMultiInputPolicy
+    assert legacy_buffer.DeviceDictRolloutBuffer is DeviceDictRolloutBuffer

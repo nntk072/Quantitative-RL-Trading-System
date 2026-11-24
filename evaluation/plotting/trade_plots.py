@@ -276,7 +276,7 @@ def plot_mae_mfe_html(table: pd.DataFrame, out_path: Path | str | None = None) -
                         size=9,
                         symbol=[
                             "x" if s else "triangle-up" if t else "circle"
-                            for s, t in zip(sub["sl_reached"], sub["tp_reached"])
+                            for s, t in zip(sub["sl_reached"], sub["tp_reached"], strict=False)
                         ],
                     ),
                     text=sub["close_type"],

@@ -61,7 +61,7 @@ def experiment_run_data_inputs(
                 data_inputs[f"{dataset_name}:{relative}"] = (
                     sha256_file(path) if path.is_file() else "MISSING"
                 )
-        for timeframe, symbol_files in dataset.get("timeframe_files", {}).items():
+        for _timeframe, symbol_files in dataset.get("timeframe_files", {}).items():
             for filename in symbol_files.values():
                 path = raw_dir / str(filename)
                 relative = str(path.relative_to(root))

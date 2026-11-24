@@ -150,11 +150,13 @@ class EntryExecutionRuntimeMixin(
         """
         entry_equity = float(self.account.equity)
         sl_already_hit = False
-        if sl_price is not None:
-            if discrete_action == 1 and fill_bid <= sl_price:
-                sl_already_hit = True
-            elif discrete_action == -1 and fill_ask >= sl_price:
-                sl_already_hit = True
+        if sl_price is not None and (
+            discrete_action == 1
+            and fill_bid <= sl_price
+            or discrete_action == -1
+            and fill_ask >= sl_price
+        ):
+            sl_already_hit = True
         if not sl_already_hit:
             self.position = self._open_at_quote(
                 (fill_bid, fill_ask),

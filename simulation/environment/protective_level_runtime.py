@@ -207,11 +207,13 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
             return
 
         sl_hit = False
-        if self.position.sl_price is not None:
-            if self.position.direction == 1 and exit_low <= self.position.sl_price:
-                sl_hit = True
-            elif self.position.direction == -1 and exit_high >= self.position.sl_price:
-                sl_hit = True
+        if self.position.sl_price is not None and (
+            self.position.direction == 1
+            and exit_low <= self.position.sl_price
+            or self.position.direction == -1
+            and exit_high >= self.position.sl_price
+        ):
+            sl_hit = True
 
         if sl_hit:
             assert self.position.sl_price is not None
@@ -264,9 +266,12 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                     continue
 
                 slot_hit = False
-                if pos.direction == 1 and exit_high >= float(slot_px):
-                    slot_hit = True
-                elif pos.direction == -1 and exit_low <= float(slot_px):
+                if (
+                    pos.direction == 1
+                    and exit_high >= float(slot_px)
+                    or pos.direction == -1
+                    and exit_low <= float(slot_px)
+                ):
                     slot_hit = True
 
                 if slot_hit:
@@ -341,9 +346,12 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                 return
         elif self.position.tp_price is not None:
             tp_hit = False
-            if self.position.direction == 1 and exit_high >= self.position.tp_price:
-                tp_hit = True
-            elif self.position.direction == -1 and exit_low <= self.position.tp_price:
+            if (
+                self.position.direction == 1
+                and exit_high >= self.position.tp_price
+                or self.position.direction == -1
+                and exit_low <= self.position.tp_price
+            ):
                 tp_hit = True
 
             if tp_hit:

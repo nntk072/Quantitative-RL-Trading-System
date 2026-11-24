@@ -36,7 +36,7 @@ This page contains 2 public callable records owned by `features.pipeline.feature
 
 **Observed usage:**
 
-1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L98)
+1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L99)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -95,7 +95,7 @@ def _build_chart_features(
 
 **Observed usage:**
 
-1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L98)
+1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L99)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

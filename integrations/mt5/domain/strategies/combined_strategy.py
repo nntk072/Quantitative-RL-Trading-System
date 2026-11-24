@@ -62,7 +62,7 @@ class CombinedStrategy(TradingStrategy):
         signals = []
         symbol = self.data.get_symbol()
 
-        for strategy_name, strategy in self.strategies.items():
+        for _strategy_name, strategy in self.strategies.items():
             try:
                 _, signal = strategy.signal()
                 signals.append(signal)

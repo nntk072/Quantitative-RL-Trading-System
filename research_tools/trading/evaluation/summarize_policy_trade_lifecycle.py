@@ -212,9 +212,7 @@ def _payout_reconciliation(
     reported_successes = _number(str(evaluation_diagnostics.get("cycle_successes", "")))
     reported_total_value = _number(str(evaluation_diagnostics.get("total_economic_value", "")))
     if payout_rows or evaluation_diagnostics:
-        if payout_sum is None:
-            status = "incomplete"
-        elif reported_payouts is None or reported_successes is None:
+        if payout_sum is None or reported_payouts is None or reported_successes is None:
             status = "incomplete"
         else:
             if math.isclose(payout_sum, reported_payouts, rel_tol=1e-9, abs_tol=1e-7):

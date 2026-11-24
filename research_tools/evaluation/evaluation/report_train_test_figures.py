@@ -107,7 +107,7 @@ def generate_train_test_figures(
         lower, upper = float(all_equity.min()), float(all_equity.max())
         margin = max((upper - lower) * 0.06, 1.0)
         fig, axes = plt.subplots(1, 2, figsize=(16, 5.8), sharey=True)
-        for ax, split in zip(axes, ("training", "testing")):
+        for ax, split in zip(axes, ("training", "testing"), strict=False):
             equity = curves[split]
             ax.plot(
                 equity.index,
@@ -146,7 +146,7 @@ def generate_train_test_figures(
         }
         dd_max = max(float(series.max()) for series in drawdowns.values())
         fig, axes = plt.subplots(1, 2, figsize=(16, 5.3), sharey=True)
-        for ax, split in zip(axes, ("training", "testing")):
+        for ax, split in zip(axes, ("training", "testing"), strict=False):
             series = drawdowns[split]
             ax.plot(series.index, series.to_numpy(dtype=float), color=colors[split], linewidth=1.0)
             ax.set_title(f"{split_titles[split]} · max {float(series.max()):.2f}%")
@@ -183,7 +183,7 @@ def generate_train_test_figures(
             1.0,
         )
         fig, axes = plt.subplots(1, 2, figsize=(16, 5.2), sharey=True)
-        for ax, split in zip(axes, ("training", "testing")):
+        for ax, split in zip(axes, ("training", "testing"), strict=False):
             series = monthly_changes[split]
             labels = [timestamp.strftime("%Y-%m") for timestamp in series.index]
             values = series.to_numpy(dtype=float)
@@ -211,7 +211,7 @@ def generate_train_test_figures(
             ("n_trades", "Completed positions", "Position count", 1.0),
         )
         fig, axes = plt.subplots(2, 3, figsize=(15, 8.2))
-        for ax, (metric, title, unit, scale) in zip(axes.flat, metric_specs):
+        for ax, (metric, title, unit, scale) in zip(axes.flat, metric_specs, strict=False):
             values = []
             labels = []
             bar_colors = []
@@ -284,7 +284,7 @@ def generate_train_test_figures(
                             number
                         )
         fig, axes = plt.subplots(1, 3, figsize=(18, 6.2))
-        for ax, outcome in zip(axes, ("winning", "losing", "breakeven")):
+        for ax, outcome in zip(axes, ("winning", "losing", "breakeven"), strict=False):
             split_data = exit_values.get(outcome, {})
             categories = sorted(
                 {reason for reason_map in split_data.values() for reason in reason_map},
@@ -320,7 +320,7 @@ def generate_train_test_figures(
         if combined_risk:
             bin_count = min(25, max(5, int(math.sqrt(len(combined_risk)))))
             bins = np.histogram_bin_edges(combined_risk, bins=bin_count)
-            for ax, split in zip(axes, ("training", "testing")):
+            for ax, split in zip(axes, ("training", "testing"), strict=False):
                 if risk_data[split]:
                     ax.hist(
                         risk_data[split], bins=bins, density=True, color=colors[split], alpha=0.7
@@ -417,7 +417,7 @@ def generate_train_test_figures(
         plt.close(fig)
         generated["train_test_sl_tp_references"] = path
 
-        for name, path in generated.items():
+        for _name, path in generated.items():
             if not path.is_file() or path.stat().st_size == 0:
                 raise RuntimeError(f"training/testing comparison figure generation failed: {path}")
         variant["comparison_figures"] = {

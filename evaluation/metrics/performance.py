@@ -348,7 +348,7 @@ def _account_path_metrics(
     first_payout = number(groups[0][1][0].get("cumulative_payouts"))
     if first_payout is None or not math.isclose(first_payout, 0.0, abs_tol=1e-9):
         payout_boundary_ambiguous = True
-    for (_, previous), (_, current) in zip(groups, groups[1:]):
+    for (_, previous), (_, current) in zip(groups, groups[1:], strict=False):
         previous_payout = number(previous[-1].get("cumulative_payouts"))
         current_payout = number(current[0].get("cumulative_payouts"))
         if (

@@ -14,7 +14,7 @@ This page contains 3 public callable records owned by `features.po3.zones`. Stat
 
 **Observed usage:**
 
-1. [production caller: `build_fvg_zones`](../../../../features/po3/zones.py#L130)
+1. [production caller: `build_fvg_zones`](../../../../features/po3/zones.py#L127)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -41,7 +41,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     return zones
 ```
 
-2. [production caller: `build_fvg_zones_for_plot`](../../../../features/po3/zones.py#L239)
+2. [production caller: `build_fvg_zones_for_plot`](../../../../features/po3/zones.py#L236)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -150,7 +150,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build drawable FVG/IFVG zones from native HTF/LTF candles (plot-only).
 
-**Exact API:** {py:obj}`features.po3.zones.build_fvg_zones_for_plot` · **Source:** [features/po3/zones.py:177](../../../../features/po3/zones.py#L177)
+**Exact API:** {py:obj}`features.po3.zones.build_fvg_zones_for_plot` · **Source:** [features/po3/zones.py:174](../../../../features/po3/zones.py#L174)
 
 **Inputs and outputs:**
 

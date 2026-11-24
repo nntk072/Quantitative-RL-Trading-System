@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import gymnasium as gym
 import numpy as np
@@ -217,25 +217,21 @@ class _TinyEnv(gym.Env[npt.NDArray[np.float32], np.int64]):
 
 def test_q5_multiplier_state_survives_sb3_checkpoint_roundtrip(tmp_path: Path) -> None:
     model = PPO("MlpPolicy", _TinyEnv(), n_steps=8, batch_size=4, n_epochs=1, device="cpu")
-    setattr(
-        model,
-        "_constrained_rl_state",
-        {
-            "version": 3,
-            "episode_cost_budget": 1.0,
-            "dual_learning_rate": 0.1,
-            "lambda_initial": 0.0,
-            "lambda_max": 100.0,
-            "gamma": 0.99,
-            "cost_discount_gamma": 1.0,
-            "daily_loss_limit_usd": 5_000.0,
-            "max_loss_limit_usd": 10_000.0,
-            "trailing_dd_limit_usd": 0.0,
-            "lagrange_multiplier": 2.5,
-            "dual_updates": 7,
-        },
-    )
+    cast(Any, model)._constrained_rl_state = {
+        "version": 3,
+        "episode_cost_budget": 1.0,
+        "dual_learning_rate": 0.1,
+        "lambda_initial": 0.0,
+        "lambda_max": 100.0,
+        "gamma": 0.99,
+        "cost_discount_gamma": 1.0,
+        "daily_loss_limit_usd": 5000.0,
+        "max_loss_limit_usd": 10000.0,
+        "trailing_dd_limit_usd": 0.0,
+        "lagrange_multiplier": 2.5,
+        "dual_updates": 7,
+    }
     path = tmp_path / "q5_checkpoint"
     model.save(path)
     restored = PPO.load(path, device="cpu")
-    assert getattr(restored, "_constrained_rl_state") == getattr(model, "_constrained_rl_state")
+    assert cast(Any, restored)._constrained_rl_state == cast(Any, model)._constrained_rl_state

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -593,15 +594,11 @@ if _SB3_AVAILABLE:
 
         def _persist_state(self) -> None:
             """Process state."""
-            setattr(
-                self.model,
-                "_constrained_rl_state",
-                {
-                    **self._config_state(),
-                    "lagrange_multiplier": self.lagrange_multiplier,
-                    "dual_updates": self._dual_updates,
-                },
-            )
+            cast(Any, self.model)._constrained_rl_state = {
+                **self._config_state(),
+                "lagrange_multiplier": self.lagrange_multiplier,
+                "dual_updates": self._dual_updates,
+            }
 
         def _on_training_start(self) -> None:
             """Process training start."""
@@ -749,10 +746,8 @@ if _SB3_AVAILABLE:
             """Process rollout end."""
             row: dict[str, Any] = {"timestep": self.num_timesteps}
             for k, v in self.model.logger.name_to_value.items():
-                try:
+                with contextlib.suppress(TypeError, ValueError):
                     row[k] = float(v)
-                except (TypeError, ValueError):
-                    pass
             self._rows.append(row)
 
         def _on_training_end(self) -> None:
@@ -931,9 +926,7 @@ if _SB3_AVAILABLE:
                 self._run_viability_eval()
                 while self._next_viability_eval_at <= self.num_timesteps:
                     self._next_viability_eval_at += self._viability_eval_freq
-            if self.viability_failure_reason is not None:
-                return False
-            return True
+            return self.viability_failure_reason is None
 
         def _run_eval(self) -> None:
             """Run eval."""

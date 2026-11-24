@@ -185,7 +185,7 @@ def test_action_selected_partial_tp_uses_first_source_tick_and_reconciles_ledger
     assert source_tick is not None
     assert source_tick[1] == env_partial["price"] == bt_partial["price"]
 
-    for engine_name, events, final_balance, open_event in (
+    for engine_name, events, final_balance, _open_event in (
         ("environment", environment_events, env.account.balance, env_open),
         ("backtest", backtest_events, float(backtest["account"].balance), bt_open),
     ):

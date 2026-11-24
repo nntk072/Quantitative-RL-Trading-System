@@ -117,10 +117,7 @@ def get_session(
     Returns:
         Session label for the timestamp.
     """
-    if isinstance(timestamp, str):
-        ts = pd.Timestamp(timestamp)
-    else:
-        ts = timestamp
+    ts = pd.Timestamp(timestamp) if isinstance(timestamp, str) else timestamp
     source = pd.DatetimeIndex([ts])
     if source.tz is None and source_clock_model == "native":
         source = source.tz_localize(tz)

@@ -153,40 +153,42 @@ def build_po3_ifvg_state(
 
         if state == 3 and direction == 1 and bull_confirm[t] > 0.0:
             origin = bull_origin[t]
-            if np.isfinite(origin) and sweep_index <= int(origin) <= t:
-                if t - int(origin) <= max_ifvg_age_bars:
-                    state = 5
-                    ifvg_origin_bar = origin
-                    ifvg_origin_time_ns = pd.Timestamp(idx[int(origin)]).value
-                    zone_low = float(ifvg_zones["ifvg_bull_low"].iloc[t])
-                    zone_high = float(ifvg_zones["ifvg_bull_high"].iloc[t])
-                    if low[t] <= zone_high and high[t] >= zone_low:
-                        through_zone_extreme = low[t]
-                    ifvg_time_ns = pd.Timestamp(idx[t]).value
-                    ifvg_index = t
-                    output.iat[t, column_index["po3_ifvg_confirmed"]] = 1.0
-                    output.iat[t, column_index["po3_distribution_started"]] = 1.0
-                    output.iat[t, column_index["po3_ifvg_confirmation_tf_code"]] = (
-                        bull_confirmation_tf_code[t]
-                    )
+            if (np.isfinite(origin) and sweep_index <= int(origin) <= t) and t - int(
+                origin
+            ) <= max_ifvg_age_bars:
+                state = 5
+                ifvg_origin_bar = origin
+                ifvg_origin_time_ns = pd.Timestamp(idx[int(origin)]).value
+                zone_low = float(ifvg_zones["ifvg_bull_low"].iloc[t])
+                zone_high = float(ifvg_zones["ifvg_bull_high"].iloc[t])
+                if low[t] <= zone_high and high[t] >= zone_low:
+                    through_zone_extreme = low[t]
+                ifvg_time_ns = pd.Timestamp(idx[t]).value
+                ifvg_index = t
+                output.iat[t, column_index["po3_ifvg_confirmed"]] = 1.0
+                output.iat[t, column_index["po3_distribution_started"]] = 1.0
+                output.iat[t, column_index["po3_ifvg_confirmation_tf_code"]] = (
+                    bull_confirmation_tf_code[t]
+                )
         elif state == 4 and direction == -1 and bear_confirm[t] > 0.0:
             origin = bear_origin[t]
-            if np.isfinite(origin) and sweep_index <= int(origin) <= t:
-                if t - int(origin) <= max_ifvg_age_bars:
-                    state = 6
-                    ifvg_origin_bar = origin
-                    ifvg_origin_time_ns = pd.Timestamp(idx[int(origin)]).value
-                    zone_low = float(ifvg_zones["ifvg_bear_low"].iloc[t])
-                    zone_high = float(ifvg_zones["ifvg_bear_high"].iloc[t])
-                    if high[t] >= zone_low and low[t] <= zone_high:
-                        through_zone_extreme = high[t]
-                    ifvg_time_ns = pd.Timestamp(idx[t]).value
-                    ifvg_index = t
-                    output.iat[t, column_index["po3_ifvg_confirmed"]] = 1.0
-                    output.iat[t, column_index["po3_distribution_started"]] = 1.0
-                    output.iat[t, column_index["po3_ifvg_confirmation_tf_code"]] = (
-                        bear_confirmation_tf_code[t]
-                    )
+            if (np.isfinite(origin) and sweep_index <= int(origin) <= t) and t - int(
+                origin
+            ) <= max_ifvg_age_bars:
+                state = 6
+                ifvg_origin_bar = origin
+                ifvg_origin_time_ns = pd.Timestamp(idx[int(origin)]).value
+                zone_low = float(ifvg_zones["ifvg_bear_low"].iloc[t])
+                zone_high = float(ifvg_zones["ifvg_bear_high"].iloc[t])
+                if high[t] >= zone_low and low[t] <= zone_high:
+                    through_zone_extreme = high[t]
+                ifvg_time_ns = pd.Timestamp(idx[t]).value
+                ifvg_index = t
+                output.iat[t, column_index["po3_ifvg_confirmed"]] = 1.0
+                output.iat[t, column_index["po3_distribution_started"]] = 1.0
+                output.iat[t, column_index["po3_ifvg_confirmation_tf_code"]] = (
+                    bear_confirmation_tf_code[t]
+                )
 
         if state in (3, 4):
             output.iat[t, column_index["po3_waiting_ifvg"]] = 1.0

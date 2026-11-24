@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -173,7 +173,7 @@ class EpisodeSpacesInitializationMixin(RuntimeMixinBase):
                 shape=(vae_latent_dim,),
                 dtype=np.float32,
             )
-        setattr(self, "observation_space", observation_space)
+        cast(Any, self).observation_space = observation_space
 
 
 __all__ = ["EpisodeSpacesInitializationMixin"]

@@ -6,6 +6,7 @@ A short sampled-action slice adds return and risk metrics on the same cadence.
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import json
 import logging
@@ -13,7 +14,7 @@ import random
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -664,7 +665,7 @@ if _SB3_AVAILABLE:
 
         def _on_training_start(self) -> None:
             """Process training start."""
-            orig = getattr(self.model, "train")
+            orig = cast(Any, self.model).train
             callback = self
 
             def _train_and_report(*args: Any, **kwargs: Any) -> Any:
@@ -698,10 +699,8 @@ if _SB3_AVAILABLE:
                         Result of process TrainingDashboardCallback.
                     """
                     total = real_clip(parameters, max_norm, *args, **kwargs)
-                    try:
+                    with contextlib.suppress(TypeError, ValueError):
                         norms.append(float(total))
-                    except (TypeError, ValueError):
-                        pass
                     return total
 
                 torch.nn.utils.clip_grad_norm_ = _cap
@@ -738,7 +737,7 @@ if _SB3_AVAILABLE:
                 callback._advance_log()
                 return result
 
-            setattr(self.model, "train", _train_and_report)
+            cast(Any, self.model).train = _train_and_report
 
         def _on_step(self) -> bool:
             """Process step.

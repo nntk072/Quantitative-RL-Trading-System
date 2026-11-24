@@ -8,6 +8,7 @@ episode semantics are unchanged.
 
 from __future__ import annotations
 
+import contextlib
 import multiprocessing as mp
 import traceback
 import warnings
@@ -369,10 +370,8 @@ class ShardedBundleVecEnv(VecEnv):
             return
         if self.waiting:
             for remote in self.remotes:
-                try:
+                with contextlib.suppress(RuntimeError):
                     self._receive(remote)
-                except RuntimeError:
-                    pass
             self.waiting = False
         for remote in self.remotes:
             if remote.closed:
@@ -380,10 +379,8 @@ class ShardedBundleVecEnv(VecEnv):
             remote.send(("close", None))
         for remote in self.remotes:
             if not remote.closed:
-                try:
+                with contextlib.suppress(EOFError, BrokenPipeError):
                     self._receive(remote)
-                except (EOFError, BrokenPipeError):
-                    pass
                 remote.close()
         for process in self.processes:
             process.join(timeout=5)
@@ -400,7 +397,8 @@ class ShardedBundleVecEnv(VecEnv):
         """
         if self.render_mode != "rgb_array":
             warnings.warn(
-                f"render mode is {self.render_mode!r}; expected 'rgb_array' for get_images()"
+                f"render mode is {self.render_mode!r}; expected 'rgb_array' for get_images()",
+                stacklevel=2,
             )
             return [None for _ in range(self.num_envs)]
         for remote in self.remotes:

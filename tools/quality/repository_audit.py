@@ -83,16 +83,20 @@ def _literal_exports(tree: ast.Module) -> list[str]:
     names: list[str] = []
     for node in tree.body:
         value: ast.expr | None = None
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
+        if (
+            isinstance(node, ast.Assign)
+            and any(
+                isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets
+            )
+            or (
+                isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                or isinstance(node, ast.AugAssign)
+                and isinstance(node.target, ast.Name)
+            )
+            and node.target.id == "__all__"
         ):
             value = node.value
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            if node.target.id == "__all__":
-                value = node.value
-        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
-            if node.target.id == "__all__":
-                value = node.value
         if value is None:
             continue
         try:
@@ -349,9 +353,12 @@ def _audit_file_accountability(root: Path, paths: Iterable[Path]) -> dict[str, A
             elif suite == "integration":
                 key = parts[2] if len(parts) > 3 else path.name
                 owner = integration_owners.get(key)
-            elif suite == "fixtures" and len(parts) > 2 and parts[2] == "research":
-                owner = "evidence_reporting_engineer"
-            elif suite == "research":
+            elif (
+                suite == "fixtures"
+                and len(parts) > 2
+                and parts[2] == "research"
+                or suite == "research"
+            ):
                 owner = "evidence_reporting_engineer"
             elif suite == "architecture" or len(parts) == 2:
                 owner = "architect"

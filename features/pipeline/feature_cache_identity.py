@@ -54,11 +54,13 @@ def feature_cache_content_hash(
         payload: dict[str, Any] = {}
         if hasattr(cfg, "features"):
             feature_payload = OmegaConf.to_container(cfg.features, resolve=True)
-            if isinstance(feature_payload, dict):
-                # False is the historical behavior, so keep its existing cache
-                # identity. The opt-in treatment remains part of the hash.
-                if feature_payload.get("normalize_d1_technical_on_source") is False:
-                    feature_payload.pop("normalize_d1_technical_on_source")
+            # False is the historical behavior, so keep its existing cache
+            # identity. The opt-in treatment remains part of the hash.
+            if (
+                isinstance(feature_payload, dict)
+                and feature_payload.get("normalize_d1_technical_on_source") is False
+            ):
+                feature_payload.pop("normalize_d1_technical_on_source")
             payload["features"] = feature_payload
         if hasattr(cfg, "strategy") and hasattr(cfg.strategy, "ifvg"):
             ifvg_payload = OmegaConf.to_container(cfg.strategy.ifvg, resolve=True)

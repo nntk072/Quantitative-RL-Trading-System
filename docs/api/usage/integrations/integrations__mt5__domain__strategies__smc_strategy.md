@@ -110,7 +110,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Identify bullish and bearish Fair Value Gaps (FVG).
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_fair_value_gaps` · **Source:** [integrations/mt5/domain/strategies/smc_strategy.py:76](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L76)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_fair_value_gaps` · **Source:** [integrations/mt5/domain/strategies/smc_strategy.py:74](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L74)
 
 **Inputs and outputs:**
 
@@ -128,7 +128,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L165)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -159,7 +159,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Identify market structure (trend direction).
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_market_structure` · **Source:** [integrations/mt5/domain/strategies/smc_strategy.py:110](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L110)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_market_structure` · **Source:** [integrations/mt5/domain/strategies/smc_strategy.py:108](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L108)
 
 **Inputs and outputs:**
 
@@ -177,7 +177,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L168)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L166)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -226,7 +226,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L162)
+1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L160)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -257,7 +257,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Generate trading signal based on SMC concepts.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.signal` · **Source:** [integrations/mt5/domain/strategies/smc_strategy.py:149](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L149)
+**Exact API:** {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.signal` · **Source:** [integrations/mt5/domain/strategies/smc_strategy.py:147](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L147)
 
 **Inputs and outputs:**
 

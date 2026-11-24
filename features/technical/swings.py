@@ -293,10 +293,7 @@ def swing_features(
     Returns:
         DataFrame returned by ``swing_features``.
     """
-    if atr is None:
-        atr_s = compute_atr(df, period=14)
-    else:
-        atr_s = atr.reindex(df.index)
+    atr_s = compute_atr(df, period=14) if atr is None else atr.reindex(df.index)
     atr_safe = atr_s.where(atr_s > 0)
     close = df["close"]
     last_h = swings["swing_high_extreme"]

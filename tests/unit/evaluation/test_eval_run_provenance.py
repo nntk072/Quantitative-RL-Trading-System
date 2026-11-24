@@ -325,7 +325,7 @@ def test_train_only_screen_exports_complete_replay_ledgers_with_hashes(
     assert ledger["test_split_evaluated"] is False
     assert ledger["n_steps"] == 2
     assert ledger["artifacts"]["trade_setup_decisions"]["row_count"] == 1
-    for name, artifact in ledger["artifacts"].items():
+    for _name, artifact in ledger["artifacts"].items():
         path = report_path.parent / artifact["path"]
         assert path.is_file()
         assert artifact["sha256"] == file_sha256(path)

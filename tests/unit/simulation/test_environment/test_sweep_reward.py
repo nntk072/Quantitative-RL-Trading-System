@@ -15,7 +15,7 @@ class TestSweepConfirmationReward:
 
         # Start below London High, then cross and hold above
         prices = [94, 96, 97, 98, 99]
-        for i, price in enumerate(prices):
+        for _i, price in enumerate(prices):
             r = reward_fn(
                 0,
                 0,
@@ -77,7 +77,7 @@ class TestSweepConfirmationReward:
         # Start below Asian High, then cross and hold above
         # London High is far above, so won't interfere
         prices = [93, 96, 97, 98, 99]
-        for i, price in enumerate(prices):
+        for _i, price in enumerate(prices):
             r = reward_fn(
                 0,
                 0,

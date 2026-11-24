@@ -49,7 +49,9 @@ def build_coverage() -> dict[str, Any]:
         rows.append(
             {
                 "subject": cells[0],
-                "dimensions": dict(zip(DIMENSIONS, (CELL_STATES[state] for state in states))),
+                "dimensions": dict(
+                    zip(DIMENSIONS, (CELL_STATES[state] for state in states), strict=False)
+                ),
             }
         )
     if not rows:

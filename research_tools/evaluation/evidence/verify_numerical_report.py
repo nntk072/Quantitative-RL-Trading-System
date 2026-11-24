@@ -174,7 +174,10 @@ def _same_report_value(actual: Any, expected: Any) -> bool:
         return (
             isinstance(actual, list)
             and len(actual) == len(expected)
-            and all(_same_report_value(left, right) for left, right in zip(actual, expected))
+            and all(
+                _same_report_value(left, right)
+                for left, right in zip(actual, expected, strict=False)
+            )
         )
     if isinstance(expected, (int, float)) and not isinstance(expected, bool):
         return _same_number(actual, expected)
@@ -523,11 +526,12 @@ def verify_split(
         "truncated",
     }:
         errors.append(f"{split_dir.name}: episode_end_reason is not recognized")
-    if isinstance(diagnostics["completed_data_split"], bool) and isinstance(
-        diagnostics["episode_end_reason"], str
+    if (
+        isinstance(diagnostics["completed_data_split"], bool)
+        and isinstance(diagnostics["episode_end_reason"], str)
+        and diagnostics["completed_data_split"] != (diagnostics["episode_end_reason"] == "data_end")
     ):
-        if diagnostics["completed_data_split"] != (diagnostics["episode_end_reason"] == "data_end"):
-            errors.append(f"{split_dir.name}: split-completion flag disagrees with end reason")
+        errors.append(f"{split_dir.name}: split-completion flag disagrees with end reason")
     if diagnostics["fail_time"] is not None and not isinstance(diagnostics["fail_time"], str):
         errors.append(f"{split_dir.name}: fail_time must be null or a string")
     hard_events = breach_events

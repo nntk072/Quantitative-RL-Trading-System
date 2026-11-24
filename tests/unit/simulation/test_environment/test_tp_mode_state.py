@@ -335,8 +335,8 @@ class TestTPModeStateMachine:
             feat["last_swing_high"] = swing
             env._apply_tp_trailing(long_pos, feat)
             long_history.append([getattr(long_pos, a) for a in levels])
-        for prev, cur in zip(long_history, long_history[1:]):
-            for p, c in zip(prev, cur):
+        for prev, cur in zip(long_history, long_history[1:], strict=False):
+            for p, c in zip(prev, cur, strict=False):
                 assert c >= p - 1e-9
         assert long_history[-1][0] > long_history[0][0]
 
@@ -362,8 +362,8 @@ class TestTPModeStateMachine:
             feat["last_swing_low"] = swing
             env._apply_tp_trailing(short_pos, feat)
             short_history.append([getattr(short_pos, a) for a in levels])
-        for prev, cur in zip(short_history, short_history[1:]):
-            for p, c in zip(prev, cur):
+        for prev, cur in zip(short_history, short_history[1:], strict=False):
+            for p, c in zip(prev, cur, strict=False):
                 assert c <= p + 1e-9
         assert short_history[-1][0] < short_history[0][0]
 

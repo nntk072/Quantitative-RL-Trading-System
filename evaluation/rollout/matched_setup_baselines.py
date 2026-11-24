@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import inspect
 import json
@@ -194,10 +195,8 @@ def _seeded_action_rng(seed: int) -> Iterator[None]:
     numpy_state = np.random.get_state()
     python_state = random.getstate()
     torch_module: Any = None
-    try:
+    with contextlib.suppress(ImportError):
         torch_module = import_module("torch")
-    except ImportError:
-        pass
     np.random.seed(seed)
     random.seed(seed)
     try:
