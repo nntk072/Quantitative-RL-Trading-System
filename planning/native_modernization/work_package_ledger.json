@@ -1,0 +1,720 @@
+{
+  "schema": "qrl.native-modernization.work-ledger.v1",
+  "plan": "planning/native_modernization/ARCHITECTURE_MODERNIZATION_PLAN.md",
+  "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+  "status_values": [
+    "pending",
+    "active",
+    "blocked",
+    "accepted",
+    "rejected_with_evidence",
+    "not_applicable_with_evidence"
+  ],
+  "work_packages": [
+    {
+      "id": "BASELINE-AUDIT",
+      "index": 1,
+      "gate": "OFFLINE",
+      "depends_on": [],
+      "status": "active",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "SEMANTIC-ORACLE",
+      "index": 2,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "BASELINE-AUDIT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "PERFORMANCE-BASELINE",
+      "index": 3,
+      "gate": "BENCH",
+      "depends_on": [
+        "BASELINE-AUDIT",
+        "SEMANTIC-ORACLE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "PERFORMANCE-POLICY",
+      "index": 4,
+      "gate": "BENCH",
+      "depends_on": [
+        "PERFORMANCE-BASELINE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "NATIVE-TOOLCHAIN",
+      "index": 5,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "BASELINE-AUDIT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "ENGINE-REUSE-TRIAL",
+      "index": 6,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "SEMANTIC-ORACLE",
+        "NATIVE-TOOLCHAIN",
+        "PERFORMANCE-BASELINE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "DATA-SCHEMAS",
+      "index": 7,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "BASELINE-AUDIT",
+        "SEMANTIC-ORACLE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "DATA-INGESTION",
+      "index": 8,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "DATA-SCHEMAS",
+        "PERFORMANCE-BASELINE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "DATA-QUERY",
+      "index": 9,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "DATA-INGESTION"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "CAUSAL-FEATURE-GRAPH",
+      "index": 10,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "DATA-SCHEMAS",
+        "SEMANTIC-ORACLE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "FEATURE-KERNELS",
+      "index": 11,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "CAUSAL-FEATURE-GRAPH",
+        "NATIVE-TOOLCHAIN"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "SHARED-DATA-ABI",
+      "index": 12,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "CAUSAL-FEATURE-GRAPH",
+        "NATIVE-TOOLCHAIN"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "NATIVE-DOMAIN",
+      "index": 13,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "ENGINE-REUSE-TRIAL",
+        "SEMANTIC-ORACLE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "NATIVE-EXECUTION",
+      "index": 14,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "NATIVE-DOMAIN",
+        "DATA-SCHEMAS"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "NATIVE-DECISIONING",
+      "index": 15,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "NATIVE-DOMAIN",
+        "SHARED-DATA-ABI"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "NATIVE-ENVIRONMENT",
+      "index": 16,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "NATIVE-EXECUTION",
+        "NATIVE-DECISIONING",
+        "SHARED-DATA-ABI"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "BATCHED-ENVIRONMENT",
+      "index": 17,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "NATIVE-ENVIRONMENT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "LEARNER-CONTRACT",
+      "index": 18,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "SEMANTIC-ORACLE",
+        "BASELINE-AUDIT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "ROLLOUT-BUFFERS",
+      "index": 19,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "BATCHED-ENVIRONMENT",
+        "LEARNER-CONTRACT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "LEARNER-OPTIMIZATION",
+      "index": 20,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "ROLLOUT-BUFFERS"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "RESOURCE-RUNTIME",
+      "index": 21,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "PERFORMANCE-BASELINE",
+        "SHARED-DATA-ABI"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "EXECUTION-DAG",
+      "index": 22,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "RESOURCE-RUNTIME",
+        "BASELINE-AUDIT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "EXPERIMENT-CATALOG",
+      "index": 23,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "EXECUTION-DAG",
+        "LEARNER-CONTRACT",
+        "CAUSAL-FEATURE-GRAPH"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "ARTIFACT-STORE",
+      "index": 24,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "EXECUTION-DAG",
+        "DATA-SCHEMAS"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "RESULT-REGISTRY",
+      "index": 25,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "ARTIFACT-STORE",
+        "DATA-QUERY",
+        "EXPERIMENT-CATALOG"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "EVALUATION-ENGINE",
+      "index": 26,
+      "gate": "OFFLINE/BENCH",
+      "depends_on": [
+        "NATIVE-ENVIRONMENT",
+        "LEARNER-CONTRACT",
+        "ARTIFACT-STORE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "RESEARCH-STATISTICS",
+      "index": 27,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "EVALUATION-ENGINE",
+        "RESULT-REGISTRY"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "EVIDENCE-GENERATION",
+      "index": 28,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "RESEARCH-STATISTICS"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "QUALITY-AND-SECURITY",
+      "index": 29,
+      "gate": "OFFLINE/PRODUCTION",
+      "depends_on": [
+        "NATIVE-TOOLCHAIN"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "INTEGRATED-BENCHMARK",
+      "index": 30,
+      "gate": "BENCH",
+      "depends_on": [
+        "DATA-INGESTION",
+        "FEATURE-KERNELS",
+        "BATCHED-ENVIRONMENT",
+        "LEARNER-OPTIMIZATION",
+        "RESOURCE-RUNTIME",
+        "RESULT-REGISTRY",
+        "EVALUATION-ENGINE",
+        "QUALITY-AND-SECURITY"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "SCIENTIFIC-RELEASE",
+      "index": 31,
+      "gate": "OFFLINE",
+      "depends_on": [
+        "INTEGRATED-BENCHMARK",
+        "RESEARCH-STATISTICS",
+        "EVIDENCE-GENERATION",
+        "QUALITY-AND-SECURITY"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "LIVE-CONTRACT",
+      "index": 32,
+      "gate": "PRODUCTION",
+      "depends_on": [
+        "NATIVE-DOMAIN",
+        "NATIVE-EXECUTION",
+        "NATIVE-DECISIONING",
+        "QUALITY-AND-SECURITY"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "PRODUCTION-CONTROL-PLANE",
+      "index": 33,
+      "gate": "PRODUCTION",
+      "depends_on": [
+        "RESULT-REGISTRY",
+        "LIVE-CONTRACT"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "OPERABILITY",
+      "index": 34,
+      "gate": "PRODUCTION",
+      "depends_on": [
+        "LIVE-CONTRACT",
+        "PRODUCTION-CONTROL-PLANE"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    },
+    {
+      "id": "FINAL-PRODUCT-APPLICATION",
+      "index": 35,
+      "gate": "PRODUCT",
+      "depends_on": [
+        "INTEGRATED-BENCHMARK",
+        "SCIENTIFIC-RELEASE",
+        "EVIDENCE-GENERATION"
+      ],
+      "status": "pending",
+      "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+      "implementation_sha_or_diff_hash": null,
+      "changed_paths": [],
+      "tests_executed": [],
+      "evidence_refs": [],
+      "benchmark_ids": [],
+      "compatibility": null,
+      "blocker": null,
+      "decision": null,
+      "reviewer": null
+    }
+  ]
+}

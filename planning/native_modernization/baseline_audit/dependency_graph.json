@@ -1,0 +1,330 @@
+{
+  "baseline_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+  "scope": "product packages; imports inside tests/, scripts/, docs/, tools/ and .agents/ excluded",
+  "files_per_package": {
+    "artifacts": 9,
+    "compute": 13,
+    "configuration": 5,
+    "decisioning": 10,
+    "evaluation": 91,
+    "experiments": 25,
+    "features": 40,
+    "integrations": 30,
+    "learning": 26,
+    "live": 5,
+    "market_data": 33,
+    "models": 24,
+    "orchestra": 31,
+    "research_tools": 174,
+    "simulation": 82,
+    "trading": 47,
+    "training": 56
+  },
+  "package_edges": {
+    "compute -> artifacts": [
+      "compute/slurm/continuation.py",
+      "compute/slurm/worker_dispatch.py"
+    ],
+    "evaluation -> artifacts": [
+      "evaluation/reanalysis/checkpoint_reanalysis.py",
+      "evaluation/reanalysis/checkpoint_reanalysis.py",
+      "evaluation/reanalysis/datasets.py"
+    ],
+    "evaluation -> configuration": [
+      "evaluation/reanalysis/checkpoint_reanalysis.py",
+      "evaluation/reanalysis/checkpoint_reanalysis.py",
+      "evaluation/reanalysis/datasets.py"
+    ],
+    "evaluation -> decisioning": [
+      "evaluation/candidate_proposals.py",
+      "evaluation/contracts.py",
+      "evaluation/metrics/trade_setup_policy.py"
+    ],
+    "evaluation -> features": [
+      "evaluation/plotting/chart_indicators.py",
+      "evaluation/plotting/chart_overlays.py",
+      "evaluation/plotting/data_plots.py"
+    ],
+    "evaluation -> learning": [
+      "evaluation/reanalysis/sb3_checkpoint_backend.py",
+      "evaluation/reanalysis/sb3_checkpoint_backend.py"
+    ],
+    "evaluation -> market_data": [
+      "evaluation/__init__.py",
+      "evaluation/candidate_execution.py",
+      "evaluation/contracts.py"
+    ],
+    "evaluation -> simulation": [
+      "evaluation/metrics/trade_setup_policy.py",
+      "evaluation/reanalysis/checkpoint_reanalysis.py",
+      "evaluation/rollout/matched_setup_baselines.py"
+    ],
+    "evaluation -> trading": [
+      "evaluation/candidate_execution.py",
+      "evaluation/plotting/chart_levels.py",
+      "evaluation/plotting/order_chart_data.py"
+    ],
+    "experiments -> artifacts": [
+      "experiments/orchestration/weekly.py",
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/cache_failure_recovery.py"
+    ],
+    "experiments -> compute": [
+      "experiments/runs/execution.py",
+      "experiments/runs/preflight_migration.py"
+    ],
+    "experiments -> configuration": [
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/checkpoints.py",
+      "experiments/runs/constants.py"
+    ],
+    "experiments -> evaluation": [
+      "experiments/variants/variant_ablation_runner.py",
+      "experiments/variants/variant_ablation_runner.py"
+    ],
+    "experiments -> features": [
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/named_cache_rebuild.py"
+    ],
+    "experiments -> learning": [
+      "experiments/runs/checkpoint_lineage.py"
+    ],
+    "experiments -> market_data": [
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/named_cache_rebuild.py"
+    ],
+    "experiments -> models": [
+      "experiments/variants/catalog.py"
+    ],
+    "experiments -> training": [
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/baseline_cache_rebuild.py",
+      "experiments/runs/named_cache_rebuild.py"
+    ],
+    "features -> artifacts": [
+      "features/pipeline/feature_matrix_builder.py"
+    ],
+    "features -> configuration": [
+      "features/pipeline/feature_cache_identity.py",
+      "features/pipeline/feature_matrix_builder.py"
+    ],
+    "features -> decisioning": [
+      "features/context/entry_ideas.py",
+      "features/context/trade_setup_candidates.py"
+    ],
+    "features -> market_data": [
+      "features/context/policy_market.py",
+      "features/context/policy_market.py",
+      "features/context/premium_discount.py"
+    ],
+    "integrations -> features": [
+      "integrations/mt5/domain/strategies/trend_breakout_strategy.py"
+    ],
+    "integrations -> live": [
+      "integrations/mt5/robot/rl_robot.py",
+      "integrations/mt5/robot/rl_robot.py"
+    ],
+    "learning -> artifacts": [
+      "learning/contracts.py",
+      "learning/rl/learner.py",
+      "learning/supervised/reference.py"
+    ],
+    "learning -> compute": [
+      "learning/rl/agent.py"
+    ],
+    "learning -> decisioning": [
+      "learning/rl/agent.py",
+      "learning/rl/agent.py",
+      "learning/rl/agent.py"
+    ],
+    "learning -> market_data": [
+      "learning/contracts.py",
+      "learning/self_supervised/vae_pre_ny.py"
+    ],
+    "learning -> models": [
+      "learning/rl/agent.py",
+      "learning/rl/agent.py",
+      "learning/rl/auxiliary.py"
+    ],
+    "live -> configuration": [
+      "live/runtime/strategy.py",
+      "live/runtime/strategy.py"
+    ],
+    "live -> decisioning": [
+      "live/runtime/strategy.py",
+      "live/runtime/strategy.py",
+      "live/runtime/strategy.py"
+    ],
+    "live -> features": [
+      "live/runtime/strategy.py"
+    ],
+    "live -> trading": [
+      "live/runtime/strategy.py",
+      "live/runtime/strategy.py"
+    ],
+    "market_data -> artifacts": [
+      "market_data/cache/__init__.py",
+      "market_data/cache/identity.py",
+      "market_data/cache/storage.py"
+    ],
+    "market_data -> configuration": [
+      "market_data/commands/discover.py",
+      "market_data/commands/prebuild_experiment_run_cache.py",
+      "market_data/commands/prepare.py"
+    ],
+    "models -> decisioning": [
+      "models/encoders/sequence_encoder_components.py",
+      "models/encoders/tcn_regime.py"
+    ],
+    "orchestra -> artifacts": [
+      "orchestra/cost.py",
+      "orchestra/health.py",
+      "orchestra/router.py"
+    ],
+    "research_tools -> artifacts": [
+      "research_tools/artifacts/audits/build_research_release_bundle.py",
+      "research_tools/artifacts/audits/verify_final_research_outputs.py",
+      "research_tools/artifacts/evidence/build_final_research_outputs.py"
+    ],
+    "research_tools -> compute": [
+      "research_tools/learning/benchmarks/measure_ppo_throughput.py",
+      "research_tools/learning/benchmarks/measure_ppo_throughput.py",
+      "research_tools/learning/benchmarks/measure_ppo_throughput.py"
+    ],
+    "research_tools -> configuration": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_selected_checkpoint_recoverability.py",
+      "research_tools/artifacts/evidence/build_final_research_outputs.py"
+    ],
+    "research_tools -> decisioning": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/representation_run_artifacts.py"
+    ],
+    "research_tools -> evaluation": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py"
+    ],
+    "research_tools -> experiments": [
+      "research_tools/artifacts/evidence/verify_research_provenance_bytes.py",
+      "research_tools/experiments/experiment_runs/audit_experiment_run_checkpoint_loads.py",
+      "research_tools/experiments/experiment_runs/audit_experiment_run_checkpoint_loads.py"
+    ],
+    "research_tools -> features": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/compute/benchmarks/measure_env_memory.py"
+    ],
+    "research_tools -> learning": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/compute/benchmarks/measure_shared_ppo_memory.py",
+      "research_tools/features/features/audit_vae_pre_ny_sequence_validity.py"
+    ],
+    "research_tools -> market_data": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py"
+    ],
+    "research_tools -> models": [
+      "research_tools/simulation/evaluation/rescore_sl_fill.py"
+    ],
+    "research_tools -> simulation": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py"
+    ],
+    "research_tools -> trading": [
+      "research_tools/evaluation/evaluation/run_baseline_eval.py",
+      "research_tools/evaluation/evaluation/test_oos.py",
+      "research_tools/evaluation/evidence/verify_numerical_report.py"
+    ],
+    "research_tools -> training": [
+      "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py",
+      "research_tools/artifacts/evidence/representation_run_artifacts.py",
+      "research_tools/artifacts/evidence/representation_run_artifacts.py"
+    ],
+    "simulation -> decisioning": [
+      "simulation/backtest/event_driven_backtest.py",
+      "simulation/backtest/event_driven_backtest.py",
+      "simulation/backtest/event_driven_backtest.py"
+    ],
+    "simulation -> features": [
+      "simulation/backtest/event_driven_backtest.py",
+      "simulation/backtest/event_driven_backtest.py",
+      "simulation/backtest/event_driven_backtest.py"
+    ],
+    "simulation -> market_data": [
+      "simulation/backtest/event_driven_backtest.py",
+      "simulation/backtest/event_driven_backtest.py",
+      "simulation/backtest/policy_actions.py"
+    ],
+    "simulation -> trading": [
+      "simulation/backtest/accounting.py",
+      "simulation/backtest/accounting.py",
+      "simulation/backtest/cross_validation/backtrader_runner.py"
+    ],
+    "trading -> features": [
+      "trading/baselines/breakout.py",
+      "trading/baselines/breakout.py",
+      "trading/baselines/classical.py"
+    ],
+    "training -> artifacts": [
+      "training/artifacts/aggregation.py",
+      "training/artifacts/evaluation_result_writer.py",
+      "training/artifacts/snapshots.py"
+    ],
+    "training -> compute": [
+      "training/runner/configuration_stage.py",
+      "training/runner/configuration_stage.py",
+      "training/runner/lstm_baseline.py"
+    ],
+    "training -> configuration": [
+      "training/configuration/cli.py",
+      "training/configuration/quality.py",
+      "training/configuration/strategy_overlays.py"
+    ],
+    "training -> decisioning": [
+      "training/configuration/survival_gate.py",
+      "training/configuration/survival_gate.py",
+      "training/runner/seed_runtime.py"
+    ],
+    "training -> evaluation": [
+      "training/artifacts/evaluation_result_writer.py",
+      "training/artifacts/manifests.py",
+      "training/callbacks/dashboard.py"
+    ],
+    "training -> features": [
+      "training/configuration/survival_gate.py",
+      "training/runner/data_stage.py",
+      "training/runner/data_stage.py"
+    ],
+    "training -> learning": [
+      "training/runner/data_stage.py",
+      "training/runner/seed_runtime.py",
+      "training/runner/seed_runtime.py"
+    ],
+    "training -> market_data": [
+      "training/runner/backtest.py",
+      "training/runner/backtest.py",
+      "training/runner/backtest.py"
+    ],
+    "training -> models": [
+      "training/configuration/variant_resolution.py",
+      "training/runner/vae.py"
+    ],
+    "training -> simulation": [
+      "training/artifacts/manifests.py",
+      "training/artifacts/manifests.py",
+      "training/callbacks/dashboard.py"
+    ],
+    "training -> trading": [
+      "training/configuration/survival_gate.py",
+      "training/runner/backtest.py",
+      "training/runner/backtest.py"
+    ]
+  },
+  "strongly_connected_components_over_1": [],
+  "unresolved_relative_imports": 0
+}

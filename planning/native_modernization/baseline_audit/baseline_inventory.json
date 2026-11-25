@@ -1,0 +1,351 @@
+{
+  "baseline_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+  "tracked_files": 2387,
+  "tracked_python_files": 1397,
+  "tracked_rust_files": 0,
+  "per_top_level_directory": {
+    "(root)": {
+      "files": 28,
+      "python_files": 3,
+      "python_lines": 362
+    },
+    ".agents": {
+      "files": 178,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    ".claude": {
+      "files": 9,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    ".codex": {
+      "files": 11,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    ".github": {
+      "files": 6,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    ".serena": {
+      "files": 2,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "agent-notes": {
+      "files": 1,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "artifacts": {
+      "files": 10,
+      "python_files": 9,
+      "python_lines": 900
+    },
+    "baseline": {
+      "files": 1,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "compute": {
+      "files": 16,
+      "python_files": 13,
+      "python_lines": 2618
+    },
+    "config": {
+      "files": 121,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "configuration": {
+      "files": 6,
+      "python_files": 5,
+      "python_lines": 461
+    },
+    "data": {
+      "files": 4,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "decisioning": {
+      "files": 12,
+      "python_files": 10,
+      "python_lines": 1981
+    },
+    "docs": {
+      "files": 499,
+      "python_files": 1,
+      "python_lines": 88
+    },
+    "evaluation": {
+      "files": 97,
+      "python_files": 91,
+      "python_lines": 30098
+    },
+    "evidence": {
+      "files": 6,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "experiments": {
+      "files": 30,
+      "python_files": 25,
+      "python_lines": 7376
+    },
+    "features": {
+      "files": 45,
+      "python_files": 40,
+      "python_lines": 10649
+    },
+    "integrations": {
+      "files": 38,
+      "python_files": 30,
+      "python_lines": 3889
+    },
+    "learning": {
+      "files": 30,
+      "python_files": 26,
+      "python_lines": 8518
+    },
+    "live": {
+      "files": 8,
+      "python_files": 5,
+      "python_lines": 473
+    },
+    "market_data": {
+      "files": 40,
+      "python_files": 33,
+      "python_lines": 6199
+    },
+    "models": {
+      "files": 29,
+      "python_files": 24,
+      "python_lines": 2807
+    },
+    "orchestra": {
+      "files": 43,
+      "python_files": 31,
+      "python_lines": 7409
+    },
+    "research_tools": {
+      "files": 176,
+      "python_files": 174,
+      "python_lines": 61243
+    },
+    "schemas": {
+      "files": 3,
+      "python_files": 0,
+      "python_lines": 0
+    },
+    "scripts": {
+      "files": 186,
+      "python_files": 175,
+      "python_lines": 6488
+    },
+    "simulation": {
+      "files": 89,
+      "python_files": 82,
+      "python_lines": 22109
+    },
+    "tests": {
+      "files": 502,
+      "python_files": 499,
+      "python_lines": 106174
+    },
+    "tools": {
+      "files": 42,
+      "python_files": 18,
+      "python_lines": 4099
+    },
+    "trading": {
+      "files": 56,
+      "python_files": 47,
+      "python_lines": 7446
+    },
+    "training": {
+      "files": 63,
+      "python_files": 56,
+      "python_lines": 12980
+    }
+  },
+  "python_files_over_1000_lines": [
+    {
+      "path": "simulation/backtest/event_driven_backtest.py",
+      "lines": 2938
+    },
+    {
+      "path": "research_tools/features/features/build_feature_causality_matrix.py",
+      "lines": 2886
+    },
+    {
+      "path": "research_tools/evaluation/evaluation/report_variant_details.py",
+      "lines": 2809
+    },
+    {
+      "path": "tests/integration/backtest/test_agent_selected_entry_execution.py",
+      "lines": 2049
+    },
+    {
+      "path": "research_tools/evaluation/evidence/verify_numerical_report.py",
+      "lines": 1617
+    },
+    {
+      "path": "evaluation/reporting/account_state_trace_reconciliation.py",
+      "lines": 1508
+    },
+    {
+      "path": "tests/unit/market_data/test_ticks.py",
+      "lines": 1492
+    },
+    {
+      "path": "tests/unit/evaluation/test_policy_decision_reconciliation.py",
+      "lines": 1481
+    },
+    {
+      "path": "tests/unit/training/test_train_rl_decomposition.py",
+      "lines": 1464
+    },
+    {
+      "path": "learning/rl/callbacks.py",
+      "lines": 1433
+    },
+    {
+      "path": "tests/integration/backtest/test_risk_lifecycle_characterization.py",
+      "lines": 1430
+    },
+    {
+      "path": "training/runner/seed_runtime.py",
+      "lines": 1426
+    },
+    {
+      "path": "experiments/runs/execution.py",
+      "lines": 1416
+    },
+    {
+      "path": "learning/rl/hybrid.py",
+      "lines": 1397
+    },
+    {
+      "path": "market_data/loading/ticks.py",
+      "lines": 1388
+    },
+    {
+      "path": "tests/unit/evaluation/test_account_state_trace_reconciliation.py",
+      "lines": 1388
+    },
+    {
+      "path": "tests/unit/evaluation/test_plots_export.py",
+      "lines": 1379
+    },
+    {
+      "path": "evaluation/reporting/policy_decision_reconciliation.py",
+      "lines": 1349
+    },
+    {
+      "path": "evaluation/plotting/order_chart_data.py",
+      "lines": 1294
+    },
+    {
+      "path": "evaluation/rollout/trained_policy_rollout.py",
+      "lines": 1231
+    },
+    {
+      "path": "scripts/dev/code_graph/graph_quality.py",
+      "lines": 1197
+    },
+    {
+      "path": "tests/integration/backtest/test_account_transition_parity.py",
+      "lines": 1153
+    },
+    {
+      "path": "research_tools/trading/evaluation/summarize_policy_trade_lifecycle.py",
+      "lines": 1131
+    },
+    {
+      "path": "tests/unit/research/test_numerical_report_verifier.py",
+      "lines": 1122
+    },
+    {
+      "path": "tests/unit/features/test_po3_config.py",
+      "lines": 1105
+    },
+    {
+      "path": "evaluation/reanalysis/checkpoint_reanalysis.py",
+      "lines": 1096
+    },
+    {
+      "path": "tests/unit/evaluation/test_eval_run_provenance.py",
+      "lines": 1072
+    },
+    {
+      "path": "tests/unit/simulation/test_environment/test_trader_actions.py",
+      "lines": 1069
+    },
+    {
+      "path": "tests/unit/training/test_survival_gate.py",
+      "lines": 1061
+    },
+    {
+      "path": "tests/unit/evaluation/test_order_chart.py",
+      "lines": 1050
+    },
+    {
+      "path": "learning/rl/agent.py",
+      "lines": 1046
+    },
+    {
+      "path": "tests/integration/backtest/test_setup_mask_backtest_boundary.py",
+      "lines": 1035
+    },
+    {
+      "path": "experiments/runs/reporting.py",
+      "lines": 1025
+    },
+    {
+      "path": "tests/integration/backtest/test_entry_levels.py",
+      "lines": 1017
+    },
+    {
+      "path": "tests/unit/experiments/test_experiment_run_artifacts.py",
+      "lines": 1012
+    }
+  ],
+  "plan_anchor_paths": {
+    "simulation/environment/env.py": "present",
+    "simulation/environment/episode_runtime.py": "present",
+    "simulation/environment/shared_bundle.py": "present",
+    "simulation/environment/bundles.py": "present",
+    "simulation/environment/worker.py": "present",
+    "market_data/transforms/align.py": "present",
+    "market_data/splits/walkforward.py": "present",
+    "market_data/loading/ticks.py": "present",
+    "features/pipeline": "present",
+    "trading/account/limits.py": "present",
+    "trading/risk": "present",
+    "decisioning/actions.py": "present",
+    "decisioning/trade_setup.py": "present",
+    "learning/rl/agent.py": "present",
+    "learning/rl/hybrid.py": "present",
+    "learning/rl/callbacks.py": "present",
+    "training/runner/seed_runtime.py": "present",
+    "experiments/variants": "present",
+    "experiments/runs": "present",
+    "experiments/orchestration": "present",
+    "artifacts/identity.py": "present",
+    "artifacts/manifest.py": "present",
+    "artifacts/layout.py": "present",
+    "artifacts/atomic.py": "present",
+    "compute/slurm/worker_dispatch.py": "present",
+    "evaluation/rollout": "present",
+    "config/variant_catalog.yaml": "present",
+    "config/base/default.yaml": "present",
+    "live": "present",
+    "integrations": "present",
+    "apps": "absent",
+    "native": "absent",
+    "Cargo.toml": "absent",
+    "rust-toolchain.toml": "absent"
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "baseline_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
+  "checks": [
+    {
+      "check": "ruff format --check .",
+      "tool": "ruff 0.15.22",
+      "exit": 0,
+      "result": "1444 files already formatted",
+      "run_on": "main-native worktree, 2026-11-25",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "ruff check .",
+      "tool": "ruff 0.15.22",
+      "exit": 0,
+      "result": "All checks passed!",
+      "run_on": "main-native worktree",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "mypy . (full tree)",
+      "tool": "mypy via .venv-x86",
+      "exit": 0,
+      "result": "Success: no issues found in 1397 source files",
+      "run_on": "main-native worktree",
+      "log": "logs/agents/architect/2026-11-25_baseline_audit/mypy_full_tree.log"
+    },
+    {
+      "check": "pytest tests/unit (first run)",
+      "tool": "pytest via .venv-x86",
+      "exit": 1,
+      "result": "1 failed, 3870 passed, 5 skipped in 2460.50s; the failure is test_documentation_inventory (caused by docs/plan files, see D1)",
+      "run_on": "main-native worktree, before the docs move",
+      "log": "logs/agents/architect/2026-11-25_baseline_audit/pytest_unit.log"
+    },
+    {
+      "check": "pytest tests/unit/tooling/test_documentation_inventory.py (after move)",
+      "tool": "pytest via .venv-x86",
+      "exit": 0,
+      "result": "7 passed",
+      "run_on": "main-native worktree after moving the plan to planning/",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "cargo fmt --all -- --check",
+      "tool": "cargo/rustfmt 1.100.0",
+      "exit": 0,
+      "result": "clean",
+      "run_on": "native workspace",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "cargo clippy --workspace --all-targets -- -D warnings",
+      "tool": "clippy 1.100.0",
+      "exit": 0,
+      "result": "clean",
+      "run_on": "native workspace",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "cargo test --workspace",
+      "tool": "cargo 1.100.0",
+      "exit": 0,
+      "result": "qrl-domain: 4 passed; qrl-native: 0 unit tests",
+      "run_on": "native workspace",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "maturin build --release + pytest native/python/tests",
+      "tool": "maturin 1.9.4",
+      "exit": 0,
+      "result": "qrl_native-0.1.0 cp312 manylinux x86_64 built; 4 smoke tests passed",
+      "run_on": "native/python",
+      "log": "session output (not saved to a file)"
+    },
+    {
+      "check": "cargo audit --file Cargo.lock --db <local advisory db>",
+      "tool": "cargo-audit 0.23.0",
+      "exit": 0,
+      "result": "1568 advisories loaded; 16 crate dependencies scanned; no vulnerabilities reported. crates.io index not refreshed (NFS lock), so the scan used the cached index",
+      "run_on": "native/Cargo.lock",
+      "log": "logs/agents/architect/2026-11-25_baseline_audit/cargo_audit.log"
+    },
+    {
+      "check": "static package dependency graph",
+      "tool": "python ast",
+      "exit": 0,
+      "result": "17 product packages, 66 edges, 0 cycles",
+      "run_on": "tracked product Python files at baseline",
+      "log": "planning/native_modernization/baseline_audit/dependency_graph.json"
+    }
+  ],
+  "pending": [
+    "pytest tests/unit full rerun after the docs move (running, log pytest_unit_rerun.log)",
+    "tests/integration subset",
+    "scoped mutation tests for risk, feature and learning (not run)"
+  ]
+}
