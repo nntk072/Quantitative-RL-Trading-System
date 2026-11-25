@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import hashlib
 import os
 import shutil
@@ -161,5 +162,13 @@ def promote_to_baseline(
             provenance={**manifest.provenance, "promotion": promotion},
         )
         write_json_atomic(staging / "manifest.json", promoted_manifest.to_dict())
-        staging.rename(dst)
+        try:
+            staging.rename(dst)
+        except OSError as exc:
+            # A concurrent attempt published this identity path first; the directory
+            # rename then fails instead of replacing the already-published copy.
+            if exc.errno in (errno.EEXIST, errno.ENOTEMPTY):
+                message = "baseline destination already published"
+                raise FileExistsError(errno.EEXIST, message, str(dst)) from exc
+            raise
     return dst
