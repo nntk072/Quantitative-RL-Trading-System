@@ -7,7 +7,7 @@ Status of this register: **clone and pin only**. No row has been evaluated yet. 
 tests, benchmarks and decisions are `not tested` until the owning work package runs them and records the output.
 The plan decision column is the plan's proposal, not a validated choice.
 
-Clones: `/scratch/work/nguyenl37/upstream_refs/<owner>_<repo>.git`, bare shallow mirrors (default branch at clone time). Read with `git --git-dir=<path> show|ls-tree|grep`. No working trees are kept. Manifest: `/scratch/work/nguyenl37/upstream_refs/MANIFEST_all.tsv`.
+Clones: `/scratch/work/nguyenl37/upstream_refs/<owner>_<repo>.git` (all 48 references are now bare mirrors), bare shallow mirrors (default branch at clone time). Read with `git --git-dir=<path> show|ls-tree|grep`. No working trees are kept. Manifest: `/scratch/work/nguyenl37/upstream_refs/MANIFEST_all.tsv`.
 
 | Upstream | Pinned SHA | Last commit | Clone status | Plan decision (proposed) | Do not inherit | Build aarch64/x86_64 | Maintenance | Evaluation |
 |---|---|---|---|---|---|---|---|---|
@@ -42,7 +42,7 @@ Clones: `/scratch/work/nguyenl37/upstream_refs/<owner>_<repo>.git`, bare shallow
 | [postgres/postgres](https://github.com/postgres/postgres) | `4255812efdbc` | 2026-11-25 | cloned, not evaluated | Production/concurrent control plane | DB deployment without operational need | not tested | last commit date only | not evaluated |
 | [sqlalchemy/alembic](https://github.com/sqlalchemy/alembic) | `a10b6da895bc` | 2026-11-22 | cloned, not evaluated | Production/concurrent control plane | DB deployment without operational need | not tested | last commit date only | not evaluated |
 | [apache/datafusion](https://github.com/apache/datafusion) | `4c7a78b0ffb1` | 2026-11-25 | cloned, not evaluated | Conditional future scale | Multiple query engines / lakehouse for modest local datasets | not tested | last commit date only | not evaluated |
-| [apache/iceberg](https://github.com/apache/iceberg) | `-` | - | not cloned (quota) | Conditional future scale | Multiple query engines / lakehouse for modest local datasets | not tested | last commit date only | not evaluated |
+| [apache/iceberg](https://github.com/apache/iceberg) | `6cf1f6e4e6cf` | 2026-11-25 | bare mirror, cloned | Conditional future scale | Multiple query engines / lakehouse for modest local datasets | not tested | last commit date only | not evaluated |
 | [delta-io/delta-rs](https://github.com/delta-io/delta-rs) | `40439ad6d37a` | 2026-11-25 | cloned, not evaluated | Conditional future scale | Multiple query engines / lakehouse for modest local datasets | not tested | last commit date only | not evaluated |
 | [ray-project/ray](https://github.com/ray-project/ray) | `b1bdb18ea5f0` | 2026-11-25 | cloned, not evaluated | Defer unless existing scheduler loses measured trial | Second scheduler inside Slurm by default | not tested | last commit date only | not evaluated |
 | [dask/distributed](https://github.com/dask/distributed) | `4ad2b5de2028` | 2026-11-25 | cloned, not evaluated | Defer unless existing scheduler loses measured trial | Second scheduler inside Slurm by default | not tested | last commit date only | not evaluated |
@@ -59,3 +59,9 @@ Clones: `/scratch/work/nguyenl37/upstream_refs/<owner>_<repo>.git`, bare shallow
 | [fastapi/fastapi](https://github.com/fastapi/fastapi) | `05e6df7e906c` | 2026-11-18 | cloned, not evaluated | Final product stage | Building website before core readiness | not tested | last commit date only | not evaluated |
 | [vercel/next.js](https://github.com/vercel/next.js) | `69ddf917b180` | 2026-11-25 | cloned, not evaluated | Final product stage | Building website before core readiness | not tested | last commit date only | not evaluated |
 | [tradingview/lightweight-charts](https://github.com/tradingview/lightweight-charts) | `dbd6ae7831fe` | 2026-11-18 | cloned, not evaluated | Final product stage | Building website before core readiness | not tested | last commit date only | not evaluated |
+
+## Coverage of this register
+
+- All 48 references in plan sections 2 and 8 are cloned as bare mirrors at a pinned SHA (Iceberg was added on 2026-11-26).
+- Every row is "not evaluated". No row has build results, dependency cost, extension-seam findings, tests, or benchmark outcomes yet. Those need the owning work package, and each package is blocked (see work_package_ledger.json, field authorization_or_resource).
+- The plan decision column is the plan's proposal. It is not a validated choice.
