@@ -58,3 +58,10 @@ Use the algorithm, callback, and policy interfaces in the `learning` subpackages
 ## Invariants
 
 Keep fitting within the training split and preserve configured seeds, policy contracts, and checkpoint identity.
+## Module size exceptions
+
+| Module | Reason |
+| --- | --- |
+| `rl/callbacks.py` | Callback ordering and checkpoint serialization share lifecycle state; extraction needs callback-order and resume characterization tests. |
+| `rl/hybrid.py` | Hybrid action distributions, masking, and graph capture share policy state; extraction needs action, entropy, masking, and capture equivalence tests. |
+| `rl/agent.py` | Agent construction binds schemas, environments, policy options, and CUDA hooks; extraction needs configuration-matrix and checkpoint round-trip coverage. |

@@ -1,14 +1,14 @@
 {
   "captured_on": "2026-10-31",
   "overall": {
-    "branch_ratio": 0.6100095177664975,
-    "branches": 12608,
-    "combined_ratio": 0.7106934779090468,
-    "covered_branches": 7691,
-    "covered_lines": 27440,
-    "files": 478,
-    "line_ratio": 0.7451661959591571,
-    "statements": 36824
+    "branch_ratio": 0.616530221215816,
+    "branches": 11482,
+    "combined_ratio": 0.7162544794938724,
+    "covered_branches": 7079,
+    "covered_lines": 25300,
+    "files": 447,
+    "line_ratio": 0.7502075673111137,
+    "statements": 33724
   },
   "packages": {
     "artifacts": {
@@ -118,15 +118,6 @@
       "files": 23,
       "line_ratio": 0.951015531660693,
       "statements": 837
-    },
-    "orchestra": {
-      "branch_ratio": 0.5435168738898757,
-      "branches": 1126,
-      "covered_branches": 612,
-      "covered_lines": 2140,
-      "files": 31,
-      "line_ratio": 0.6903225806451613,
-      "statements": 3100
     },
     "simulation": {
       "branch_ratio": 0.6733333333333333,

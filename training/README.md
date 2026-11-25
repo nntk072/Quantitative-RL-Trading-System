@@ -55,3 +55,8 @@ Use the configuration, runner, callback, and artifact interfaces under this pack
 ## Invariants
 
 Respect frozen run configuration and chronological split boundaries. Record failures and incomplete runs with their identity and output paths.
+## Module size exceptions
+
+| Module | Reason |
+| --- | --- |
+| `runner/seed_runtime.py` | Per-seed setup coordinates environment, fitting, learner, and checkpoint state; extraction needs end-to-end seeded runner characterization. |

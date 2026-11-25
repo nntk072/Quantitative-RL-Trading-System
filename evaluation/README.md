@@ -57,3 +57,12 @@ subpackages rather than being re-exported here.
 ## Invariants
 
 Do not select models, checkpoints, or thresholds on the locked report period. Reports must preserve source, split, and run identity.
+## Module size exceptions
+
+| Module | Reason |
+| --- | --- |
+| `reporting/account_state_trace_reconciliation.py` | The report compares account, trade, and provider traces through one reconciliation pipeline; split boundaries need fixture coverage for each artifact shape. |
+| `reporting/policy_decision_reconciliation.py` | Policy decisions, eligibility masks, action schemas, and ledger rows are reconciled together; extraction needs a characterized cross-artifact fixture set. |
+| `plotting/order_chart_data.py` | Order and fill annotations share timestamp normalization and chart joins; separating them needs export and order-chart golden comparisons. |
+| `rollout/trained_policy_rollout.py` | Checkpoint restoration, vector rollout, and artifact writing share lifecycle state; split only after a complete rollout fixture exercises failure and success paths. |
+| `reanalysis/checkpoint_reanalysis.py` | Checkpoint schema, deterministic action mode, split evaluation, and output provenance form one entry workflow; extraction needs frozen train-only fixtures. |

@@ -56,3 +56,8 @@ Use the package loaders, transforms, cache interfaces, and chronological split h
 ## Invariants
 
 Keep timestamps and availability causal; higher-timeframe values become available after close; cache identity includes feature version and content hash.
+## Module size exceptions
+
+| Module | Reason |
+| --- | --- |
+| `loading/ticks.py` | Tick parsing shares vendor normalization, ordering, filtering, and cache identity; extraction needs schema and cache equivalence fixtures. |

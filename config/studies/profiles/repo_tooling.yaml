@@ -105,10 +105,12 @@ api_paths:
 - tools/documentation/package_dependency_model.py
 - tools/documentation/public_api_inventory.py
 - tools/quality/coverage_report.py
+- tools/quality/module_size.py
 - tools/quality/repository_audit.py
 - tools/quality/research_script_migration.py
 - tools/quality/test_overlap.py
 caller_paths:
+- tests/architecture/test_module_size_gate.py
 - tests/architecture/test_documentation_contracts.py
 - tests/integration/backtest/test_local_tick_action_trace.py
 - tests/integration/evaluation/test_matched_setup_baselines.py

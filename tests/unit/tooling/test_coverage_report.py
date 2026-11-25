@@ -90,3 +90,13 @@ def test_main_coverage_gate_rejects_a_non_main_baseline() -> None:
 
     with pytest.raises(ValueError, match="captured from main"):
         require_main_baseline({"source_branch": "feature/refactor"})
+
+
+def test_product_coverage_baseline_excludes_orchestra() -> None:
+    import json
+    from pathlib import Path
+
+    baseline_path = Path(__file__).resolve().parents[3] / "tools/quality/coverage_baseline.json"
+    baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+
+    assert "orchestra" not in baseline["packages"]

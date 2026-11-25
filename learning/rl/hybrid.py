@@ -72,6 +72,28 @@ def _eligibility_mask(
     return mask
 
 
+def _trade_setup_logits_width(action_net: Any) -> int:
+    """Return the setup-category width from either supported hybrid actor head.
+
+    Args:
+        action_net: Standard or conditioned hybrid actor heads.
+
+    Returns:
+        Number of categories in the trade-setup logits layer.
+
+    Raises:
+        ValueError: If the action head has no linear trade-setup logits layer.
+    """
+    layer = getattr(action_net, "trade_setup_logits", None)
+    if layer is None:
+        categorical_logits = getattr(action_net, "categorical_logits", None)
+        if categorical_logits is not None and "trade_setup" in categorical_logits:
+            layer = categorical_logits["trade_setup"]
+    if not isinstance(layer, nn.Linear):
+        raise ValueError("trade-setup mask check requires a trade-setup logits layer")
+    return int(layer.out_features)
+
+
 _CATEGORICAL_COORDINATES = {*_SETUP_COORDINATES, "entry_execution", "sl_mode", "tp_mode", "exit"}
 
 
@@ -597,6 +619,35 @@ class HybridClampedStdMultiInputPolicy(ClampedStdMultiInputPolicy):
         if not isinstance(obs, dict) or self.trade_setup_mask_key not in obs:
             raise ValueError("setup hybrid policy requires its configured eligibility mask")
         self._distribution_masks = {self.setup_coordinate: obs[self.trade_setup_mask_key]}
+
+    @property
+    def rollout_mask_width(self) -> int:
+        """Return the trade-setup category count used by this policy.
+
+        Returns:
+            Number of trade-setup categories emitted by the policy.
+        """
+        if self.setup_coordinate != "trade_setup":
+            raise ValueError("rollout host mask check requires a trade-setup policy")
+        return _trade_setup_logits_width(self.action_net)
+
+    def validate_rollout_masks(self, observations: dict[str, torch.Tensor]) -> None:
+        """Validate flattened rollout masks against the policy's setup logits.
+
+        Args:
+            observations: Flattened observations, one row per rollout transition.
+
+        Raises:
+            ValueError: If the configured setup mask is missing or invalid.
+        """
+        if self.setup_coordinate != "trade_setup" or self.trade_setup_mask_key not in observations:
+            raise ValueError("rollout host mask check requires the configured trade-setup mask")
+        mask_values = observations[self.trade_setup_mask_key]
+        _eligibility_mask(
+            mask_values,
+            (int(mask_values.shape[0]), self.rollout_mask_width),
+            "setup",
+        )
 
     def enable_rollout_policy_graph(self) -> None:
         """Replay the whole rollout forward from a CUDA graph while a rollout is collected.

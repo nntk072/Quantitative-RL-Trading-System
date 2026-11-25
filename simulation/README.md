@@ -75,3 +75,8 @@ Use the public environment API and the event-driven backtest entry points docume
 ## Invariants
 
 Use only information available at decision time; session rules are eligibility masks and must not remove bars from feature data; fills follow explicit quote and risk contracts.
+## Module size exceptions
+
+| Module | Reason |
+| --- | --- |
+| `backtest/event_driven_backtest.py` | The run loop shares mutable position, quote, order, and accounting state across nested execution phases; splitting requires new golden and integration traces first. |
