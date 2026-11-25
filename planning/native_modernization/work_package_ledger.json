@@ -36,7 +36,8 @@
       "compatibility": null,
       "blocker": "Feature and learning mutation tests and the integration subset were not run. They need an 8-CPU allocation run, which is a lead request.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Needs one 8-CPU allocation run of the feature and learning mutation tests and the integration subset (lead request). No owner approval needed."
     },
     {
       "id": "SEMANTIC-ORACLE",
@@ -60,7 +61,8 @@
       "compatibility": null,
       "blocker": "Fill, event and rounding oracles need captured broker events, which are not in the tree. Plan forbids fabricating them. Candidate defects C1 (invalid fill direction maps to bid) and C2 (slippage_points not applied) need an owner decision before this Python oracle is used as a reference.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Needs captured broker execution events (not in the tree; not fabricated) and an owner decision on candidate defects C1 and C2 in trading/execution/costs.py."
     },
     {
       "id": "PERFORMANCE-BASELINE",
@@ -80,7 +82,8 @@
       "compatibility": null,
       "blocker": "Needs a benchmark allocation with a frozen train-only workload, and depends on SEMANTIC-ORACLE (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Needs a benchmark allocation (GPU for learner workloads) and a frozen train-only workload; depends on SEMANTIC-ORACLE."
     },
     {
       "id": "PERFORMANCE-POLICY",
@@ -99,7 +102,8 @@
       "compatibility": null,
       "blocker": "Depends on PERFORMANCE-BASELINE (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream once PERFORMANCE-BASELINE has results; no allocation of its own."
     },
     {
       "id": "NATIVE-TOOLCHAIN",
@@ -124,7 +128,8 @@
       "compatibility": null,
       "blocker": "aarch64/GH200 wheel needs a Slurm allocation on a GH200 node (not run). Portable manylinux baseline not yet chosen. Windows/WSL not built.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Needs a Slurm CPU allocation on a GH200 node for the aarch64 wheel (one srun, lead request); owner decision on the portable manylinux baseline."
     },
     {
       "id": "ENGINE-REUSE-TRIAL",
@@ -147,7 +152,8 @@
       "compatibility": null,
       "blocker": "Needs engine adapter spikes against frozen fixtures. Depends on SEMANTIC-ORACLE (blocked) and NATIVE-TOOLCHAIN (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: engine adapter spikes against frozen fixtures; needs SEMANTIC-ORACLE fixtures first."
     },
     {
       "id": "DATA-SCHEMAS",
@@ -173,7 +179,8 @@
       "compatibility": null,
       "blocker": "Not yet: Parquet round trip and row-wise reconciliation over all source CSVs (the full files cover 2026 and were excluded by decision), a persisted quarantine output, a data manifest, and a schema migration policy.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: Parquet round trip and reconciliation over pre-2026 source windows (owner decision on the window); no allocation."
     },
     {
       "id": "DATA-INGESTION",
@@ -193,7 +200,8 @@
       "compatibility": null,
       "blocker": "Depends on DATA-SCHEMAS (blocked) and PERFORMANCE-BASELINE (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: depends on DATA-SCHEMAS and a benchmark for I/O; no allocation for the offline part."
     },
     {
       "id": "DATA-QUERY",
@@ -212,7 +220,8 @@
       "compatibility": null,
       "blocker": "Depends on DATA-INGESTION (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: DuckDB views; depends on DATA-INGESTION."
     },
     {
       "id": "CAUSAL-FEATURE-GRAPH",
@@ -234,7 +243,8 @@
       "compatibility": null,
       "blocker": "Typed feature DAG, fit-scope and cache-hash rules, held-out perturbation, and batch vs streaming equivalence are not implemented.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: typed feature DAG, fit-scope and cache-hash rules, batch vs streaming tests; no allocation."
     },
     {
       "id": "FEATURE-KERNELS",
@@ -254,7 +264,8 @@
       "compatibility": null,
       "blocker": "Depends on CAUSAL-FEATURE-GRAPH (blocked) and needs a benchmark allocation.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after CAUSAL-FEATURE-GRAPH, then a benchmark allocation."
     },
     {
       "id": "SHARED-DATA-ABI",
@@ -274,7 +285,8 @@
       "compatibility": null,
       "blocker": "Depends on CAUSAL-FEATURE-GRAPH (blocked); memory measurement needs an allocation.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after CAUSAL-FEATURE-GRAPH; memory measurement needs an allocation."
     },
     {
       "id": "NATIVE-DOMAIN",
@@ -301,7 +313,8 @@
       "compatibility": null,
       "blocker": "No property tests, no differential traces against the Python trading reference, no serialization round trip, no Account, ledger, risk state or daily-reset latch.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream (Rust): property tests, differential traces against the Python reference, account and risk state; no allocation."
     },
     {
       "id": "NATIVE-EXECUTION",
@@ -321,7 +334,8 @@
       "compatibility": null,
       "blocker": "Depends on NATIVE-DOMAIN (incomplete) and DATA-SCHEMAS (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream (Rust) after NATIVE-DOMAIN and DATA-SCHEMAS; no allocation."
     },
     {
       "id": "NATIVE-DECISIONING",
@@ -341,7 +355,8 @@
       "compatibility": null,
       "blocker": "Depends on NATIVE-DOMAIN (incomplete) and SHARED-DATA-ABI (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream (Rust) after NATIVE-DOMAIN and SHARED-DATA-ABI; no allocation."
     },
     {
       "id": "NATIVE-ENVIRONMENT",
@@ -362,7 +377,8 @@
       "compatibility": null,
       "blocker": "Depends on NATIVE-EXECUTION, NATIVE-DECISIONING and SHARED-DATA-ABI (all blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream (Rust) after NATIVE-EXECUTION, NATIVE-DECISIONING and SHARED-DATA-ABI; no allocation."
     },
     {
       "id": "BATCHED-ENVIRONMENT",
@@ -381,7 +397,8 @@
       "compatibility": null,
       "blocker": "Depends on NATIVE-ENVIRONMENT (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after NATIVE-ENVIRONMENT; a thread-sweep benchmark needs an allocation."
     },
     {
       "id": "LEARNER-CONTRACT",
@@ -401,7 +418,8 @@
       "compatibility": null,
       "blocker": "Needs frozen PPO and SAC tapes; depends on SEMANTIC-ORACLE (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: frozen PPO and SAC tapes; needs SEMANTIC-ORACLE fixtures first."
     },
     {
       "id": "ROLLOUT-BUFFERS",
@@ -421,7 +439,8 @@
       "compatibility": null,
       "blocker": "Depends on BATCHED-ENVIRONMENT and LEARNER-CONTRACT (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after BATCHED-ENVIRONMENT and LEARNER-CONTRACT; measurements need an allocation."
     },
     {
       "id": "LEARNER-OPTIMIZATION",
@@ -440,7 +459,8 @@
       "compatibility": null,
       "blocker": "Needs GPU allocations (MI210 or GH200) and depends on ROLLOUT-BUFFERS (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Needs GPU allocations (MI210 or GH200) for timed runs; owner approval for any GPU hours beyond the default single-GPU task."
     },
     {
       "id": "RESOURCE-RUNTIME",
@@ -467,7 +487,8 @@
       "compatibility": null,
       "blocker": "Online items need an authorized GH200 allocation (sweep, p95, launch topology). Dispatcher RAM admission is not enforced (R2) and needs a per-worker memory field in the request contract.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Online items O1 to O3 need an authorized GH200 allocation (one interactive allocation, owner OK); dispatcher RAM admission (R2) needs a per-worker memory field, an offline change in the experiment runner."
     },
     {
       "id": "EXECUTION-DAG",
@@ -487,7 +508,8 @@
       "compatibility": null,
       "blocker": "Depends on RESOURCE-RUNTIME (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after RESOURCE-RUNTIME (online part needs a Slurm allocation to validate launch topology)."
     },
     {
       "id": "EXPERIMENT-CATALOG",
@@ -508,7 +530,8 @@
       "compatibility": null,
       "blocker": "Depends on EXECUTION-DAG, LEARNER-CONTRACT and CAUSAL-FEATURE-GRAPH (all blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after EXECUTION-DAG, LEARNER-CONTRACT and CAUSAL-FEATURE-GRAPH."
     },
     {
       "id": "ARTIFACT-STORE",
@@ -528,7 +551,8 @@
       "compatibility": null,
       "blocker": "Depends on EXECUTION-DAG and DATA-SCHEMAS (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after EXECUTION-DAG and DATA-SCHEMAS; no allocation."
     },
     {
       "id": "RESULT-REGISTRY",
@@ -549,7 +573,8 @@
       "compatibility": null,
       "blocker": "Depends on ARTIFACT-STORE, DATA-QUERY and EXPERIMENT-CATALOG (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after ARTIFACT-STORE, DATA-QUERY and EXPERIMENT-CATALOG; no allocation."
     },
     {
       "id": "EVALUATION-ENGINE",
@@ -570,7 +595,8 @@
       "compatibility": null,
       "blocker": "Depends on NATIVE-ENVIRONMENT, LEARNER-CONTRACT and ARTIFACT-STORE (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after NATIVE-ENVIRONMENT, LEARNER-CONTRACT and ARTIFACT-STORE; no allocation for the offline part."
     },
     {
       "id": "RESEARCH-STATISTICS",
@@ -590,7 +616,8 @@
       "compatibility": null,
       "blocker": "Depends on EVALUATION-ENGINE and RESULT-REGISTRY (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after EVALUATION-ENGINE and RESULT-REGISTRY; no allocation."
     },
     {
       "id": "EVIDENCE-GENERATION",
@@ -609,7 +636,8 @@
       "compatibility": null,
       "blocker": "Depends on RESEARCH-STATISTICS (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream after RESEARCH-STATISTICS; no allocation."
     },
     {
       "id": "QUALITY-AND-SECURITY",
@@ -633,7 +661,8 @@
       "compatibility": null,
       "blocker": "Proptest and fuzz targets, the native CI matrix, and the cargo-audit record on the final lockfile are not done. NATIVE-TOOLCHAIN is blocked.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Offline engineering stream: proptest and fuzz targets, native CI matrix, cargo-audit record on the final lockfile; needs NATIVE-TOOLCHAIN first."
     },
     {
       "id": "INTEGRATED-BENCHMARK",
@@ -659,7 +688,8 @@
       "compatibility": null,
       "blocker": "Needs a benchmark allocation and all upstream packages above (blocked). Nothing has been timed, so no comparison is reported.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Needs benchmark allocations and owner approval for the timed 2M-transition runs, after all upstream packages."
     },
     {
       "id": "SCIENTIFIC-RELEASE",
@@ -681,7 +711,8 @@
       "compatibility": null,
       "blocker": "A 20M campaign needs the owner's authorization, a frozen design, and the benchmark and evidence packages (blocked). Not run, per the goal.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Owner authorization and frozen design for any 20M campaign; not started."
     },
     {
       "id": "LIVE-CONTRACT",
@@ -703,7 +734,8 @@
       "compatibility": null,
       "blocker": "Production gate. Mock and paper mode only; needs the owner's approval to start production work. No broker connection, no real orders.",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Owner approval to start production work; paper and mock mode only; no broker connection."
     },
     {
       "id": "PRODUCTION-CONTROL-PLANE",
@@ -723,7 +755,8 @@
       "compatibility": null,
       "blocker": "Production gate; needs the owner's approval. Depends on RESULT-REGISTRY and LIVE-CONTRACT (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Owner approval to start production work; depends on RESULT-REGISTRY and LIVE-CONTRACT."
     },
     {
       "id": "OPERABILITY",
@@ -743,7 +776,8 @@
       "compatibility": null,
       "blocker": "Production gate; needs the owner's approval. Depends on LIVE-CONTRACT and PRODUCTION-CONTROL-PLANE (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Owner approval to start production work; depends on LIVE-CONTRACT and PRODUCTION-CONTROL-PLANE."
     },
     {
       "id": "FINAL-PRODUCT-APPLICATION",
@@ -764,7 +798,8 @@
       "compatibility": null,
       "blocker": "Product gate; needs the owner's approval and a qualified offline engine (blocked).",
       "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
-      "reviewer": null
+      "reviewer": null,
+      "authorization_or_resource": "Owner approval for the product gate and a qualified offline engine."
     }
   ]
 }
