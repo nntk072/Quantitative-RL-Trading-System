@@ -67,3 +67,10 @@ Rules that apply to both trackers:
 - Never claim a check passed unless it ran, and record its exit code.
 - Never fabricate a measurement or a gate result.
 - Work that needs the owner's decision is recorded in `DECISIONS.md` with the least irreversible choice.
+
+## Publishing (replaces the named-batch rule, owner-approved 2026-11-26)
+
+- Each batch goes to `main` as a pull request from a feature branch. The branch is cut from the current remote `main`, carries only the Python-only commits the lead names, and includes the study-catalog registrations and regenerated docs those commits need.
+- CI on the pull request is the gate. The tracker watches it, and merges only when every required check is green.
+- Merge with rebase (or squash). No merge commits. Force-push only on feature branches, never on `main`.
+- Feature branches may be pushed to origin. `main-native` stays local.
