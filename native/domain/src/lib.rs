@@ -3,6 +3,14 @@
 //! This crate has no Python, I/O or broker dependencies. Discrete quantities use
 //! checked integer arithmetic; overflow is reported as an error rather than wrapped.
 
+pub mod order;
+pub mod position;
+pub mod units;
+
+pub use order::{Fill, Order, OrderIntent, OrderState};
+pub use position::Position;
+pub use units::{notional_cents, Price, Quantity, Side};
+
 /// Schema version of the native domain contract. Bump when a serialized field changes meaning.
 pub const DOMAIN_SCHEMA_VERSION: u32 = 1;
 
@@ -11,12 +19,45 @@ pub const DOMAIN_SCHEMA_VERSION: u32 = 1;
 pub enum DomainError {
     /// The result does not fit in the target integer type.
     Overflow,
+    /// A quantity must be a strictly positive number of lot steps.
+    NonPositiveQuantity,
+    /// A price must be a strictly positive number of ticks.
+    NonPositivePrice,
+    /// A tick value (cents per tick per lot) must be strictly positive.
+    NonPositiveTickValue,
+    /// A commission must not be negative.
+    NegativeFee,
+    /// The requested order lifecycle move is not in the transition table.
+    InvalidTransition {
+        from: order::OrderState,
+        to: order::OrderState,
+    },
+    /// A fill would exceed the order quantity.
+    Overfill,
+    /// A fill's side does not match the order's side.
+    SideMismatch,
+    /// A fill references a different order.
+    OrderMismatch,
 }
 
 impl std::fmt::Display for DomainError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             DomainError::Overflow => write!(f, "integer overflow in domain arithmetic"),
+            DomainError::NonPositiveQuantity => {
+                write!(f, "quantity must be a positive number of lot steps")
+            }
+            DomainError::NonPositivePrice => write!(f, "price must be a positive number of ticks"),
+            DomainError::NonPositiveTickValue => {
+                write!(f, "tick value must be a positive number of cents")
+            }
+            DomainError::NegativeFee => write!(f, "fee must not be negative"),
+            DomainError::InvalidTransition { from, to } => {
+                write!(f, "invalid order transition from {from:?} to {to:?}")
+            }
+            DomainError::Overfill => write!(f, "fill exceeds the order quantity"),
+            DomainError::SideMismatch => write!(f, "fill side does not match the order side"),
+            DomainError::OrderMismatch => write!(f, "fill references a different order"),
         }
     }
 }
