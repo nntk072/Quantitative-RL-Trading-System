@@ -30,6 +30,7 @@ caller_paths:
 - tests/unit/experiments/test_matrix_experiment_run_controller.py
 - tests/unit/experiments/test_model_variant_catalog.py
 - tests/unit/experiments/test_orchestration_weekly.py
+- tests/unit/experiments/test_preflight_migration.py
 - tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py
 - tests/unit/experiments/test_triton_experiment_run_recovery.py
 - tests/unit/experiments/test_triton_report_experiment_run_status.py

@@ -30,6 +30,7 @@ api_paths:
 - market_data/transforms/session_schedule.py
 - market_data/transforms/sessions.py
 caller_paths:
+- tests/unit/market_data/test_discover.py
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
 - evaluation/contracts.py
