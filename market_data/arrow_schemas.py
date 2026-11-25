@@ -76,10 +76,28 @@ class RowProblem:
 
 
 def _column(table: pa.Table, name: str) -> np.ndarray[Any, Any]:
+    """Return a table column as a NumPy array.
+
+    Args:
+        table: Arrow table to read from.
+        name: Column name.
+
+    Returns:
+        NumPy array of the column values; nulls use the NumPy null representation.
+    """
     return np.asarray(table.column(name).to_numpy(zero_copy_only=False))
 
 
 def _as_ns(table: pa.Table, name: str) -> np.ndarray[Any, Any]:
+    """Return a timestamp column as int64 nanoseconds since the epoch, UTC.
+
+    Args:
+        table: Arrow table to read from.
+        name: Timestamp column name.
+
+    Returns:
+        int64 NumPy array of nanoseconds.
+    """
     return np.asarray(
         table.column(name).cast(pa.int64()).to_numpy(zero_copy_only=False), dtype=np.int64
     )
@@ -88,9 +106,11 @@ def _as_ns(table: pa.Table, name: str) -> np.ndarray[Any, Any]:
 def validate_quotes(table: pa.Table) -> list[RowProblem]:
     """Return rule violations for a normalized quote table.
 
-    Rules: event time precedes or equals availability (no future data); duplicate
-    (instrument, source sequence) pairs are flagged on every occurrence; bid must not exceed
-    ask when both are present; prices must be finite and positive when present.
+    Args:
+        table: Normalized quote table with the QUOTE_SCHEMA columns.
+
+    Returns:
+        Every violation with its row index and reason; an empty list when the table is valid.
     """
     problems: list[RowProblem] = []
     event_ns = _as_ns(table, "event_time")
@@ -124,8 +144,11 @@ def validate_quotes(table: pa.Table) -> list[RowProblem]:
 def validate_bars(table: pa.Table) -> list[RowProblem]:
     """Return rule violations for a normalized OHLC bar table.
 
-    Rules: all prices finite and positive; high bounds open, close and low; low bounds open and
-    close; close time follows event time; availability is not before the close time.
+    Args:
+        table: Normalized bar table with the BAR_SCHEMA columns.
+
+    Returns:
+        Every violation with its row index and reason; an empty list when the table is valid.
     """
     problems: list[RowProblem] = []
     event_ns = _as_ns(table, "event_time")
@@ -155,7 +178,15 @@ def validate_bars(table: pa.Table) -> list[RowProblem]:
 
 
 def quarantine_mask(problems: list[RowProblem], num_rows: int) -> np.ndarray[Any, Any]:
-    """Return a boolean mask that is True for every row with at least one problem."""
+    """Return a boolean mask that is True for every row with at least one problem.
+
+    Args:
+        problems: Violations returned by a validator.
+        num_rows: Number of rows in the validated table.
+
+    Returns:
+        Boolean mask of length num_rows.
+    """
     mask: np.ndarray[Any, Any] = np.zeros(num_rows, dtype=bool)
     for problem in problems:
         mask[problem.row] = True
@@ -195,7 +226,8 @@ def mt5_export_to_bars(
         source_id: Source identity written to every row.
 
     Returns:
-        The converted bar table and the problems. ``RowProblem.row`` indexes ``frame``.
+        The converted bar table, with every row that failed validation removed, and the problems.
+        ``RowProblem.row`` indexes ``frame``; callers persist the problems as the quarantine record.
     """
     minutes = _TIMEFRAME_MINUTES.get(timeframe)
     if minutes is None:
@@ -237,6 +269,12 @@ def mt5_export_to_bars(
         },
         schema=BAR_SCHEMA,
     )
-    for problem in validate_bars(table):
+    bar_problems = validate_bars(table)
+    for problem in bar_problems:
         problems.append(RowProblem(keep[problem.row], problem.reason))
+    if bar_problems:
+        bad = np.zeros(table.num_rows, dtype=bool)
+        for problem in bar_problems:
+            bad[problem.row] = True
+        table = table.filter(pa.array(~bad))
     return table, sorted(problems, key=lambda p: p.row)
