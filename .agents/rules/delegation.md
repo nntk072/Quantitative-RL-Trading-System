@@ -74,5 +74,36 @@ remains in `triton-slurm.md`.
 
 Inspect branch, source revision, dirty paths, and active runs before dispatch.
 Do not reset, clean, stash, move, or overwrite unrelated changes. Workers do
-not independently rebase, merge, commit, push, or alter refs. Preserve user
-authorization gates in `git-commit-rules.md` and `ci-verification.md`.
+not rebase, merge, push, or alter refs on shared branches. A worker may commit
+only on its own feature branch in its own isolated worktree, and only when the
+coordinator has authorized commits for that task. Preserve user authorization
+gates in `git-commit-rules.md` and `ci-verification.md`.
+
+## Plan workflow (native modernization)
+
+This section governs the plan-driven workstreams in
+`planning/native_modernization/OPERATING_MODEL.md`. It is a delegation pattern
+on top of the rules above, not a new roster.
+
+- **Streams.** At most four stream agents run at once. Each takes one ready
+  work package with disjoint paths, works in a detached worktree from the
+  current integration branch, and returns commits, changed paths, and exact
+  command results. The coordinator turns each stream's commit into a feature
+  branch and a pull request.
+- **Integration branch.** Work lands in `main-native` through pull requests
+  from feature branches. Streams never edit `main-native` directly.
+- **Trackers.** The main tracker keeps a worktree on remote `main` and reports
+  what changed there. The main-native tracker is report-only: it finds fixes
+  that also belong on `main`. Neither tracker pushes unless the coordinator names
+  the commits and the batch.
+- **Gate.** CI on each pull request is the gate. Merge only when every required
+  check is green, using rebase or squash. No merge commits, no force-push on
+  `main`, and force-push only on feature branches.
+- **Resource operator.** The coordinator alone requests Slurm allocations (one
+  `srun` at a time) and owns the file-quota budget. Streams never run Slurm.
+- **Gates that CI does not enforce.** A check not in CI is run locally before
+  the PR is opened. Today this includes full-tree mypy; add a CI job when one is
+  created.
+- **Subprocess imports.** Tests that run a script or subprocess from a worktree
+  set `PYTHONPATH` to that checkout, because a shared virtualenv can point at a
+  different checkout.
