@@ -24,3 +24,14 @@
 - Decisions: logs/agents/architect/2026-11-25_native_goal/DECISIONS.md (not tracked by git).
 - Resource log: logs/agents/architect/2026-11-25_native_goal/RESOURCES.md (not tracked by git).
 - Ledger: planning/native_modernization/work_package_ledger.json.
+
+## Publication to remote main (goal condition c)
+
+- Commits on remote main since 11bcf4e1: one batch, 0d9304d3 (six Python commits and the regenerated docs). The owner named the commit list.
+- Pushed once. The first push attempt over SSH failed (no key). The same batch was pushed over HTTPS with no force.
+- CI runs on 0d9304d3: CI 45720268537 (success), Documentation website 45720268551 (success), Push on main (CodeQL) 45720268143 (success).
+
+## Ledger status (condition a)
+
+- 35 work packages: all blocked. Each carries a cause and an authorization_or_resource field in work_package_ledger.json.
+- Nothing is accepted. The acceptance criteria are not met for any package.

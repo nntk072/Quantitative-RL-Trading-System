@@ -22,3 +22,7 @@ Every package is blocked. Each entry names the cause and the authorization or re
 ## Implementation not yet written (no external blocker)
 - NATIVE-DOMAIN: property tests, differential traces, serialization, account and risk state.
 - CAUSAL-FEATURE-GRAPH, DATA-INGESTION, DATA-QUERY, NATIVE-EXECUTION, NATIVE-DECISIONING, NATIVE-ENVIRONMENT, BATCHED-ENVIRONMENT, ROLLOUT-BUFFERS, EXECUTION-DAG, EXPERIMENT-CATALOG, ARTIFACT-STORE, RESULT-REGISTRY, EVALUATION-ENGINE, RESEARCH-STATISTICS, EVIDENCE-GENERATION, LEARNER-CONTRACT, ENGINE-REUSE-TRIAL, PERFORMANCE-POLICY, QUALITY-AND-SECURITY.
+
+## Per-package authorization or resource
+
+The authoritative field is `authorization_or_resource` in planning/native_modernization/work_package_ledger.json. Each of the 35 entries has one. The grouping above is a summary of those fields.
