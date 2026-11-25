@@ -1,0 +1,260 @@
+{
+  "schema": "qrl.native-modernization.mutation-check.v1",
+  "work_package": "BASELINE-AUDIT",
+  "scope": "scoped mutation check: trading/account/limits.py and trading/risk/sizing.py",
+  "base_sha": "f96ffcfd49768bdbc0631ffed9fdbe00d1cd4c65",
+  "method": "one mutant at a time; the old text was asserted to match exactly once; pytest ran on the test set; the production file was restored with git checkout -- <file> in a finally block; git status was checked afterwards",
+  "pytest_command": "python -m pytest -q -p no:cacheprovider --tb=no -rfE -o addopts= <test_set>",
+  "python": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python (cpython 3.12.14)",
+  "timeout_s_per_run": 80,
+  "test_set": [
+    "tests/unit/trading/test_semantic_oracle_limits_sizing.py",
+    "tests/unit/trading/test_risk.py",
+    "tests/unit/trading/test_risk_properties.py",
+    "tests/unit/simulation/test_environment/test_fixed_risk_sizing.py",
+    "tests/unit/evaluation/test_account_state_trace_reconciliation.py",
+    "tests/unit/evaluation/test_rollout.py",
+    "tests/unit/evaluation/test_trade_setup_policy_diagnostics.py",
+    "tests/unit/features/test_stage_a_observation.py",
+    "tests/unit/research/test_deterministic_reanalysis.py",
+    "tests/unit/simulation/test_environment/test_observation_schema.py",
+    "tests/unit/trading/test_ftmo_midnight_fidelity.py",
+    "tests/unit/trading/test_guardrails.py",
+    "tests/unit/trading/test_repeated_payout_policy.py",
+    "tests/unit/trading/test_risk_policy_contract.py",
+    "tests/integration/backtest/test_account_transition_parity.py",
+    "tests/integration/backtest/test_repeated_payout_backtest.py",
+    "tests/integration/backtest/test_risk_lifecycle_characterization.py",
+    "tests/integration/backtest/test_entry_levels.py",
+    "tests/unit/evaluation/test_order_chart.py",
+    "tests/unit/simulation/test_environment/test_strategy_env.py",
+    "tests/architecture/test_public_imports.py"
+  ],
+  "test_set_rationale": "tier 1: the oracle file, the only file that imports trading.account.limits by module name, and the files that import trading.risk.sizing; tier 2: unit and integration tests that reach limits through AccountState (which imports limits) or call sizing through the environment",
+  "baseline_unmutated": {
+    "exit_code": 0,
+    "summary": "428 passed, 1 warning in 18.13s"
+  },
+  "mutants": [
+    {
+      "id": "L1",
+      "module": "trading/account/limits.py",
+      "function": "canonical_daily_loss",
+      "mutant": "drop max(0, ...) floor",
+      "old": "return max(0.0, float(session_start_equity) - float(equity))",
+      "new": "return float(session_start_equity) - float(equity)",
+      "status": "killed",
+      "failed_test_count": 1,
+      "killing_tests": [
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_daily_loss_is_zero_when_equity_rose"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "1 failed, 427 passed, 1 warning in 25.63s",
+      "wall_s": 28.7
+    },
+    {
+      "id": "L2",
+      "module": "trading/account/limits.py",
+      "function": "canonical_daily_loss",
+      "mutant": "sign flip (operands swapped)",
+      "old": "return max(0.0, float(session_start_equity) - float(equity))",
+      "new": "return max(0.0, float(equity) - float(session_start_equity))",
+      "status": "killed",
+      "failed_test_count": 2,
+      "killing_tests": [
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_daily_loss_is_start_minus_equity_when_losing",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_daily_loss_is_zero_when_equity_rose"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "2 failed, 426 passed, 1 warning in 19.89s",
+      "wall_s": 22.6
+    },
+    {
+      "id": "L3",
+      "module": "trading/account/limits.py",
+      "function": "daily_floor",
+      "mutant": "sign flip (limit added instead of subtracted)",
+      "old": "return float(session_start_equity) - float(daily_loss_limit)",
+      "new": "return float(session_start_equity) + float(daily_loss_limit)",
+      "status": "killed",
+      "failed_test_count": 32,
+      "killing_tests": [
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[legacy_gross_closed_losses-1.0-100000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[legacy_gross_closed_losses-1.0-50000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[legacy_gross_closed_losses-3.0-100000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[legacy_gross_closed_losses-3.0-50000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[session_net_equity-1.0-100000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[session_net_equity-1.0-50000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[session_net_equity-3.0-100000.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reconcile_realized_and_open_account_transitions[session_net_equity-3.0-50000.0]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_continues_through_multiple_cycles",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_records_one_failed_cycle_on_account_breach",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_economic_value[full_config]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_economic_value[instance]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_economic_value[resolved_mapping]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_environment_and_backtest_match_controlled_target_and_reset",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach[eod]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach[intraday_trailing]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach[static]",
+        "tests/integration/backtest/test_risk_lifecycle_characterization.py::test_open_position_daily_breach_forced_close_reconciles_both_engines",
+        "tests/unit/evaluation/test_rollout.py::test_evaluate_model_produces_trades_and_valid_equity",
+        "tests/unit/trading/test_ftmo_midnight_fidelity.py::test_open_loss_at_midnight_does_not_lower_balance_based_daily_floor",
+        "tests/unit/trading/test_guardrails.py::test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode",
+        "tests/unit/trading/test_guardrails.py::test_daily_percentage_floor_reanchors_to_each_session_opening_equity",
+        "tests/unit/trading/test_guardrails.py::test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial[eod-100000.0]",
+        "tests/unit/trading/test_guardrails.py::test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial[intraday_trailing-100000.0]",
+        "tests/unit/trading/test_guardrails.py::test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial[static-90000.0]",
+        "tests/unit/trading/test_repeated_payout_policy.py::test_dynamic_risk_budget_uses_locked_post_payout_floor[eod]",
+        "tests/unit/trading/test_repeated_payout_policy.py::test_dynamic_risk_budget_uses_locked_post_payout_floor[intraday_trailing]",
+        "tests/unit/trading/test_repeated_payout_policy.py::test_fixed_session_equity_daily_floor_counts_unrealized_loss",
+        "tests/unit/trading/test_repeated_payout_policy.py::test_repeated_risk_budget_respects_execution_reserve",
+        "tests/unit/trading/test_repeated_payout_policy.py::test_repeated_risk_budget_respects_remaining_account_and_daily_capacity",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_daily_floor_is_start_minus_limit",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_remaining_daily_capacity_is_equity_above_the_floor"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "32 failed, 396 passed, 1 warning in 17.99s",
+      "wall_s": 20.1
+    },
+    {
+      "id": "L4",
+      "module": "trading/account/limits.py",
+      "function": "remaining_daily_capacity",
+      "mutant": "drop max(0, ...) floor (breach not clamped)",
+      "old": "return max(0.0, float(equity) - daily_floor(session_start_equity, daily_loss_limit))",
+      "new": "return float(equity) - daily_floor(session_start_equity, daily_loss_limit)",
+      "status": "killed",
+      "failed_test_count": 1,
+      "killing_tests": [
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_remaining_daily_capacity_is_zero_once_breached"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "1 failed, 427 passed, 1 warning in 17.46s",
+      "wall_s": 19.9
+    },
+    {
+      "id": "L5",
+      "module": "trading/account/limits.py",
+      "function": "remaining_account_capacity",
+      "mutant": "change clamp constant 0.0 -> 1.0",
+      "old": "return max(0.0, float(equity) - float(account_floor))",
+      "new": "return max(1.0, float(equity) - float(account_floor))",
+      "status": "killed",
+      "failed_test_count": 3,
+      "killing_tests": [
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach[eod]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_environment_and_backtest_match_payout_then_cycle_breach[intraday_trailing]",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_remaining_account_capacity_above_floor_and_at_floor"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "3 failed, 425 passed, 1 warning in 18.39s",
+      "wall_s": 20.3
+    },
+    {
+      "id": "S1",
+      "module": "trading/risk/sizing.py",
+      "function": "stop_loss_risk_usd",
+      "mutant": "drop abs() on stop distance",
+      "old": "return abs(float(stop_distance)) * float(lots) * float(contract_size) * float(point_value)",
+      "new": "return float(stop_distance) * float(lots) * float(contract_size) * float(point_value)",
+      "status": "killed",
+      "failed_test_count": 9,
+      "killing_tests": [
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_consume_actions_while_delayed_entry_is_pending",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_match_on_one_shared_tick_execution_trace[10--1-False-30.0-0.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_match_on_one_shared_tick_execution_trace[10--1-True-0.0-0.0]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_match_on_one_shared_tick_execution_trace[10--1-True-0.0-0.1]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_match_on_one_shared_tick_execution_trace[10--1-True-30.0-0.1]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_reject_insufficient_margin_without_account_mutation[10--1]",
+        "tests/integration/backtest/test_account_transition_parity.py::test_environment_and_backtest_size_to_the_same_trade_risk_cap[10--1-5.0-0.5]",
+        "tests/integration/backtest/test_risk_lifecycle_characterization.py::test_environment_and_backtest_apply_confirmed_swing_trailing_stop_next_bar[-1]",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_stop_loss_risk_uses_absolute_stop_distance"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "9 failed, 419 passed, 1 warning in 20.84s",
+      "wall_s": 23.4
+    },
+    {
+      "id": "S2",
+      "module": "trading/risk/sizing.py",
+      "function": "compute_lots",
+      "mutant": "remove max_loss_cap clamp",
+      "old": "lots = min(lots, max_lots_from_cap)",
+      "new": "lots = lots",
+      "status": "killed",
+      "failed_test_count": 2,
+      "killing_tests": [
+        "tests/unit/trading/test_risk.py::test_compute_lots_with_cap",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_loss_cap_limits_fractional_sizing"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "2 failed, 426 passed, 1 warning in 25.20s",
+      "wall_s": 28.6
+    },
+    {
+      "id": "S3",
+      "module": "trading/risk/sizing.py",
+      "function": "compute_lots",
+      "mutant": "drop risk_usd exemption from loss cap (cap applies to explicit risk)",
+      "old": "if max_loss_cap is not None and risk_usd is None:",
+      "new": "if max_loss_cap is not None:",
+      "status": "killed",
+      "failed_test_count": 3,
+      "killing_tests": [
+        "tests/unit/simulation/test_environment/test_fixed_risk_sizing.py::test_explicit_risk_usd_beats_max_loss_cap",
+        "tests/unit/simulation/test_environment/test_fixed_risk_sizing.py::test_max_lot_ceiling_is_the_only_remaining_limit",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_explicit_risk_usd_is_not_shrunk_by_the_loss_cap"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "3 failed, 425 passed, 1 warning in 18.24s",
+      "wall_s": 20.8
+    },
+    {
+      "id": "S4",
+      "module": "trading/risk/sizing.py",
+      "function": "compute_lots",
+      "mutant": "remove lower clip bound (min_lot -> 0)",
+      "old": "lots = np.clip(lots, min_lot, max_lot)",
+      "new": "lots = np.clip(lots, 0.0, max_lot)",
+      "status": "killed",
+      "failed_test_count": 2,
+      "killing_tests": [
+        "tests/unit/trading/test_risk_properties.py::test_wider_stop_never_increases_lots_for_the_same_dollar_risk",
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py::test_tiny_budget_is_clipped_up_to_minimum_lot"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "2 failed, 426 passed, 1 warning in 29.92s",
+      "wall_s": 32.0
+    },
+    {
+      "id": "S5",
+      "module": "trading/risk/sizing.py",
+      "function": "compute_lots_with_execution_reserve",
+      "mutant": "lot-step rounding flipped from floor to ceil (exceeds budget)",
+      "old": "stepped_lots = np.floor(affordable_lots / lot_step) * lot_step",
+      "new": "stepped_lots = np.ceil(affordable_lots / lot_step) * lot_step",
+      "status": "killed",
+      "failed_test_count": 8,
+      "killing_tests": [
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_economic_value[full_config]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_economic_value[instance]",
+        "tests/integration/backtest/test_repeated_payout_backtest.py::test_repeated_payout_backtest_withdraws_realized_overshoot_and_reports_economic_value[resolved_mapping]",
+        "tests/unit/simulation/test_environment/test_fixed_risk_sizing.py::test_end_to_end_dynamic_mode_still_sizes_off_equity",
+        "tests/unit/simulation/test_environment/test_fixed_risk_sizing.py::test_fixed_mode_risks_exactly_fixed_risk_at_every_stop_width[1098.0]",
+        "tests/unit/simulation/test_environment/test_strategy_env.py::TestAdaptiveRiskSizing::test_dynamic_budget_includes_modeled_execution_costs",
+        "tests/unit/trading/test_risk.py::test_execution_reserved_lots_round_down_to_broker_volume_step",
+        "tests/unit/trading/test_risk.py::test_trading_risk_primitives_share_risk_and_reserve_sizing"
+      ],
+      "pytest_exit_code": 1,
+      "pytest_summary": "8 failed, 420 passed, 1 warning in 19.38s",
+      "wall_s": 21.3
+    }
+  ],
+  "totals": {
+    "mutants": 10,
+    "killed": 10,
+    "survived": 0,
+    "inconclusive_timeout": 0
+  },
+  "survivors": []
+}
