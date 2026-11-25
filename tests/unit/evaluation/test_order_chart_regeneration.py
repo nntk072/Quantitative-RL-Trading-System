@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -152,3 +154,129 @@ def test_replot_rebuilds_all_timeframes_used_by_overlapping_trade_ideas() -> Non
     assert list(chart_config.features.ifvg_mtf.timeframes) == ["M10", "M15", "M30"]
     assert list(chart_config.features.po3_state_mtf.timeframes) == ["M15"]
     assert list(chart_config.features.entry_ideas.timeframes) == ["H1"]
+
+
+def test_main_applies_cli_render_overrides_and_normalizes_timeframe_selection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir = tmp_path / "source-run"
+    run_dir.mkdir()
+    output_dir = tmp_path / "rendered"
+    cfg = OmegaConf.create({"output": {"save_html": True, "max_order_charts": 40}})
+    calls: list[tuple[Any, ...]] = []
+
+    def capture_split(*args: Any) -> None:
+        calls.append(args)
+
+    monkeypatch.setattr(order_chart_regeneration, "_load_run_config", lambda _: cfg)
+    monkeypatch.setattr(order_chart_regeneration, "_replot_split", capture_split)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "order-chart-regeneration",
+            "--run",
+            str(run_dir),
+            "--output",
+            str(output_dir),
+            "--split",
+            "training",
+            "--dpi",
+            "110",
+            "--max-charts",
+            "3",
+            "--no-save-html",
+            "--force",
+            "--order-block-timeframes",
+            "h1,m5",
+            "--ema-timeframes",
+            "all",
+            "--swing-timeframes",
+            "",
+        ],
+    )
+
+    order_chart_regeneration.main()
+
+    assert output_dir.is_dir()
+    assert len(calls) == 1
+    assert calls[0][0:7] == (run_dir, cfg, "training", 110, True, False, 3)
+    assert calls[0][7] == output_dir
+    assert calls[0][8] == ("H1", "M5")
+    assert calls[0][11] == ("M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1")
+    assert calls[0][12] == ()
+
+
+def test_main_rejects_unsupported_timeframe_before_creating_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir = tmp_path / "source-run"
+    run_dir.mkdir()
+    output_dir = tmp_path / "rendered"
+    cfg = OmegaConf.create({"output": {}})
+    called = False
+
+    def capture_split(*args: Any) -> None:
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(order_chart_regeneration, "_load_run_config", lambda _: cfg)
+    monkeypatch.setattr(order_chart_regeneration, "_replot_split", capture_split)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "order-chart-regeneration",
+            "--run",
+            str(run_dir),
+            "--output",
+            str(output_dir),
+            "--fvg-timeframes",
+            "H2",
+        ],
+    )
+
+    with pytest.raises(SystemExit, match="Unsupported chart timeframe"):
+        order_chart_regeneration.main()
+
+    assert not output_dir.exists()
+    assert called is False
+
+
+def test_replot_copies_equity_to_separate_output_and_skips_data_load_without_trades(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir = tmp_path / "source-run"
+    source_split = run_dir / "training"
+    source_split.mkdir(parents=True)
+    equity_path = source_split / "equity.csv"
+    equity_path.write_text("time,equity\n2025-01-02,100000\n", encoding="utf-8")
+    output_root = tmp_path / "rendered"
+    cfg = OmegaConf.create({})
+    summaries: list[tuple[Path, Any, Any]] = []
+
+    def record_summary(
+        split_dir: Path, config: Any, dpi: int, *, trades: pd.DataFrame | None = None
+    ) -> None:
+        summaries.append((split_dir, config, trades))
+
+    def fail_data_load(*args: Any, **kwargs: Any) -> Any:
+        raise AssertionError("bar data should not be loaded when the split has no trades.csv")
+
+    monkeypatch.setattr(order_chart_regeneration, "_replot_split_summary", record_summary)
+    monkeypatch.setattr(order_chart_regeneration, "_load_split_bars", fail_data_load)
+
+    order_chart_regeneration._replot_split(
+        run_dir,
+        cfg,
+        "training",
+        72,
+        False,
+        output_root=output_root,
+        swing_timeframes=(),
+    )
+
+    output_split = output_root / "training"
+    assert (output_split / "equity.csv").read_bytes() == equity_path.read_bytes()
+    assert equity_path.read_text(encoding="utf-8").endswith("100000\n")
+    assert summaries == [(output_split, cfg, None)]

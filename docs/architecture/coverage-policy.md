@@ -16,10 +16,10 @@ enforced rule today.
 
 ## Latest measured coverage
 
-CI run `45704573509` at target-branch head `89515950` measured 36,471 of
-44,790 product statements covered (81.43%), with 8,319 statements missing.
-Product branch coverage is 11,360 of 16,428 (69.15%), informational only.
-The artifact's all-source total is 36,502/44,873 lines and 11,360/16,442
+CI run `45712994524` at target-branch head `b596249e` measured 36,738 of
+44,790 product statements covered (82.02%), with 8,052 statements missing.
+Product branch coverage is 11,448 of 16,428 (69.70%), informational only.
+The artifact's all-source total is 36,769/44,873 lines and 11,448/16,442
 branches; it includes the informational `research_tools` helper at 31/83 lines
 (37.35%) and 0/14 branches. This artifact measures only
 `perf/env-step-speedup`; it is not a repository-wide coverage percentage.
@@ -30,17 +30,17 @@ branches; it includes the informational `research_tools` helper at 31/83 lines
 | `compute` | 919/1,177 | 78.08% |
 | `configuration` | 194/199 | 97.49% |
 | `decisioning` | 577/604 | 95.53% |
-| `evaluation` | 9,566/11,600 | 82.47% |
-| `experiments` | 2,401/3,250 | 73.88% |
+| `evaluation` | 9,687/11,600 | 83.51% |
+| `experiments` | 2,410/3,250 | 74.15% |
 | `features` | 3,908/4,151 | 94.15% |
 | `integrations` | 965/1,703 | 56.66% |
 | `learning` | 2,816/3,438 | 81.91% |
 | `live` | 140/169 | 82.84% |
 | `market_data` | 2,064/2,354 | 87.68% |
 | `models` | 822/861 | 95.47% |
-| `simulation` | 6,134/7,277 | 84.29% |
+| `simulation` | 6,138/7,277 | 84.35% |
 | `trading` | 2,300/2,637 | 87.22% |
-| `training` | 3,322/5,010 | 66.31% |
+| `training` | 3,455/5,010 | 68.96% |
 
 ## Exclusions
 

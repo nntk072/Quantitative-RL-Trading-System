@@ -14,7 +14,7 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
-from experiments.runs import checkpoints
+from experiments.runs import baseline_cache_rebuild, checkpoints
 
 MODULE_PATH = Path(__file__).resolve().parents[3] / "experiments/runs/execution.py"
 SPEC = importlib.util.spec_from_file_location("experiment_run_controller", MODULE_PATH)
@@ -1030,3 +1030,73 @@ def test_checkpoint_map_script_reports_invalid_seed_as_cli_error(
         runpy.run_path(str(Path(checkpoints.__file__)), run_name="__main__")
 
     assert "ERROR: invalid literal for int() with base 10: 'not-a-seed'" in capsys.readouterr().err
+
+
+def test_baseline_cache_rebuild_refuses_an_incomplete_existing_backup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = tmp_path / "repo"
+    cache_path = repository / baseline_cache_rebuild.LEGACY_BASELINE_CACHE
+    cache_path.parent.mkdir(parents=True)
+    cache_path.write_bytes(b"current cache")
+    Path(f"{cache_path}.hash").write_text("old-hash\n", encoding="utf-8")
+    backup_dir = tmp_path / "backup"
+    backup_dir.mkdir()
+    (backup_dir / cache_path.name).write_bytes(b"partial backup")
+    report_path = tmp_path / "report.json"
+    cfg = SimpleNamespace(data=SimpleNamespace(primary="US100.cash", secondary="US500.cash"))
+    resolved = {
+        "base_config": "config/base/default.yaml",
+        "strategy": "baseline",
+        "overrides": [],
+    }
+
+    monkeypatch.setattr(baseline_cache_rebuild, "ROOT", repository)
+    monkeypatch.setattr(baseline_cache_rebuild, "resolve_variant", lambda *args, **kwargs: resolved)
+    monkeypatch.setattr(baseline_cache_rebuild, "load_merged_config", lambda args: cfg)
+    monkeypatch.setattr(
+        baseline_cache_rebuild,
+        "run_pipeline",
+        lambda *args, **kwargs: pytest.fail("an incomplete backup must stop before data loading"),
+    )
+
+    with pytest.raises(FileExistsError, match="incomplete existing cache backup"):
+        baseline_cache_rebuild.rebuild(backup_dir, report_path)
+
+    assert (backup_dir / cache_path.name).read_bytes() == b"partial backup"
+    assert not (backup_dir / Path(f"{cache_path}.hash").name).exists()
+    assert not report_path.exists()
+
+
+def test_baseline_cache_rebuild_cli_resolves_paths_and_prints_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    captured: dict[str, Path] = {}
+    report = {"status": "passed", "variant": "ladder_a0_flat"}
+
+    def fake_rebuild(backup_dir: Path, report_path: Path) -> dict[str, Any]:
+        captured["backup_dir"] = backup_dir
+        captured["report_path"] = report_path
+        return report
+
+    monkeypatch.setattr(baseline_cache_rebuild, "rebuild", fake_rebuild)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "baseline_cache_rebuild.py",
+            "--backup-dir",
+            "backup",
+            "--report",
+            "reports/rebuild.json",
+        ],
+    )
+
+    assert baseline_cache_rebuild.main() == 0
+
+    assert captured == {
+        "backup_dir": (tmp_path / "backup").resolve(),
+        "report_path": (tmp_path / "reports/rebuild.json").resolve(),
+    }
+    assert json.loads(capsys.readouterr().out) == report
