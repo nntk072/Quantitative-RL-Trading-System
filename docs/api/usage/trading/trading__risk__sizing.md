@@ -393,39 +393,17 @@ def test_trading_risk_primitives_share_risk_and_reserve_sizing() -> None:
 # … caller assertions omitted …
 ```
 
-2. [tutorial example: `03_trading_and_risk · code cell 2`](../../../../docs/learn/tutorials/03_trading_and_risk.ipynb)
+2. [test fixture: `test_stop_loss_risk_uses_absolute_stop_distance`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L59)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-import matplotlib.pyplot as plt
-
-from trading.risk.sizing import compute_lots, compute_sl_tp_long, stop_loss_risk_usd
-
-entry = 100.0
-stop, target = compute_sl_tp_long(entry, last_swing_low=96.0, buffer_pts=0.5, rr_ratio=2.0)
-requested_risk_usd = 200.0
-lots = compute_lots(
-    equity=10_000.0,
-    risk_frac=0.02,
-    entry_price=entry,
-    sl_price=stop,
-    min_lot=0.01,
-    max_lot=100.0,
-    risk_usd=requested_risk_usd,
-)
-actual_risk = stop_loss_risk_usd(entry - stop, lots, contract_size=1.0)
-print(
-    {
-        "entry": entry,
-        "stop": stop,
-        "target": target,
-        "lots": round(lots, 3),
-        "risk_usd": round(actual_risk, 2),
-        "reward_risk": (target - entry) / (entry - stop),
-    }
-)
+def test_stop_loss_risk_uses_absolute_stop_distance() -> None:
+    # |-2.5| * 0.1 lots * 100 contract size * 1.0 point value = 25.0
+    assert stop_loss_risk_usd(-2.5, 0.1, 100.0, 1.0) == pytest.approx(25.0)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

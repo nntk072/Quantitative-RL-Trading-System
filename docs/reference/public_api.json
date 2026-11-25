@@ -15879,6 +15879,54 @@
       "source_path": "market_data/splits/definitions.py"
     },
     {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.arrow_schemas",
+      "kind": "value",
+      "name": "_TIMEFRAME_MINUTES",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 199,
+      "source_module": "market_data.arrow_schemas",
+      "source_path": "market_data/arrow_schemas.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.arrow_schemas",
+      "kind": "value",
+      "name": "_UTC_NS",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 21,
+      "source_module": "market_data.arrow_schemas",
+      "source_path": "market_data/arrow_schemas.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.arrow_schemas",
+      "kind": "function",
+      "name": "_as_ns",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 91,
+      "source_module": "market_data.arrow_schemas",
+      "source_path": "market_data/arrow_schemas.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.arrow_schemas",
+      "kind": "function",
+      "name": "_column",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 78,
+      "source_module": "market_data.arrow_schemas",
+      "source_path": "market_data/arrow_schemas.py"
+    },
+    {
       "classification": "stable",
       "documented": false,
       "exported_from": "market_data.cache",
