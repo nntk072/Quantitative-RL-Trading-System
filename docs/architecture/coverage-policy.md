@@ -8,16 +8,16 @@ product packages, which is not yet met; the regression gate is the enforced rule
 
 ## Latest measured coverage
 
-CI run `45592061411` at source `6a5cb1d9` measured 35,706 of 44,778 product
-lines covered (79.74%) and 11,105 of 16,426 branches covered (67.61%). Branch
+CI run `45600836805` at source `207a4018` measured 35,707 of 44,778 product
+lines covered (79.74%) and 11,106 of 16,426 branches covered (67.61%). Branch
 coverage is informational only. The enforced check is line regression against
-the baseline above. The current line gap is 9,072 statements, so the 100%
+the baseline above. The current line gap is 9,071 statements, so the 100%
 target remains open.
 
 | Product package | Line coverage |
 |---|---:|
 | `artifacts` | 95.00% |
-| `compute` | 64.12% |
+| `compute` | 64.21% |
 | `configuration` | 97.49% |
 | `decisioning` | 95.53% |
 | `evaluation` | 82.31% |
