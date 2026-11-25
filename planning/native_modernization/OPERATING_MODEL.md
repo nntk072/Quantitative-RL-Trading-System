@@ -41,6 +41,17 @@ Goal: finish the native modernization plan on `main-native` while keeping `main`
 - Requests the GH200 aarch64 build and any benchmark allocations, and reports them to the lead before running.
 - Records every allocation (job id, partition, CPUs, memory, time, owner) in `logs/agents/architect/2026-11-25_native_goal/RESOURCES.md`.
 
+## Parallel trackers (added by owner instruction)
+
+Two trackers run in parallel with the stream agents. Each has its own worktree and may edit files there when needed.
+
+- **Tracker main** (`/scratch/work/nguyenl37/worktrees/main-tracker`, detached on remote `main`): keeps `main` current, reports changes on remote `main`, and publishes only the commit list the lead names. Each publish is one push, followed by a CI watch to completion. No force-push, no PRs, no merge commits.
+- **Tracker main-native** (its own detached worktree, created when it first needs to edit): finds `main-native` fixes that also belong on `main` and prepares candidate batches. It may edit and test in its own worktree. It never pushes, and its candidates reach `main` only through tracker main on a named batch.
+
+Rules that apply to both trackers:
+- They never change `main-native` itself. Commits reach `main-native` only through the lead's cherry-pick.
+- Each worktree counts against the file quota, and it is removed when the tracker finishes its task.
+
 ## Handoffs
 
 | From | To | Handoff |
