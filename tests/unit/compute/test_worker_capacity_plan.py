@@ -11,7 +11,9 @@ from compute.slurm.worker_resources import plan_worker_capacity
 GiB = 1024**3
 
 
-def _node(cpus: int, *, memory_gib: float, gpu_memory: list[dict[str, Any]] | None = None) -> dict:
+def _node(
+    cpus: int, *, memory_gib: float, gpu_memory: list[dict[str, Any]] | None = None
+) -> dict[str, Any]:
     return {
         "cpu_ids": list(range(cpus)),
         "memory_limit_bytes": int(memory_gib * GiB),
