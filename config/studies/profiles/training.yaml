@@ -22,6 +22,7 @@ api_paths:
 - training/configuration/variant_risk_policy.py
 - training/configuration/variants.py
 - training/reporting/training_curves.py
+- training/reporting/__init__.py
 - training/runner/__init__.py
 - training/runner/backtest.py
 - training/runner/baselines.py
