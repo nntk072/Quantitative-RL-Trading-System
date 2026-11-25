@@ -48,6 +48,7 @@ caller_paths:
 - scripts/maintenance/artifacts/inventory_checkpoint_serialized_classes.py
 - tests/integration/backtest/test_local_trace_source_clock.py
 - tests/unit/artifacts/test_artifact_lifecycle.py
+- tests/unit/compute/test_worker_dispatch_parsing.py
 - tests/unit/artifacts/test_artifact_promotion.py
 - tests/unit/evaluation/test_evaluation_manifest.py
 - tests/unit/learning/test_learning_contracts.py
