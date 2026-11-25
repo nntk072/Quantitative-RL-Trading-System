@@ -159,7 +159,6 @@ source = [
     "live",
     "integrations",
     "compute",
-    "orchestra",
 ]
 
 [tool.coverage.report]

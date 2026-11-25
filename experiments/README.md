@@ -101,3 +101,9 @@ Use the run, variant, provenance, and orchestration interfaces under this packag
 ## Invariants
 
 Register configuration before use, preserve the exact run identity, and retain negative, breached, no-trade, and incomplete outcomes.
+## Module size exceptions
+
+| Module | Reason |
+| --- | --- |
+| `runs/execution.py` | Run dispatch binds registered configs, source identity, artifact paths, and worker lifecycle; extraction needs per-run-type identity fixtures. |
+| `runs/reporting.py` | Run summaries combine account, resource, episode, and markdown outputs; extraction needs golden summaries for each supported artifact combination. |

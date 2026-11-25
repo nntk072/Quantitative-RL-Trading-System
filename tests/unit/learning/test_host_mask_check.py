@@ -7,10 +7,11 @@ from typing import Any, cast
 import gymnasium as gym
 import numpy as np
 import pytest
+import torch
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.vec_env.base_vec_env import VecEnv
 
-from learning.rl.host_mask_check import EligibilityCheckedVecEnv
+from learning.rl.host_mask_check import EligibilityCheckedVecEnv, install_host_mask_check
 
 _WIDTH = 4
 
@@ -68,3 +69,38 @@ def test_non_finite_mask_fails_closed_on_step() -> None:
     with pytest.raises(ValueError, match="finite"):
         env.step(np.zeros((1, 1), dtype=np.float32))
     env.close()
+
+
+def test_installer_supports_legacy_hybrid_categorical_head() -> None:
+    class _Policy:
+        trade_setup_mask_key = "trade_setup_mask"
+
+        def __init__(self) -> None:
+            self.action_net = type(
+                "_ActionNet",
+                (),
+                {
+                    "categorical_logits": torch.nn.ModuleDict(
+                        {"trade_setup": torch.nn.Linear(1, _WIDTH)}
+                    )
+                },
+            )()
+            self._collecting_rollout = False
+
+        def validate_rollout_masks(self, observations: dict[str, Any]) -> None:
+            del observations
+
+    class _Model:
+        def __init__(self) -> None:
+            self.policy = _Policy()
+            self.env = DummyVecEnv([lambda: _MaskEnv(np.ones((1, _WIDTH), dtype=np.float32))])
+
+        def collect_rollouts(self, *args: Any, **kwargs: Any) -> tuple[Any, ...]:
+            return args, kwargs
+
+    model = _Model()
+    install_host_mask_check(model)
+
+    assert isinstance(model.env, EligibilityCheckedVecEnv)
+    obs = cast(dict[str, Any], model.env.reset())
+    assert np.array_equal(obs["trade_setup_mask"], np.ones((1, _WIDTH), dtype=np.float32))

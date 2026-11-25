@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 from stable_baselines3.common.vec_env.base_vec_env import VecEnv, VecEnvWrapper
 
-from learning.rl.hybrid import masks_prevalidated
+from learning.rl.hybrid import _trade_setup_logits_width, masks_prevalidated
 
 
 class EligibilityCheckedVecEnv(VecEnvWrapper):
@@ -84,12 +84,14 @@ def install_host_mask_check(model: Any) -> None:
         model: PPO model whose policy is the trade-setup conditioned policy.
 
     Raises:
-        ValueError: If the policy does not use a trade-setup eligibility mask.
+        ValueError: If the policy does not expose a trade-setup mask contract.
     """
     policy = model.policy
-    if not hasattr(policy, "validate_rollout_masks"):
+    if not callable(getattr(policy, "validate_rollout_masks", None)) or not hasattr(
+        policy, "trade_setup_mask_key"
+    ):
         raise ValueError("ppo.rollout_host_mask_check requires the trade-setup policy")
-    width = int(policy.action_net.trade_setup_logits.out_features)
+    width = _trade_setup_logits_width(policy.action_net)
     model.env = EligibilityCheckedVecEnv(model.env, policy.trade_setup_mask_key, width)
     model.collect_rollouts = _prevalidated(model.collect_rollouts, policy)
 

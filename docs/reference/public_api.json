@@ -14836,7 +14836,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 139,
+      "source_line": 141,
       "source_module": "learning.rl.host_mask_check",
       "source_path": "learning/rl/host_mask_check.py"
     },
@@ -14848,7 +14848,7 @@
       "name": "_no_device_mask_check",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 129,
+      "source_line": 131,
       "source_module": "learning.rl.host_mask_check",
       "source_path": "learning/rl/host_mask_check.py"
     },
@@ -14860,7 +14860,7 @@
       "name": "_prevalidated",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 97,
+      "source_line": 99,
       "source_module": "learning.rl.host_mask_check",
       "source_path": "learning/rl/host_mask_check.py"
     },
@@ -14884,7 +14884,7 @@
       "name": "HybridActorHeads",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 135,
+      "source_line": 157,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14896,7 +14896,7 @@
       "name": "HybridBoxDistribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 197,
+      "source_line": 219,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14908,7 +14908,7 @@
       "name": "HybridClampedStdMultiInputPolicy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 449,
+      "source_line": 471,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14920,7 +14920,7 @@
       "name": "TradeSetupConditionedActorHeads",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 733,
+      "source_line": 784,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14932,7 +14932,7 @@
       "name": "TradeSetupConditionedClampedStdMultiInputPolicy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 1188,
+      "source_line": 1239,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14944,7 +14944,7 @@
       "name": "TradeSetupConditionedHybridBoxDistribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 885,
+      "source_line": 936,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14956,7 +14956,7 @@
       "name": "_CATEGORICAL_COORDINATES",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 75,
+      "source_line": 97,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14992,7 +14992,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 1307,
+      "source_line": 1358,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -15004,7 +15004,7 @@
       "name": "_categorical_distribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 92,
+      "source_line": 114,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -15028,7 +15028,7 @@
       "name": "_encoded_centers",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 105,
+      "source_line": 127,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -15040,7 +15040,19 @@
       "name": "_normal_distribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 78,
+      "source_line": 100,
+      "source_module": "learning.rl.hybrid",
+      "source_path": "learning/rl/hybrid.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.hybrid",
+      "kind": "function",
+      "name": "_trade_setup_logits_width",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 75,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },

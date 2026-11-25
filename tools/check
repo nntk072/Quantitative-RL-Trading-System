@@ -85,7 +85,11 @@ run_quality() {
   run_module ruff check .
   run_module mypy .
 }
-run_architecture() { sync_dev; run_module pytest -q tests/architecture; }
+run_architecture() {
+  sync_dev
+  run_module tools.quality.module_size
+  run_module pytest -q tests/architecture
+}
 run_docs() {
   sync_docs
   run_module pytest -q \
