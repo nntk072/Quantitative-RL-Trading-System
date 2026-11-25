@@ -3,6 +3,7 @@ source_roots:
 - trading
 - research_tools/trading
 api_paths:
+- trading/account/limits.py
 - trading/__init__.py
 - trading/account/__init__.py
 - trading/account/account_state.py
@@ -38,6 +39,8 @@ api_paths:
 - trading/strategies/po3_ifvg.py
 - trading/strategies/strategy_contract.py
 caller_paths:
+- tests/unit/trading/test_semantic_oracle_limits_sizing.py
+- tests/unit/trading/test_semantic_oracle_costs.py
 - evaluation/candidate_execution.py
 - evaluation/plotting/chart_levels.py
 - evaluation/plotting/order_chart_data.py
