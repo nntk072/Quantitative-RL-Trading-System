@@ -20,4 +20,4 @@ def test_overflow_raises_instead_of_wrapping() -> None:
 
 def test_non_integer_input_is_rejected() -> None:
     with pytest.raises(TypeError):
-        qrl_native.checked_add_units(1.5, 2)  # type: ignore[arg-type]
+        qrl_native.checked_add_units(1.5, 2)

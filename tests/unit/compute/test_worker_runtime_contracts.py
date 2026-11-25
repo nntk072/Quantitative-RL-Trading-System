@@ -5,8 +5,11 @@ from __future__ import annotations
 import ast
 import json
 import os
+import signal
 import subprocess
 import sys
+import time
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -67,7 +70,7 @@ def test_manager_never_launches_a_request_cancelled_before_it_was_claimed(
     cancelled.mkdir()
     (cancelled / "pending-cancel.cancel").touch()
     done_marker.touch()
-    monkeypatch.setattr(worker_dispatch.os, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(os, "sched_getaffinity", lambda _pid: {0})
     monkeypatch.setattr(
         worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": 1024}
     )
@@ -141,9 +144,9 @@ def test_shim_waits_on_one_submitted_request_without_resubmitting(
     ready.parent.mkdir(parents=True)
     ready.write_text("ready", encoding="utf-8")
     monkeypatch.setattr(sys, "argv", ["worker_dispatch", "--srun-shim", *SHIM_ARGV])
-    monkeypatch.setattr(worker_dispatch.signal, "signal", lambda *_args: None)
-    monkeypatch.setattr(worker_dispatch.uuid, "uuid4", lambda: SimpleNamespace(hex="once-1"))
-    monkeypatch.setattr(worker_dispatch.os, "readlink", lambda _fd: "pipe:[stdout]")
+    monkeypatch.setattr(signal, "signal", lambda *_args: None)
+    monkeypatch.setattr(uuid, "uuid4", lambda: SimpleNamespace(hex="once-1"))
+    monkeypatch.setattr(os, "readlink", lambda _fd: "pipe:[stdout]")
     sleeps: list[float] = []
 
     def sleep_then_complete(seconds: float) -> None:
@@ -152,7 +155,7 @@ def test_shim_waits_on_one_submitted_request_without_resubmitting(
             results.mkdir(parents=True, exist_ok=True)
             (results / "once-1.json").write_text(json.dumps({"returncode": 0}), encoding="utf-8")
 
-    monkeypatch.setattr(worker_dispatch.time, "sleep", sleep_then_complete)
+    monkeypatch.setattr(time, "sleep", sleep_then_complete)
 
     assert worker_dispatch._request() == 0
     # One fixed-interval poll per second and exactly one submitted request file.
@@ -169,7 +172,7 @@ def test_failed_scheduler_query_is_issued_once_and_never_retried(
         issued.append(list(args))
         raise subprocess.CalledProcessError(1, args, stderr="partition unavailable")
 
-    monkeypatch.setattr(capacity.subprocess, "run", failing_run)
+    monkeypatch.setattr(subprocess, "run", failing_run)
 
     with pytest.raises(subprocess.CalledProcessError):
         capacity.available_nodes(
