@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import runpy
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,6 +12,7 @@ from typing import Any
 import pytest
 
 import compute.slurm.worker_dispatch as worker_dispatch
+from artifacts.layout import ExperimentRunArtifactLayout
 from compute.slurm.worker_dispatch import _host_key, _parse_srun
 
 VALID = [
@@ -336,3 +338,295 @@ def test_manager_dispatches_requests_and_records_completion_or_launch_failure(
         "memory_limit_bytes": 1024,
         "gpu_memory": ["GPU-0"],
     }
+
+
+def test_request_requires_worker_queue_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("EXPERIMENT_RUN_WORKER_QUEUE", raising=False)
+
+    with pytest.raises(RuntimeError, match="EXPERIMENT_RUN_WORKER_QUEUE is not set"):
+        worker_dispatch._request()
+
+
+def test_request_times_out_when_manager_never_becomes_ready(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    queue = tmp_path / "queue"
+    monotonic_values = iter([100.0, 100.0, 160.0])
+    time_module: Any = vars(worker_dispatch)["time"]
+    slept: list[float] = []
+    monkeypatch.setenv("SLURM_JOB_ID", "993")
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setattr(sys, "argv", ["worker_dispatch", *VALID])
+    monkeypatch.setattr(time_module, "monotonic", lambda: next(monotonic_values))
+    monkeypatch.setattr(time_module, "sleep", slept.append)
+
+    with pytest.raises(TimeoutError, match="persistent worker manager did not become ready"):
+        worker_dispatch._request()
+
+    assert slept == [0.2]
+
+
+def test_request_signal_marks_pending_request_cancelled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    queue = tmp_path / "queue"
+    signal_module: Any = vars(worker_dispatch)["signal"]
+    time_module: Any = vars(worker_dispatch)["time"]
+    uuid_module: Any = vars(worker_dispatch)["uuid"]
+    handlers: dict[int, Any] = {}
+    monkeypatch.setenv("SLURM_JOB_ID", "994")
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    _pending, _claimed, _results, ready = worker_dispatch._paths(queue, "gpuarm1")
+    ready.parent.mkdir(parents=True)
+    ready.touch()
+    monkeypatch.setattr(sys, "argv", ["worker_dispatch", "--srun-shim", *VALID])
+    monkeypatch.setattr(uuid_module, "uuid4", lambda: SimpleNamespace(hex="cancel-1"))
+    monkeypatch.setattr(
+        signal_module, "signal", lambda signum, handler: handlers.__setitem__(signum, handler)
+    )
+
+    def send_sigterm(_seconds: float) -> None:
+        handlers[signal_module.SIGTERM](signal_module.SIGTERM, None)
+
+    monkeypatch.setattr(time_module, "sleep", send_sigterm)
+
+    with pytest.raises(SystemExit, match="143"):
+        worker_dispatch._request()
+
+    cancelled = ready.parent / "cancelled" / "cancel-1.cancel"
+    assert cancelled.is_file()
+
+
+def test_launch_uses_requested_log_when_stdout_is_a_pipe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    os_module: Any = vars(worker_dispatch)["os"]
+    subprocess_module: Any = vars(worker_dispatch)["subprocess"]
+    requested_log = tmp_path / "requested.log"
+    captured: dict[str, Any] = {}
+    monkeypatch.delenv("CUDA_VISIBLE_DEVICES", raising=False)
+    monkeypatch.setattr(os_module, "sched_setaffinity", lambda *_args: None)
+
+    def fake_popen(argv: list[str], **kwargs: Any) -> SimpleNamespace:
+        captured["argv"] = argv
+        captured.update(kwargs)
+        return SimpleNamespace(pid=1234, poll=lambda: None)
+
+    monkeypatch.setattr(subprocess_module, "Popen", fake_popen)
+    payload: dict[str, Any] = {
+        "argv": ["python", "train.py", "--out", str(requested_log)],
+        "cwd": str(tmp_path),
+        "cpu_ids": [0],
+        "gpu_count": 0,
+        "gpu_id": 0,
+        "env": {},
+        "job_id": "995",
+        "request_id": "pipe-1",
+        "stdout_path": "pipe:[12345]",
+    }
+
+    worker_dispatch._launch(payload, tmp_path / "results")
+
+    assert requested_log.is_file()
+    assert captured["stdout"].closed
+
+
+def test_launch_refuses_unresolved_gpu_device(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "GPU-0")
+    monkeypatch.setattr(worker_dispatch, "_gpu_device_for_request", lambda *_args: None)
+    payload: dict[str, Any] = {
+        "argv": ["python", "train.py"],
+        "cwd": str(tmp_path),
+        "cpu_ids": [0],
+        "gpu_count": 1,
+        "gpu_id": 0,
+        "env": {},
+        "job_id": "999",
+        "request_id": "unresolved-gpu",
+        "stdout_path": "",
+    }
+
+    with pytest.raises(RuntimeError, match="GPU worker request resolved without a visible GPU"):
+        worker_dispatch._launch(payload, tmp_path / "results")
+
+
+def test_manager_cancels_running_worker_and_records_final_exit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    queue = tmp_path / "queue"
+    os_module: Any = vars(worker_dispatch)["os"]
+    signal_module: Any = vars(worker_dispatch)["signal"]
+    time_module: Any = vars(worker_dispatch)["time"]
+    job_id = "996"
+    node = "gpuarm1"
+    monkeypatch.setenv("SLURM_JOB_ID", job_id)
+    pending, claimed, results, ready = worker_dispatch._paths(queue, node)
+    pending.mkdir(parents=True)
+    request = {
+        "request_id": "cancelled-worker",
+        "node": node,
+        "cpu_ids": [2, 4],
+        "gpu_count": 0,
+        "gpu_id": 0,
+        "argv": ["python", "worker.py"],
+        "env": {},
+        "cwd": str(tmp_path),
+        "stdout_path": "",
+    }
+    (pending / "cancelled-worker.json").write_text(json.dumps(request), encoding="utf-8")
+    cancelled = pending.parent / "cancelled"
+    cancelled.mkdir()
+    (cancelled / "cancelled-worker.cancel").touch()
+    done_marker = tmp_path / "allocation.done"
+    done_marker.touch()
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setenv("SLURMD_NODENAME", node)
+    monkeypatch.setenv("EXPERIMENT_RUN_OUT_DIR", str(tmp_path / "run"))
+    monkeypatch.setenv("EXPERIMENT_RUN_ALLOCATION_DONE_MARKER", str(done_marker))
+    monkeypatch.setattr(os_module, "sched_getaffinity", lambda _pid: {2, 4})
+    killed_signals: list[int] = []
+
+    def missing_process(pid: int, signum: int) -> None:
+        assert pid == 234
+        killed_signals.append(signum)
+        raise ProcessLookupError
+
+    monkeypatch.setattr(os_module, "killpg", missing_process)
+    monkeypatch.setattr(
+        worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": 1024}
+    )
+    monkeypatch.setattr(worker_dispatch, "gpu_memory_inventory", lambda: [])
+    monotonic_values = iter([100.0, 160.0])
+    monkeypatch.setattr(time_module, "monotonic", lambda: next(monotonic_values))
+    monkeypatch.setattr(time_module, "sleep", lambda _seconds: None)
+    poll_values = iter([None, None, None, 9])
+
+    def launch(_payload: dict[str, Any], _results: Path) -> SimpleNamespace:
+        return SimpleNamespace(pid=234, poll=lambda: next(poll_values))
+
+    monkeypatch.setattr(worker_dispatch, "_launch", launch)
+
+    assert worker_dispatch._manager() == 0
+
+    assert json.loads((results / "cancelled-worker.json").read_text(encoding="utf-8")) == {
+        "returncode": 9
+    }
+    assert (claimed.parent / "completed" / "cancelled-worker.json").is_file()
+    assert killed_signals == [signal_module.SIGTERM, signal_module.SIGKILL]
+
+
+def test_main_routes_manager_and_shim_modes(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(worker_dispatch, "_manager", lambda: 6)
+
+    def request() -> int:
+        calls.append(sys.argv[:])
+        return 7
+
+    monkeypatch.setattr(worker_dispatch, "_request", request)
+    monkeypatch.setattr(sys, "argv", ["worker_dispatch", "--manager"])
+
+    assert worker_dispatch.main() == 6
+
+    monkeypatch.setattr(sys, "argv", ["worker_dispatch", "--srun-shim", "--nodelist=gpuarm1"])
+    assert worker_dispatch.main() == 7
+    assert calls == [["worker_dispatch", "--nodelist=gpuarm1"]]
+
+
+def test_manager_rejects_missing_queue_or_job_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("EXPERIMENT_RUN_WORKER_QUEUE", raising=False)
+    monkeypatch.delenv("SLURM_JOB_ID", raising=False)
+
+    with pytest.raises(RuntimeError, match="worker manager requires"):
+        worker_dispatch._manager()
+
+
+def test_manager_skips_malformed_and_misrouted_requests(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    queue = tmp_path / "queue"
+    os_module: Any = vars(worker_dispatch)["os"]
+    job_id = "997"
+    node = "gpuarm1"
+    monkeypatch.setenv("SLURM_JOB_ID", job_id)
+    pending, claimed, _results, ready = worker_dispatch._paths(queue, node)
+    pending.mkdir(parents=True)
+    malformed = pending / "a-malformed.json"
+    malformed.write_text("{not json", encoding="utf-8")
+    misrouted = pending / "b-other-node.json"
+    misrouted.write_text(json.dumps({"node": "gpuarm2", "request_id": "foreign"}))
+    done_marker = tmp_path / "allocation.done"
+    done_marker.touch()
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setenv("SLURMD_NODENAME", node)
+    monkeypatch.setenv("EXPERIMENT_RUN_OUT_DIR", str(tmp_path / "run"))
+    monkeypatch.setenv("EXPERIMENT_RUN_ALLOCATION_DONE_MARKER", str(done_marker))
+    monkeypatch.setattr(os_module, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(
+        worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": 1024}
+    )
+    monkeypatch.setattr(worker_dispatch, "gpu_memory_inventory", lambda: [])
+
+    def remove_unclaimed_requests(_seconds: float) -> None:
+        malformed.unlink()
+        misrouted.unlink()
+
+    monkeypatch.setattr(vars(worker_dispatch)["time"], "sleep", remove_unclaimed_requests)
+    monkeypatch.setattr(
+        worker_dispatch, "_launch", lambda *_args: pytest.fail("invalid request was launched")
+    )
+
+    assert worker_dispatch._manager() == 0
+
+    assert ready.is_file()
+    assert list(claimed.iterdir()) == []
+
+
+def test_manager_uses_default_allocation_done_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    queue = tmp_path / "queue"
+    output = tmp_path / "run"
+    os_module: Any = vars(worker_dispatch)["os"]
+    monkeypatch.setenv("SLURM_JOB_ID", "998")
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setenv("SLURMD_NODENAME", "gpuarm1")
+    monkeypatch.setenv("EXPERIMENT_RUN_OUT_DIR", str(output))
+    monkeypatch.delenv("EXPERIMENT_RUN_ALLOCATION_DONE_MARKER", raising=False)
+    done_marker = ExperimentRunArtifactLayout(output).root_file("allocation_controller.exit")
+    done_marker.parent.mkdir(parents=True)
+    done_marker.touch()
+    monkeypatch.setattr(os_module, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(
+        worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": None}
+    )
+    monkeypatch.setattr(worker_dispatch, "gpu_memory_inventory", lambda: [])
+
+    assert worker_dispatch._manager() == 0
+
+    _pending, _claimed, _results, ready = worker_dispatch._paths(queue, "gpuarm1")
+    assert json.loads(ready.read_text(encoding="utf-8")) == {
+        "node": "gpuarm1",
+        "job_id": "998",
+        "cpu_ids": [0],
+        "memory_limit_bytes": None,
+        "gpu_memory": [],
+    }
+
+
+def test_script_wraps_dispatch_errors_with_worker_exit_code(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("EXPERIMENT_RUN_WORKER_QUEUE", raising=False)
+    monkeypatch.setattr(sys, "argv", ["worker_dispatch.py", "--srun-shim"])
+
+    with pytest.raises(SystemExit, match="127"):
+        runpy.run_path(str(Path(worker_dispatch.__file__)), run_name="__main__")
+
+    assert "experiment run worker dispatch error: EXPERIMENT_RUN_WORKER_QUEUE is not set" in (
+        capsys.readouterr().err
+    )

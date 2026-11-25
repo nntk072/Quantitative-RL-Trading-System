@@ -60,7 +60,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `gpu_experiment_run`](../../../../artifacts/layout.py#L98)
+1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L600)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    monkeypatch.setenv("SLURM_JOB_ID", "998")
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setenv("SLURMD_NODENAME", "gpuarm1")
+    monkeypatch.setenv("EXPERIMENT_RUN_OUT_DIR", str(output))
+    monkeypatch.delenv("EXPERIMENT_RUN_ALLOCATION_DONE_MARKER", raising=False)
+    done_marker = ExperimentRunArtifactLayout(output).root_file("allocation_controller.exit")
+    done_marker.parent.mkdir(parents=True)
+    done_marker.touch()
+    monkeypatch.setattr(os_module, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(
+        worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": None}
+# … caller assertions omitted …
+```
+
+2. [production caller: `gpu_experiment_run`](../../../../artifacts/layout.py#L98)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -69,26 +89,6 @@ def gpu_experiment_run(self, experiment_run_id: str) -> ExperimentRunArtifactLay
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,100}", experiment_run_id):
         raise ValueError(f"unsafe experiment run id: {experiment_run_id!r}")
     return ExperimentRunArtifactLayout(self.root / "gpu_experiment_runs" / experiment_run_id)
-```
-
-2. [production caller: `resolve_handoff`](../../../../compute/slurm/continuation.py#L51)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        not isinstance(handoff, dict)
-        or handoff.get("schema") != "aalto.experiment_run_continuation_handoff.v1"
-    ):
-        raise ValueError("unsupported experiment run continuation handoff schema")
-    source_manifest = json.loads(
-        ExperimentRunArtifactLayout(source_experiment_run).manifest.read_text(encoding="utf-8")
-    )
-    if handoff.get("source_experiment_run_id") != source_experiment_run.name or handoff.get(
-        "source_experiment_run_fingerprint"
-    ) != source_manifest.get("fingerprint"):
-        raise ValueError(
-# … caller assertions omitted …
 ```
 
 **Workflow context:**
@@ -1256,7 +1256,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L391)
+1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L600)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    monkeypatch.setenv("SLURM_JOB_ID", "998")
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setenv("SLURMD_NODENAME", "gpuarm1")
+    monkeypatch.setenv("EXPERIMENT_RUN_OUT_DIR", str(output))
+    monkeypatch.delenv("EXPERIMENT_RUN_ALLOCATION_DONE_MARKER", raising=False)
+    done_marker = ExperimentRunArtifactLayout(output).root_file("allocation_controller.exit")
+    done_marker.parent.mkdir(parents=True)
+    done_marker.touch()
+    monkeypatch.setattr(os_module, "sched_getaffinity", lambda _pid: {0})
+    monkeypatch.setattr(
+        worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": None}
+# … caller assertions omitted …
+```
+
+2. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L389)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

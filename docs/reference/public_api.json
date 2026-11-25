@@ -1204,7 +1204,7 @@
       "name": "_gpu_device_for_request",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 264,
+      "source_line": 262,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },
@@ -1228,7 +1228,7 @@
       "name": "_launch",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 285,
+      "source_line": 283,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },
@@ -1240,7 +1240,7 @@
       "name": "_log_path",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 228,
+      "source_line": 226,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },
@@ -1252,7 +1252,7 @@
       "name": "_manager",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 347,
+      "source_line": 345,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },
@@ -1276,7 +1276,7 @@
       "name": "_paths",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 151,
+      "source_line": 149,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },
@@ -1288,7 +1288,7 @@
       "name": "_request",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 166,
+      "source_line": 164,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },
@@ -1300,7 +1300,7 @@
       "name": "_write_result",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 250,
+      "source_line": 248,
       "source_module": "compute.slurm.worker_dispatch",
       "source_path": "compute/slurm/worker_dispatch.py"
     },

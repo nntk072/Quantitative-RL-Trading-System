@@ -89,8 +89,6 @@ def _parse_srun(argv: list[str]) -> dict[str, Any]:
             gpu_count = int(arg.rsplit(":", 1)[1])
         elif arg.startswith("--gpu-bind="):
             binding = arg.removeprefix("--gpu-bind=map_gpu:")
-            if binding == arg.removeprefix("--gpu-bind="):
-                raise ValueError(f"unsupported experiment run GPU binding: {arg}")
             try:
                 gpu_id = int(binding)
             except ValueError as exc:
