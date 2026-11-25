@@ -79,6 +79,19 @@ def test_process_stat_cpu_usec_parses_user_and_system_time() -> None:
     assert sample_experiment_run_resources._process_stat_cpu_usec(stat, 100) == 2_000_000
 
 
+def test_process_stat_cpu_usec_handles_closing_parenthesis_in_process_name() -> None:
+    fields = ["S"] + ["0"] * 12
+    fields[11] = "125"
+    fields[12] = "75"
+    stat = f"123 (worker ) with spaces) {' '.join(fields)}"
+
+    assert sample_experiment_run_resources._process_stat_cpu_usec(stat, 100) == 2_000_000
+
+
+def test_process_stat_cpu_usec_returns_zero_for_truncated_record() -> None:
+    assert sample_experiment_run_resources._process_stat_cpu_usec("123 (worker) S 0 0", 100) == 0
+
+
 def test_gpu_sample_preserves_each_device(monkeypatch) -> None:
     monkeypatch.setattr(
         "compute.slurm.resources.subprocess.run",
