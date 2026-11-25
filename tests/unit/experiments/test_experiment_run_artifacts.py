@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import json
+import runpy
 import subprocess
 import sys
 import zipfile
@@ -12,6 +13,8 @@ from typing import Any, cast
 
 import numpy as np
 import pytest
+
+from experiments.runs import checkpoints
 
 MODULE_PATH = Path(__file__).resolve().parents[3] / "experiments/runs/execution.py"
 SPEC = importlib.util.spec_from_file_location("experiment_run_controller", MODULE_PATH)
@@ -794,3 +797,216 @@ def test_experiment_run_evaluation_rejects_selection_on_unexposed_holdout() -> N
         ValueError, match="report-only experiment split cannot be used for selection"
     ):
         controller.validate_experiment_run_evaluation(evaluation)
+
+
+def test_checkpoint_map_cli_writes_filtered_variants_and_seed_keys(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    variant_file = tmp_path / "variants.txt"
+    variant_file.write_text("# comment\n\nalpha\nbeta\n", encoding="utf-8")
+    output = repository / "checkpoint_map.json"
+    sources = [tmp_path / "parent-a", tmp_path / "parent-b"]
+    captured: dict[str, object] = {}
+
+    def build_map(
+        source_dirs: list[Path], required_keys: set[str], target_steps: int
+    ) -> dict[str, object]:
+        captured["source_dirs"] = source_dirs
+        captured["required_keys"] = required_keys
+        captured["target_steps"] = target_steps
+        return {"schema_version": 1, "checkpoints": []}
+
+    monkeypatch.setattr(checkpoints, "ROOT", repository)
+    monkeypatch.setattr(checkpoints, "build_initial_checkpoint_map", build_map)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "checkpoints.py",
+            "--source-experiment-run",
+            str(sources[0]),
+            "--source-experiment-run",
+            str(sources[1]),
+            "--variant-file",
+            str(variant_file),
+            "--seeds",
+            "7, 8 9",
+            "--timesteps",
+            "12000",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert checkpoints.main() == 0
+
+    assert captured == {
+        "source_dirs": sources,
+        "required_keys": {
+            "alpha__seed7",
+            "alpha__seed8",
+            "alpha__seed9",
+            "beta__seed7",
+            "beta__seed8",
+            "beta__seed9",
+        },
+        "target_steps": 12000,
+    }
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "schema_version": 1,
+        "checkpoints": [],
+        "target_run_keys": [
+            "alpha__seed7",
+            "alpha__seed8",
+            "alpha__seed9",
+            "beta__seed7",
+            "beta__seed8",
+            "beta__seed9",
+        ],
+    }
+    assert not output.with_name("checkpoint_map.json.tmp").exists()
+    assert json.loads(capsys.readouterr().out) == {"output": str(output), "run_keys": 6}
+
+
+@pytest.mark.parametrize(
+    ("variant_contents", "seeds"),
+    [("# only comment\n", "1"), ("alpha\nalpha\n", "1"), ("alpha\n", "  ")],
+)
+def test_checkpoint_map_cli_rejects_empty_or_duplicate_design(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    variant_contents: str,
+    seeds: str,
+) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    variant_file = tmp_path / "variants.txt"
+    variant_file.write_text(variant_contents, encoding="utf-8")
+    output = repository / "checkpoint_map.json"
+    monkeypatch.setattr(checkpoints, "ROOT", repository)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "checkpoints.py",
+            "--source-experiment-run",
+            str(tmp_path / "parent"),
+            "--variant-file",
+            str(variant_file),
+            "--seeds",
+            seeds,
+            "--timesteps",
+            "100",
+            "--output",
+            str(output),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="variant file or seed list is empty or duplicated"):
+        checkpoints.main()
+
+    assert not output.exists()
+
+
+def test_checkpoint_map_cli_rejects_output_outside_repository(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    variant_file = tmp_path / "variants.txt"
+    variant_file.write_text("alpha\n", encoding="utf-8")
+    outside_output = tmp_path / "outside.json"
+    monkeypatch.setattr(checkpoints, "ROOT", repository)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "checkpoints.py",
+            "--source-experiment-run",
+            str(tmp_path / "parent"),
+            "--variant-file",
+            str(variant_file),
+            "--seeds",
+            "1",
+            "--timesteps",
+            "100",
+            "--output",
+            str(outside_output),
+        ],
+    )
+
+    with pytest.raises(
+        ValueError, match="checkpoint map output must be stored inside this repository"
+    ):
+        checkpoints.main()
+
+    assert not outside_output.exists()
+
+
+def test_checkpoint_map_cli_refuses_to_replace_existing_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    variant_file = tmp_path / "variants.txt"
+    variant_file.write_text("alpha\n", encoding="utf-8")
+    output = repository / "checkpoint_map.json"
+    output.write_text("preserve this map\n", encoding="utf-8")
+    monkeypatch.setattr(checkpoints, "ROOT", repository)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "checkpoints.py",
+            "--source-experiment-run",
+            str(tmp_path / "parent"),
+            "--variant-file",
+            str(variant_file),
+            "--seeds",
+            "1",
+            "--timesteps",
+            "100",
+            "--output",
+            str(output),
+        ],
+    )
+
+    with pytest.raises(FileExistsError, match="refusing to replace existing checkpoint map"):
+        checkpoints.main()
+
+    assert output.read_text(encoding="utf-8") == "preserve this map\n"
+
+
+def test_checkpoint_map_script_reports_invalid_seed_as_cli_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    variant_file = tmp_path / "variants.txt"
+    variant_file.write_text("alpha\n", encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "checkpoints.py",
+            "--source-experiment-run",
+            str(tmp_path / "parent"),
+            "--variant-file",
+            str(variant_file),
+            "--seeds",
+            "not-a-seed",
+            "--timesteps",
+            "100",
+            "--output",
+            str(tmp_path / "checkpoint_map.json"),
+        ],
+    )
+
+    with pytest.raises(SystemExit, match="2"):
+        runpy.run_path(str(Path(checkpoints.__file__)), run_name="__main__")
+
+    assert "ERROR: invalid literal for int() with base 10: 'not-a-seed'" in capsys.readouterr().err

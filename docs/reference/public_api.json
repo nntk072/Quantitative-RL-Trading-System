@@ -14896,7 +14896,7 @@
       "name": "HybridBoxDistribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 219,
+      "source_line": 253,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14908,7 +14908,7 @@
       "name": "HybridClampedStdMultiInputPolicy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 471,
+      "source_line": 500,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14920,7 +14920,7 @@
       "name": "TradeSetupConditionedActorHeads",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 784,
+      "source_line": 813,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14932,7 +14932,7 @@
       "name": "TradeSetupConditionedClampedStdMultiInputPolicy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 1239,
+      "source_line": 1268,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14944,7 +14944,7 @@
       "name": "TradeSetupConditionedHybridBoxDistribution",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 936,
+      "source_line": 965,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },
@@ -14992,7 +14992,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 1358,
+      "source_line": 1387,
       "source_module": "learning.rl.hybrid",
       "source_path": "learning/rl/hybrid.py"
     },

@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
+import json
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+
 import pytest
 
+import compute.slurm.worker_dispatch as worker_dispatch
 from compute.slurm.worker_dispatch import _host_key, _parse_srun
 
 VALID = [
@@ -118,3 +125,214 @@ def test_more_than_one_gpu_per_node_is_refused(count: str) -> None:
 def test_missing_single_node_single_task_is_refused() -> None:
     with pytest.raises(ValueError, match="missing node, cwd, CPU mask, or argv"):
         _parse_srun(_with({"--nodes": "--nodes=2"}))
+
+
+def test_log_path_prefers_attempt_identity_then_explicit_output(tmp_path: Path) -> None:
+    attempt = tmp_path / "runs" / "variant_a__seed42" / "attempt1"
+    assert (
+        worker_dispatch._log_path(
+            {"OUT_DIR": str(attempt), "LOG_DIR": str(tmp_path / "logs")}, "/repo", []
+        )
+        == tmp_path / "logs" / "variant_a__seed42__attempt1.log"
+    )
+    assert worker_dispatch._log_path(
+        {}, "/repo", ["python", "run.py", "--out", "custom.log"]
+    ) == Path("custom.log")
+    assert worker_dispatch._log_path({}, "/repo", ["python", "run.py"]) == Path(
+        "/repo/experiment_run_worker_dispatch.log"
+    )
+
+
+def test_write_result_atomically_records_exit_code(tmp_path: Path) -> None:
+    worker_dispatch._write_result(tmp_path, "request-1", 17)
+
+    result = tmp_path / "request-1.json"
+    assert json.loads(result.read_text(encoding="utf-8")) == {"returncode": 17}
+    assert not result.with_suffix(".tmp").exists()
+
+
+def test_gpu_device_selection_handles_cpu_request_and_invalid_binding() -> None:
+    assert (
+        worker_dispatch._gpu_device_for_request({"gpu_count": 0, "gpu_id": 99}, ["GPU-0"]) is None
+    )
+    assert (
+        worker_dispatch._gpu_device_for_request({"gpu_count": 1, "gpu_id": 1}, ["GPU-0", "GPU-1"])
+        == "GPU-1"
+    )
+    with pytest.raises(RuntimeError, match="allocation exposes 1 visible GPU"):
+        worker_dispatch._gpu_device_for_request({"gpu_count": 1, "gpu_id": 1}, ["GPU-0"])
+
+
+@pytest.mark.parametrize(
+    ("gpu_count", "visible_devices", "expected_device"),
+    [(0, "", None), (1, "GPU-0, GPU-1", "GPU-1")],
+)
+def test_launch_builds_child_environment_and_closes_log_stream(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    gpu_count: int,
+    visible_devices: str,
+    expected_device: str | None,
+) -> None:
+    log_path = tmp_path / "worker.log"
+    preexec_cpu_ids: list[set[int]] = []
+    captured: dict[str, Any] = {}
+    os_module: Any = vars(worker_dispatch)["os"]
+    subprocess_module: Any = vars(worker_dispatch)["subprocess"]
+    monkeypatch.setenv("RESUME_CHECKPOINT", "parent-checkpoint")
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", visible_devices)
+    monkeypatch.setattr(
+        os_module,
+        "sched_setaffinity",
+        lambda _pid, cpus: preexec_cpu_ids.append(set(cpus)),
+    )
+
+    def fake_popen(argv: list[str], **kwargs: Any) -> SimpleNamespace:
+        captured["argv"] = argv
+        captured.update(kwargs)
+        kwargs["preexec_fn"]()
+        return SimpleNamespace(pid=1234, poll=lambda: None)
+
+    monkeypatch.setattr(subprocess_module, "Popen", fake_popen)
+    payload: dict[str, Any] = {
+        "argv": ["python", "train.py"],
+        "cwd": str(tmp_path),
+        "cpu_ids": [3, 5],
+        "gpu_count": gpu_count,
+        "gpu_id": 1,
+        "env": {"GPU_ID": "requested"},
+        "job_id": "77",
+        "request_id": "request-1",
+        "stdout_path": str(log_path),
+    }
+
+    process = worker_dispatch._launch(payload, tmp_path / "results")
+
+    child_env = captured["env"]
+    assert child_env["SLURM_JOB_ID"] == "77"
+    assert "RESUME_CHECKPOINT" not in child_env
+    assert preexec_cpu_ids == [{3, 5}]
+    assert captured["cwd"] == str(tmp_path)
+    assert captured["stdout"].closed
+    assert vars(process)["_experiment_run_log_path"] == str(log_path)
+    assert vars(process)["_experiment_run_request_id"] == "request-1"
+    if expected_device is None:
+        assert "CUDA_VISIBLE_DEVICES" not in child_env
+    else:
+        assert child_env["CUDA_VISIBLE_DEVICES"] == expected_device
+        assert child_env["GPU_ID"] == expected_device
+
+
+def test_launch_rejects_gpu_request_without_slurm_device_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("CUDA_VISIBLE_DEVICES", raising=False)
+    payload: dict[str, Any] = {
+        "argv": ["python", "train.py"],
+        "cwd": str(tmp_path),
+        "cpu_ids": [0],
+        "gpu_count": 1,
+        "gpu_id": 0,
+        "env": {},
+        "job_id": "77",
+        "request_id": "request-1",
+        "stdout_path": "",
+    }
+
+    with pytest.raises(RuntimeError, match="no Slurm CUDA_VISIBLE_DEVICES binding"):
+        worker_dispatch._launch(payload, tmp_path / "results")
+
+
+def test_request_shim_waits_for_result_and_forwards_whitelisted_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    queue = tmp_path / "queue"
+    signal_module: Any = vars(worker_dispatch)["signal"]
+    uuid_module: Any = vars(worker_dispatch)["uuid"]
+    os_module: Any = vars(worker_dispatch)["os"]
+    time_module: Any = vars(worker_dispatch)["time"]
+    monkeypatch.setenv("SLURM_JOB_ID", "991")
+    pending, _claimed, results, ready = worker_dispatch._paths(queue, "gpuarm1")
+    ready.parent.mkdir(parents=True)
+    ready.write_text("ready", encoding="utf-8")
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    for key in worker_dispatch.ENV_KEYS:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("VARIANT", "variant_a0")
+    monkeypatch.setenv("PRIVATE_TOKEN", "not-exported")
+    monkeypatch.setattr(sys, "argv", ["worker_dispatch", "--srun-shim", *VALID])
+    monkeypatch.setattr(signal_module, "signal", lambda *_args: None)
+    monkeypatch.setattr(uuid_module, "uuid4", lambda: SimpleNamespace(hex="req-1"))
+    monkeypatch.setattr(os_module, "readlink", lambda _fd: "pipe:[stdout]")
+
+    def publish_result(_seconds: float) -> None:
+        request = json.loads((pending / "req-1.json").read_text(encoding="utf-8"))
+        assert request["env"] == {"VARIANT": "variant_a0"}
+        results.mkdir(parents=True, exist_ok=True)
+        (results / "req-1.json").write_text(json.dumps({"returncode": 23}), encoding="utf-8")
+
+    monkeypatch.setattr(time_module, "sleep", publish_result)
+
+    assert worker_dispatch._request() == 23
+    assert (
+        json.loads((pending / "req-1.json").read_text(encoding="utf-8"))["stdout_path"]
+        == "pipe:[stdout]"
+    )
+
+
+@pytest.mark.parametrize("launch_error", [None, RuntimeError("launch refused")])
+def test_manager_dispatches_requests_and_records_completion_or_launch_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, launch_error: RuntimeError | None
+) -> None:
+    queue = tmp_path / "queue"
+    os_module: Any = vars(worker_dispatch)["os"]
+    job_id = "992"
+    node = "gpuarm1.domain"
+    monkeypatch.setenv("SLURM_JOB_ID", job_id)
+    pending, claimed, results, ready = worker_dispatch._paths(queue, node)
+    pending.mkdir(parents=True)
+    request = {
+        "request_id": "req-2",
+        "node": node,
+        "cpu_ids": [2, 4],
+        "gpu_count": 0,
+        "gpu_id": 0,
+        "argv": ["python", "worker.py"],
+        "env": {},
+        "cwd": str(tmp_path),
+        "stdout_path": "",
+    }
+    (pending / "req-2.json").write_text(json.dumps(request), encoding="utf-8")
+    done_marker = tmp_path / "allocation.done"
+    done_marker.touch()
+    monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
+    monkeypatch.setenv("SLURMD_NODENAME", node)
+    monkeypatch.setenv("EXPERIMENT_RUN_OUT_DIR", str(tmp_path / "run"))
+    monkeypatch.setenv("EXPERIMENT_RUN_ALLOCATION_DONE_MARKER", str(done_marker))
+    monkeypatch.setattr(os_module, "sched_getaffinity", lambda _pid: {2, 4})
+    monkeypatch.setattr(
+        worker_dispatch, "available_resources", lambda: {"memory_limit_bytes": 1024}
+    )
+    monkeypatch.setattr(worker_dispatch, "gpu_memory_inventory", lambda: ["GPU-0"])
+
+    def launch(_payload: dict[str, Any], _results: Path) -> SimpleNamespace:
+        if launch_error is not None:
+            raise launch_error
+        return SimpleNamespace(pid=123, poll=lambda: 5)
+
+    monkeypatch.setattr(worker_dispatch, "_launch", launch)
+
+    assert worker_dispatch._manager() == 0
+
+    completed = claimed.parent / "completed" / "req-2.json"
+    assert completed.is_file()
+    assert json.loads((results / "req-2.json").read_text(encoding="utf-8")) == {
+        "returncode": 127 if launch_error else 5
+    }
+    assert json.loads(ready.read_text(encoding="utf-8")) == {
+        "node": "gpuarm1",
+        "job_id": job_id,
+        "cpu_ids": [2, 4],
+        "memory_limit_bytes": 1024,
+        "gpu_memory": ["GPU-0"],
+    }
