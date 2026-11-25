@@ -478,7 +478,6 @@ def test_manager_cancels_running_worker_and_records_final_exit(
     (pending / "cancelled-worker.json").write_text(json.dumps(request), encoding="utf-8")
     cancelled = pending.parent / "cancelled"
     cancelled.mkdir()
-    (cancelled / "cancelled-worker.cancel").touch()
     done_marker = tmp_path / "allocation.done"
     done_marker.touch()
     monkeypatch.setenv("EXPERIMENT_RUN_WORKER_QUEUE", str(queue))
@@ -504,6 +503,8 @@ def test_manager_cancels_running_worker_and_records_final_exit(
     poll_values = iter([None, None, None, 9])
 
     def launch(_payload: dict[str, Any], _results: Path) -> SimpleNamespace:
+        # The cancel arrives while the worker is running, so it is signalled only after launch.
+        (cancelled / "cancelled-worker.cancel").touch()
         return SimpleNamespace(pid=234, poll=lambda: next(poll_values))
 
     monkeypatch.setattr(worker_dispatch, "_launch", launch)

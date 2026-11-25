@@ -15,8 +15,13 @@ from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 WORKER_CPU_AFFINITY_GUARD = ROOT / "scripts" / "compute" / "slurm" / "verify_worker_cpu_affinity.py"
+# Headroom kept back from every node. Shared by the worker planner and admission control.
+DEFAULT_CPU_RESERVE_PER_NODE = 1
+DEFAULT_MEMORY_RESERVE_GIB = 64.0
 
 __all__ = [
+    "DEFAULT_CPU_RESERVE_PER_NODE",
+    "DEFAULT_MEMORY_RESERVE_GIB",
     "ROOT",
     "WORKER_CPU_AFFINITY_GUARD",
     "available_resources",
@@ -297,8 +302,8 @@ def plan_worker_capacity(
     max_workers_per_gpu: int = 9,
     gpu_memory_per_worker_gib: float = 8.0,
     gpu_memory_reserve_fraction: float = 0.2,
-    cpu_reserve_per_node: int = 1,
-    memory_reserve_gib: float = 64.0,
+    cpu_reserve_per_node: int = DEFAULT_CPU_RESERVE_PER_NODE,
+    memory_reserve_gib: float = DEFAULT_MEMORY_RESERVE_GIB,
     memory_safety_factor: float = 1.35,
 ) -> dict[str, Any]:
     """Plan concurrent variant slots from per-node CPU, RAM, and GPU limits.

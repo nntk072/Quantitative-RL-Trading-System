@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from artifacts.layout import ExperimentRunArtifactLayout
+from compute.slurm.thread_limits import thread_environment
 from compute.slurm.worker_resources import available_resources, gpu_memory_inventory
 
 ENV_KEYS = (
@@ -45,6 +46,8 @@ ENV_KEYS = (
     "MKL_NUM_THREADS",
     "OPENBLAS_NUM_THREADS",
 )
+# 128 + SIGTERM: the status a shim reports when it is cancelled.
+_CANCELLED_BEFORE_LAUNCH_RETURNCODE = 143
 
 
 def _host_key(value: str) -> str:
@@ -295,6 +298,10 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
     env.pop("CUDA_VISIBLE_DEVICES", None)
     env.update(payload["env"])
     env["SLURM_JOB_ID"] = str(payload.get("job_id", ""))
+    cpu_ids = {int(value) for value in payload["cpu_ids"]}
+    # Thread pools are sized from the cores this worker was granted, overriding any
+    # value the requester or host environment carried, so the child cannot oversubscribe.
+    env.update(thread_environment(len(cpu_ids)))
     if payload["gpu_count"]:
         allocated_devices = [
             item.strip()
@@ -312,7 +319,6 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
         env["GPU_ID"] = selected_device
     else:
         env.pop("CUDA_VISIBLE_DEVICES", None)
-    cpu_ids = {int(value) for value in payload["cpu_ids"]}
 
     def apply_affinity() -> None:
         """Constrain the child process to its allocated CPU IDs."""
@@ -406,6 +412,16 @@ def _manager() -> int:
             except (OSError, KeyError, json.JSONDecodeError):
                 continue
             request_id = str(payload["request_id"])
+            if (cancelled / f"{request_id}.cancel").exists():
+                # The shim that owned this request was cancelled while it was queued and has
+                # already exited, so nothing is launched and the request is closed out.
+                print(
+                    f"EXPERIMENT_RUN_NODE_CANCELLED_BEFORE_LAUNCH request={request_id}",
+                    flush=True,
+                )
+                _write_result(results, request_id, _CANCELLED_BEFORE_LAUNCH_RETURNCODE)
+                os.replace(claimed_path, completed / claimed_path.name)
+                continue
             print(
                 f"EXPERIMENT_RUN_NODE_DISPATCH request={request_id}"
                 f" cpus={payload['cpu_ids']} gpu={bool(payload['gpu_count'])}"
