@@ -1288,11 +1288,11 @@
         "../../../../features/context/reachability.py#L193",
         "../../../../features/context/reachability.py#L193",
         "../../../../features/context/reachability.py#L17",
-        "../../../../tests/unit/evaluation/test_order_chart.py#L734",
+        "../../../../tests/unit/evaluation/test_order_chart.py#L890",
         "../../../../tests/unit/features/test_stage_a_observation.py#L272",
         "../../../../features/context/reachability.py#L163",
         "../../../../features/context/reachability.py#L228",
-        "../../../../tests/unit/evaluation/test_order_chart.py#L737",
+        "../../../../tests/unit/evaluation/test_order_chart.py#L893",
         "../../../../simulation/environment/entry_runtime.py#L310",
         "../../../../features/context/reachability.py#L193"
       ],
@@ -3754,7 +3754,7 @@
     {
       "links": [
         "../../../../trading/strategies/po3_ifvg.py#L14",
-        "../../../../tests/unit/evaluation/test_order_chart.py#L779",
+        "../../../../tests/unit/evaluation/test_order_chart.py#L935",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L13",
         "../../../../trading/strategies/po3_ifvg.py#L112",
         "../../../../trading/strategies/po3_ifvg.py#L229",

@@ -179,6 +179,44 @@ def test_checkpoint_reanalysis_inherits_sampled_mode_and_seed(tmp_path: Path) ->
     assert eval_run.resolve_reanalysis_action_mode(source, False) is False
 
 
+@pytest.mark.parametrize("metadata", ["{invalid", "[]", '{"action_rng_seed": true}'])
+def test_checkpoint_reanalysis_does_not_inherit_invalid_evaluation_metadata(
+    tmp_path: Path, metadata: str
+) -> None:
+    source = tmp_path / "source"
+    evaluation_dir = source / "evaluations"
+    evaluation_dir.mkdir(parents=True)
+    (evaluation_dir / "test_report_only.json").write_text(metadata, encoding="utf-8")
+
+    assert eval_run.resolve_reanalysis_action_mode(source, None) is False
+    assert eval_run.resolve_reanalysis_action_seed(source, None, stochastic=True) is None
+
+
+def test_train_only_stochastic_reanalysis_requires_a_seed() -> None:
+    with pytest.raises(ValueError, match="requires a recorded or explicit seed"):
+        eval_run.validate_train_only_action_mode(
+            train_only_screen=True,
+            stochastic=True,
+            action_rng_seed=None,
+        )
+
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=True,
+        stochastic=True,
+        action_rng_seed=23,
+    )
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=True,
+        stochastic=False,
+        action_rng_seed=None,
+    )
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=False,
+        stochastic=True,
+        action_rng_seed=None,
+    )
+
+
 def test_checkpoint_reanalysis_parses_tick_fill_slippage_override() -> None:
     args = eval_run.build_reanalysis_parser().parse_args(
         ["--run", "source", "--output", "out", "--tick-fill-slippage-points", "10"]
