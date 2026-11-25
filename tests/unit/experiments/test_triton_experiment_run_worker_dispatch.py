@@ -151,6 +151,8 @@ def test_persistent_manager_dispatches_worker_with_affinity_and_gpu_binding(
     job_id = "dispatch-test-job"
     manager_env = dict(
         os.environ,
+        # Dispatcher runs as a script; put this checkout first so it imports its own compute package.
+        PYTHONPATH=str(DISPATCHER.parents[2]),
         EXPERIMENT_RUN_WORKER_QUEUE=str(queue),
         EXPERIMENT_RUN_OUT_DIR=str(experiment_run),
         SLURM_JOB_ID=job_id,
@@ -227,6 +229,8 @@ def test_cancelled_dispatch_terminates_the_node_child(tmp_path: Path) -> None:
     job_id = "dispatch-cancel-test-job"
     manager_env = dict(
         os.environ,
+        # Dispatcher runs as a script; put this checkout first so it imports its own compute package.
+        PYTHONPATH=str(DISPATCHER.parents[2]),
         EXPERIMENT_RUN_WORKER_QUEUE=str(queue),
         EXPERIMENT_RUN_OUT_DIR=str(experiment_run),
         SLURM_JOB_ID=job_id,
