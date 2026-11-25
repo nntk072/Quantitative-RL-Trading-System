@@ -86,6 +86,7 @@ caller_paths:
 - tests/unit/training/test_representation_study.py
 - tests/unit/training/test_research_protocol.py
 - tests/unit/training/test_run_log.py
+- tests/unit/training/test_seed_runtime_coverage.py
 - tests/unit/training/test_sac_smoke.py
 - tests/unit/training/test_survival_campaign_resume.py
 - tests/unit/training/test_survival_gate.py
