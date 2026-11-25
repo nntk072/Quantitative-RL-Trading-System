@@ -1,0 +1,13 @@
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[project]
+name = "qrl-native"
+version = "0.1.0"
+description = "Native domain kernels for the Quantitative RL Trading System (CPU wheel)"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.maturin]
+module-name = "qrl_native"
