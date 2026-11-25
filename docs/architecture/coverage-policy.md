@@ -16,10 +16,10 @@ enforced rule today.
 
 ## Latest measured coverage
 
-CI run `45687911793` at target-branch head `26ad3e8d` measured 36,413 of
-44,790 product statements covered (81.30%), with 8,377 statements missing.
-Product branch coverage is 11,337 of 16,428 (69.01%), informational only.
-The artifact's all-source total is 36,444/44,873 lines and 11,337/16,442
+CI run `45701089737` at target-branch head `7b8d34a3` measured 36,443 of
+44,790 product statements covered (81.36%), with 8,347 statements missing.
+Product branch coverage is 11,347 of 16,428 (69.07%), informational only.
+The artifact's all-source total is 36,474/44,873 lines and 11,347/16,442
 branches; it includes the informational `research_tools` helper at 31/83 lines
 (37.35%) and 0/14 branches. This artifact measures only
 `perf/env-step-speedup`; it is not a repository-wide coverage percentage.
@@ -40,7 +40,7 @@ branches; it includes the informational `research_tools` helper at 31/83 lines
 | `models` | 822/861 | 95.47% |
 | `simulation` | 6,134/7,277 | 84.29% |
 | `trading` | 2,300/2,637 | 87.22% |
-| `training` | 3,292/5,010 | 65.71% |
+| `training` | 3,322/5,010 | 66.31% |
 
 ## Exclusions
 
