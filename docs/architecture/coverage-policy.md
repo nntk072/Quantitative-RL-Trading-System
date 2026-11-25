@@ -1,23 +1,30 @@
 # Coverage policy
 
-Coverage is measured per product package. The CI `coverage-report` job combines
-unit and integration data, compares each package with the main baseline in
-`tools/quality/coverage_baseline.json`, and fails if line coverage falls below
-that baseline. Branch coverage is reported but is not gated. The product floor target is 100% line coverage over the
-product packages, which is not yet met; the regression gate is the enforced rule today.
+Coverage is measured from the checked-out target branch's declared product
+packages, not from tests, scripts, or repository tooling. The CI
+`coverage-report` job also includes
+`research_tools.compute.audits.pretraining_readiness_task_runner` so its
+artifact SHA-256 provenance code stays visible in ordinary reports; the
+resulting `research_tools` row is informational and has no package baseline.
+The job combines unit and integration data, compares each product package with
+the main baseline in `tools/quality/coverage_baseline.json`, and fails if line
+coverage falls below that baseline. Branch coverage is reported but is not
+gated. The product floor target is 100% line coverage over the product
+packages, which is not yet met; the regression gate is the enforced rule today.
 
 ## Latest measured coverage
 
-CI run `45650193322` at source `3821ffcc` measured 36,361 of 44,792 product
-statements covered (81.18%) and 11,322 of 16,430 branches covered (68.91%).
+CI run `45668584827` at target-branch head `13fde0fb` (same source tree as merge
+`6755417e`) measured 36,395 of 44,790 product statements covered (81.26%) and
+11,337 of 16,428 branches covered (69.01%). The line gap is 8,395 statements.
 Branch coverage is informational only. The enforced check is line regression
-against the baseline above. The current line gap is 8,431 statements, so the
-100% target remains open.
+against the main baseline above; this artifact measures `perf/env-step-speedup`
+and is not a repository-wide coverage percentage.
 
 | Product package | Line coverage |
 |---|---:|
 | `artifacts` | 95.28% |
-| `compute` | 75.06% |
+| `compute` | 78.08% |
 | `configuration` | 97.49% |
 | `decisioning` | 95.53% |
 | `evaluation` | 82.31% |

@@ -22,7 +22,7 @@ for semantics; neighboring packages should consume its public boundary.
 | Resource capability and scheduler adapter | `compute/` | Device and Slurm helpers | Capability/backend adapter and compute tests | Model classes and scientific policy |
 | Experiment run lifecycle and experiment variants | `experiments/` | Variant and experiment run packages | One experiment run lifecycle service and experiment run tests | Environment internals and feature algorithms |
 | Live runtime and external broker/vendor adapters | `live/`, `integrations/` | Broker-neutral runtime with MT5 adapter | Runtime port or one external adapter plus contract tests | Vendor SDK types crossing into scientific packages |
-| Workflow composition and developer orchestration | `training/`, `orchestra/` | Training runners and Orchestra pipeline | One use case/phase and integration tests | Leaf-domain ownership of scientific semantics |
+| Workflow composition | `training/` | Training runners and experiment workflows | One use case/phase and integration tests | Leaf-domain ownership of scientific semantics |
 
 ## Axis of Change
 
@@ -89,7 +89,6 @@ packages are intentionally excluded until they exist.
 | `evaluation/reporting/dataset_renderers.py` | Typed report dataset renderers |
 | `compute/contracts.py` | Device and execution-backend capabilities |
 | `integrations/mt5/domain/trader.py` | MT5-specific adapter |
-| `orchestra/task_orchestration.py` | Engineering workflow composition |
 | `tests/architecture/test_dependency_rules.py` | Enforced package dependency rules |
 
 ## Implemented Boundary Work

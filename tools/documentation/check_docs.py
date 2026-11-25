@@ -25,7 +25,6 @@ PACKAGES = (
     "live",
     "integrations",
     "compute",
-    "orchestra",
 )
 SUBPACKAGE_GUIDES = (
     "scripts/research/analysis/README.md",
@@ -52,7 +51,6 @@ SUBPACKAGE_GUIDES = (
     "models/auxiliary/README.md",
     "models/factory/README.md",
     "models/runtime/README.md",
-    "orchestra/commands/README.md",
     "trading/orders/README.md",
     "trading/execution/README.md",
     "trading/risk/README.md",
@@ -98,7 +96,6 @@ SOURCE_ROOTS = (
     "live/",
     "market_data/",
     "models/",
-    "orchestra/",
     "scripts/",
     "simulation/",
     "tests/",
@@ -172,8 +169,6 @@ MAINTAINED_DOCS = (
     "models/auxiliary/README.md",
     "models/factory/README.md",
     "models/runtime/README.md",
-    "orchestra/README.md",
-    "orchestra/commands/README.md",
     "simulation/backtest/cross_validation/README.md",
     "trading/account/README.md",
     "trading/baselines/README.md",

@@ -83,7 +83,6 @@ assert len(load_config()) > 0
 
     env["PYTHONPATH"] = sysconfig.get_paths()["purelib"]
     for entrypoint in (
-        "orchestra",
         "qrl-data",
         "qrl-train",
         "qrl-evaluate",

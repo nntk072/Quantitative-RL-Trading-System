@@ -68,7 +68,6 @@ source_paths = [
     "live",
     "integrations",
     "compute",
-    "orchestra",
 ]
 only_mutate = [
     "trading/account/limits.py",
@@ -159,6 +158,7 @@ source = [
     "live",
     "integrations",
     "compute",
+    "research_tools.compute.audits.pretraining_readiness_task_runner",
 ]
 
 [tool.coverage.report]
@@ -169,7 +169,7 @@ skip_empty = true
 line-length = 100
 target-version = "py311"
 extend-exclude = ["evidence/research/archive_2026"]
-src = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]
+src = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "UP", "D2", "D3", "D4", "B", "SIM"]
@@ -179,11 +179,9 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["D205"]
-# orchestra/ is development tooling outside the product scope; its B and SIM findings are deferred.
-"orchestra/**/*.py" = ["B", "SIM"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra"]
+known-first-party = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -203,7 +201,6 @@ files = [
     "live",
     "integrations",
     "compute",
-    "orchestra",
     "scripts",
     "tests",
     "demo_trading.py",
@@ -298,13 +295,12 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "orchestra", "research_tools"]
+packages = ["configuration", "artifacts", "market_data", "features", "trading", "simulation", "models", "decisioning", "learning", "training", "evaluation", "experiments", "live", "integrations", "compute", "research_tools"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "config/base/default.yaml" = "configuration/_resources/default.yaml"
 
 [project.scripts]
-orchestra = "orchestra.cli:main"
 # Canonical project command names.
 qrl-data = "market_data.cli:main"
 qrl-train = "training.cli:main"

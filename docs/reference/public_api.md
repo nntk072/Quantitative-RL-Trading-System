@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 471 |
-| private implementation | 1056 |
+| private implementation | 985 |
 
 ## Public package exports
 
@@ -830,7 +830,6 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Command | Entry point | Source |
 |---|---|---|
-| `orchestra` | `orchestra.cli:main` | [orchestra/cli.py](../../orchestra/cli.py) |
 | `qrl-compute` | `compute.cli:main` | [compute/cli.py](../../compute/cli.py) |
 | `qrl-data` | `market_data.cli:main` | [market_data/cli.py](../../market_data/cli.py) |
 | `qrl-evaluate` | `evaluation.cli:main` | [evaluation/cli.py](../../evaluation/cli.py) |

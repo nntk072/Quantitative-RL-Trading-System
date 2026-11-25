@@ -5,14 +5,14 @@ description: "Use when selecting local checks, preparing a commit, diagnosing ho
 
 # CI verification gate
 
-Applies to **all agents** (Cursor, Orchestra, Cline, Windsurf, Kilo, Vibe, etc.).
+Applies to all coding agents.
 
 Two layers:
 
 | Layer | Who | Commands |
 |-------|-----|----------|
 | **Agent commit/push gate** | Any coding agent before `git commit` / `git push` | format + lint + mypy (full tree) + **scoped** pytest |
-| **Merge CI bar** | GitHub Actions named gates; Orchestra verification phase | twelve named `./tools/check` gates plus `ci-success`; Orchestra runs `./tools/check full` |
+| **Merge CI bar** | GitHub Actions named gates | twelve named `./tools/check` gates plus `ci-success` |
 
 Agents must **not** run `pytest tests/ -v` by default — it is too heavy. Prefer the
 smallest relevant test set for the change.
@@ -136,8 +136,8 @@ regardless of this change-impact preflight.
   (for example, `<feature_module>.py` → `tests/**/test_*<feature>*`).
 - Cap to a small set (typically 1–few files). Do **not** expand to the whole tree
   “to be safe.”
-- Run `./tools/check full` only when the user explicitly asks, or when you are
-  the Orchestra verification phase / reproducing a complete CI failure. Use the
+- Run `./tools/check full` only when the user explicitly asks, or when
+  reproducing a complete CI failure. Use the
   named `./tools/check <gate>` command to reproduce one hosted gate.
 
 ### Format failures (common CI red)
@@ -184,8 +184,8 @@ When you are about to commit or push, stop using this section and switch to the
 
 ## Merge CI bar (not the agent default)
 
-GitHub Actions runs twelve named gates and a required-job aggregator. Orchestra
-uses the same dispatcher sequentially:
+GitHub Actions runs twelve named gates and a required-job aggregator. The same
+dispatcher can run them sequentially:
 
 ```bash
 ./tools/check full
@@ -200,12 +200,10 @@ uses the same dispatcher sequentially:
 
 - Mock methods with `monkeypatch.setattr`, not `instance.method = ...` (mypy
   `method-assign`).
-- Orchestra router/health tests on CI: use `stub_clis` fixture
-  (`tests/unit/orchestra/conftest.py`).
 
 ## Relations
 
 - Pre-commit checklist: [git-commit-rules.md](git-commit-rules.md)
 - Feature workflow: [core-execution.md](core-execution.md) and [validation-routing.md](validation-routing.md)
 - Agent index: [README.md](README.md)
-- Full gate: `.github/workflows/ci.yml`, `tools/check`, and Orchestra's adapter
+- Full gate: `.github/workflows/ci.yml` and `tools/check`

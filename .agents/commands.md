@@ -33,7 +33,7 @@ Do not run `pytest tests/ -v` unless asked.
 ```
 
 Merge CI runs the named `./tools/check` gates plus the required-job aggregator.
-Orchestra phase 9 runs their serial equivalent with `./tools/check full`.
+Hosted CI runs the named `./tools/check` gates plus the required-job aggregator.
 
 ## Data Pipeline
 
@@ -72,7 +72,6 @@ uv run python scripts/research/analysis/evaluation/report_g3.py --runs-dir outpu
 .venv-x86/bin/pytest -m integration              # integration tests only
 .venv-x86/bin/pytest tests/unit/features/ -q     # feature tests only
 .venv-x86/bin/pytest tests/unit/simulation/test_environment/ -q         # env tests only
-.venv-x86/bin/pytest tests/unit/orchestra/ -q    # orchestra tests
 ./tools/check unit
 ```
 
@@ -88,13 +87,6 @@ uv run python scripts/research/analysis/evaluation/report_g3.py --runs-dir outpu
 Use the architecture-matched virtual environment on other nodes (for example
 `.venv-x86/bin/pytest` on x86_64). Do not launch checks through a mismatched
 `uv` executable on ARM.
-
-## Orchestra
-
-```bash
-orchestra doctor                             # Tier-0 health check
-orchestra run "task description"             # full pipeline (verify runs ./tools/check full)
-```
 
 ## Docker
 

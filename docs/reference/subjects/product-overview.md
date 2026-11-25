@@ -15,7 +15,6 @@ The distribution is `quantitative-rl-trading-system`. It declares Python
 | `qrl-evaluate` | `evaluation.cli:main` | `reanalyze` |
 | `qrl-experiment` | `experiments.cli:main` | `run`, `status`, `summarize`, `checkpoint-map`, `recover-cache`, `rebuild-named-cache`, `variants`, `catalog` |
 | `qrl-compute` | `compute.cli:main` | `capacity`, `resources`, `continuation`, `worker` |
-| `orchestra` | `orchestra.cli:main` | See the [Orchestra guide](../../modules/orchestra.md) |
 
 `qrl-train` selects training without a recognized first-token command and
 passes the original argument list to the training parser in that case. The

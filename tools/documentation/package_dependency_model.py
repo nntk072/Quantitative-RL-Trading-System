@@ -23,7 +23,6 @@ PACKAGES = (
     "live",
     "integrations",
     "compute",
-    "orchestra",
 )
 START = "<!-- GENERATED PACKAGE IMPORT GRAPH: START -->"
 END = "<!-- GENERATED PACKAGE IMPORT GRAPH: END -->"

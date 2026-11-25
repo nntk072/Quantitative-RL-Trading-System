@@ -196,6 +196,3 @@ zscaler.crt
 # Local IDE agent config (rules live in .agents/rules/)
 .cursor/
 .kilocode/
-
-# Legacy Orchestra runtime state; new state lives under outputs/orchestra/.
-/orchestra/state/

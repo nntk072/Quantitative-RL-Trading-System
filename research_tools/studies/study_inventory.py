@@ -270,8 +270,6 @@ def _config_inventory(
             inferred = "compute"
         elif len(parts) > 1 and parts[0] == "schemas":
             inferred = "experiments" if "trial_ledger" in parts[-1] else "artifacts"
-        elif len(parts) > 1 and parts[0] == "orchestra":
-            inferred = "orchestra"
         if relative.startswith("config/studies/profiles/"):
             inferred = Path(relative).stem
         elif (

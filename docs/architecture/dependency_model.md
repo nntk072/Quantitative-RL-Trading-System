@@ -36,7 +36,6 @@ flowchart LR
     live[`live/`]
     integrations[`integrations/`]
     compute[`compute/`]
-    orchestra[`orchestra/`]
     market_data -->|imports| artifacts
     market_data -->|imports| configuration
     features -->|imports| artifacts
@@ -89,7 +88,6 @@ flowchart LR
     integrations -->|imports| features
     integrations -->|imports| live
     compute -->|imports| artifacts
-    orchestra -->|imports| artifacts
 ```
 
 | Package | Imports production packages |
@@ -109,7 +107,6 @@ flowchart LR
 | `live` | `configuration`, `decisioning`, `features`, `trading` |
 | `integrations` | `features`, `live` |
 | `compute` | `artifacts` |
-| `orchestra` | `artifacts` |
 
 <!-- GENERATED PACKAGE IMPORT GRAPH: END -->
 

@@ -46,7 +46,6 @@ generated/learning/index
 generated/live/index
 generated/market_data/index
 generated/models/index
-generated/orchestra/index
 generated/simulation/index
 generated/trading/index
 generated/training/index

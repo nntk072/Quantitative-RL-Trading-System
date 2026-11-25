@@ -10,7 +10,6 @@ The installed command surfaces are:
 | `qrl-experiment` | Variant catalog, run resolution, and experiment-run operations. |
 | `qrl-compute` | Device and resource diagnostics. |
 | `qrl-study` | Register, validate, plan, and run configured repository studies and audits. |
-| `orchestra` | Engineering workflow orchestration. |
 
 The `qrl-*` prefixes identify the repository command family. Inspect available
 operations with `--help`. A help check does not launch training or allocate a
