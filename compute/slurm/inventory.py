@@ -51,7 +51,11 @@ class NodeInventory:
 
     @property
     def granted_cpus(self) -> int:
-        """Cores this process may use: affinity, capped by cgroup quota and Slurm's CPU count."""
+        """Cores this process may use: affinity, capped by cgroup quota and Slurm's CPU count.
+
+        Returns:
+            The smallest of the affinity count, the floor of the cgroup quota, and Slurm's CPU count, never below zero.
+        """
         limits = [len(self.cpu_ids)]
         if self.cpu_quota_cores is not None:
             limits.append(math.floor(self.cpu_quota_cores))
@@ -103,7 +107,16 @@ def read_inventory(
 
 
 def _ancestor_values(name: str, proc: Path, root: Path) -> list[str]:
-    """Return the text of ``name`` at the process cgroup and each ancestor below the root."""
+    """Return the text of ``name`` at the process cgroup and each ancestor below the root.
+
+    Args:
+        name: Cgroup file name to look for, such as ``memory.max``.
+        proc: Process cgroup file that locates the leaf directory.
+        root: Cgroup mount root; the walk stops at this directory.
+
+    Returns:
+        Stripped text of each existing ``name`` file from the leaf up to the root; empty when the leaf is absent.
+    """
     leaf = cgroup_file(name, proc_cgroup=proc, cgroup_root=root)
     if leaf is None:
         return []
@@ -120,7 +133,15 @@ def _ancestor_values(name: str, proc: Path, root: Path) -> list[str]:
 
 
 def _memory_limit_bytes(proc: Path, root: Path) -> int | None:
-    """Return the tightest finite ``memory.max`` on the path, or ``None`` when none is set."""
+    """Return the tightest finite ``memory.max`` on the path, or ``None`` when none is set.
+
+    Args:
+        proc: Process cgroup file that locates the leaf directory.
+        root: Cgroup mount root.
+
+    Returns:
+        The tightest finite memory limit in bytes, or ``None`` when no finite limit is set.
+    """
     finite = [
         int(text)
         for text in _ancestor_values("memory.max", proc, root)
@@ -130,7 +151,18 @@ def _memory_limit_bytes(proc: Path, root: Path) -> int | None:
 
 
 def _cpu_quota_cores(proc: Path, root: Path) -> float | None:
-    """Return the tightest ``cpu.max`` quota in cores, or ``None`` when unlimited."""
+    """Return the tightest ``cpu.max`` quota in cores, or ``None`` when unlimited.
+
+    Args:
+        proc: Process cgroup file that locates the leaf directory.
+        root: Cgroup mount root.
+
+    Returns:
+        The smallest quota in cores across the path, or ``None`` when every level is unlimited.
+
+    Raises:
+        ValueError: If a ``cpu.max`` value is malformed or has a non-positive quota or period.
+    """
     cores: list[float] = []
     for text in _ancestor_values("cpu.max", proc, root):
         parts = text.split()
@@ -146,7 +178,16 @@ def _cpu_quota_cores(proc: Path, root: Path) -> float | None:
 
 
 def _allocation_integer(name: str, proc: Path, root: Path) -> int | None:
-    """Read a job-level counter such as ``memory.current``; ``None`` when absent."""
+    """Read a job-level counter such as ``memory.current``; ``None`` when absent.
+
+    Args:
+        name: Counter file name, such as ``memory.current``.
+        proc: Process cgroup file that locates the leaf directory.
+        root: Cgroup mount root.
+
+    Returns:
+        The counter value, or ``None`` when the file is absent or not a plain integer.
+    """
     path = allocation_cgroup_file(name, proc_cgroup=proc, cgroup_root=root)
     if path is None:
         return None
@@ -157,7 +198,15 @@ def _allocation_integer(name: str, proc: Path, root: Path) -> int | None:
 def _gpu_devices(
     env: Mapping[str, str], records: Sequence[Mapping[str, Any]]
 ) -> tuple[GpuDevice, ...]:
-    """Map ``CUDA_VISIBLE_DEVICES`` tokens to devices, attaching measured memory when known."""
+    """Map ``CUDA_VISIBLE_DEVICES`` tokens to devices, attaching measured memory when known.
+
+    Args:
+        env: Environment mapping that holds ``CUDA_VISIBLE_DEVICES``.
+        records: Per-device records with index, uuid, total_bytes and free_bytes.
+
+    Returns:
+        One ``GpuDevice`` per visible token in environment order; memory is ``None`` where no record matched.
+    """
     devices: list[GpuDevice] = []
     for raw in env.get("CUDA_VISIBLE_DEVICES", "").split(","):
         token = raw.strip()
@@ -181,7 +230,18 @@ def _gpu_devices(
 
 
 def _optional_positive_int(env: Mapping[str, str], key: str) -> int | None:
-    """Parse an optional Slurm integer; anything malformed or non-positive fails closed."""
+    """Parse an optional Slurm integer; anything malformed or non-positive fails closed.
+
+    Args:
+        env: Environment mapping to read from.
+        key: Name of the variable to parse.
+
+    Returns:
+        The positive integer value, or ``None`` when the variable is unset or empty.
+
+    Raises:
+        ValueError: If the value is not an integer or is not positive.
+    """
     value = env.get(key, "")
     if not value:
         return None
@@ -195,12 +255,26 @@ def _optional_positive_int(env: Mapping[str, str], key: str) -> int | None:
 
 
 def _int_or_none(value: object) -> int | None:
-    """Return an integer measurement, or ``None`` when the record lacks one."""
+    """Return an integer measurement, or ``None`` when the record lacks one.
+
+    Args:
+        value: Record field to check.
+
+    Returns:
+        The value when it is an integer, otherwise ``None``.
+    """
     return value if isinstance(value, int) else None
 
 
 def _disk_free(path: Path) -> int:
-    """Return free bytes available to unprivileged writers on ``path``'s filesystem."""
+    """Return free bytes available to unprivileged writers on ``path``'s filesystem.
+
+    Args:
+        path: Directory whose filesystem is measured.
+
+    Returns:
+        Free bytes available to unprivileged writers on that filesystem.
+    """
     return shutil.disk_usage(path).free
 
 

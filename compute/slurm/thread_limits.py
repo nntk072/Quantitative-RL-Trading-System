@@ -21,7 +21,14 @@ THREAD_ENV_KEYS: tuple[str, ...] = (
 
 
 def _require_granted_cores(granted_cpus: int) -> None:
-    """Refuse a worker with no granted cores; a zero-thread pool is never a valid limit."""
+    """Refuse a worker with no granted cores; a zero-thread pool is never a valid limit.
+
+    Args:
+        granted_cpus: Core count granted to the worker.
+
+    Raises:
+        ValueError: If ``granted_cpus`` is below one.
+    """
     if granted_cpus < 1:
         raise ValueError("a worker needs at least one granted CPU for its thread limits")
 

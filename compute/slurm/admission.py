@@ -151,7 +151,17 @@ class ResourceAdmission:
         )
 
     def _select_gpus(self, request: ResourceRequest) -> list[GpuDevice]:
-        """Choose the devices that satisfy the GPU count and per-device memory request."""
+        """Choose the devices that satisfy the GPU count and per-device memory request.
+
+        Args:
+            request: Request whose GPU count and per-device memory must be met.
+
+        Returns:
+            The first ``request.gpus`` eligible devices, in visible order; an empty list when no GPU is requested.
+
+        Raises:
+            AdmissionError: If too few devices are visible or eligible.
+        """
         if request.gpus == 0:
             return []
         if not self._gpus:
@@ -159,7 +169,14 @@ class ResourceAdmission:
         fraction = self._headroom.gpu_memory_fraction
 
         def fits(device: GpuDevice) -> bool:
-            """Return whether ``device`` has enough usable memory for this request."""
+            """Return whether ``device`` has enough usable memory for this request.
+
+            Args:
+                device: Device to test against the request's per-device memory amount.
+
+            Returns:
+                ``True`` when the device can host the requested GPU memory, or when none was requested.
+            """
             if request.gpu_memory_bytes == 0:
                 return True
             usable = _usable_gpu_bytes(device, fraction)
@@ -183,7 +200,15 @@ class ResourceAdmission:
 
 
 def _usable_gpu_bytes(device: GpuDevice, reserved_fraction: float) -> int | None:
-    """Free device memory minus the reserved share of total memory; ``None`` if unmeasured."""
+    """Free device memory minus the reserved share of total memory; ``None`` if unmeasured.
+
+    Args:
+        device: GPU device with optional total and free memory.
+        reserved_fraction: Share of total device memory kept back as headroom.
+
+    Returns:
+        Free bytes minus the reserved share, clamped at zero; ``None`` when either measurement is unknown.
+    """
     if device.total_bytes is None or device.free_bytes is None:
         return None
     return max(0, device.free_bytes - int(device.total_bytes * reserved_fraction))
