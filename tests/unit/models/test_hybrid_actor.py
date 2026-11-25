@@ -112,6 +112,57 @@ def test_hybrid_distribution_deterministic_mode_uses_valid_category_codes() -> N
     assert torch.isfinite(distribution.log_prob(actions)).all()
 
 
+def test_hybrid_distribution_reuses_device_constants_after_warmup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    actor = HybridActorHeads(4, ("risk", "sl_mode"), {"sl_mode": 0.1})
+    distribution = HybridBoxDistribution(actor, action_width=2)
+    means = torch.tensor([[0.25], [0.75]])
+    logits = {"sl_mode": torch.zeros((2, 4))}
+    distribution.proba_distribution(means, torch.zeros(1), logits)
+    classes = {"sl_mode": torch.tensor([2, 3])}
+    expected = torch.tensor([[0.25, 0.0], [0.75, 2.0 / 3.0]])
+
+    # The first forward is the graph warm-up that may create per-device constants.
+    distribution._pack(means, classes)
+
+    def reject_host_tensor_creation(*args: Any, **kwargs: Any) -> torch.Tensor:
+        del args, kwargs
+        raise AssertionError("action packing reconstructed a host constant after warm-up")
+
+    monkeypatch.setattr(torch, "tensor", reject_host_tensor_creation)
+    monkeypatch.setattr(torch, "as_tensor", reject_host_tensor_creation)
+    monkeypatch.setattr(torch.Tensor, "new_tensor", reject_host_tensor_creation)
+
+    packed = distribution._pack(means, classes)
+
+    torch.testing.assert_close(packed, expected)
+
+
+def test_hybrid_distribution_log_prob_reuses_device_constants_after_warmup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    actor = HybridActorHeads(4, ("risk", "sl_mode"), {"sl_mode": 0.1})
+    distribution = HybridBoxDistribution(actor, action_width=2)
+    means = torch.tensor([[0.25], [0.75]])
+    logits = {"sl_mode": torch.zeros((2, 4))}
+    distribution.proba_distribution(means, torch.zeros(1), logits)
+    actions = torch.tensor([[0.25, 0.0], [0.75, 2.0 / 3.0]])
+    distribution._pack(means, {"sl_mode": torch.tensor([2, 3])})
+
+    def reject_host_tensor_creation(*args: Any, **kwargs: Any) -> torch.Tensor:
+        del args, kwargs
+        raise AssertionError("log-probability reconstructed a host constant after warm-up")
+
+    monkeypatch.setattr(torch, "tensor", reject_host_tensor_creation)
+    monkeypatch.setattr(torch, "as_tensor", reject_host_tensor_creation)
+    monkeypatch.setattr(torch.Tensor, "new_tensor", reject_host_tensor_creation)
+
+    log_prob = distribution.log_prob(actions)
+
+    assert torch.isfinite(log_prob).all()
+
+
 def test_trade_setup_hybrid_distribution_samples_only_each_rows_valid_candidates() -> None:
     coordinates = ("trade_setup", "risk", "exit")
     actor = HybridActorHeads(4, coordinates, {})

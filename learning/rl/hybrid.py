@@ -187,6 +187,7 @@ class HybridActorHeads(nn.Module):
             name: _encoded_centers(name, float(thresholds.get(name, 0.0)))
             for name in self.categorical_indices
         }
+        self._device_constants: dict[tuple[Any, ...], torch.Tensor] = {}
         self.continuous_mean = nn.Linear(latent_dim, len(self.continuous_indices))
         self.categorical_logits = nn.ModuleDict(
             {name: nn.Linear(latent_dim, len(centers)) for name, centers in self.centers.items()}
@@ -214,6 +215,39 @@ class HybridActorHeads(nn.Module):
         """
         logits = {name: layer(latent) for name, layer in self.categorical_logits.items()}
         return self.continuous_mean(latent), logits
+
+    def center_tensor(self, name: str, like: torch.Tensor) -> torch.Tensor:
+        """Return encoded categorical centers cached by device and dtype.
+
+        Args:
+            name: Categorical action coordinate.
+            like: Tensor whose device and dtype the centers must match.
+
+        Returns:
+            Center values as a tensor.
+        """
+        key = ("centers", name, like.device, like.dtype)
+        cached = self._device_constants.get(key)
+        if cached is None:
+            cached = torch.tensor(self.centers[name], device=like.device, dtype=like.dtype)
+            self._device_constants[key] = cached
+        return cached
+
+    def continuous_index_tensor(self, like: torch.Tensor) -> torch.Tensor:
+        """Return continuous action indices cached on the tensor's device.
+
+        Args:
+            like: Tensor whose device the indices must use.
+
+        Returns:
+            Long tensor of continuous action indices.
+        """
+        key = ("continuous", like.device)
+        cached = self._device_constants.get(key)
+        if cached is None:
+            cached = torch.as_tensor(self.continuous_indices, dtype=torch.long, device=like.device)
+            self._device_constants[key] = cached
+        return cached
 
 
 class HybridBoxDistribution(SB3Distribution):
@@ -292,13 +326,10 @@ class HybridBoxDistribution(SB3Distribution):
         if self.mean is None:
             raise RuntimeError("call proba_distribution before sampling actions")
         output = self.mean.new_zeros((self.mean.shape[0], self.action_width))
-        continuous_index = torch.as_tensor(
-            self.actor.continuous_indices, dtype=torch.long, device=output.device
-        )
+        continuous_index = self.actor.continuous_index_tensor(output)
         output = output.index_copy(1, continuous_index, continuous)
         for name, class_ids in classes.items():
-            centers = self.actor.centers[name]
-            center_tensor = output.new_tensor(centers)
+            center_tensor = self.actor.center_tensor(name, output)
             output[:, self.actor.categorical_indices[name]] = center_tensor[class_ids]
         return output
 
@@ -350,9 +381,7 @@ class HybridBoxDistribution(SB3Distribution):
         """
         if self.normal is None:
             raise RuntimeError("call proba_distribution before evaluating actions")
-        continuous_index = torch.as_tensor(
-            self.actor.continuous_indices, dtype=torch.long, device=actions.device
-        )
+        continuous_index = self.actor.continuous_index_tensor(actions)
         result = cast(
             torch.Tensor,
             self.normal.log_prob(  # type: ignore[no-untyped-call]
@@ -361,7 +390,7 @@ class HybridBoxDistribution(SB3Distribution):
         ).sum(dim=1)
         for name, dist in self.categorical.items():
             index = self.actor.categorical_indices[name]
-            centers = actions.new_tensor(self.actor.centers[name])
+            centers = self.actor.center_tensor(name, actions)
             classes = (actions[:, index : index + 1] - centers[None, :]).abs().argmin(dim=1)
             result = result + cast(
                 torch.Tensor,
