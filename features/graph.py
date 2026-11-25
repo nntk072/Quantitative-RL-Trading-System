@@ -7,8 +7,9 @@ timeframe source hash or any upstream hash changes, and not when an unrelated no
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from graphlib import CycleError as GraphCycleError
 from graphlib import TopologicalSorter
@@ -64,6 +65,8 @@ class FeatureNode:
     outputs: tuple[OutputColumn, ...]
     fit_scope: FitScope
     config: Mapping[str, Any]
+    # Functions that implement the node; their source text is part of the node identity.
+    implementation: tuple[Callable[..., Any], ...] = ()
 
     def __post_init__(self) -> None:
         """Validate scalar fields and copy the configuration mapping."""
@@ -74,6 +77,18 @@ class FeatureNode:
         if self.warmup_bars < 0:
             raise FeatureGraphError(f"{self.node_id!r}: warmup_bars must be >= 0")
         object.__setattr__(self, "config", dict(self.config))
+
+
+def implementation_hash(functions: Sequence[Callable[..., Any]]) -> str:
+    """Return sha256 over the qualified name and source text of each function, in order.
+
+    The source is read at hash time, so an edit to a function body changes the hash.
+    """
+    digest = hashlib.sha256()
+    for function in functions:
+        digest.update(getattr(function, "__qualname__", repr(function)).encode())
+        digest.update(inspect.getsource(function).encode())
+    return digest.hexdigest()
 
 
 def _topological_order(nodes: Mapping[str, FeatureNode]) -> tuple[str, ...]:
@@ -164,6 +179,7 @@ class FeatureGraph:
                 "config": node.config,
                 "source_hash": source_hashes[node.timeframe],
                 "upstream": {d: hashes[d] for d in deps},
+                "implementation": implementation_hash(node.implementation),
             }
             # json.dumps raises TypeError for non-JSON configuration values.
             text = json.dumps(payload, sort_keys=True, separators=(",", ":"), allow_nan=False)
