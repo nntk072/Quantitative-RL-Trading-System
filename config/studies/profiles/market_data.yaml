@@ -5,6 +5,7 @@ source_roots:
 - research_tools/studies/handlers/market_data.py
 api_paths:
 - market_data/__init__.py
+- market_data/arrow_schemas.py
 - market_data/cache/__init__.py
 - market_data/cache/bars.py
 - market_data/cache/storage.py
@@ -31,6 +32,9 @@ api_paths:
 - market_data/transforms/sessions.py
 caller_paths:
 - tests/unit/market_data/test_discover.py
+- tests/unit/market_data/test_arrow_schemas.py
+- tests/unit/market_data/test_mt5_export_to_bars.py
+- tests/unit/features/test_causal_prefix_invariance.py
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
 - evaluation/contracts.py
@@ -160,6 +164,10 @@ caller_paths:
 - training/setup/learner.py
 - training/setup/tick_execution_preflight.py
 source_scopes:
+- path: market_data/arrow_schemas.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+  - market_data.bar_ingestion_and_row_validity
 - path: market_data/loading
   study_ids:
   - market_data.source_parsing_and_quality
