@@ -84,7 +84,7 @@ def test_ohlc_violation_is_reported_against_the_source_row() -> None:
     frame.loc[1, "HIGH"] = "100.0"  # high below close 100.5
     table, problems = mt5_export_to_bars(frame, instrument_id="US100.cash", timeframe="M1")
     assert [(p.row, p.reason) for p in problems] == [(1, "OHLC bounds violated")]
-    assert table.num_rows == 2
+    assert table.num_rows == 1  # the invalid row is quarantined, not returned as a bar
 
 
 def test_unsupported_timeframe_is_refused() -> None:
@@ -101,3 +101,15 @@ def test_reconciliation_counts_match_the_source() -> None:
         sum(table.column("close").to_pylist())
         + sum(float(frame["CLOSE"].iloc[i]) for i in rejected)
     )
+
+
+def test_source_clock_matches_the_declared_config_value() -> None:
+    """The hard-coded Helsinki clock must agree with config/base/default.yaml (timestamp_clock)."""
+    import yaml
+
+    from market_data.arrow_schemas import SOURCE_CLOCK
+
+    config = yaml.safe_load((REPO / "config" / "base" / "default.yaml").read_text(encoding="utf-8"))
+    declared = config["data"]["timestamp_clock"]
+    assert declared == "europe_helsinki"
+    assert SOURCE_CLOCK == "Europe/Helsinki"
