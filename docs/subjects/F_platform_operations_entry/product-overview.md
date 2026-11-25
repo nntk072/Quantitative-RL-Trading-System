@@ -59,7 +59,6 @@ using its help surface in an installed environment.
 | Reanalyze a saved checkpoint | `qrl-evaluate --help` | Checkpoint, matching config and data, period role |
 | Inspect or coordinate variants | `qrl-experiment --help` | Catalog, run state, frozen variant inputs |
 | Find scheduler interfaces | `qrl-compute --help` | Current platform runbook and allocation |
-| Inspect the orchestration interface | `orchestra --help` | Workflow state and phase prerequisites |
 
 Running `qrl-train --help` shows help for its default training path.
 The same executable also dispatches recognized first-token commands for
@@ -94,8 +93,8 @@ shows how to connect a reported number to the recorded inputs.
 ## Worked example
 
 The Tier A notebook reads the installed console-script metadata and verifies
-the routes for data, training, evaluation, experiments, compute, and
-orchestration. It only inspects package registration.
+the routes for data, training, evaluation, experiments, compute, and study
+catalog tools. It only inspects package registration.
 
 ```{toctree}
 :hidden:

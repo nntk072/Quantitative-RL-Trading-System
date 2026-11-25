@@ -25,7 +25,7 @@ from research_tools.compute.audits.pretraining_readiness_plan import (
     plan_summary,
     resolve_task,
 )
-from research_tools.orchestra.audits.pretraining_readiness_task_runner import (
+from research_tools.compute.audits.pretraining_readiness_task_runner import (
     TaskResult,
     blocked_task_result,
     persist_task_result,

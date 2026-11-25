@@ -1,36 +1,46 @@
 # Coverage policy
 
-Coverage is measured per product package. The CI `coverage-report` job combines
-unit and integration data, compares each package with the main baseline in
+Coverage is measured from the checked-out target branch's declared product
+packages, not from tests, scripts, or repository tooling. The CI
+`coverage-report` job also includes
+`research_tools.compute.audits.pretraining_readiness_task_runner` so its
+artifact SHA-256 provenance code stays visible in ordinary reports. Its
+`research_tools` row and the all-source aggregate are informational; product
+totals and the regression gate use only the 15 product packages listed below.
+The job combines unit and integration data, compares each product package and
+the product aggregate with the main baseline in
 `tools/quality/coverage_baseline.json`, and fails if line coverage falls below
-that baseline. Branch coverage is reported but is not gated. The product floor target is 100% line coverage over the
-product packages, which is not yet met; the regression gate is the enforced rule today.
+that baseline. Branch coverage is reported but is not gated. The product floor
+target is 100% line coverage, which is not yet met; the regression gate is the
+enforced rule today.
 
 ## Latest measured coverage
 
-CI run `45650193322` at source `3821ffcc` measured 36,361 of 44,792 product
-statements covered (81.18%) and 11,322 of 16,430 branches covered (68.91%).
-Branch coverage is informational only. The enforced check is line regression
-against the baseline above. The current line gap is 8,431 statements, so the
-100% target remains open.
+CI run `45687911793` at target-branch head `26ad3e8d` measured 36,413 of
+44,790 product statements covered (81.30%), with 8,377 statements missing.
+Product branch coverage is 11,337 of 16,428 (69.01%), informational only.
+The artifact's all-source total is 36,444/44,873 lines and 11,337/16,442
+branches; it includes the informational `research_tools` helper at 31/83 lines
+(37.35%) and 0/14 branches. This artifact measures only
+`perf/env-step-speedup`; it is not a repository-wide coverage percentage.
 
-| Product package | Line coverage |
-|---|---:|
-| `artifacts` | 95.28% |
-| `compute` | 75.06% |
-| `configuration` | 97.49% |
-| `decisioning` | 95.53% |
-| `evaluation` | 82.31% |
-| `experiments` | 73.02% |
-| `features` | 94.15% |
-| `integrations` | 56.66% |
-| `learning` | 81.91% |
-| `live` | 82.84% |
-| `market_data` | 87.68% |
-| `models` | 95.47% |
-| `simulation` | 84.29% |
-| `trading` | 87.22% |
-| `training` | 65.71% |
+| Product package | Covered / statements | Line coverage |
+|---|---:|---:|
+| `artifacts` | 343/360 | 95.28% |
+| `compute` | 919/1,177 | 78.08% |
+| `configuration` | 194/199 | 97.49% |
+| `decisioning` | 577/604 | 95.53% |
+| `evaluation` | 9,566/11,600 | 82.47% |
+| `experiments` | 2,373/3,250 | 73.02% |
+| `features` | 3,908/4,151 | 94.15% |
+| `integrations` | 965/1,703 | 56.66% |
+| `learning` | 2,816/3,438 | 81.91% |
+| `live` | 140/169 | 82.84% |
+| `market_data` | 2,064/2,354 | 87.68% |
+| `models` | 822/861 | 95.47% |
+| `simulation` | 6,134/7,277 | 84.29% |
+| `trading` | 2,300/2,637 | 87.22% |
+| `training` | 3,292/5,010 | 65.71% |
 
 ## Exclusions
 

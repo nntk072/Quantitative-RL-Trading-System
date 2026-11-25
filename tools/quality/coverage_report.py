@@ -12,6 +12,25 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BASELINE = ROOT / "tools/quality/coverage_baseline.json"
+PRODUCT_PACKAGES = frozenset(
+    {
+        "artifacts",
+        "compute",
+        "configuration",
+        "decisioning",
+        "evaluation",
+        "experiments",
+        "features",
+        "integrations",
+        "learning",
+        "live",
+        "market_data",
+        "models",
+        "simulation",
+        "trading",
+        "training",
+    }
+)
 
 
 def _ratio(covered: int, total: int) -> float | None:
@@ -20,7 +39,7 @@ def _ratio(covered: int, total: int) -> float | None:
 
 
 def aggregate_coverage(report: dict[str, Any]) -> dict[str, Any]:
-    """Aggregate coverage.py JSON by first-level production package."""
+    """Aggregate product-package coverage and retain an all-source summary."""
     packages: dict[str, dict[str, Any]] = {}
     for source_path, details in report["files"].items():
         package = Path(source_path).parts[0]
@@ -37,21 +56,52 @@ def aggregate_coverage(report: dict[str, Any]) -> dict[str, Any]:
     for metrics in packages.values():
         metrics["line_ratio"] = _ratio(metrics["covered_lines"], metrics["statements"])
         metrics["branch_ratio"] = _ratio(metrics["covered_branches"], metrics["branches"])
-    totals = report["totals"]
-    overall = {
-        "files": len(report["files"]),
-        "statements": totals["num_statements"],
-        "covered_lines": totals["covered_lines"],
-        "branches": totals["num_branches"],
-        "covered_branches": totals["covered_branches"],
-        "line_ratio": _ratio(totals["covered_lines"], totals["num_statements"]),
-        "branch_ratio": _ratio(totals["covered_branches"], totals["num_branches"]),
-        "combined_ratio": _ratio(
-            totals["covered_lines"] + totals["covered_branches"],
-            totals["num_statements"] + totals["num_branches"],
+    all_sources = _summarize(report["totals"], len(report["files"]))
+    product_totals = {
+        "num_statements": sum(
+            package["statements"] for name, package in packages.items() if name in PRODUCT_PACKAGES
+        ),
+        "covered_lines": sum(
+            package["covered_lines"]
+            for name, package in packages.items()
+            if name in PRODUCT_PACKAGES
+        ),
+        "num_branches": sum(
+            package["branches"] for name, package in packages.items() if name in PRODUCT_PACKAGES
+        ),
+        "covered_branches": sum(
+            package["covered_branches"]
+            for name, package in packages.items()
+            if name in PRODUCT_PACKAGES
         ),
     }
-    return {"overall": overall, "packages": dict(sorted(packages.items()))}
+    product_files = sum(
+        package["files"] for name, package in packages.items() if name in PRODUCT_PACKAGES
+    )
+    overall = _summarize(product_totals, product_files)
+    return {
+        "overall": overall,
+        "all_sources": all_sources,
+        "packages": dict(sorted(packages.items())),
+    }
+
+
+def _summarize(totals: dict[str, int], files: int) -> dict[str, Any]:
+    """Build line, branch, and combined ratios from coverage counts."""
+    statements = totals["num_statements"]
+    covered_lines = totals["covered_lines"]
+    branches = totals["num_branches"]
+    covered_branches = totals["covered_branches"]
+    return {
+        "files": files,
+        "statements": statements,
+        "covered_lines": covered_lines,
+        "branches": branches,
+        "covered_branches": covered_branches,
+        "line_ratio": _ratio(covered_lines, statements),
+        "branch_ratio": _ratio(covered_branches, branches),
+        "combined_ratio": _ratio(covered_lines + covered_branches, statements + branches),
+    }
 
 
 def compare_baseline(current: dict[str, Any], baseline: dict[str, Any]) -> list[str]:
@@ -122,12 +172,17 @@ def main(argv: list[str] | None = None) -> int:
     overall = current["overall"]
     source_branch = args.branch or _current_branch()
     print(
-        f"Coverage for {source_branch} against {baseline_document['source_branch']} baseline "
+        f"Product coverage for {source_branch} against {baseline_document['source_branch']} baseline "
         f"({baseline_document['source_commit'][:8]}): "
         f"{overall['covered_lines']}/{overall['statements']} lines "
         f"({_percent(overall['line_ratio'])}), "
         f"{overall['covered_branches']}/{overall['branches']} branches "
         f"({_percent(overall['branch_ratio'])}); combined {_percent(overall['combined_ratio'])}"
+    )
+    all_sources = current["all_sources"]
+    print(
+        f"All measured sources (informational): {all_sources['covered_lines']}/"
+        f"{all_sources['statements']} lines ({_percent(all_sources['line_ratio'])})"
     )
     print("Package                 Line       Branch")
     for name, metrics in current["packages"].items():

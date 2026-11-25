@@ -20,7 +20,6 @@ uv run qrl-train --help
 uv run qrl-evaluate --help
 uv run qrl-experiment --help
 uv run qrl-compute --help
-orchestra --help
 ```
 
 Use the active environment's executable directly when `uv` does not match the

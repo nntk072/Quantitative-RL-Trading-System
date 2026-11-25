@@ -23,7 +23,6 @@ FUNCTION_ROOTS = (
     "live",
     "integrations",
     "compute",
-    "orchestra",
     "tools",
 )
 

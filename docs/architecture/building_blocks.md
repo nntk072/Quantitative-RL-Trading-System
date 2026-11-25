@@ -32,7 +32,6 @@ flowchart TB
     subgraph ResearchTooling[Research tooling]
         research_tools[research_tools: study registry and cross-domain audits]
     end
-    orchestra[orchestra: engineering workflow]
 ```
 
 This is a responsibility view, not a dependency graph. See the generated
@@ -54,7 +53,6 @@ This is a responsibility view, not a dependency graph. See the generated
 | `artifacts/` | Own identities, manifests, atomic storage, and artifact lifecycle primitives | Shared infrastructure used by workflows |
 | `compute/` | Discover devices/resources and adapt to Slurm execution | Does not choose research hypotheses or training settings |
 | `live/` and `integrations/` | Keep broker-neutral runtime separate from MetaTrader-specific adapters | Vendor dependencies stay outside core trading contracts |
-| `orchestra/` | Coordinate repository engineering and CI workflows | Does not participate in model inference or trading |
 | `research_tools/` | Register studies and bundle reusable cross-domain audits and diagnostics | May compose production APIs; production packages must not import it |
 
 ## Composition roots

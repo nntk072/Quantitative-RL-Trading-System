@@ -64,7 +64,6 @@ def test_broker():
     broker.place_order()
 """,
     )
-    _write(tmp_path / "orchestra" / "pipeline.py", "def hidden() -> None:\n    pass\n")
     _write(tmp_path / ".venv-x86" / "lib.py", "def hidden() -> None:\n    pass\n")
     _write(tmp_path / "build" / "generated.py", "def hidden() -> None:\n    pass\n")
 

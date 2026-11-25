@@ -13,7 +13,6 @@ def _write_module(path: Path, line_count: int) -> None:
 def test_module_size_gate_reports_product_modules_over_limit(tmp_path: Path) -> None:
     _write_module(tmp_path / "training" / "large.py", 1001)
     _write_module(tmp_path / "training" / "small.py", 1000)
-    _write_module(tmp_path / "orchestra" / "out_of_scope.py", 1500)
 
     assert find_oversized_modules(tmp_path) == [("training/large.py", 1001)]
 

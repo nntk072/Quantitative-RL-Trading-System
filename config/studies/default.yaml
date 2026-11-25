@@ -18,7 +18,7 @@ workflow:
   evaluation: {enabled: true, modules: [evaluation]}
   experiments: {enabled: true, modules: [experiments]}
   compute: {enabled: true, modules: [compute]}
-  reporting: {enabled: true, modules: [artifacts, orchestra]}
+  reporting: {enabled: true, modules: [artifacts]}
   integrations: {enabled: true, modules: [live, integrations]}
 study_defaults:
   code_check: "Every listed focused check passes, with no uncovered source or config inputs."
@@ -37,7 +37,6 @@ modules:
   evaluation: {enabled: true}
   experiments: {enabled: true}
   compute: {enabled: true}
-  orchestra: {enabled: true}
   live: {enabled: true}
   integrations: {enabled: true}
   repo_tooling: {enabled: true}

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
 from omegaconf import OmegaConf
+from research_tools.compute.audits import pretraining_readiness_task_runner as task_runner
 from scripts.research.audits.pretraining_parallel_readiness import (
     _validate_run_root,
     run_plan,
@@ -214,7 +217,9 @@ def test_artifact_hash_and_dependency_closure(
 
     rows = {row["task_id"]: row for row in manifest["tasks"]}
     assert set(rows) == {"producer", "consumer"}
-    assert len(rows["producer"]["artifact_sha256"][str(artifact)]) == 64
+    assert rows["producer"]["artifact_sha256"][str(artifact)] == (
+        "ee8250fb76e094b34b471f13a73dbbe51d1ae142e9df59d7c0d31ec20f0a0a8e"
+    )
     saved = json.loads(
         (_run_root(tmp_path) / "pretraining_parallel_readiness_manifest.json").read_text()
     )
@@ -331,3 +336,79 @@ def test_plan_rejects_scientific_gate_shared_by_common_and_price(tmp_path: Path)
 
     with pytest.raises(ValueError, match="must be disjoint"):
         load_plan(path)
+
+
+def test_artifact_hashes_cover_nested_directory_contents(tmp_path: Path) -> None:
+    directory = tmp_path / "artifacts"
+    nested = directory / "nested"
+    nested.mkdir(parents=True)
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    first = directory / "first.bin"
+    second = nested / "second.txt"
+    first.write_bytes(b"first artifact bytes")
+    second.write_text("second artifact text\n", encoding="utf-8")
+
+    hashes = task_runner._artifact_hashes((str(directory), str(empty)))
+
+    assert hashes == {
+        str(first): hashlib.sha256(b"first artifact bytes").hexdigest(),
+        str(second): hashlib.sha256(b"second artifact text\n").hexdigest(),
+        f"EMPTY::{empty}": "",
+    }
+    first.write_bytes(b"changed artifact bytes")
+    changed_hashes = task_runner._artifact_hashes((str(directory), str(empty)))
+
+    assert changed_hashes[str(first)] == hashlib.sha256(b"changed artifact bytes").hexdigest()
+    assert changed_hashes[str(first)] != hashes[str(first)]
+    assert changed_hashes[str(second)] == hashes[str(second)]
+    assert changed_hashes[f"EMPTY::{empty}"] == ""
+
+
+def test_run_task_records_child_start_failure_and_hashes_failure_log(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task = load_plan(
+        _write_plan(tmp_path / "spawn-failure.yaml", [_task("spawn_failure", "print('unused')")])
+    ).tasks[0]
+
+    def fail_to_start(*_args: Any, **_kwargs: Any) -> None:
+        raise OSError("child executable unavailable")
+
+    monkeypatch.setattr(subprocess, "run", fail_to_start)
+
+    result = task_runner.run_task(task, tmp_path / "execution")
+
+    log_path = Path(result.log_path or "")
+    assert result.status == "fail"
+    assert result.return_code == 127
+    assert result.blocker == "could not start direct child process: child executable unavailable"
+    assert "could not start direct child process: child executable unavailable" in (
+        log_path.read_text(encoding="utf-8")
+    )
+    assert result.log_sha256 == hashlib.sha256(log_path.read_bytes()).hexdigest()
+
+
+def test_run_task_fails_closed_when_declared_artifact_hashing_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifact = tmp_path / "artifact.txt"
+    artifact.write_text("completed artifact", encoding="utf-8")
+    task = load_plan(
+        _write_plan(
+            tmp_path / "hash-failure.yaml",
+            [_task("hash_failure", "print('completed')", artifact=str(artifact))],
+        )
+    ).tasks[0]
+
+    def fail_to_hash(_roots: tuple[str, ...]) -> dict[str, str]:
+        raise PermissionError("artifact read denied")
+
+    monkeypatch.setattr(task_runner, "_artifact_hashes", fail_to_hash)
+
+    result = task_runner.run_task(task, tmp_path / "execution")
+
+    assert result.status == "fail"
+    assert result.return_code == 0
+    assert result.artifact_sha256 == {}
+    assert result.blocker == "could not hash declared artifacts: artifact read denied"

@@ -1,5 +1,5 @@
 {
-  "page_count": 489,
+  "page_count": 488,
   "pages": [
     {
       "links": [
@@ -5602,7 +5602,6 @@
         "compute.md",
         "live.md",
         "integrations.md",
-        "orchestra.md",
         "testing.md",
         "repository_layout.md",
         "../architecture/README.md",
@@ -5752,16 +5751,6 @@
       "section": "modules",
       "status": "current",
       "title": "Models module",
-      "type": "developer"
-    },
-    {
-      "links": [],
-      "orphan_status": "in toctree",
-      "path": "docs/modules/orchestra.md",
-      "primary_navigation_owner": [],
-      "section": "modules",
-      "status": "current",
-      "title": "Orchestra module",
       "type": "developer"
     },
     {
@@ -6946,7 +6935,6 @@
         "../../training/reporting/training_curves.py#L515",
         "../../training/runner/__init__.py#L1",
         "../../simulation/environment/trading_environment_factory.py#L553",
-        "../../orchestra/cli.py",
         "../../compute/cli.py",
         "../../market_data/cli.py",
         "../../evaluation/cli.py",
@@ -7294,7 +7282,6 @@
     },
     {
       "links": [
-        "../../modules/orchestra.md",
         "../../operations/RUNNING_COMMANDS.md",
         "../../config.md",
         "live-paper-metatrader.md"

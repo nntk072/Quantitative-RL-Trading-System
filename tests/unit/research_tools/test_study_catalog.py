@@ -24,7 +24,7 @@ def test_repository_study_catalog_covers_owned_modules_and_configures_only_regis
 ):
     plan = build_study_plan(ROOT)
 
-    assert len(plan["modules"]) >= 17
+    assert len(plan["modules"]) >= 16
     assert all(module["source_roots"] for module in plan["modules"])
     assert all(module["source_file_count"] > 0 for module in plan["modules"])
     assert all(module["uncovered_source_files"] == [] for module in plan["modules"])
@@ -36,9 +36,9 @@ def test_repository_study_catalog_covers_owned_modules_and_configures_only_regis
         for module in plan["modules"]
         for path in (ROOT / value for value in module["api_paths"] + module["caller_paths"])
     )
-    assert len(plan["catalog_study_ids"]) == 93
+    assert len(plan["catalog_study_ids"]) == 91
     assert Counter(study["type"] for module in plan["modules"] for study in module["studies"]) == {
-        "code_check": 80,
+        "code_check": 78,
         "audit": 8,
         "empirical": 5,
     }

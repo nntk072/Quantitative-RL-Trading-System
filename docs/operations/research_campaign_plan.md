@@ -1039,7 +1039,6 @@ AGENTS.md
 .agents/
 .codex/
 .claude/
-orchestra/
 ```
 
 but remove stale campaign-specific process instructions.

@@ -21,7 +21,6 @@ PRODUCTION = (
     "live",
     "integrations",
     "compute",
-    "orchestra",
 )
 LEGACY_PREFIXES = (
     "quant_rl",
@@ -331,7 +330,7 @@ def test_models_framework_imports_are_limited_to_checkpoint_adapters() -> None:
     )
 
 
-WORKFLOW_PACKAGES = {"training", "evaluation", "experiments", "live", "integrations", "orchestra"}
+WORKFLOW_PACKAGES = {"training", "evaluation", "experiments", "live", "integrations"}
 LEAF_PACKAGES = {
     "configuration",
     "artifacts",

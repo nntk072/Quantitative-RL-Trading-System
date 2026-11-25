@@ -28,7 +28,6 @@ EXCLUDED_DIRS = {
     "build",
     "dist",
     "node_modules",
-    "orchestra",
     "site-packages",
     "tests",
     "__pycache__",
@@ -371,10 +370,7 @@ def _static_references(
 def build_rows(root: Path) -> list[dict[str, str]]:
     """Inventory production definitions and statically visible direct test references."""
     source_paths = [
-        path
-        for path in _python_files(root)
-        if "tests" not in path.relative_to(root).parts
-        and "orchestra" not in path.relative_to(root).parts
+        path for path in _python_files(root) if "tests" not in path.relative_to(root).parts
     ]
     package_reexports = _package_reexports(root, source_paths)
     defined_classes = _class_symbols(root, source_paths)
@@ -645,7 +641,7 @@ behavior evidence before deciding whether code is dead or needs a contract.
 references between source directories. It omits intra-package references and
 cannot represent dynamic imports, dependency inversion, or runtime call flow.
 
-Production files are discovered recursively while excluding tests, orchestra,
+Production files are discovered recursively while excluding tests,
 virtual environments, build outputs, package installations, and bytecode
 caches. The risk tier is a coarse review priority, not a severity score:
 
@@ -671,12 +667,7 @@ def main() -> int:
     output_dir = args.output_dir if args.output_dir.is_absolute() else root / args.output_dir
     rows = build_rows(root)
     source_count = len(
-        [
-            path
-            for path in _python_files(root)
-            if "tests" not in path.relative_to(root).parts
-            and "orchestra" not in path.relative_to(root).parts
-        ]
+        [path for path in _python_files(root) if "tests" not in path.relative_to(root).parts]
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     write_csv(output_dir / "function_test_reference_map.csv", rows)
