@@ -1,0 +1,64 @@
+$ cargo test --workspace
+   Compiling qrl-domain v0.1.0 (/scratch/work/nguyenl37/worktrees/stream-native/native/domain)
+   Compiling qrl-native v0.1.0 (/scratch/work/nguyenl37/worktrees/stream-native/native/python)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.73s
+     Running unittests src/lib.rs (target/debug/build/qrl-domain/b8ee72b4af621279/out/qrl_domain-b8ee72b4af621279)
+
+running 35 tests
+test limits::tests::capacity_above_floor ... ok
+test limits::tests::capacity_zero_once_breached ... ok
+test limits::tests::daily_loss_when_losing ... ok
+test limits::tests::daily_loss_zero_when_equity_rose ... ok
+test limits::tests::floor_is_start_minus_limit ... ok
+test limits::tests::overflow_is_an_error ... ok
+test order::tests::fill_for_other_order_or_side_is_refused ... ok
+test order::tests::filled_order_cannot_be_cancelled ... ok
+test order::tests::full_lifecycle_through_partial_fill_to_filled ... ok
+test order::tests::negative_fee_is_refused ... ok
+test order::tests::new_order_is_pending_with_nothing_filled ... ok
+test order::tests::overfill_is_refused_and_order_unchanged ... ok
+test order::tests::pending_order_cannot_be_filled_or_cancelled ... ok
+test order::tests::partially_filled_order_can_be_cancelled_for_the_remainder ... ok
+test order::tests::rejected_and_cancelled_are_terminal ... ok
+test position::tests::crossing_zero_closes_then_opens_remainder_at_fill_price ... ok
+test position::tests::fees_accumulate_separately_from_realized_pnl ... ok
+test position::tests::flat_position_has_no_average_entry ... ok
+test position::tests::increase_averages_by_hand_and_realizes_nothing ... ok
+test position::tests::nonpositive_tick_value_is_refused ... ok
+test position::tests::overflowing_fees_are_refused_and_position_unchanged ... ok
+test position::tests::overflowing_price_is_refused_and_position_unchanged ... ok
+test position::tests::overflowing_realized_pnl_is_refused ... ok
+test position::tests::reduce_realizes_pnl_by_hand_and_round_trip_nets_zero ... ok
+test position::tests::short_reduce_profits_when_price_falls ... ok
+test tests::error_message_names_the_failure ... ok
+test tests::adds_units_within_range ... ok
+test tests::overflow_is_an_error_not_a_wrap ... ok
+test tests::schema_version_is_one ... ok
+test units::tests::notional_hand_calculation ... ok
+test units::tests::notional_refuses_overflow ... ok
+test units::tests::notional_requires_positive_tick_value ... ok
+test units::tests::price_must_be_positive ... ok
+test units::tests::quantity_must_be_positive ... ok
+test units::tests::side_sign ... ok
+
+test result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/build/qrl-native/0c37a033f2e4f7c8/out/qrl_native-0c37a033f2e4f7c8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests qrl_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests qrl_native
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0

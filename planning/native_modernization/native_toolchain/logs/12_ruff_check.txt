@@ -1,0 +1,3 @@
+$ ruff check . (worktree scope)
+All checks passed!
+exit=0

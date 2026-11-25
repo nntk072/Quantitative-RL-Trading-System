@@ -1,0 +1,14 @@
+$ .venv/bin/python -m pytest native/python/tests/test_smoke.py -v -rs -p no:cacheprovider
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.2.0, pluggy-1.7.0 -- /scratch/work/nguyenl37/worktrees/stream-native/.venv/bin/python
+rootdir: /scratch/work/nguyenl37/worktrees/stream-native
+configfile: pyproject.toml
+collecting ... collected 4 items
+
+native/python/tests/test_smoke.py::test_schema_version_matches_the_rust_contract PASSED [ 25%]
+native/python/tests/test_smoke.py::test_checked_add_returns_the_sum PASSED [ 50%]
+native/python/tests/test_smoke.py::test_overflow_raises_instead_of_wrapping PASSED [ 75%]
+native/python/tests/test_smoke.py::test_non_integer_input_is_rejected PASSED [100%]
+
+============================== 4 passed in 0.02s ===============================
+exit=0

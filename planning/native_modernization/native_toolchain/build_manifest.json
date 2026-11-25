@@ -1,0 +1,42 @@
+{
+  "build": {
+    "maturin_command": "maturin build --release -i <python> --out target/wheels -m native/python/Cargo.toml",
+    "platform": "Linux-5.14.0-687.66.2.el9_8.x86_64-x86_64-with-glibc2.34",
+    "profile": "release",
+    "rustflags_env": {
+      "CARGO_ENCODED_RUSTFLAGS": "",
+      "RUSTFLAGS": ""
+    },
+    "source_date_epoch": "1767225600",
+    "workspace_lints": {
+      "clippy.all": "deny",
+      "rust.unsafe_code": "forbid"
+    }
+  },
+  "inputs": {
+    "cargo_lock_sha256": "f12ec2f47a4d717604b6f4d6f29154fa5d1e74dbc34a4482672e9050320d0c36",
+    "source_tree_sha256": "5279cde1b4fb75e2937fff62b6db03393c40fca12370162f54a5c4f2da28a364"
+  },
+  "repository_dirty_at_build": true,
+  "repository_head": "463d784df021ae1b0a8c89692f3ad869bc5ff160",
+  "schema": "qrl.native.build_manifest.v1",
+  "target_triple": "x86_64-unknown-linux-gnu",
+  "toolchain": {
+    "cargo": "cargo 1.100.0 (3acc79c0c 2026-11-05)",
+    "rust_toolchain_file": "[toolchain]\nchannel = \"1.100.0\"\ncomponents = [\"clippy\", \"rustfmt\"]\nprofile = \"minimal\"",
+    "rustc": "rustc 1.100.0 (0ef1bc386 2026-11-09)"
+  },
+  "tools": {
+    "maturin": "maturin 1.9.4",
+    "maturin_path": "/scratch/work/nguyenl37/worktrees/stream-native/.venv/bin/maturin",
+    "python": "3.12.14",
+    "python_tag": "cp312"
+  },
+  "wheel": {
+    "bytes": 255617,
+    "name": "qrl_native-0.1.0-cp312-cp312-manylinux_2_34_x86_64.whl",
+    "path": "target/wheels/qrl_native-0.1.0-cp312-cp312-manylinux_2_34_x86_64.whl",
+    "sha256": "7281b84d38bebf02c4d6e490904bbf62d52ba1ad5be9d09d9652bd51ae493160"
+  },
+  "work_package": "NATIVE-TOOLCHAIN"
+}

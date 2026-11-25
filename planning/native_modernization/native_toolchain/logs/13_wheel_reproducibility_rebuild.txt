@@ -1,0 +1,10 @@
+$ maturin build --release (repro rebuild into target/wheels-repro)
+🔗 Found pyo3 bindings
+🐍 Found CPython 3.12 at /scratch/work/nguyenl37/worktrees/stream-native/.venv/bin/python
+   Compiling pyo3-ffi v0.30.1
+   Compiling pyo3 v0.30.1
+   Compiling qrl-native v0.1.0 (/scratch/work/nguyenl37/worktrees/stream-native/native/python)
+    Finished `release` profile [optimized] target(s) in 10.62s
+📦 Built wheel for CPython 3.12 to target/wheels-repro/qrl_native-0.1.0-cp312-cp312-manylinux_2_34_x86_64.whl
+exit=0
+611b9ecd36166904ba501c9290cd4d0849701a2107f6ec483b03fff303d4ba94  target/wheels-repro/qrl_native-0.1.0-cp312-cp312-manylinux_2_34_x86_64.whl

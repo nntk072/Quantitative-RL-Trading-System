@@ -1,0 +1,4 @@
+Wheel reproducibility check (SOURCE_DATE_EPOCH=1767225600), two independent maturin builds:
+build r1 -> 7281b84d38bebf02c4d6e490904bbf62d52ba1ad5be9d09d9652bd51ae493160 exit=0
+build r2 -> 7281b84d38bebf02c4d6e490904bbf62d52ba1ad5be9d09d9652bd51ae493160 exit=0
+Without SOURCE_DATE_EPOCH (see 13_*): contents identical, zip entry mtimes differ, container hashes differ.

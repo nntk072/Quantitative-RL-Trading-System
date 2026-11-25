@@ -1,0 +1,4 @@
+$ cargo --version; rustc --version
+cargo 1.100.0 (3acc79c0c 2026-11-05)
+rustc 1.100.0 (0ef1bc386 2026-11-09)
+exit=0

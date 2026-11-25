@@ -1,0 +1,9 @@
+Resolved 1 package in 1ms
+Prepared 1 package in 38ms
+Uninstalled 1 package in 3ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 1 package in 12ms
+ ~ qrl-native==0.1.0 (from file:///scratch/work/nguyenl37/worktrees/stream-native/target/wheels/qrl_native-0.1.0-cp312-cp312-manylinux_2_34_x86_64.whl)
+exit=0

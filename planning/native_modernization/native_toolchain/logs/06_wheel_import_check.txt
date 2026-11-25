@@ -1,0 +1,3 @@
+$ .venv/bin/python -c 'import qrl_native; print(qrl_native.__file__)'
+/scratch/work/nguyenl37/worktrees/stream-native/.venv/lib/python3.12/site-packages/qrl_native/__init__.py 3.12.14
+exit=0

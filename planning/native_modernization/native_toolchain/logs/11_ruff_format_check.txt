@@ -1,0 +1,3 @@
+$ ruff format --check . (x86 venv ruff 0.15.22, worktree scope)
+1452 files already formatted
+exit=0

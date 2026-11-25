@@ -1,0 +1,27 @@
+$ .venv/bin/python -m pytest native/python/tests -v -rs -p no:cacheprovider
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.2.0, pluggy-1.7.0 -- /scratch/work/nguyenl37/worktrees/stream-native/.venv/bin/python
+rootdir: /scratch/work/nguyenl37/worktrees/stream-native
+configfile: pyproject.toml
+collecting ... collected 17 items
+
+native/python/tests/test_limits_parity.py::test_daily_loss_matches_the_oracle PASSED [  5%]
+native/python/tests/test_limits_parity.py::test_floor_matches_the_oracle PASSED [ 11%]
+native/python/tests/test_limits_parity.py::test_remaining_capacity_matches_the_oracle PASSED [ 17%]
+native/python/tests/test_limits_parity.py::test_overflow_raises_in_python PASSED [ 23%]
+native/python/tests/test_position_parity.py::test_notional_matches_hand_calculation PASSED [ 29%]
+native/python/tests/test_position_parity.py::test_notional_overflow_raises_instead_of_wrapping PASSED [ 35%]
+native/python/tests/test_position_parity.py::test_notional_rejects_nonpositive_inputs PASSED [ 41%]
+native/python/tests/test_position_parity.py::test_increase_averages_by_hand_and_realizes_nothing PASSED [ 47%]
+native/python/tests/test_position_parity.py::test_reduce_round_trip_nets_zero_by_hand PASSED [ 52%]
+native/python/tests/test_position_parity.py::test_crossing_zero_opens_remainder_at_fill_price PASSED [ 58%]
+native/python/tests/test_position_parity.py::test_fees_are_kept_separate_from_realized_pnl PASSED [ 64%]
+native/python/tests/test_position_parity.py::test_refused_fill_leaves_position_unchanged PASSED [ 70%]
+native/python/tests/test_position_parity.py::test_overflowing_fill_raises_and_position_is_unchanged PASSED [ 76%]
+native/python/tests/test_smoke.py::test_schema_version_matches_the_rust_contract PASSED [ 82%]
+native/python/tests/test_smoke.py::test_checked_add_returns_the_sum PASSED [ 88%]
+native/python/tests/test_smoke.py::test_overflow_raises_instead_of_wrapping PASSED [ 94%]
+native/python/tests/test_smoke.py::test_non_integer_input_is_rejected PASSED [100%]
+
+============================== 17 passed in 0.07s ==============================
+exit=0
