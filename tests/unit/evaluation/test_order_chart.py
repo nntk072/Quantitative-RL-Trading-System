@@ -38,7 +38,11 @@ from evaluation.plotting.order_chart_data import (
 )
 from evaluation.plotting.order_chart_renderers import draw_order_levels_mpl
 from evaluation.plotting.orders import _position_events
-from evaluation.plotting.overlay_events import _rays_from_origins, _swing_origins
+from evaluation.plotting.overlay_events import (
+    _rays_from_origins,
+    _swing_origins,
+    candidate_sweep_line,
+)
 from evaluation.plotting.plots import plot_per_trade_orders
 from evaluation.plotting.plots_interactive import (
     plot_per_trade_orders as plot_per_trade_orders_html,
@@ -575,6 +579,158 @@ def test_plot_config_selects_timeframe_per_entry_idea() -> None:
     assert (zones[0].low, zones[0].high) == (102.0, 103.0)
 
 
+def test_fvg_retest_snapshot_keeps_its_origin_when_zone_is_no_longer_active() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_ifvg_bull_active": [0.0] * 4,
+            "M5_ifvg_bull_low": [100.0] * 4,
+            "M5_ifvg_bull_high": [101.5] * 4,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[2],
+            "direction": "buy",
+            "entry_setup_types": "['fvg_retest']",
+            "entry_setup_levels": "{'M5_ifvg_bull_low': 100.0, 'M5_ifvg_bull_high': 101.5}",
+            "entry_origin_bar": 1,
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+    )
+
+    assert len(zones) == 1
+    assert zones[0].label == "FVG/IFVG · M5 Bull IFVG"
+    assert (zones[0].low, zones[0].high) == (100.0, 101.5)
+    assert zones[0].t0 == idx[1]
+    assert zones[0].t1 == idx[3]
+
+
+def test_order_block_zone_starts_at_its_recorded_origin_candle() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min", tz="UTC")
+    origin = idx[0] - pd.Timedelta(minutes=5)
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "ob_bull_active": [1.0] * 4,
+            "ob_bull_low": [100.0] * 4,
+            "ob_bull_high": [101.0] * 4,
+            "ob_bull_origin_time_ms": [origin.timestamp() * 1000] * 4,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[2],
+            "entry_idea_zones": [
+                {
+                    "idea": "order_block",
+                    "family": "ob",
+                    "timeframe": "M1",
+                    "side": "bull",
+                    "low": 100.0,
+                    "high": 101.0,
+                }
+            ],
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+    )
+
+    assert len(zones) == 1
+    assert zones[0].t0 == origin
+    assert zones[0].t1 == idx[-1]
+
+
+def test_saved_zone_filters_reject_invalid_geometry_and_disabled_idea() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=3, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_ifvg_bull_active": [1.0] * 3,
+            "M5_ifvg_bull_low": [100.0] * 3,
+            "M5_ifvg_bull_high": [101.0] * 3,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[1],
+            "entry_idea_zones": [
+                {
+                    "idea": "po3",
+                    "family": "ifvg",
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": 102.0,
+                    "high": 101.0,
+                },
+                {
+                    "idea": "po3",
+                    "family": "ifvg",
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": float("nan"),
+                    "high": 101.0,
+                },
+                {
+                    "idea": "po3",
+                    "family": "unknown",
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": 100.0,
+                    "high": 101.0,
+                },
+                {
+                    "idea": "po3",
+                    "family": "ifvg",
+                    "timeframe": "M5",
+                    "side": "outside",
+                    "low": 100.0,
+                    "high": 101.0,
+                },
+                {
+                    "idea": "po3",
+                    "family": "ifvg",
+                    "timeframe": "M5",
+                    "side": "bull",
+                    "low": 100.0,
+                    "high": 101.0,
+                },
+            ],
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+        entry_idea_plot_config={"po3": {"enabled": False}},
+    )
+
+    assert zones == []
+
+
 def test_isolated_spike_is_ignored_and_news_is_kept() -> None:
     idx = pd.date_range("2026-01-02 16:30", periods=12, freq="1min")
     high = np.full(12, 100.0)
@@ -1048,3 +1204,70 @@ def test_structural_target_keeps_the_entry_to_tp_band() -> None:
 def test_legacy_order_chart_exports_forward_to_canonical_modules() -> None:
     assert legacy_order_chart.draw_order_levels_mpl is draw_order_levels_mpl
     assert legacy_order_chart.order_levels is order_levels
+
+
+def test_candidate_sweep_line_uses_matching_recorded_event_when_snapshot_is_absent() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    bars = pd.DataFrame({"high": [102.0] * 4, "low": [99.0] * 4}, index=idx)
+    recorded = SweepLine(t0=idx[0], t1=idx[2], price=100.0, side="low", label="recorded sweep")
+    open_row = pd.Series(
+        {
+            "entry_setup_types": ["sweep"],
+            "entry_origin_bar": 1,
+            "direction": 1,
+            "signal_time": idx[3],
+        }
+    )
+
+    line = candidate_sweep_line(bars, open_row, events=OverlayEvents(sweeps=[recorded]))
+
+    assert line is recorded
+
+
+def test_candidate_sweep_line_recovers_missing_pivot_from_source_wick() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    bars = pd.DataFrame({"high": [102.0] * 4, "low": [101.0, 100.0, 102.0, 99.0]}, index=idx)
+    open_row = pd.Series(
+        {
+            "entry_setup_types": "['sweep']",
+            "entry_origin_bar": 3,
+            "direction": 1,
+            "entry_setup_levels": "{'sweep_low_level': 100.0, 'sweep_low_ref_tf_code': 5}",
+        }
+    )
+
+    line = candidate_sweep_line(bars, open_row)
+
+    assert line is not None
+    assert (line.t0, line.t1, line.price, line.side, line.label) == (
+        idx[1],
+        idx[3],
+        100.0,
+        "low",
+        "M5 liquidity sweep",
+    )
+
+
+def test_candidate_sweep_line_uses_feature_pivot_timestamp_for_new_entry() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min", tz="UTC")
+    bars = pd.DataFrame({"high": [102.0] * 4, "low": [101.0, 100.0, 102.0, 99.0]}, index=idx)
+    features = pd.DataFrame(
+        {
+            "sweep_low": [0.0, 0.0, 0.0, 1.0],
+            "sweep_low_level": [np.nan, np.nan, np.nan, 100.0],
+            "sweep_low_pivot_time_ns": [np.nan, np.nan, np.nan, idx[1].value],
+            "sweep_low_ref_tf_code": [np.nan, np.nan, np.nan, 15.0],
+        },
+        index=idx,
+    )
+    open_row = pd.Series({"entry_setup_types": ["sweep"], "entry_origin_bar": 3, "direction": 1})
+
+    line = candidate_sweep_line(bars, open_row, features=features)
+
+    assert line is not None
+    assert (line.t0, line.t1, line.price, line.label) == (
+        idx[1],
+        idx[3],
+        100.0,
+        "M15 liquidity sweep",
+    )

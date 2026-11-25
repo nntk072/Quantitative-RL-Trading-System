@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -105,3 +106,84 @@ def test_seed_subset_runs_configured_order_and_returns_last_seed_budget(
     assert constructed_seeds == [7, 23]
     assert results == [{"seed": 7}, {"seed": 23}]
     assert timesteps == 23_000
+
+
+@pytest.mark.parametrize(
+    ("development_only", "allow_selection", "test_result", "expected_role"),
+    [
+        (True, True, None, "development_only"),
+        (
+            False,
+            False,
+            {"entry_diag": {"eligible": 4}, "entry_state_diagnostics": {"valid": True}},
+            "final_report_only",
+        ),
+        (
+            False,
+            True,
+            {"entry_diag": {"eligible": 4}, "entry_state_diagnostics": {"valid": True}},
+            "selection_acknowledged",
+        ),
+    ],
+)
+def test_build_result_preserves_oos_role_and_per_seed_risk_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    development_only: bool,
+    allow_selection: bool,
+    test_result: dict[str, Any] | None,
+    expected_role: str,
+) -> None:
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    cfg = SimpleNamespace(
+        env={"strategy_actions": True, "trade_setup_actions": False, "agent_entry_execution": 1}
+    )
+    runner: Any = object.__new__(seed_runtime.SeedRunner)
+    runner.context = SimpleNamespace(
+        preparation=SimpleNamespace(
+            configuration=SimpleNamespace(
+                args=SimpleNamespace(allow_locked_oos_for_selection=allow_selection), cfg=cfg
+            ),
+            run_assets=SimpleNamespace(run_dir=run_dir),
+        )
+    )
+    runner.seed = 42
+    runner.train_env = object()
+    runner.model = SimpleNamespace(num_timesteps=1234)
+    runner.test_result = test_result
+    runner.test_m = None
+    runner.train_result = {"survived_full_year": False, "n_breach_sessions": 1}
+    runner.train_m = None
+    runner.train_gate = {"hard_risk_ok": False, "reason": "daily_loss"}
+    runner.train_activity_gate = {"status": "INACTIVE"}
+    runner.best_checkpoint_callback = SimpleNamespace(
+        best_checkpoint_status="none", best_n_trades=0, viability_eval_history=[]
+    )
+    runner.abort_reason = "daily_loss"
+    runner.sequence_feature_schema = {"columns": ["close"]}
+    runner.phase_timings_seconds = {"ppo_learn": 1.25}
+    runner.manifest_path = run_dir / "manifest.json"
+    runner.development_only = development_only
+    monkeypatch.setattr(seed_runtime, "get_action_space_width", lambda _env: 5)
+    monkeypatch.setattr(seed_runtime, "action_schema_manifest", lambda _env: {"width": 5})
+    monkeypatch.setattr(seed_runtime, "observation_account_dim", lambda _env: 2)
+    monkeypatch.setattr(seed_runtime, "observation_space_shapes", lambda _env: {"policy": [7]})
+    monkeypatch.setattr(seed_runtime, "observation_schema_manifest", lambda _env: {"width": 7})
+
+    result = runner.build_result()
+
+    assert result["oos_role"] == expected_role
+    assert result["train_result"] == {"survived_full_year": False, "n_breach_sessions": 1}
+    assert result["train_gate"] == {"hard_risk_ok": False, "reason": "daily_loss"}
+    assert result["env_flags"]["strategy_actions"] is True
+    assert result["env_flags"]["trade_setup_actions"] is False
+    assert result["env_flags"]["agent_entry_execution"] is True
+    assert result["model_num_timesteps"] == 1234
+    assert result["run_manifest"] == "manifest.json"
+    if test_result is None:
+        assert result["entry_diag"] == {}
+        assert result["entry_state_diagnostics"] == {}
+    else:
+        assert result["entry_diag"] == {"eligible": 4}
+        assert result["entry_state_diagnostics"] == {"valid": True}

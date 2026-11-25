@@ -34,6 +34,7 @@ api_paths:
 - simulation/environment/worker.py
 caller_paths:
 - tests/unit/training/test_observation_memmap.py
+- tests/unit/training/test_debug_trace.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
 - tests/integration/backtest/test_market_entry_fill_event_parity.py
 - tests/integration/backtest/test_market_order_quote_wait_contract.py

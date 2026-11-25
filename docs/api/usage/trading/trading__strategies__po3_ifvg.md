@@ -12,7 +12,7 @@ This page contains 10 public callable records owned by `trading.strategies.po3_i
 
 **Observed usage:**
 
-1. [test fixture: `test_dynamic_rr_scales_with_reachable_reward`](../../../../tests/unit/evaluation/test_order_chart.py#L779)
+1. [test fixture: `test_dynamic_rr_scales_with_reachable_reward`](../../../../tests/unit/evaluation/test_order_chart.py#L935)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

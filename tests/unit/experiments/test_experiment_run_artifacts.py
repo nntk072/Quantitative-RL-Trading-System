@@ -112,6 +112,26 @@ def test_worker_cpu_masks_are_disjoint_and_reject_oversubscription() -> None:
         controller.cpu_mask_for_slot(cpu_ids, 9, 5)
 
 
+def test_worker_slot_distribution_uses_capacities_without_overbooking() -> None:
+    assert controller.distribute_worker_slots(
+        5,
+        {"gpuarm2": 2, "gpuarm1": 3},
+    ) == {"gpuarm1": 3, "gpuarm2": 2}
+
+
+def test_worker_slot_distribution_rejects_request_above_total_capacity() -> None:
+    with pytest.raises(ValueError, match="exceeds the resource-derived capacity"):
+        controller.distribute_worker_slots(4, {"gpuarm1": 1, "gpuarm2": 2})
+
+
+def test_worker_shutdown_signal_sets_the_stop_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(controller, "STOP", False)
+
+    controller.signal_stop(15, None)
+
+    assert controller.STOP is True
+
+
 def test_worker_node_cpu_metadata_uses_node_local_cpu_ids(tmp_path: Path) -> None:
     queue_root = tmp_path / "worker_queue"
     ready = queue_root / "job-123" / "gpuarm2" / "ready"
