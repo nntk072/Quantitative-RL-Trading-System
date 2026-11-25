@@ -16,16 +16,26 @@
       "index": 1,
       "gate": "OFFLINE",
       "depends_on": [],
-      "status": "active",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "full unit+architecture: 4053 passed, 5 skipped, 2 xfailed (exit 0)",
+        "mutation check: 10 mutants, 10 killed"
+      ],
+      "evidence_refs": [
+        "planning/native_modernization/baseline_audit/baseline_check_results.json",
+        "planning/native_modernization/baseline_audit/defect_catalog.md",
+        "planning/native_modernization/baseline_audit/dependency_graph.json",
+        "planning/native_modernization/baseline_audit/baseline_inventory.json",
+        "planning/native_modernization/baseline_audit/mutation_check.md",
+        "logs/agents/architect/2026-11-25_baseline_audit/pytest_unit_final2.log"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Feature and learning mutation tests and the integration subset were not run. They need an 8-CPU allocation run, which is a lead request.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -35,16 +45,21 @@
       "depends_on": [
         "BASELINE-AUDIT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "tests/unit/trading/test_semantic_oracle_limits_sizing.py (12 pass)",
+        "tests/unit/trading/test_semantic_oracle_costs.py (12 pass, 2 xfail)"
+      ],
+      "evidence_refs": [
+        "planning/native_modernization/baseline_audit/mutation_check.md"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Fill, event and rounding oracles need captured broker events, which are not in the tree. Plan forbids fabricating them. Candidate defects C1 (invalid fill direction maps to bid) and C2 (slippage_points not applied) need an owner decision before this Python oracle is used as a reference.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -55,7 +70,7 @@
         "BASELINE-AUDIT",
         "SEMANTIC-ORACLE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -63,8 +78,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Needs a benchmark allocation with a frozen train-only workload, and depends on SEMANTIC-ORACLE (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -74,7 +89,7 @@
       "depends_on": [
         "PERFORMANCE-BASELINE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -82,8 +97,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on PERFORMANCE-BASELINE (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -93,16 +108,22 @@
       "depends_on": [
         "BASELINE-AUDIT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "cargo fmt --check, clippy -D warnings, cargo test, release build (x86_64, exit 0)",
+        "maturin wheel + 17 Python native tests pass"
+      ],
+      "evidence_refs": [
+        "planning/native_modernization/native_toolchain/build_manifest.json",
+        "native/UNSAFE_AUDIT.md"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "aarch64/GH200 wheel needs a Slurm allocation on a GH200 node (not run). Portable manylinux baseline not yet chosen. Windows/WSL not built.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -114,16 +135,18 @@
         "NATIVE-TOOLCHAIN",
         "PERFORMANCE-BASELINE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
       "tests_executed": [],
-      "evidence_refs": [],
+      "evidence_refs": [
+        "planning/native_modernization/upstream_reuse_register.md"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Needs engine adapter spikes against frozen fixtures. Depends on SEMANTIC-ORACLE (blocked) and NATIVE-TOOLCHAIN (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -134,16 +157,22 @@
         "BASELINE-AUDIT",
         "SEMANTIC-ORACLE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "tests/unit/market_data/test_arrow_schemas.py",
+        "tests/unit/market_data/test_mt5_export_to_bars.py"
+      ],
+      "evidence_refs": [
+        "planning/native_modernization/data_schemas/quality_ledger.json",
+        "market_data/arrow_schemas.py"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Not yet: Parquet round trip and row-wise reconciliation over all source CSVs (the full files cover 2026 and were excluded by decision), a persisted quarantine output, a data manifest, and a schema migration policy.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -154,7 +183,7 @@
         "DATA-SCHEMAS",
         "PERFORMANCE-BASELINE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -162,8 +191,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on DATA-SCHEMAS (blocked) and PERFORMANCE-BASELINE (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -173,7 +202,7 @@
       "depends_on": [
         "DATA-INGESTION"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -181,8 +210,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on DATA-INGESTION (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -193,16 +222,18 @@
         "DATA-SCHEMAS",
         "SEMANTIC-ORACLE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
+      "tests_executed": [
+        "tests/unit/features/test_causal_prefix_invariance.py (prefix invariance for ATR and realized vol)"
+      ],
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Typed feature DAG, fit-scope and cache-hash rules, held-out perturbation, and batch vs streaming equivalence are not implemented.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -213,7 +244,7 @@
         "CAUSAL-FEATURE-GRAPH",
         "NATIVE-TOOLCHAIN"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -221,8 +252,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on CAUSAL-FEATURE-GRAPH (blocked) and needs a benchmark allocation.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -233,7 +264,7 @@
         "CAUSAL-FEATURE-GRAPH",
         "NATIVE-TOOLCHAIN"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -241,8 +272,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on CAUSAL-FEATURE-GRAPH (blocked); memory measurement needs an allocation.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -253,16 +284,23 @@
         "ENGINE-REUSE-TRIAL",
         "SEMANTIC-ORACLE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "cargo test: 35 pass in qrl-domain",
+        "native/python/tests/test_position_parity.py"
+      ],
+      "evidence_refs": [
+        "native/domain/src/order.rs",
+        "native/domain/src/position.rs",
+        "native/domain/src/units.rs"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "No property tests, no differential traces against the Python trading reference, no serialization round trip, no Account, ledger, risk state or daily-reset latch.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -273,7 +311,7 @@
         "NATIVE-DOMAIN",
         "DATA-SCHEMAS"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -281,8 +319,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on NATIVE-DOMAIN (incomplete) and DATA-SCHEMAS (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -293,7 +331,7 @@
         "NATIVE-DOMAIN",
         "SHARED-DATA-ABI"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -301,8 +339,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on NATIVE-DOMAIN (incomplete) and SHARED-DATA-ABI (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -314,7 +352,7 @@
         "NATIVE-DECISIONING",
         "SHARED-DATA-ABI"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -322,8 +360,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on NATIVE-EXECUTION, NATIVE-DECISIONING and SHARED-DATA-ABI (all blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -333,7 +371,7 @@
       "depends_on": [
         "NATIVE-ENVIRONMENT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -341,8 +379,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on NATIVE-ENVIRONMENT (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -353,7 +391,7 @@
         "SEMANTIC-ORACLE",
         "BASELINE-AUDIT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -361,8 +399,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Needs frozen PPO and SAC tapes; depends on SEMANTIC-ORACLE (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -373,7 +411,7 @@
         "BATCHED-ENVIRONMENT",
         "LEARNER-CONTRACT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -381,8 +419,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on BATCHED-ENVIRONMENT and LEARNER-CONTRACT (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -392,7 +430,7 @@
       "depends_on": [
         "ROLLOUT-BUFFERS"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -400,8 +438,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Needs GPU allocations (MI210 or GH200) and depends on ROLLOUT-BUFFERS (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -412,16 +450,23 @@
         "PERFORMANCE-BASELINE",
         "SHARED-DATA-ABI"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "tests/unit/compute: all pass in the full run"
+      ],
+      "evidence_refs": [
+        "planning/native_modernization/resource_runtime/coverage_of_acceptance.md",
+        "compute/slurm/inventory.py",
+        "compute/slurm/admission.py",
+        "compute/slurm/thread_limits.py"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Online items need an authorized GH200 allocation (sweep, p95, launch topology). Dispatcher RAM admission is not enforced (R2) and needs a per-worker memory field in the request contract.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -432,7 +477,7 @@
         "RESOURCE-RUNTIME",
         "BASELINE-AUDIT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -440,8 +485,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on RESOURCE-RUNTIME (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -453,7 +498,7 @@
         "LEARNER-CONTRACT",
         "CAUSAL-FEATURE-GRAPH"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -461,8 +506,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on EXECUTION-DAG, LEARNER-CONTRACT and CAUSAL-FEATURE-GRAPH (all blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -473,7 +518,7 @@
         "EXECUTION-DAG",
         "DATA-SCHEMAS"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -481,8 +526,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on EXECUTION-DAG and DATA-SCHEMAS (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -494,7 +539,7 @@
         "DATA-QUERY",
         "EXPERIMENT-CATALOG"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -502,8 +547,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on ARTIFACT-STORE, DATA-QUERY and EXPERIMENT-CATALOG (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -515,7 +560,7 @@
         "LEARNER-CONTRACT",
         "ARTIFACT-STORE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -523,8 +568,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on NATIVE-ENVIRONMENT, LEARNER-CONTRACT and ARTIFACT-STORE (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -535,7 +580,7 @@
         "EVALUATION-ENGINE",
         "RESULT-REGISTRY"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -543,8 +588,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on EVALUATION-ENGINE and RESULT-REGISTRY (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -554,7 +599,7 @@
       "depends_on": [
         "RESEARCH-STATISTICS"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -562,8 +607,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Depends on RESEARCH-STATISTICS (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -573,16 +618,21 @@
       "depends_on": [
         "NATIVE-TOOLCHAIN"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
-      "tests_executed": [],
-      "evidence_refs": [],
+      "tests_executed": [
+        "ruff format and check clean",
+        "tests/architecture: 69 pass"
+      ],
+      "evidence_refs": [
+        "tests/architecture"
+      ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Proptest and fuzz targets, the native CI matrix, and the cargo-audit record on the final lockfile are not done. NATIVE-TOOLCHAIN is blocked.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -599,7 +649,7 @@
         "EVALUATION-ENGINE",
         "QUALITY-AND-SECURITY"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -607,8 +657,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Needs a benchmark allocation and all upstream packages above (blocked). Nothing has been timed, so no comparison is reported.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -621,7 +671,7 @@
         "EVIDENCE-GENERATION",
         "QUALITY-AND-SECURITY"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -629,8 +679,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "A 20M campaign needs the owner's authorization, a frozen design, and the benchmark and evidence packages (blocked). Not run, per the goal.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -643,7 +693,7 @@
         "NATIVE-DECISIONING",
         "QUALITY-AND-SECURITY"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -651,8 +701,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Production gate. Mock and paper mode only; needs the owner's approval to start production work. No broker connection, no real orders.",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -663,7 +713,7 @@
         "RESULT-REGISTRY",
         "LIVE-CONTRACT"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -671,8 +721,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Production gate; needs the owner's approval. Depends on RESULT-REGISTRY and LIVE-CONTRACT (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -683,7 +733,7 @@
         "LIVE-CONTRACT",
         "PRODUCTION-CONTROL-PLANE"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -691,8 +741,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Production gate; needs the owner's approval. Depends on LIVE-CONTRACT and PRODUCTION-CONTROL-PLANE (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     },
     {
@@ -704,7 +754,7 @@
         "SCIENTIFIC-RELEASE",
         "EVIDENCE-GENERATION"
       ],
-      "status": "pending",
+      "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
       "changed_paths": [],
@@ -712,8 +762,8 @@
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": null,
-      "decision": null,
+      "blocker": "Product gate; needs the owner's approval and a qualified offline engine (blocked).",
+      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
       "reviewer": null
     }
   ]
