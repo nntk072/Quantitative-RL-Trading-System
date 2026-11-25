@@ -40,6 +40,35 @@ def test_coverage_aggregates_line_and_branch_metrics() -> None:
     assert coverage["packages"]["artifacts"]["files"] == 1
 
 
+def test_informational_source_does_not_change_product_aggregate() -> None:
+    report = _report()
+    report["files"]["research_tools/sample/hash_audit.py"] = {
+        "summary": {
+            "num_statements": 100,
+            "covered_lines": 10,
+            "num_branches": 20,
+            "covered_branches": 2,
+        }
+    }
+    report["totals"].update(
+        num_statements=110,
+        covered_lines=18,
+        num_branches=24,
+        covered_branches=5,
+    )
+
+    coverage = aggregate_coverage(report)
+
+    assert coverage["overall"]["statements"] == 10
+    assert coverage["overall"]["covered_lines"] == 8
+    assert coverage["overall"]["branches"] == 4
+    assert coverage["overall"]["covered_branches"] == 3
+    assert coverage["all_sources"]["statements"] == 110
+    assert coverage["packages"]["research_tools"]["files"] == 1
+    product_baseline = aggregate_coverage(_report())
+    assert compare_baseline(coverage, product_baseline) == []
+
+
 def test_coverage_ratchet_accepts_equal_main_baseline() -> None:
     coverage = aggregate_coverage(_report())
     baseline = {"overall": coverage["overall"], "packages": coverage["packages"]}
