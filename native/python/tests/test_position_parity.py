@@ -89,3 +89,22 @@ def test_overflowing_fill_raises_and_position_is_unchanged() -> None:
         position.apply_fill(True, 2**63 - 1, 1, 0, TICK_VALUE)
     assert position.lots == 0
     assert position.average_entry_ticks is None
+
+
+def test_changed_tick_value_is_refused_and_position_unchanged() -> None:
+    # The tick value is fixed by the first fill; a different value would change the cost basis.
+    position = qrl_native.Position()
+    position.apply_fill(True, 1000, 1, 0, TICK_VALUE)
+    with pytest.raises(ValueError):
+        position.apply_fill(True, 1000, 1, 0, 50)
+    assert position.lots == 1
+    assert position.realized_pnl_cents == 0
+
+
+def test_round_trip_at_a_loss_realizes_by_hand() -> None:
+    # Long 1 at 1000, sell 1 at 990: exit 99000 - basis 100000 = -1000 cents.
+    position = qrl_native.Position()
+    position.apply_fill(True, 1000, 1, 0, TICK_VALUE)
+    position.apply_fill(False, 990, 1, 0, TICK_VALUE)
+    assert position.lots == 0
+    assert position.realized_pnl_cents == -1000

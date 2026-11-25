@@ -7,7 +7,8 @@ Scope: every Rust source file in this repository's own crates (`native/domain`, 
 - Occurrences of the `unsafe` keyword in repository-owned Rust: **0**.
 - Other unsafe-like constructs (`transmute`, `from_raw`, raw pointer casts, `extern "C"`,
   `static mut`, `#[no_mangle]`): **0**.
-- Files audited: `native/domain/src/{lib,units,order,position}.rs`, `native/python/src/lib.rs`.
+- Files audited: `native/domain/src/{lib,units,order,position,account,risk,wire}.rs`,
+  `native/domain/tests/properties.rs`, `native/python/src/lib.rs`.
 
 Verification command (run from the repository root; `target/` and `.venv/` excluded):
 
