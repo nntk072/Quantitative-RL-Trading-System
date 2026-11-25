@@ -1240,7 +1240,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 192,
+      "source_line": 217,
       "source_module": "compute.slurm.admission",
       "source_path": "compute/slurm/admission.py"
     },
@@ -1252,7 +1252,7 @@
       "name": "_usable_gpu_bytes",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 185,
+      "source_line": 202,
       "source_module": "compute.slurm.admission",
       "source_path": "compute/slurm/admission.py"
     },
@@ -1348,7 +1348,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 207,
+      "source_line": 281,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1360,7 +1360,7 @@
       "name": "_allocation_integer",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 148,
+      "source_line": 180,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1372,7 +1372,7 @@
       "name": "_ancestor_values",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 105,
+      "source_line": 109,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1384,7 +1384,7 @@
       "name": "_cpu_quota_cores",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 132,
+      "source_line": 153,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1396,7 +1396,7 @@
       "name": "_disk_free",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 202,
+      "source_line": 269,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1408,7 +1408,7 @@
       "name": "_gpu_devices",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 157,
+      "source_line": 198,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1420,7 +1420,7 @@
       "name": "_int_or_none",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 197,
+      "source_line": 257,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1432,7 +1432,7 @@
       "name": "_memory_limit_bytes",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 122,
+      "source_line": 135,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1444,7 +1444,7 @@
       "name": "_optional_positive_int",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 183,
+      "source_line": 232,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1456,7 +1456,7 @@
       "name": "read_inventory",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 63,
+      "source_line": 67,
       "source_module": "compute.slurm.inventory",
       "source_path": "compute/slurm/inventory.py"
     },
@@ -1492,7 +1492,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 79,
+      "source_line": 86,
       "source_module": "compute.slurm.thread_limits",
       "source_path": "compute/slurm/thread_limits.py"
     },
@@ -1516,7 +1516,7 @@
       "name": "apply_torch_threads",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 58,
+      "source_line": 65,
       "source_module": "compute.slurm.thread_limits",
       "source_path": "compute/slurm/thread_limits.py"
     },
@@ -1528,7 +1528,7 @@
       "name": "thread_environment",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 29,
+      "source_line": 36,
       "source_module": "compute.slurm.thread_limits",
       "source_path": "compute/slurm/thread_limits.py"
     },
@@ -1540,7 +1540,7 @@
       "name": "torch_thread_counts",
       "numpy_style": false,
       "package": "compute",
-      "source_line": 42,
+      "source_line": 49,
       "source_module": "compute.slurm.thread_limits",
       "source_path": "compute/slurm/thread_limits.py"
     },
@@ -16276,7 +16276,7 @@
       "name": "_TIMEFRAME_MINUTES",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 170,
+      "source_line": 199,
       "source_module": "market_data.arrow_schemas",
       "source_path": "market_data/arrow_schemas.py"
     },
@@ -16300,7 +16300,7 @@
       "name": "_as_ns",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 83,
+      "source_line": 91,
       "source_module": "market_data.arrow_schemas",
       "source_path": "market_data/arrow_schemas.py"
     },

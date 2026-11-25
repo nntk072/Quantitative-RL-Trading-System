@@ -60,7 +60,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L600)
+1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L601)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1256,7 +1256,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L600)
+1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L601)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1276,7 +1276,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L389)
+2. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L395)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
