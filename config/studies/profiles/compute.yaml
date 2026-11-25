@@ -1,14 +1,18 @@
 module_id: compute
 source_roots: [compute, research_tools/compute]
 api_paths:
+- compute/__init__.py
 - compute/contracts.py
 - compute/environment/__init__.py
 - compute/environment/capabilities.py
 - compute/environment/device.py
 - compute/environment/precision.py
 - compute/slurm/__init__.py
+- compute/slurm/admission.py
 - compute/slurm/continuation.py
+- compute/slurm/inventory.py
 - compute/slurm/resources.py
+- compute/slurm/thread_limits.py
 - compute/slurm/worker_dispatch.py
 - compute/slurm/worker_resources.py
 - compute/cli.py
@@ -27,8 +31,13 @@ caller_paths:
 - training/runner/lstm_baseline.py
 - training/runner/vae.py
 - tests/unit/compute/test_compute_cli.py
+- tests/unit/compute/test_admission_control.py
 - tests/unit/compute/test_continuation_handoff.py
 - tests/unit/compute/test_device_sizing.py
+- tests/unit/compute/test_resource_inventory.py
+- tests/unit/compute/test_thread_limits.py
+- tests/unit/compute/test_worker_capacity_plan.py
+- tests/unit/compute/test_worker_runtime_contracts.py
 - tests/unit/compute/test_worker_dispatch_parsing.py
 source_scopes:
   - {path: compute/environment, study_ids: [compute.device_and_precision_selection]}
