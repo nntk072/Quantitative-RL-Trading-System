@@ -731,6 +731,99 @@ def test_saved_zone_filters_reject_invalid_geometry_and_disabled_idea() -> None:
     assert zones == []
 
 
+def test_legacy_trade_without_idea_attribution_uses_explicit_zone_timeframe_toggles() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=3, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "M5_fvg_bull_active": [1.0, 1.0, 0.0],
+            "M5_fvg_bull_low": [100.0] * 3,
+            "M5_fvg_bull_high": [101.0] * 3,
+            "M5_fvg_bear_active": [1.0, 0.0, 1.0],
+            "M5_fvg_bear_low": [102.0] * 3,
+            "M5_fvg_bear_high": [103.0] * 3,
+        },
+        index=idx,
+    )
+    legacy_open_row = pd.Series({"time": idx[1], "direction": 1})
+
+    zones = _feature_zones(
+        features,
+        window,
+        legacy_open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=("M5",),
+        ifvg_timeframes=(),
+    )
+
+    assert {zone.label for zone in zones} == {"M5 Bull FVG", "M5 Bear FVG"}
+    assert {(zone.low, zone.high) for zone in zones} == {(100.0, 101.0), (102.0, 103.0)}
+
+
+def test_legacy_fvg_retest_uses_saved_zone_fields_and_origin_bar_fallback() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=4, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(
+        {
+            "ifvg_bear_active": [0.0] * 4,
+            "ifvg_bear_low": [90.0] * 4,
+            "ifvg_bear_high": [91.0] * 4,
+        },
+        index=idx,
+    )
+    open_row = pd.Series(
+        {
+            "time": idx[3],
+            "direction": -1,
+            "entry_setup_types": "['fvg_retest']",
+            "entry_origin_bar": 1,
+            "ifvg_zone_low": 100.0,
+            "ifvg_zone_high": 101.0,
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=(),
+        fvg_timeframes=(),
+        ifvg_timeframes=(),
+    )
+
+    assert len(zones) == 1
+    assert zones[0].label == "FVG/IFVG · M1 Bear IFVG"
+    assert (zones[0].low, zones[0].high) == (100.0, 101.0)
+    assert (zones[0].t0, zones[0].t1) == (idx[1], idx[-1])
+
+
+def test_malformed_legacy_zone_metadata_is_skipped_without_breaking_chart_rebuild() -> None:
+    idx = pd.date_range("2025-01-06 18:21", periods=2, freq="1min")
+    window = pd.DataFrame(index=idx)
+    features = pd.DataFrame(index=idx)
+    open_row = pd.Series(
+        {
+            "time": idx[0],
+            "entry_ideas": "['po3'",
+            "entry_idea_timeframes": "{not a mapping",
+            "entry_idea_zones": "not a serialized zone list",
+            "entry_setup_types": "['fvg_retest'",
+            "entry_setup_levels": "{malformed",
+        }
+    )
+
+    zones = _feature_zones(
+        features,
+        window,
+        open_row,
+        order_block_timeframes=("M5",),
+        fvg_timeframes=("M5",),
+        ifvg_timeframes=("M5",),
+    )
+
+    assert zones == []
+
+
 def test_isolated_spike_is_ignored_and_news_is_kept() -> None:
     idx = pd.date_range("2026-01-02 16:30", periods=12, freq="1min")
     high = np.full(12, 100.0)
