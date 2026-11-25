@@ -1,0 +1,66 @@
+{
+  "ledger": "DATA-SCHEMAS quality ledger",
+  "scope": "tracked example export only; not a research dataset and not scientific evidence",
+  "schema_version": "market-event.v1",
+  "generator": "planning/native_modernization/data_schemas/build_quality_ledger.py",
+  "source": {
+    "file": "data/examples/US100.cash_M1_202412300105_202501020334.csv",
+    "file_name": "US100.cash_M1_202412300105_202501020334.csv",
+    "sha256": "856022af89ca53330ed3525fd3dcf686553337080fdbc006e4e1d4d2415d920d",
+    "bytes": 191653,
+    "delimiter": "tab",
+    "source_row_count": 2880
+  },
+  "conversion": {
+    "instrument_id": "US100.cash",
+    "timeframe": "M1",
+    "source_id": "mt5-export",
+    "source_clock": "Europe/Helsinki",
+    "bar_timestamp_convention": "open",
+    "close_time": "event_time + 1 minute",
+    "available_at": "close_time",
+    "volume_column": "TICKVOL",
+    "converted_row_count": 2880
+  },
+  "reconciliation": {
+    "source_rows": 2880,
+    "converted_rows": 2880,
+    "excluded_from_table": 0,
+    "flagged_in_table": 0,
+    "reconciles": true
+  },
+  "quarantine": {
+    "count": 0,
+    "rule": "rows failing validate_bars or DST local-time mapping are reported with a reason",
+    "rows": []
+  },
+  "time_coverage": {
+    "first_event_time_utc": "2024-12-29T23:05:00Z",
+    "last_event_time_utc": "2025-01-02T01:34:00Z",
+    "first_source_label": "2024.12.30 01:05:00 Europe/Helsinki",
+    "last_source_label": "2025.01.02 03:34:00 Europe/Helsinki",
+    "strictly_increasing": true,
+    "duplicate_event_times": 0
+  },
+  "gaps": {
+    "threshold": "spacing between consecutive converted event_time values > 1 minute",
+    "gap_minutes": "end - start in whole minutes (spacing between bar opens)",
+    "missing_bars": "gap_minutes - 1",
+    "count": 2,
+    "total_missing_bars": 1590,
+    "items": [
+      {
+        "start": "2024-12-30T21:49:00Z",
+        "end": "2024-12-30T23:05:00Z",
+        "gap_minutes": 76,
+        "missing_bars": 75
+      },
+      {
+        "start": "2024-12-31T21:49:00Z",
+        "end": "2025-01-01T23:05:00Z",
+        "gap_minutes": 1516,
+        "missing_bars": 1515
+      }
+    ]
+  }
+}
