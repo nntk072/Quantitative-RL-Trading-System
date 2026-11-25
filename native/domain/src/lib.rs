@@ -3,16 +3,25 @@
 //! This crate has no Python, I/O or broker dependencies. Discrete quantities use
 //! checked integer arithmetic; overflow is reported as an error rather than wrapped.
 
+pub mod account;
 pub mod order;
 pub mod position;
+pub mod risk;
 pub mod units;
+mod wire;
 
+pub use account::Account;
 pub use order::{Fill, Order, OrderIntent, OrderState};
 pub use position::Position;
+pub use risk::DailyLossGuard;
 pub use units::{notional_cents, Price, Quantity, Side};
 
 /// Schema version of the native domain contract. Bump when a serialized field changes meaning.
-pub const DOMAIN_SCHEMA_VERSION: u32 = 1;
+///
+/// Version 2 adds the exact cost basis and tick value to [`Position`] and changes how realized
+/// PnL is rounded (the cost removed on each reduction is rounded to whole cents). Version 1 had
+/// no serialized form.
+pub const DOMAIN_SCHEMA_VERSION: u32 = 2;
 
 /// Failure of a checked domain operation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,6 +47,18 @@ pub enum DomainError {
     SideMismatch,
     /// A fill references a different order.
     OrderMismatch,
+    /// Starting cash must not be negative.
+    NegativeCash,
+    /// A position's tick value is fixed by its first fill; a different value is refused.
+    TickValueMismatch,
+    /// A daily-loss limit must be a strictly positive number of cents.
+    NonPositiveLossLimit,
+    /// A new daily session must have a strictly greater identifier than the current one.
+    SessionNotAdvanced,
+    /// The daily-loss breach latch is set for this session; new exposure is refused.
+    DailyLossBreached,
+    /// A serialized value is malformed, has an unknown version, or is internally inconsistent.
+    InvalidEncoding,
 }
 
 impl std::fmt::Display for DomainError {
@@ -58,6 +79,23 @@ impl std::fmt::Display for DomainError {
             DomainError::Overfill => write!(f, "fill exceeds the order quantity"),
             DomainError::SideMismatch => write!(f, "fill side does not match the order side"),
             DomainError::OrderMismatch => write!(f, "fill references a different order"),
+            DomainError::NegativeCash => write!(f, "starting cash must not be negative"),
+            DomainError::TickValueMismatch => {
+                write!(
+                    f,
+                    "tick value differs from the value fixed by the first fill"
+                )
+            }
+            DomainError::NonPositiveLossLimit => {
+                write!(f, "daily loss limit must be a positive number of cents")
+            }
+            DomainError::SessionNotAdvanced => {
+                write!(f, "session identifier must strictly increase")
+            }
+            DomainError::DailyLossBreached => {
+                write!(f, "daily loss limit is breached for this session")
+            }
+            DomainError::InvalidEncoding => write!(f, "malformed or inconsistent serialized value"),
         }
     }
 }
@@ -75,8 +113,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn schema_version_is_one() {
-        assert_eq!(DOMAIN_SCHEMA_VERSION, 1);
+    fn schema_version_is_two() {
+        assert_eq!(DOMAIN_SCHEMA_VERSION, 2);
     }
 
     #[test]

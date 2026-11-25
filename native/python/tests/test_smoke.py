@@ -6,7 +6,8 @@ qrl_native = pytest.importorskip("qrl_native")
 
 
 def test_schema_version_matches_the_rust_contract() -> None:
-    assert qrl_native.domain_schema_version() == 1
+    # Version 2 added the Position cost basis and tick value (see native/domain/src/lib.rs).
+    assert qrl_native.domain_schema_version() == 2
 
 
 def test_checked_add_returns_the_sum() -> None:

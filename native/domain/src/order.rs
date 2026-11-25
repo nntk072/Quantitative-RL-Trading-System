@@ -11,6 +11,7 @@
 //! and leave the order unchanged.
 
 use crate::units::{Price, Quantity, Side};
+use crate::wire;
 use crate::DomainError;
 
 /// A decision to trade. Not an order: it has no lifecycle.
@@ -199,7 +200,80 @@ impl Order {
         self.state = to;
         Ok(())
     }
+
+    /// Canonical fixed-width frame of the order: version, id, side tag, quantity, filled lots,
+    /// state tag. Little-endian integers.
+    pub fn to_wire(&self) -> [u8; ORDER_WIRE_LEN] {
+        let mut out = [0u8; ORDER_WIRE_LEN];
+        out[0] = wire::VERSION;
+        out[1..9].copy_from_slice(&self.id.to_le_bytes());
+        out[9] = match self.side {
+            Side::Buy => 0,
+            Side::Sell => 1,
+        };
+        out[10..18].copy_from_slice(&self.quantity.lots().to_le_bytes());
+        out[18..26].copy_from_slice(&self.filled_lots.to_le_bytes());
+        out[26] = match self.state {
+            OrderState::Pending => 0,
+            OrderState::Accepted => 1,
+            OrderState::PartiallyFilled => 2,
+            OrderState::Filled => 3,
+            OrderState::Cancelled => 4,
+            OrderState::Rejected => 5,
+        };
+        out
+    }
+
+    /// Decodes a frame written by [`Order::to_wire`].
+    ///
+    /// Refuses a wrong length, version or tag, a nonpositive quantity, and a state that the
+    /// transition table could not reach with the recorded fill count.
+    pub fn from_wire(bytes: &[u8]) -> Result<Self, DomainError> {
+        wire::check_frame(bytes, ORDER_WIRE_LEN)?;
+        let side = match wire::read_tag(bytes, 9)? {
+            0 => Side::Buy,
+            1 => Side::Sell,
+            _ => return Err(DomainError::InvalidEncoding),
+        };
+        let state = match wire::read_tag(bytes, 26)? {
+            0 => OrderState::Pending,
+            1 => OrderState::Accepted,
+            2 => OrderState::PartiallyFilled,
+            3 => OrderState::Filled,
+            4 => OrderState::Cancelled,
+            5 => OrderState::Rejected,
+            _ => return Err(DomainError::InvalidEncoding),
+        };
+        let order = Self {
+            id: wire::read_u64(bytes, 1)?,
+            side,
+            quantity: Quantity::from_lots(wire::read_i64(bytes, 10)?)
+                .map_err(|_| DomainError::InvalidEncoding)?,
+            filled_lots: wire::read_i64(bytes, 18)?,
+            state,
+        };
+        if order.is_reachable() {
+            Ok(order)
+        } else {
+            Err(DomainError::InvalidEncoding)
+        }
+    }
+
+    /// Whether the lifecycle could have produced this state and fill count.
+    fn is_reachable(&self) -> bool {
+        let quantity = self.quantity.lots();
+        let filled = self.filled_lots;
+        match self.state {
+            OrderState::Pending | OrderState::Accepted | OrderState::Rejected => filled == 0,
+            OrderState::PartiallyFilled => filled > 0 && filled < quantity,
+            OrderState::Filled => filled == quantity,
+            OrderState::Cancelled => (0..quantity).contains(&filled),
+        }
+    }
 }
+
+/// Serialized length of an [`Order`] frame in bytes.
+pub const ORDER_WIRE_LEN: usize = 27;
 
 #[cfg(test)]
 mod tests {
@@ -340,6 +414,65 @@ mod tests {
             Err(DomainError::SideMismatch)
         );
         assert_eq!(order.filled_lots(), 0);
+    }
+
+    #[test]
+    fn wire_round_trip_keeps_state_and_fill_count() {
+        let mut order = Order::new(42, intent(Side::Sell, 3));
+        order.accept().unwrap();
+        order.apply_fill(&fill(42, Side::Sell, 1000, 1, 0)).unwrap();
+        let frame = order.to_wire();
+        assert_eq!(frame.len(), ORDER_WIRE_LEN);
+        assert_eq!(Order::from_wire(&frame), Ok(order));
+    }
+
+    #[test]
+    fn wire_refuses_unreachable_or_malformed_frames() {
+        let order = Order::new(1, intent(Side::Buy, 2));
+        let frame = order.to_wire();
+        assert_eq!(
+            Order::from_wire(&frame[..ORDER_WIRE_LEN - 1]),
+            Err(DomainError::InvalidEncoding)
+        );
+        let mut bad_version = frame;
+        bad_version[0] = 9;
+        assert_eq!(
+            Order::from_wire(&bad_version),
+            Err(DomainError::InvalidEncoding)
+        );
+        let mut bad_side = frame;
+        bad_side[9] = 7;
+        assert_eq!(
+            Order::from_wire(&bad_side),
+            Err(DomainError::InvalidEncoding)
+        );
+        let mut bad_state = frame;
+        bad_state[26] = 6;
+        assert_eq!(
+            Order::from_wire(&bad_state),
+            Err(DomainError::InvalidEncoding)
+        );
+        // A filled order must have filled every lot.
+        let mut filled_without_lots = frame;
+        filled_without_lots[26] = 3;
+        assert_eq!(
+            Order::from_wire(&filled_without_lots),
+            Err(DomainError::InvalidEncoding)
+        );
+        // A pending order cannot carry fills.
+        let mut pending_with_fill = frame;
+        pending_with_fill[18] = 1;
+        assert_eq!(
+            Order::from_wire(&pending_with_fill),
+            Err(DomainError::InvalidEncoding)
+        );
+        // Quantity zero is not a tradable order.
+        let mut zero_quantity = frame;
+        zero_quantity[10..18].copy_from_slice(&0i64.to_le_bytes());
+        assert_eq!(
+            Order::from_wire(&zero_quantity),
+            Err(DomainError::InvalidEncoding)
+        );
     }
 
     #[test]
