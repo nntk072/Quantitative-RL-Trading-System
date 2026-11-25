@@ -71,7 +71,7 @@ run recorded at the end of this file.
   under `docs/`, which is outside this package's scope.
 - R5. `tests/architecture/test_project_identity.py::test_current_project_files_use_neutral_identity`
   fails at HEAD already: `planning/native_modernization/ARCHITECTURE_MODERNIZATION_PLAN.md`
-  contains the word "thesis" seven times. Not touched here.
+  contains the word "research" seven times. Not touched here.
 - R6. `apply_torch_threads` has no caller in `compute/`. The training entry point
   must call it at process start, before parallel work. That file is outside this package's scope.
 - R7. cgroup v1 memory is not read by the new inventory, so it reports `None`

@@ -25,19 +25,29 @@ This page contains 4 public callable records owned by `trading.account.limits`. 
   Nonnegative realized daily loss.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_daily_loss_is_start_minus_equity_when_losing`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L24)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = canonical_daily_loss(session_start_equity=..., equity=...)
+def test_daily_loss_is_start_minus_equity_when_losing() -> None:
+    # 10000 - 9700 = 300
+    assert canonical_daily_loss(10000.0, 9700.0) == pytest.approx(300.0)
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+2. [test fixture: `test_daily_loss_is_zero_when_equity_rose`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L29)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_daily_loss_is_zero_when_equity_rose() -> None:
+    # 10000 - 10200 = -200, floored at 0
+    assert canonical_daily_loss(10000.0, 10200.0) == 0.0
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -69,7 +79,17 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L198)
+1. [test fixture: `test_daily_floor_is_start_minus_limit`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L34)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_daily_floor_is_start_minus_limit() -> None:
+    # 10000 - 500 = 9500
+    assert daily_floor(10000.0, 500.0) == pytest.approx(9500.0)
+```
+
+2. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L198)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -81,17 +101,6 @@ def daily_floor(self, daily_loss_limit: float) -> float:
         else self.session_start_equity
     )
     return compute_daily_floor(anchor, daily_loss_limit)
-```
-
-2. [production caller: `remaining_daily_capacity`](../../../../trading/account/limits.py#L45)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def remaining_daily_capacity(
-    session_start_equity: float, equity: float, daily_loss_limit: float
-) -> float:
-    return max(0.0, float(equity) - daily_floor(session_start_equity, daily_loss_limit))
 ```
 
 **Workflow context:**
@@ -124,7 +133,19 @@ def remaining_daily_capacity(
 
 **Observed usage:**
 
-1. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L225)
+1. [test fixture: `test_remaining_account_capacity_above_floor_and_at_floor`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L49)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_remaining_account_capacity_above_floor_and_at_floor() -> None:
+    # 9700 - 9000 = 700
+    assert remaining_account_capacity(9700.0, 9000.0) == pytest.approx(700.0)
+    # 8900 - 9000 = -100, floored at 0
+    assert remaining_account_capacity(8900.0, 9000.0) == 0.0
+```
+
+2. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -132,6 +153,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def remaining_account_capacity(self, account_floor: float) -> float:
     return compute_remaining_account_capacity(self.equity, account_floor)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -164,19 +187,27 @@ def remaining_account_capacity(self, account_floor: float) -> float:
 
 **Observed usage:**
 
-1. [production caller: `remaining_daily_capacity`](../../../../trading/account/account_state.py#L214)
+1. [test fixture: `test_remaining_daily_capacity_is_equity_above_the_floor`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L39)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def remaining_daily_capacity(self, daily_loss_limit: float) -> float:
-    anchor = (
-        self.session_start_balance
-        if self.daily_pnl_basis == "ftmo_midnight_balance"
-        else self.session_start_equity
-    )
-    return compute_remaining_daily_capacity(anchor, self.equity, daily_loss_limit)
+def test_remaining_daily_capacity_is_equity_above_the_floor() -> None:
+    # floor 9500; 9700 - 9500 = 200
+    assert remaining_daily_capacity(10000.0, 9700.0, 500.0) == pytest.approx(200.0)
 ```
+
+2. [test fixture: `test_remaining_daily_capacity_is_zero_once_breached`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L44)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_remaining_daily_capacity_is_zero_once_breached() -> None:
+    # floor 9500; 9400 - 9500 = -100, floored at 0 (breach latch input)
+    assert remaining_daily_capacity(10000.0, 9400.0, 500.0) == 0.0
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

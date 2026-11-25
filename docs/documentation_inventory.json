@@ -1609,7 +1609,7 @@
       "links": [
         "../../../../features/technical/indicators.py#L111",
         "../../../../tests/integration/test_session_levels_integration.py#L78",
-        "../../../../docs/subjects/A_data_features/examples/technical-indicators.ipynb",
+        "../../../../tests/unit/features/test_causal_prefix_invariance.py#L35",
         "../../../../features/technical/indicators.py#L484",
         "../../../../tests/unit/features/test_htf_alignment.py#L52",
         "../../../../tests/unit/features/test_htf_alignment.py#L268"
@@ -3038,13 +3038,17 @@
     {
       "links": [
         "../../../../trading/account/limits.py#L6",
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L24",
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L29",
         "../../../../trading/account/limits.py#L19",
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L34",
         "../../../../trading/account/account_state.py#L198",
-        "../../../../trading/account/limits.py#L45",
         "../../../../trading/account/limits.py#L48",
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L49",
         "../../../../trading/account/account_state.py#L225",
         "../../../../trading/account/limits.py#L32",
-        "../../../../trading/account/account_state.py#L214"
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L39",
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L44"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__account__limits.md",
@@ -3231,12 +3235,13 @@
         "../../../../tests/integration/backtest/test_broker_quote_parity.py#L16",
         "../../../../trading/execution/costs.py#L78",
         "../../../../tests/unit/trading/test_cost_model.py#L62",
-        "../../../../trading/execution/quotes.py#L132",
+        "../../../../tests/unit/trading/test_semantic_oracle_costs.py#L47",
         "../../../../trading/execution/costs.py#L58",
         "../../../../tests/unit/trading/test_cost_model.py#L45",
         "../../../../tests/unit/trading/test_cost_model.py#L51",
         "../../../../trading/execution/costs.py#L43",
-        "../../../../tests/unit/trading/test_cost_model.py#L57"
+        "../../../../tests/unit/trading/test_cost_model.py#L57",
+        "../../../../tests/unit/trading/test_semantic_oracle_costs.py#L26"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__execution__costs.md",
@@ -3663,7 +3668,7 @@
         "../../../../docs/subjects/C_trading_risk_execution/examples/stops-targets-multi-tp-exits.ipynb",
         "../../../../trading/risk/sizing.py#L13",
         "../../../../tests/unit/trading/test_risk.py#L20",
-        "../../../../docs/learn/tutorials/03_trading_and_risk.ipynb"
+        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L59"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__risk__sizing.md",

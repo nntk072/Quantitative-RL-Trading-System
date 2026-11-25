@@ -85,17 +85,23 @@ def test_bar_quote_derives_ask_from_close():
     assert ask == pytest.approx(20000.6)
 ```
 
-2. [production caller: `quote_from_bar_price`](../../../../trading/execution/quotes.py#L132)
+2. [test fixture: `test_bar_quote_uses_default_then_per_bar_spread`](../../../../tests/unit/trading/test_semantic_oracle_costs.py#L47)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def quote_from_bar_price(
-    cost_model: CostModel, price: float, spread_points: float | None
-) -> tuple[float, float]:
-    spread = raw_spread_to_price(spread_points, cost_model.point_size)
-    return cost_model.bar_quote(float(price), bar_spread=spread)
+def test_bar_quote_uses_default_then_per_bar_spread() -> None:
+    # Default: ask = 20000.0 + 0.6 = 20000.6. Explicit bar_spread 1.5: ask = 20000.0 + 1.5 = 20001.5.
+    model = CostModel(spread_points=0.6)
+    bid, ask = model.bar_quote(close=20000.0)
+    assert bid == pytest.approx(20000.0)
+    assert ask == pytest.approx(20000.6)
+    bid, ask = model.bar_quote(close=20000.0, bar_spread=1.5)
+    assert bid == pytest.approx(20000.0)
+    assert ask == pytest.approx(20001.5)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -190,6 +196,18 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_total_cost_is_commission_only():
     c = CostModel(spread_points=0.6, commission_per_lot=3.0)
     assert c.total_cost(lots=2.0) == pytest.approx(6.0)
+```
+
+2. [test fixture: `test_commission_is_rate_times_lots`](../../../../tests/unit/trading/test_semantic_oracle_costs.py#L26)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_commission_is_rate_times_lots() -> None:
+    # 2.5 per lot * 4.0 lots = 10.0; the direction argument does not change the fee.
+    model = CostModel(commission_per_lot=2.5)
+    assert model.total_cost(lots=4.0) == pytest.approx(10.0)
+    assert model.total_cost(lots=4.0, direction=-1) == pytest.approx(10.0)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
