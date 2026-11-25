@@ -12,18 +12,16 @@ import pytest
 import yaml
 
 # MT5 is a Windows-only runtime dependency. Keep this CLI importable on CPU CI;
-# every MT5 call in this module's tests is replaced before use.
-_mt5_was_missing = "MetaTrader5" not in sys.modules
-if _mt5_was_missing:
+# augment any test-provided stub and replace every MT5 call before use.
+_mt5_stub = sys.modules.get("MetaTrader5")
+if _mt5_stub is None:
     _mt5_stub = ModuleType("MetaTrader5")
-    for _name in ("initialize", "login", "symbols_get", "shutdown", "last_error"):
-        setattr(_mt5_stub, _name, lambda *args, **kwargs: None)
     sys.modules["MetaTrader5"] = _mt5_stub
+for _name in ("initialize", "login", "symbols_get", "shutdown", "last_error"):
+    if not hasattr(_mt5_stub, _name):
+        setattr(_mt5_stub, _name, lambda *args, **kwargs: None)
 
 from market_data.commands import discover  # noqa: E402
-
-if _mt5_was_missing:
-    sys.modules.pop("MetaTrader5", None)
 
 mt5: Any = vars(discover)["mt5"]
 
