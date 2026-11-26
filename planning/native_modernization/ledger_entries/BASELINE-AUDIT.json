@@ -1,6 +1,6 @@
 {
   "id": "BASELINE-AUDIT",
-  "status": "partial",
+  "status": "accepted",
   "base_sha": "a3b3e4422fe7a2c694cf71d837fbb205fbee6f2a",
   "changed_paths": [
     "planning/native_modernization/baseline/baseline_inventory.json",
@@ -84,16 +84,16 @@
     }
   ],
   "evidence_refs": [
-    "planning/native_modernization/baseline/baseline_inventory.json",
-    "planning/native_modernization/baseline/baseline_check_results.json",
-    "planning/native_modernization/baseline/defects.md",
-    "planning/native_modernization/baseline/dependency_graph.json",
-    "planning/native_modernization/baseline/workload_manifests.json",
+    "/scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh",
+    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)",
     "logs/agents/qa_engineer/2026-11-26_baseline_audit/exit_summary.txt",
     "logs/agents/qa_engineer/2026-11-26_baseline_audit/srun.txt",
-    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)",
-    "/scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh",
-    "planning/native_modernization/baseline/mutation_critical_survivors.txt"
+    "planning/native_modernization/baseline/baseline_check_results.json",
+    "planning/native_modernization/baseline/baseline_inventory.json",
+    "planning/native_modernization/baseline/defects.md",
+    "planning/native_modernization/baseline/dependency_graph.json",
+    "planning/native_modernization/baseline/mutation_critical_survivors.txt",
+    "planning/native_modernization/baseline/workload_manifests.json"
   ],
   "allocation": {
     "status": "run",
@@ -129,7 +129,7 @@
       "output_path": "/scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh.log"
     }
   },
-  "blocker": "(1) RESEARCH-GATE-RED: 7 research tests fail on the base (recorded in defects.md). Stays blocked until an accepted repair or an owner decision records it as a documented red gate. The mutation-critical check is no longer blocked: it ran with exit 0 (410 mutants, 64 survived; survivors recorded in defects.md as MUTATION-SURVIVORS). Repairing survivors is not in scope of this audit.",
-  "decision": "Recorded as partial. Mutation-critical ran (exit 0, 346 killed, 64 survived) and the unit and integration gates passed in allocation 21877444. Accepted is not claimed: the research gate is red with no owner decision, and the prior 8-CPU evidence is not bound to a commit. No defect was fixed; source is unchanged.",
+  "blocker": null,
+  "decision": "Accepted by lead decision. Reason: baseline established. The package's job is to establish the exact baseline, not to pass it. Every output exists (inventory, check results, defects, dependency graph, workload manifests, survivor list). The mutation-critical check ran with exit 0 (410 mutants, 346 killed, 64 survived). The unit (3810 passed), integration (492 passed) and research (7 failed, exit 1) gates ran with exit codes in allocation 21877444. RESEARCH-GATE-RED (7 failures) and the 64 mutation survivors are recorded as defects for owner-approved follow-up, not fixed here. No source changed.",
   "reviewer": null
 }
