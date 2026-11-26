@@ -28,6 +28,8 @@ api_paths:
 - features/po3/po3_phase_state.py
 - features/po3/trigger_rules.py
 - features/po3/zones.py
+- features/registry.py
+- features/technical/__init__.py
 - features/technical/htf_sweeps.py
 - features/technical/indicators.py
 - features/technical/structure.py
@@ -107,6 +109,8 @@ caller_paths:
 - tests/unit/features/test_entry_ideas.py
 - tests/unit/features/test_feature_build_inputs.py
 - tests/unit/features/test_feature_cache_and_fit_scope.py
+- tests/unit/features/test_feature_registry.py
+- tests/unit/features/test_feature_registry_values.py
 - tests/unit/features/test_fold_normalize.py
 - tests/unit/features/test_htf_alignment.py
 - tests/unit/features/test_htf_sweeps.py
@@ -157,6 +161,7 @@ source_scopes:
   - {path: features/po3, study_ids: [features.causal_availability, features.context_candidates_and_session_masks, features.fvg_ifvg_event_lifecycle, features.po3_setup_state_transitions]}
   - {path: features/contracts.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/graph.py, study_ids: [features.family_schema_and_cache]}
+  - {path: features/registry.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/input_view.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/__init__.py, study_ids: [features.family_schema_and_cache]}
   - {path: research_tools/studies/handlers/features.py, study_ids: [features.causal_availability, features.prefix_causality_and_fit_scope, features.candidate_geometry_and_proposal_preflight]}

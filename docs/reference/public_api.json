@@ -11716,7 +11716,7 @@
       "name": "feature_cache_path",
       "numpy_style": false,
       "package": "features",
-      "source_line": 153,
+      "source_line": 157,
       "source_module": "features.pipeline.feature_cache_identity",
       "source_path": "features/pipeline/feature_cache_identity.py"
     },
@@ -12604,7 +12604,7 @@
       "name": "_FIT_SCOPES",
       "numpy_style": false,
       "package": "features",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "features.graph",
       "source_path": "features/graph.py"
     },
@@ -12616,7 +12616,7 @@
       "name": "_topological_order",
       "numpy_style": false,
       "package": "features",
-      "source_line": 79,
+      "source_line": 100,
       "source_module": "features.graph",
       "source_path": "features/graph.py"
     },
@@ -12760,7 +12760,7 @@
       "name": "feature_cache_path",
       "numpy_style": false,
       "package": "features",
-      "source_line": 153,
+      "source_line": 157,
       "source_module": "features.pipeline.feature_cache_identity",
       "source_path": "features/pipeline/feature_cache_identity.py"
     },
@@ -13303,6 +13303,30 @@
       "source_line": 143,
       "source_module": "features.po3.zones",
       "source_path": "features/po3/zones.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.registry",
+      "kind": "function",
+      "name": "_node",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 89,
+      "source_module": "features.registry",
+      "source_path": "features/registry.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.registry",
+      "kind": "function",
+      "name": "_technical",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 112,
+      "source_module": "features.registry",
+      "source_path": "features/registry.py"
     },
     {
       "classification": "private implementation",

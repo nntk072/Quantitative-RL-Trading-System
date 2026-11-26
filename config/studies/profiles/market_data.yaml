@@ -64,6 +64,7 @@ caller_paths:
 - features/po3/po3_phase_state.py
 - features/po3/trigger_rules.py
 - features/po3/zones.py
+- features/registry.py
 - features/technical/htf_sweeps.py
 - features/technical/indicators.py
 - features/technical/structure.py
@@ -121,6 +122,8 @@ caller_paths:
 - tests/unit/experiments/test_triton_prebuild_cache.py
 - tests/unit/features/test_alignment_properties.py
 - tests/unit/features/test_feature_build_inputs.py
+- tests/unit/features/test_feature_registry.py
+- tests/unit/features/test_feature_registry_values.py
 - tests/unit/features/test_htf_alignment.py
 - tests/unit/features/test_pd_context.py
 - tests/unit/features/test_po3_config.py

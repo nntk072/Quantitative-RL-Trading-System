@@ -70,7 +70,11 @@ IMPLEMENTATIONS: dict[str, tuple[Callable[..., Any], ...]] = {
 
 
 def code_identity() -> str:
-    """Return sha256 over every family's implementation hash (configuration independent)."""
+    """Return sha256 over every family's implementation hash (configuration independent).
+
+    Returns:
+        Hex digest covering every declared family's implementation source.
+    """
     digest = hashlib.sha256()
     for family in sorted(IMPLEMENTATIONS):
         digest.update(family.encode())
@@ -84,7 +88,19 @@ Names = tuple[str, ...]
 # fmt: off
 def _node(family: str, tf: str, deps: Names, outputs: Names, warmup: int,
           config: Mapping[str, Any]) -> FeatureNode:
-    """Build one bar-close feature node with float64 outputs and train-independent fit scope."""
+    """Build one bar-close feature node with float64 outputs and train-independent fit scope.
+
+    Args:
+        family: Feature family name, also the implementation lookup key.
+        tf: Timeframe label the node belongs to (for example ``M1``).
+        deps: Node ids this node depends on.
+        outputs: Output column names, each stored as float64.
+        warmup: Number of leading bars that are null before values are valid.
+        config: Configuration values recorded in the node identity.
+
+    Returns:
+        The declared feature node.
+    """
     return FeatureNode(node_id=f"{tf}.{family}", version="1", dependencies=deps,
                        required_columns=BAR_COLUMNS, timeframe=tf, warmup_bars=warmup,
                        availability="bar_close", fit_scope="none",
@@ -94,7 +110,15 @@ def _node(family: str, tf: str, deps: Names, outputs: Names, warmup: int,
 
 
 def _technical(tf: str, f: Mapping[str, Any]) -> list[FeatureNode]:
-    """Declare the eleven indicator families of ``build_indicators`` for one timeframe."""
+    """Declare the eleven indicator families of ``build_indicators`` for one timeframe.
+
+    Args:
+        tf: Timeframe label used as the node id prefix.
+        f: Plain ``features`` configuration mapping.
+
+    Returns:
+        One node per technical family, in ``TECHNICAL`` order.
+    """
     periods = [int(p) for p in f["ema_periods"]]
     horizons = [int(h) for h in f["return_horizons"]]
     k, d = int(f["stoch_k"]), int(f["stoch_d"])
@@ -124,7 +148,14 @@ def _technical(tf: str, f: Mapping[str, Any]) -> list[FeatureNode]:
 
 
 def registry_nodes(features_cfg: DictConfig) -> list[FeatureNode]:
-    """Declare every family for the given ``features`` configuration node."""
+    """Declare every family for the given ``features`` configuration node.
+
+    Args:
+        features_cfg: The resolved ``features`` configuration node.
+
+    Returns:
+        Feature nodes for the primary timeframe and each higher timeframe.
+    """
     f: dict[str, Any] = OmegaConf.to_container(features_cfg, resolve=True)  # type: ignore[assignment]
     bars = f"{PRIMARY}.bars"
     nodes = [_node("bars", PRIMARY, (), (), 0, {}), *_technical(PRIMARY, f)]
