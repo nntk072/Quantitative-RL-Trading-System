@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 506 |
-| private implementation | 1103 |
+| private implementation | 1105 |
 
 ## Public package exports
 
