@@ -86,8 +86,8 @@ This section governs the plan-driven workstreams in
 on top of the rules above, not a new roster.
 
 - **Streams.** At most four stream agents run at once. Each takes one ready
-  work package with disjoint paths, works in a detached worktree from the
-  current integration branch, and returns commits, changed paths, and exact
+  work package with disjoint paths, works in a detached worktree from a green
+  integration head, and returns commits, changed paths, and exact
   command results. The coordinator turns each stream's commit into a feature
   branch and a pull request.
 - **Integration branch.** Work lands in `main-native` through pull requests
@@ -114,17 +114,43 @@ on top of the rules above, not a new roster.
 - **Gate.** CI on each pull request is the full check and the gate. Merge only
   when every required check is green, using rebase or squash. No merge commits.
   Force-push only on feature branches, never on `main`.
-- **Local checks.** Run only the fastest checks locally: format, lint and the
-  touched test files. Full-suite runs belong to CI. Use Slurm for the smallest
-  necessary check, never for the full suite.
+- **Fast check before push.** Before every push, run format, lint, the touched
+  test files and the generated-docs check. The brief names the exact command:
+  `tools/check_fast` when it exists, and until then the commands listed in the
+  brief. Full-suite runs belong to CI. Use Slurm for the smallest necessary
+  check, never for the full suite.
 - **Mypy.** Mypy is not in CI yet, so run it locally on the touched files
   until a CI job exists.
-- **CI watcher.** One subagent watches every open PR and reports each failing
-  job to the flow that owns the branch. That owner fixes it and pushes again.
-  The watcher never pushes, edits code or merges, unless the coordinator names
-  the PR to merge.
+- **CI watcher.** One subagent watches every open PR. On a failing job it
+  messages the PR's named owner and nobody else. That owner fixes it and pushes
+  again. The watcher never pushes, edits code or merges, unless the coordinator
+  names the PR to merge.
 - **Resource operator.** The coordinator alone requests Slurm allocations (one
   `srun` at a time) and owns the file-quota budget. Streams never run Slurm.
+- **One owner per PR.** Every PR body names its owner agent and its flow. The
+  CI watcher messages that owner on failure and nobody else. A PR without an
+  owner is not opened.
+- **Owner on call.** An owner stays on call until its PR merges. An agent does
+  not finish its turn while its own PR is open and red. If it cannot wait, it
+  hands the PR to a named successor in writing before it stops.
+- **Green base.** A branch is cut only from a green integration head. If the
+  head is red, the work waits, or it targets the fix.
+- **One PR per file-set.** PRs that touch the same file merge in sequence, not
+  in parallel. The later branch rebases after the earlier one merges.
+- **New modules.** A new module needs its study-catalog entries (`api_paths`,
+  `caller_paths`, `source_scopes`), docstring Args and Returns sections, and
+  regenerated docs in the same PR.
+- **Push and tooling preflight.** The first step of every brief is a
+  push-access check and a check that `gh` is callable at
+  `/home/nguyenl37/.local/bin/gh`. The remote is HTTPS. If either check fails,
+  the agent reports it at once and does not work around it.
+- **Short-lived agents.** A brief has one narrow goal. Follow-ups go to the same
+  agent by message so its context is kept. No agent waits on events it cannot
+  see. An owner is kept on call under the owner-on-call rule.
+- **Report format.** Every report ends with these fields: PR number, head SHA,
+  each check and its conclusion, owner, and the exact blocker if any.
+- **Honest gates.** An agent never marks a check as passed unless it ran it. It
+  names any gate that CI does not run, which is mypy today.
 
 - **Subprocess imports.** Tests that run a script or subprocess from a worktree
   set `PYTHONPATH` to that checkout, because a shared virtualenv can point at a
