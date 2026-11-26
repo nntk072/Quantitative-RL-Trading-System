@@ -150,6 +150,11 @@ on top of the rules above, not a new roster.
   Do not open a PR for work in progress, a partial acceptance, or a draft meant
   to be finished later. If the work is not complete, hold the branch and report
   the remaining items to the coordinator.
+- **Stack while open.** An agent does not wait for its PR to merge. After a
+  delivery is pushed and its PR is open, it continues with its next ready task,
+  stacked on its own unmerged PR branch. When the base or the PR branch changes,
+  it rebases its stacked work and resolves conflicts on its own branch. Merging
+  still needs the required checks green, and the CI watcher follows them.
 - **Owner on call.** An owner stays responsible for its PR until it merges. It
   handles the failures the watcher routes to it. It does not wait for checks. If
   it stops, it hands the PR to a named successor in writing first.
