@@ -43,8 +43,10 @@ class CostModel:
     def total_cost(self, lots: float, direction: int | None = None) -> float:
         """Return the explicit transaction cost for one side of a trade.
 
-        Spread/slippage are modeled in :meth:`fill_price` (bid/ask execution),
-        so this method should only include explicit broker fees (commission).
+        Spread and slippage are not part of this method. Spread is applied by the
+        bid/ask quote (``bar_quote``), and slippage is applied to the quote on the
+        tick and protective-level paths before :meth:`fill_price` selects a side.
+        This method therefore includes only explicit broker fees (commission).
 
         Args:
             lots: Positive trade size in lots.

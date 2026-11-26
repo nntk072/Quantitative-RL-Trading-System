@@ -7,7 +7,8 @@ covered here. Every expected value is worked out in the comment above its assert
 does not reuse the production formula.
 
 Former candidate defect C1 (invalid fill side) is fixed and asserted as a positive case.
-The slippage candidate (C2) remains a strict xfail; see semantic_contracts.md section 5.
+Former candidate defect C2 is resolved as documented semantics: fill_price selects the side
+of the quote and does not apply slippage_points (see semantic_contracts.md section 5).
 """
 
 from __future__ import annotations
@@ -92,22 +93,20 @@ def test_zero_slippage_leaves_bar_fill_at_quote_side() -> None:
     assert model.fill_price(bid=99.5, ask=100.5, direction=-1) == pytest.approx(99.5)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "CANDIDATE SOURCE DEFECT (or docstring defect, owner decision): total_cost's docstring "
-        "says 'Spread/slippage are modeled in fill_price', but fill_price ignores slippage_points. "
-        "slippage_points is applied only by the tick-quote path (trading/execution/quotes.py). "
-        "Reproducer: CostModel(slippage_points=0.5).fill_price(99.5, 100.5, 1) returns 100.5, "
-        "not 101.0."
-    ),
-)
-def test_nonzero_slippage_worsens_bar_fill_per_docstring_adverse() -> None:
-    # Documented intent: long pays ask + slippage = 100.5 + 0.5 = 101.0;
-    # short receives bid - slippage = 99.5 - 0.5 = 99.0.
+def test_fill_price_does_not_apply_slippage_points_double_count_guard() -> None:
+    """Documented semantics (former candidate C2), pinned at the current value.
+
+    fill_price returns the quote side only. Slippage is applied to the quote before
+    fill_price (tick path, protective path). If fill_price also applied slippage_points,
+    configured slippage (config/base/default.yaml, 5.0) would be charged twice on market
+    and protective fills. Any change here must be reviewed against that double-count
+    risk and re-frozen with a new fixture version.
+    """
+    # Current value: fill_price selects the quote side, so long = ask 100.5 and short = bid 99.5
+    # regardless of slippage_points = 0.5. Adverse slippage belongs to the quote paths.
     model = CostModel(slippage_points=0.5)
-    assert model.fill_price(bid=99.5, ask=100.5, direction=1) == pytest.approx(101.0)
-    assert model.fill_price(bid=99.5, ask=100.5, direction=-1) == pytest.approx(99.0)
+    assert model.fill_price(bid=99.5, ask=100.5, direction=1) == pytest.approx(100.5)
+    assert model.fill_price(bid=99.5, ask=100.5, direction=-1) == pytest.approx(99.5)
 
 
 # --- TradingCostModel (unused in the repository; covered as defined in the module) ----
