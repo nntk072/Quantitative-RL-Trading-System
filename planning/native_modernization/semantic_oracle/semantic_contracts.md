@@ -142,11 +142,15 @@ Declared for SEMANTIC-ORACLE, decision handed on:
 - **O5 truncation observation:** the observation returned at data end is not the in-episode observation for the same valuation index. Pinned as current behaviour. **Decision for LEARNER-CONTRACT:** whether truncated transitions are bootstrapped, and how.
 - **O6 rounding:** two separate declared rules (lot sizer floor; target-leg round-half-even), each pinned. **No change.** Unifying them would be an owner decision with a new evidence identity.
 
+Run in this round (evidence in parity_report.md):
+
+- **Native backend parity: run.** `qrl_native` is built from the worktree (release, worktree-local target) on a spool allocation without gcc, by linking through `rust-lld`. Parity tests in `native/python/tests/test_semantic_oracle_parity.py` replay the fixture expectations in cents: daily loss, floor, remaining capacity at and around the strict-below boundary, session-start capacity, and an integer-lot round trip (gross 4000 cents, fees 200 cents). The native API has integer lots only, so fractional-lot fixtures (AC-B) and the sizer, target-leg and quote families are Python-side by design and are not native.
+- **Rust proptest: run.** `native/domain/tests/semantic_oracle_invariants.rs` uses a fixed seed (`semantic-oracle-domain-seed-0001`, 512 cases per property). Expected values are computed in i128. Covered: loss, floor, remaining capacity, the strict floor boundary, and the price and lot positivity rules.
+- **Full env trace freeze: done.** `planning/native_modernization/semantic_oracle/fixtures/env_trace.v1.json` is a characterization frozen from the implementation (not hand-calculated), covering 60 steps and 76 trades on one fixed episode. Each record carries an ordering key: `[valuation_bar, action_ordinal, trade_seq]`. The replay test compares keys and types exactly, and reward and equity with the oracle tolerances.
+
 Still not claimed:
 
-- **Native backend parity: skipped with recorded reason.** `qrl_native` is not built or installed in `.venv-x86`. Building it is outside this package.
-- **Rust proptest: not run.** The plan asks for Hypothesis and proptest. No Rust oracle exists on this branch, and the native backend is skipped.
-- The 2.2.0 mutation re-run was not performed in this pass.
+- The 2.2.0 mutation re-run was not performed. It is not an acceptance item of this package.
 - Feature causality (`CAUSAL-FEATURE-GRAPH`) is out of scope. Env tests hold features fixed.
 - No claim about profitability, performance or research evidence.
 
