@@ -211,24 +211,33 @@ class RoundTripResult:
     rows: int
     schema_equal: bool
     values_equal: bool
+    polars_values_equal: bool
 
 
 def parquet_round_trip(table: pa.Table, path: Path) -> RoundTripResult:
-    """Write a table to Parquet, read it back, and compare schema and every value.
+    """Write a table to Parquet, read it back with PyArrow and Polars, and compare every value.
 
     Args:
         table: Table to persist.
         path: Destination file; overwritten.
 
     Returns:
-        Row count and whether the schema and all values survived unchanged.
+        Row count, whether the PyArrow read keeps the schema and every value, and whether the Polars
+        read returns the same values after casting to the table's schema.
     """
+    import polars as pl
+
     pq.write_table(table, path)
     back = pq.read_table(path)
+    polars_frame = pl.read_parquet(path)
+    polars_values = bool(polars_frame.height == table.num_rows)
+    if polars_values and table.num_rows:
+        polars_values = bool(polars_frame.to_arrow().cast(table.schema).equals(table))
     return RoundTripResult(
         rows=back.num_rows,
         schema_equal=back.schema.equals(table.schema),
         values_equal=back.equals(table),
+        polars_values_equal=polars_values,
     )
 
 

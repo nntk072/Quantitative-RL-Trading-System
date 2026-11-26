@@ -1,0 +1,260 @@
+{
+  "ledger": "DATA-SCHEMAS higher-timeframe reconciliation",
+  "scope": "source rows dated before the cutoff only; rows on or after it were counted, not parsed; labels and counts only; not scientific evidence",
+  "generator": "planning/native_modernization/data_schemas/build_timeframe_reconciliation.py",
+  "window_before": "2026.01.01",
+  "clock": "Europe/Helsinki local wall-clock buckets",
+  "m1": {
+    "file": "US100.cash_M1_202412300105_202610162349.csv",
+    "sha256": "4c46c6c9820cba15cea38487228d9c334467087b8bb109e3ffad7ca234d83f8c",
+    "body_lines_in_file": 630787,
+    "rows_in_window": 351432,
+    "lines_on_or_after_cutoff": 279355,
+    "rows_converted": 351432,
+    "export_rows_dropped_dst": 0,
+    "first_local_open": "2024-12-30 01:05",
+    "last_local_open": "2025-12-31 23:49"
+  },
+  "timeframes": {
+    "M3": {
+      "source": {
+        "file": "US100.cash_M3_202412300103_202610162348.csv",
+        "sha256": "21c200a927db10622022dbf3f846c48f5f8eba0a4eb4cfc998d21d55bee40ac2",
+        "body_lines_in_file": 210746,
+        "rows_in_window": 117424,
+        "lines_on_or_after_cutoff": 93322
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "3min",
+      "comparison": {
+        "export_bars": 117424,
+        "resampled_buckets": 117424,
+        "matched_buckets": 117424,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 117424,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "M5": {
+      "source": {
+        "file": "US100.cash_M5_202412300105_202610162345.csv",
+        "sha256": "10ecf18c879731c716d1e569534eb0b1b7931b4d31b64da615ed31b20d40a319",
+        "body_lines_in_file": 126179,
+        "rows_in_window": 70308,
+        "lines_on_or_after_cutoff": 55871
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "5min",
+      "comparison": {
+        "export_bars": 70308,
+        "resampled_buckets": 70308,
+        "matched_buckets": 70308,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 70308,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 0,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "M10": {
+      "source": {
+        "file": "US100.cash_M10_202412300100_202610162340.csv",
+        "sha256": "4fa1998033185ec06eac79343853bcb4128d1a22b45bd002426222c7d5b18eb9",
+        "body_lines_in_file": 63331,
+        "rows_in_window": 35292,
+        "lines_on_or_after_cutoff": 28039
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "10min",
+      "comparison": {
+        "export_bars": 35292,
+        "resampled_buckets": 35292,
+        "matched_buckets": 35292,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 35292,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "M15": {
+      "source": {
+        "file": "US100.cash_M15_202412300100_202610162345.csv",
+        "sha256": "b7c43a6beb51f12b8bf6ca81598539ec5829e25de851cc661c864c1355abe08f",
+        "body_lines_in_file": 42519,
+        "rows_in_window": 23694,
+        "lines_on_or_after_cutoff": 18825
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "15min",
+      "comparison": {
+        "export_bars": 23694,
+        "resampled_buckets": 23694,
+        "matched_buckets": 23694,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 23694,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "M30": {
+      "source": {
+        "file": "US100.cash_M30_202412300100_202610162330.csv",
+        "sha256": "250a746d65064190035d90ba99acf9f956cf4e2fd8e3fe6e97240518e60904b5",
+        "body_lines_in_file": 21265,
+        "rows_in_window": 11852,
+        "lines_on_or_after_cutoff": 9413
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "30min",
+      "comparison": {
+        "export_bars": 11852,
+        "resampled_buckets": 11852,
+        "matched_buckets": 11852,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 11852,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "H1": {
+      "source": {
+        "file": "US100.cash_H1_202412300100_202610162300.csv",
+        "sha256": "c9e398bd45a3d2f6bb9e1991a4bac6a48d06b17afacc76da36b4c44529f48610",
+        "body_lines_in_file": 10636,
+        "rows_in_window": 5929,
+        "lines_on_or_after_cutoff": 4707
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "1h",
+      "comparison": {
+        "export_bars": 5929,
+        "resampled_buckets": 5929,
+        "matched_buckets": 5929,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 5929,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "H4": {
+      "source": {
+        "file": "US100.cash_H4_202412300000_202610162000.csv",
+        "sha256": "9aa409187df685642350faae6f9652fe804befb5e569a0e00def4385506dfc51",
+        "body_lines_in_file": 2781,
+        "rows_in_window": 1552,
+        "lines_on_or_after_cutoff": 1229
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "4h",
+      "comparison": {
+        "export_bars": 1552,
+        "resampled_buckets": 1552,
+        "matched_buckets": 1552,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 1552,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    },
+    "D1": {
+      "source": {
+        "file": "US100.cash_D1_202412300000_202610160000.csv",
+        "sha256": "75153c50cde25e1ed7625c9c95dcfae1be8a9949adef8b8781f7ff809a895bc2",
+        "body_lines_in_file": 466,
+        "rows_in_window": 260,
+        "lines_on_or_after_cutoff": 206
+      },
+      "export_rows_dropped_dst": 0,
+      "resample_frequency": "1D",
+      "comparison": {
+        "export_bars": 260,
+        "resampled_buckets": 260,
+        "matched_buckets": 260,
+        "export_only_buckets": 0,
+        "resampled_only_buckets": 0,
+        "matched_with_all_fields_equal": 260,
+        "matched_with_any_field_mismatch": 0,
+        "field_mismatch_counts": {
+          "open": 0,
+          "high": 0,
+          "low": 0,
+          "close": 0,
+          "volume": 0
+        },
+        "max_abs_price_delta": 0.0,
+        "window_edge_partial_matched": 1,
+        "first_mismatch_local_opens": []
+      }
+    }
+  }
+}

@@ -31,6 +31,11 @@ api_paths:
 - market_data/transforms/resample.py
 - market_data/transforms/session_schedule.py
 - market_data/transforms/sessions.py
+- market_data/event_schemas.py
+- market_data/export_window.py
+- market_data/reconciliation.py
+- market_data/tick_reconciliation.py
+- market_data/timeframe_reconciliation.py
 caller_paths:
 - tests/unit/market_data/test_partitioned_bars.py
 - tests/unit/market_data/test_discover.py
@@ -168,6 +173,10 @@ caller_paths:
 - training/runner/walk_forward_validation.py
 - training/setup/learner.py
 - training/setup/tick_execution_preflight.py
+- tests/unit/market_data/test_event_schemas.py
+- tests/unit/market_data/test_reconciliation.py
+- tests/unit/market_data/test_tick_reconciliation.py
+- tests/unit/market_data/test_timeframe_reconciliation.py
 source_scopes:
 - path: market_data/partitioned_bars.py
   study_ids:
@@ -226,6 +235,24 @@ source_scopes:
 - path: market_data/news
   study_ids:
   - market_data.raw_data_quality_and_coverage
+- path: market_data/event_schemas.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+- path: market_data/export_window.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+  - market_data.bar_ingestion_and_row_validity
+- path: market_data/reconciliation.py
+  study_ids:
+  - market_data.raw_data_quality_and_coverage
+  - market_data.bar_ingestion_and_row_validity
+- path: market_data/tick_reconciliation.py
+  study_ids:
+  - market_data.tick_order_and_book_reconstruction
+  - market_data.raw_data_quality_and_coverage
+- path: market_data/timeframe_reconciliation.py
+  study_ids:
+  - market_data.timeframe_resampling_and_close_alignment
 config_paths:
 - config/base/default.yaml
 - config/data_modes/normal.yaml

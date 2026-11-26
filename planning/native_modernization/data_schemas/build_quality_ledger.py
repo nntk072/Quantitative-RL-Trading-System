@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import io
 import json
 import sys
 import tempfile
@@ -28,6 +27,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pyarrow as pa  # type: ignore[import-untyped]
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
 
@@ -43,6 +43,7 @@ from market_data.arrow_schemas import (  # noqa: E402
     mt5_export_to_bars,
     require_schema_id,
 )
+from market_data.export_window import split_export_window, window_frame  # noqa: E402
 from market_data.reconciliation import (  # noqa: E402
     parquet_round_trip,
     quarantine_table,
@@ -62,29 +63,6 @@ def _iso(value: pd.Timestamp) -> str:
     return pd.Timestamp(value).tz_convert("UTC").strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _window_lines(raw: bytes, window_before: str | None) -> tuple[str, list[str], int, int]:
-    """Split the export into the header, in-window body lines, and the count of lines after the cutoff.
-
-    Raises:
-        RuntimeError: If an in-window line follows an out-of-window line (the export is not
-            chronological, so a prefix window is not well defined).
-    """
-    text_lines = [line for line in raw.decode("ascii").splitlines() if line.strip()]
-    header, body = text_lines[0], text_lines[1:]
-    if window_before is None:
-        return header, body, 0, len(body)
-    keep: list[str] = []
-    after = 0
-    for line in body:
-        if line.split("\t", 1)[0] < window_before:
-            if after:
-                raise RuntimeError("export is not chronological: in-window row after cutoff")
-            keep.append(line)
-        else:
-            after += 1
-    return header, keep, after, len(body)
-
-
 def build_ledger(
     source: Path, *, window_before: str | None = None, parquet_dir: Path | None = None
 ) -> dict[str, Any]:
@@ -102,15 +80,13 @@ def build_ledger(
     """
     raw = source.read_bytes()
     sha256 = hashlib.sha256(raw).hexdigest()
-    header, body, after_cutoff, total_body_lines = _window_lines(raw, window_before)
+    window = split_export_window(raw, window_before)
+    after_cutoff = window.lines_on_or_after_cutoff
+    total_body_lines = window.body_lines_in_file
+    frame = window_frame(window)
+    body = window.body
     if window_before is not None and len(body) + after_cutoff != total_body_lines:
         raise RuntimeError("window line accounting failed")
-
-    frame = pd.read_csv(io.StringIO("\n".join([header, *body]) + "\n"), sep="\t", dtype=str).rename(
-        columns=lambda name: name.strip("<>")
-    )
-    if len(frame) != len(body):
-        raise RuntimeError(f"row count mismatch: parsed {len(frame)}, lines {len(body)}")
 
     table, problems = mt5_export_to_bars(
         frame, instrument_id=INSTRUMENT_ID, timeframe=TIMEFRAME, source_id=SOURCE_ID
@@ -126,7 +102,10 @@ def build_ledger(
     with tempfile.TemporaryDirectory() as scratch:
         round_trip = parquet_round_trip(table, Path(scratch) / "bars_roundtrip.parquet")
     if not (
-        round_trip.schema_equal and round_trip.values_equal and round_trip.rows == table.num_rows
+        round_trip.schema_equal
+        and round_trip.values_equal
+        and round_trip.polars_values_equal
+        and round_trip.rows == table.num_rows
     ):
         raise RuntimeError(f"parquet round trip failed: {round_trip}")
     if parquet_dir is not None:
@@ -222,7 +201,9 @@ def build_ledger(
             "rows": round_trip.rows,
             "schema_equal": round_trip.schema_equal,
             "values_equal": round_trip.values_equal,
+            "polars_values_equal": round_trip.polars_values_equal,
             "pyarrow_version": pa.__version__,
+            "polars_version": str(pl.__version__),
         },
         "quarantine": {
             "count": len(quarantined),

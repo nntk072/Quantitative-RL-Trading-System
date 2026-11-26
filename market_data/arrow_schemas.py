@@ -94,7 +94,12 @@ CALENDAR_SCHEMA = pa.schema(
     ]
 )
 
-SUPPORTED_SCHEMA_IDS = frozenset({SCHEMA_VERSION})
+NORMALIZED_EVENT_SCHEMA_ID = "normalized-event.v1"
+FEATURE_ROW_SCHEMA_ID = "feature-row.v1"
+
+SUPPORTED_SCHEMA_IDS = frozenset(
+    {SCHEMA_VERSION, NORMALIZED_EVENT_SCHEMA_ID, FEATURE_ROW_SCHEMA_ID}
+)
 """Schema identities this reader accepts. Any other id fails closed; see the README migration policy."""
 
 
