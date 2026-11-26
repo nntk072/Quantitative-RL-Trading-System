@@ -95,3 +95,17 @@ Measured in allocation 21877444 (pht54, batch-skl, 8 CPUs) with `pytest -q -n 8 
 | `tests/research/test_feature_causality_matrix.py::test_generated_matrix_lists_public_functions_and_all_setup_flags` | `assert 103 == 99`: the generated feature-causality matrix has 103 entries where the test expects 99. The generated output is stale. | Stale generated output |
 
 Severity: **Medium**. The research gate is red on the base, so no research gate can be treated as green from this baseline. Repair is not part of this audit; DECISIONS (2026-11-26) keeps defects recorded, not fixed.
+
+
+## MUTATION-SURVIVORS: 64 of 410 mutants survived the curated gate
+
+`tools/check mutation-critical` (mutmut 3.8.1, operator job 21877472) exited 0 with 346 killed, 64 survived. Survivor list: `planning/native_modernization/baseline/mutation_critical_survivors.txt`.
+
+| Module | Survived | Severity |
+|---|---|---|
+| `market_data/splits/walkforward.py` (purged_walk_forward) | 34 | Medium (causal chronology) |
+| `market_data/transforms/align.py` | 26 | Medium (causal alignment) |
+| `trading/risk/contracts.py` | 3 | Low |
+| `decisioning/actions.py` | 1 | Low |
+
+`trading/account/limits.py` and `trading/risk/budget.py` had zero survivors. Survivors are recorded, not fixed. The gate does not fail on survivors, so the exit code 0 is not a statement about test quality for these modules.

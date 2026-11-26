@@ -11,7 +11,8 @@
     "Exit codes are the process exit codes of the commands shown. A check is recorded as passed only when its command ran and exited 0.",
     "Checks run on the login node (login5.triton.aalto.fi) only where they are light, per the repository gate rules. Heavy suites are run in the 8-CPU allocation described under T-UNIT, T-INTEGRATION and T-RESEARCH.",
     "The .venv-x86/bin/mypy launcher has a shebang to a missing interpreter (/scratch/work/nguyenl37/Aalto_MS_Thesis/.venv-x86/bin/python) and exits 127. mypy was therefore run as a module with the same interpreter.",
-    "Real-usage run: the three repository gate selections ran inside allocation 21877444 (see the allocation block). unit and integration exit 0; research exit 1 (7 failures). The earlier login-node results are unchanged."
+    "Real-usage run: the three repository gate selections ran inside allocation 21877444 (see the allocation block). unit and integration exit 0; research exit 1 (7 failures). The earlier login-node results are unchanged.",
+    "Mutation-critical was run after mutmut 3.8.1 was installed into .venv-x86 by the lead; the earlier NOT RUN entry is superseded."
   ],
   "checks": [
     {
@@ -136,11 +137,13 @@
     },
     {
       "id": "CHK-MUTATION-CRITICAL",
-      "description": "Scoped risk / feature / learning mutation checks (tools/check mutation-critical, mutmut 3.8.1 with curated only_mutate set)",
-      "command": "./tools/check mutation-critical (QRL_CHECK_NO_SYNC=1 QRL_PYTHON=.venv-x86/bin/python)",
-      "exit_code": null,
-      "result": "NOT RUN. mutmut 3.8.1 (locked in uv.lock) is not installed in .venv-x86; its wheel is absent from the local uv cache and the node has no network. No substitute harness was written. Blocker: install mutmut==3.8.1 into .venv-x86 (needs network or a pre-provisioned wheel), then run one srun.",
-      "blocker": "NOT RUN. mutmut 3.8.1 (locked in uv.lock) is not installed in .venv-x86; its wheel is absent from the local uv cache and the node has no network. No substitute harness was written. Blocker: install mutmut==3.8.1 into .venv-x86 (needs network or a pre-provisioned wheel), then run one srun."
+      "description": "Scoped risk / feature / learning mutation gate (tools/check mutation-critical, mutmut 3.8.1, curated only_mutate set)",
+      "command": "/scratch/work/nguyenl37/spool/inbox/05_baseline_audit_mutation_critical.sh (QRL_CHECK_NO_SYNC=1 QRL_PYTHON=.venv-x86/bin/python QRL_MUTATION_MAX_CHILDREN=8 ./tools/check mutation-critical)",
+      "exit_code": 0,
+      "result": "exit 0. 410 mutants: 346 killed, 64 survived, 0 timeouts. Survivors: market_data.splits.walkforward 34, market_data.transforms.align 26, trading.risk.contracts 3, decisioning.actions 1. trading.account.limits and trading.risk.budget had 0 survivors. Gate exit code does not reflect survivors (repository describes it as a test-quality signal).",
+      "run": "operator allocation job 21877472 (batch-skl, 8 CPUs), node pht54, 13:54:13 to 13:54:38",
+      "output": "logs: /scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh.log (exit 0 in .exit); survivor list: planning/native_modernization/baseline/mutation_critical_survivors.txt",
+      "evidence_source": "ran by operator runner from spool inbox"
     }
   ],
   "allocation": {
