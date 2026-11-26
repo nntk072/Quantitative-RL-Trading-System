@@ -36,6 +36,7 @@ caller_paths:
 - tests/unit/market_data/test_discover.py
 - tests/unit/market_data/test_arrow_schemas.py
 - tests/unit/market_data/test_mt5_export_to_bars.py
+- tests/unit/market_data/test_trade_calendar_schemas.py
 - tests/unit/features/test_causal_prefix_invariance.py
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
