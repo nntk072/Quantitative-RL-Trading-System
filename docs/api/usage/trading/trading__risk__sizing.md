@@ -227,39 +227,27 @@ def test_compute_sl_tp_long() -> None:
     assert tp == 112.0
 ```
 
-2. [tutorial example: `03_trading_and_risk · code cell 2`](../../../../docs/learn/tutorials/03_trading_and_risk.ipynb)
+2. [test fixture: `_run_sizing_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L156)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-import matplotlib.pyplot as plt
-
-from trading.risk.sizing import compute_lots, compute_sl_tp_long, stop_loss_risk_usd
-
-entry = 100.0
-stop, target = compute_sl_tp_long(entry, last_swing_low=96.0, buffer_pts=0.5, rr_ratio=2.0)
-requested_risk_usd = 200.0
-lots = compute_lots(
-    equity=10_000.0,
-    risk_frac=0.02,
-    entry_price=entry,
-    sl_price=stop,
-    min_lot=0.01,
-    max_lot=100.0,
-    risk_usd=requested_risk_usd,
-)
-actual_risk = stop_loss_risk_usd(entry - stop, lots, contract_size=1.0)
-print(
-    {
-        "entry": entry,
-        "stop": stop,
-        "target": target,
-        "lots": round(lots, 3),
-        "risk_usd": round(actual_risk, 2),
-        "reward_risk": (target - entry) / (entry - stop),
-    }
-)
+# … caller setup omitted …
+    if op == "compute_lots_with_execution_reserve":
+        return compute_lots_with_execution_reserve(**args)
+    if op == "modeled_execution_reserve_usd":
+        return modeled_execution_reserve_usd(**args)
+    if op == "compute_sl_tp_long":
+        return list(compute_sl_tp_long(**args))
+    if op == "compute_sl_tp_short":
+        return list(compute_sl_tp_short(**args))
+    if op == "compute_sl_tp_from_structure":
+        return list(compute_sl_tp_from_structure(**args))
+    if op == "target_close_size":
+# … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -315,36 +303,27 @@ def test_compute_sl_tp_short() -> None:
     assert tp == 88.0  # 100 - 2*(106-100)
 ```
 
-2. [tutorial example: `stops-targets-multi-tp-exits · code cell 2`](../../../../docs/subjects/C_trading_risk_execution/examples/stops-targets-multi-tp-exits.ipynb)
+2. [test fixture: `_run_sizing_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L158)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-from math import isclose
-
-from trading.orders.selection import decode_tp_fractions, decode_tp_selections, validate_tp_levels
-from trading.risk.sizing import compute_sl_tp_long, compute_sl_tp_short
-
-long_sl, long_tp = compute_sl_tp_long(100.0, 98.0, buffer_pts=1.0, rr_ratio=2.0)
-short_sl, short_tp = compute_sl_tp_short(100.0, 102.0, buffer_pts=1.0, rr_ratio=2.0)
-assert (long_sl, long_tp) == (97.0, 106.0)
-assert (short_sl, short_tp) == (103.0, 94.0)
-slots = decode_tp_selections(0, 1, 2, menu_size=3)
-assert slots == (0, 1, 2)
-assert decode_tp_selections(None, None, None, menu_size=3) == (None, None, 0)
-fractions = decode_tp_fractions(0.0, 0.0, slots)
-assert len(fractions) == 3 and isclose(sum(fractions), 1.0)
-assert validate_tp_levels(1, 100.0, long_sl, (102.0, 104.0, long_tp))
-assert not validate_tp_levels(1, 100.0, long_sl, (104.0, 102.0, long_tp))
-print(
-    {
-        "long": (long_sl, long_tp),
-        "short": (short_sl, short_tp),
-        "slots": slots,
-        "fractions": fractions,
-    }
-)
+# … caller setup omitted …
+    if op == "modeled_execution_reserve_usd":
+        return modeled_execution_reserve_usd(**args)
+    if op == "compute_sl_tp_long":
+        return list(compute_sl_tp_long(**args))
+    if op == "compute_sl_tp_short":
+        return list(compute_sl_tp_short(**args))
+    if op == "compute_sl_tp_from_structure":
+        return list(compute_sl_tp_from_structure(**args))
+    if op == "target_close_size":
+        slots = set(args["active_tp"])
+        position = Position(
+# … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -393,14 +372,19 @@ def test_trading_risk_primitives_share_risk_and_reserve_sizing() -> None:
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_stop_loss_risk_uses_absolute_stop_distance`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L59)
+2. [test fixture: `_run_sizing_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L148)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_stop_loss_risk_uses_absolute_stop_distance() -> None:
-    # |-2.5| * 0.1 lots * 100 contract size * 1.0 point value = 25.0
-    assert stop_loss_risk_usd(-2.5, 0.1, 100.0, 1.0) == pytest.approx(25.0)
+    if op == "stop_loss_risk_usd":
+        return stop_loss_risk_usd(**args)
+    if op == "compute_lots":
+        return compute_lots(**args)
+    if op == "compute_lots_with_execution_reserve":
+        return compute_lots_with_execution_reserve(**args)
+    if op == "modeled_execution_reserve_usd":
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

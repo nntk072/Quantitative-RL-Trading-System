@@ -28,19 +28,29 @@ This page contains 1 public callable records owned by `trading.risk.execution_re
   Dollar reserve for adverse stop slippage and round-trip commission.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `_run_sizing_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L154)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = modeled_execution_reserve_usd(lots=..., slippage_points=..., commission_per_lot=..., contract_size=..., point_value=...)
+# … caller setup omitted …
+    if op == "compute_lots":
+        return compute_lots(**args)
+    if op == "compute_lots_with_execution_reserve":
+        return compute_lots_with_execution_reserve(**args)
+    if op == "modeled_execution_reserve_usd":
+        return modeled_execution_reserve_usd(**args)
+    if op == "compute_sl_tp_long":
+        return list(compute_sl_tp_long(**args))
+    if op == "compute_sl_tp_short":
+        return list(compute_sl_tp_short(**args))
+    if op == "compute_sl_tp_from_structure":
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

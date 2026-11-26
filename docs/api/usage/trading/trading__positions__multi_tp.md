@@ -8,7 +8,7 @@ This page contains 2 public callable records owned by `trading.positions.multi_t
 
 **Purpose:** Disable invalid remaining TP slots without fabricating target prices.
 
-**Exact API:** {py:obj}`trading.positions.multi_tp.reorder_remaining_targets` · **Source:** [trading/positions/multi_tp.py:47](../../../../trading/positions/multi_tp.py#L47)
+**Exact API:** {py:obj}`trading.positions.multi_tp.reorder_remaining_targets` · **Source:** [trading/positions/multi_tp.py:50](../../../../trading/positions/multi_tp.py#L50)
 
 **Inputs and outputs:**
 
@@ -63,19 +63,24 @@ The input, output, and error contract above is the safe boundary for a caller. F
   Lot size to close while retaining the configured runner when applicable.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `_run_sizing_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L176)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = target_close_size(pos=..., slot_num=..., is_final=...)
+# … caller setup omitted …
+            ema_runner_fraction=float(args["runner_fraction"]),
+        )
+        for slot in (1, 2, 3):
+            if slot in slots:
+                setattr(position, f"tp{slot}_price", 100.0 + slot)
+        return target_close_size(position, int(args["slot"]), is_final=bool(args["is_final"]))
+    raise UnknownOperationError(op)
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

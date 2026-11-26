@@ -661,7 +661,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `BaseStrategy.fast_forward` | method | [trading.baselines.step_indexed_strategy](../../trading/baselines/step_indexed_strategy.py#L38) | stable |
 | `BaseStrategy.reset` | method | [trading.baselines.step_indexed_strategy](../../trading/baselines/step_indexed_strategy.py#L34) | stable |
 | `Broker` | class | [trading.execution.broker](../../trading/execution/broker.py#L129) | stable |
-| `COST_US100` | value | [trading.execution.costs](../../trading/execution/costs.py#L97) | stable |
+| `COST_US100` | value | [trading.execution.costs](../../trading/execution/costs.py#L101) | stable |
 | `CostModel` | class | [trading.execution.costs](../../trading/execution/costs.py#L13) | stable |
 | `FILL_COST_PROVENANCE_SCHEMA_VERSION` | value | [trading.execution.costs](../../trading/execution/costs.py#L9) | stable |
 | `Position` | class | [trading.execution.broker](../../trading/execution/broker.py#L46) | stable |
@@ -679,8 +679,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `Broker.mark_to_market` | method | [trading.execution.broker](../../trading/execution/broker.py#L257) | stable |
 | `Broker.open_position` | method | [trading.execution.broker](../../trading/execution/broker.py#L166) | stable |
 | `Broker.required_margin` | method | [trading.execution.broker](../../trading/execution/broker.py#L154) | stable |
-| `CostModel.bar_quote` | method | [trading.execution.costs](../../trading/execution/costs.py#L78) | stable |
-| `CostModel.fill_price` | method | [trading.execution.costs](../../trading/execution/costs.py#L58) | stable |
+| `CostModel.bar_quote` | method | [trading.execution.costs](../../trading/execution/costs.py#L82) | stable |
+| `CostModel.fill_price` | method | [trading.execution.costs](../../trading/execution/costs.py#L60) | stable |
 | `CostModel.total_cost` | method | [trading.execution.costs](../../trading/execution/costs.py#L43) | stable |
 | `DEVIATION_KS` | value | [trading.orders.levels](../../trading/orders/levels.py#L5) | stable |
 | `OrderGeometry` | class | [trading.orders.entries](../../trading/orders/entries.py#L45) | stable |
@@ -721,7 +721,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TradingPolicyConfig.repeated_payout` | method | [trading.policy.config](../../trading/policy/config.py#L63) | stable |
 | `TradingPolicyConfig.to_dict` | method | [trading.policy.config](../../trading/policy/config.py#L191) | stable |
 | `TradingPolicyConfig.validate` | method | [trading.policy.config](../../trading/policy/config.py#L134) | stable |
-| `reorder_remaining_targets` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L47) | stable |
+| `reorder_remaining_targets` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L50) | stable |
 | `target_close_size` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L10) | stable |
 | `FTMOGuardrails` | class | [trading.risk.guardrails](../../trading/risk/guardrails.py#L83) | stable |
 | `FTMOMidnightSnapshotUnavailable` | class | [trading.risk.ftmo_clock](../../trading/risk/ftmo_clock.py#L16) | stable |
