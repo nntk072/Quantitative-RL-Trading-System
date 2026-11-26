@@ -25,6 +25,7 @@ caller_paths:
 - tests/integration/test_device.py
 - tests/integration/test_sac_agent_integration.py
 - tests/unit/experiments/test_model_variant_catalog.py
+- tests/unit/learning/test_learner_contract_compat.py
 - tests/unit/features/test_causal_features.py
 - tests/unit/models/test_auxiliary.py
 - tests/unit/models/test_encoders.py
