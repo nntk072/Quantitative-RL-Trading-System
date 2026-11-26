@@ -1,5 +1,5 @@
 {
-  "page_count": 489,
+  "page_count": 488,
   "pages": [
     {
       "links": [
@@ -1288,11 +1288,11 @@
         "../../../../features/context/reachability.py#L193",
         "../../../../features/context/reachability.py#L193",
         "../../../../features/context/reachability.py#L17",
-        "../../../../tests/unit/evaluation/test_order_chart.py#L734",
+        "../../../../tests/unit/evaluation/test_order_chart.py#L983",
         "../../../../tests/unit/features/test_stage_a_observation.py#L272",
         "../../../../features/context/reachability.py#L163",
         "../../../../features/context/reachability.py#L228",
-        "../../../../tests/unit/evaluation/test_order_chart.py#L737",
+        "../../../../tests/unit/evaluation/test_order_chart.py#L986",
         "../../../../simulation/environment/entry_runtime.py#L310",
         "../../../../features/context/reachability.py#L193"
       ],
@@ -3759,7 +3759,7 @@
     {
       "links": [
         "../../../../trading/strategies/po3_ifvg.py#L14",
-        "../../../../tests/unit/evaluation/test_order_chart.py#L779",
+        "../../../../tests/unit/evaluation/test_order_chart.py#L1028",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L13",
         "../../../../trading/strategies/po3_ifvg.py#L112",
         "../../../../trading/strategies/po3_ifvg.py#L229",
@@ -5607,7 +5607,6 @@
         "compute.md",
         "live.md",
         "integrations.md",
-        "orchestra.md",
         "testing.md",
         "repository_layout.md",
         "../architecture/README.md",
@@ -5757,16 +5756,6 @@
       "section": "modules",
       "status": "current",
       "title": "Models module",
-      "type": "developer"
-    },
-    {
-      "links": [],
-      "orphan_status": "in toctree",
-      "path": "docs/modules/orchestra.md",
-      "primary_navigation_owner": [],
-      "section": "modules",
-      "status": "current",
-      "title": "Orchestra module",
       "type": "developer"
     },
     {
@@ -6951,7 +6940,6 @@
         "../../training/reporting/training_curves.py#L515",
         "../../training/runner/__init__.py#L1",
         "../../simulation/environment/trading_environment_factory.py#L553",
-        "../../orchestra/cli.py",
         "../../compute/cli.py",
         "../../market_data/cli.py",
         "../../evaluation/cli.py",
@@ -7299,7 +7287,6 @@
     },
     {
       "links": [
-        "../../modules/orchestra.md",
         "../../operations/RUNNING_COMMANDS.md",
         "../../config.md",
         "live-paper-metatrader.md"

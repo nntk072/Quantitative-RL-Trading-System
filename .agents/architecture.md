@@ -21,7 +21,6 @@ configuration/ → market_data/ → features/ → simulation/
                                         compute/
 
 live/ → integrations/mt5/
-orchestra/ → repository/CI orchestration
 ```
 
 ## Root Package Ownership
@@ -43,12 +42,10 @@ orchestra/ → repository/CI orchestration
 | `live/` | broker-neutral live runtime |
 | `integrations/mt5/` | Lazily loaded MetaTrader-specific adapters and domain integration |
 | `compute/` | cluster/environment/Slurm implementation |
-| `orchestra/` | engineering workflow orchestration |
 
 ## Stable Commands
 
 ```text
-orchestra
 qrl-data
 qrl-train
 qrl-evaluate

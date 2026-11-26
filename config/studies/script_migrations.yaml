@@ -856,12 +856,11 @@ scripts:
   tests: *id010
   migration_state: complete
 - path: scripts/research/audits/pretraining_readiness_task_runner.py
-  owner_module: orchestra
-  target: research_tools.orchestra.audits.pretraining_readiness_task_runner
+  owner_module: compute
+  target: research_tools.compute.audits.pretraining_readiness_task_runner
   entrypoint: module
   tests:
-  - tests/unit/orchestra/test_handoff.py
-  - tests/unit/orchestra/test_pipeline.py
+  - tests/unit/research/test_pretraining_parallel_readiness.py
   migration_state: complete
 - path: scripts/research/audits/pretraining_scientific_readiness.py
   owner_module: training

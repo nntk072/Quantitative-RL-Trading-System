@@ -190,3 +190,89 @@ def test_publish_staged_files_rolls_back_partial_replace(
     assert target_a.read_text(encoding="utf-8") == "old:baseline.parquet"
     assert target_b.read_text(encoding="utf-8") == "old:idea1.parquet"
     assert not report.exists()
+
+
+def _install_minimal_rebuild_plan(
+    monkeypatch: pytest.MonkeyPatch, root: Path, cache_dir: Path
+) -> None:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(cache_builder, "ROOT", root)
+    monkeypatch.setattr(
+        cache_builder,
+        "plan",
+        lambda: [{"variant": "representative", "cache_path": str(cache_dir / "cache.parquet")}],
+    )
+
+
+@pytest.mark.unit
+def test_rebuild_rejects_report_outside_repository_before_writing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    cache_dir = root / "cache"
+    _install_minimal_rebuild_plan(monkeypatch, root, cache_dir)
+
+    with pytest.raises(ValueError, match="report path must stay inside the repository"):
+        cache_builder.rebuild(root / "backup", tmp_path / "external-report.json")
+
+    assert not (root / "backup").exists()
+    assert not (tmp_path / "external-report.json").exists()
+
+
+@pytest.mark.unit
+def test_rebuild_refuses_to_overwrite_an_existing_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    cache_dir = root / "cache"
+    _install_minimal_rebuild_plan(monkeypatch, root, cache_dir)
+    report = root / "reports" / "rebuild.json"
+    report.parent.mkdir()
+    report.write_text("prior evidence\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match="refusing to overwrite existing report"):
+        cache_builder.rebuild(root / "backup", report)
+
+    assert report.read_text(encoding="utf-8") == "prior evidence\n"
+    assert not (root / "backup").exists()
+
+
+@pytest.mark.unit
+def test_rebuild_refuses_to_reuse_existing_backup_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    cache_dir = root / "cache"
+    _install_minimal_rebuild_plan(monkeypatch, root, cache_dir)
+    backup = root / "backup"
+    backup.mkdir()
+    report = root / "rebuild.json"
+
+    with pytest.raises(FileExistsError, match="refusing to reuse existing backup directory"):
+        cache_builder.rebuild(backup, report)
+
+    assert backup.is_dir()
+    assert not report.exists()
+
+
+@pytest.mark.unit
+def test_rebuild_rejects_cache_directory_symlink_before_staging(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    actual_cache_dir = root / "actual-cache"
+    actual_cache_dir.mkdir()
+    linked_cache_dir = root / "cache-link"
+    linked_cache_dir.symlink_to(actual_cache_dir, target_is_directory=True)
+    _install_minimal_rebuild_plan(monkeypatch, root, linked_cache_dir)
+
+    with pytest.raises(RuntimeError, match="cache directory must be a real directory"):
+        cache_builder.rebuild(root / "backup", root / "rebuild.json")
+
+    assert linked_cache_dir.is_symlink()
+    assert not (root / "backup").exists()
+    assert not (root / "rebuild.json").exists()

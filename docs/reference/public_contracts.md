@@ -41,7 +41,6 @@ does not remove the need to preserve its declared schema and version.
 | `experiments` | Variant resolver, experiment-run CLI and run records | Configuration/workflow boundary; catalog labels are not runtime settings |
 | `live` / `integrations` | Broker-neutral runtime and adapter interfaces | Stable boundary with vendor-specific implementations isolated in adapters |
 | `compute` | Resource/device contracts and scheduler adapters | Shared operational contract; cluster inventory is not stable API |
-| `orchestra` | `orchestra` command surface | Developer tooling, separate from trading/runtime API |
 
 The precise Python exports are declared by each package's `__all__` or
 contract module. Do not import underscore-prefixed helpers across domains.

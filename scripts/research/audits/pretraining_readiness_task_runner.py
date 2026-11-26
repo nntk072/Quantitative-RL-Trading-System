@@ -10,7 +10,7 @@ _ROOT = _Path(__file__).resolve().parents[3]
 if str(_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_ROOT))
 
-_TARGET = "research_tools.orchestra.audits.pretraining_readiness_task_runner"
+_TARGET = "research_tools.compute.audits.pretraining_readiness_task_runner"
 if __name__ == "__main__":
     _run_module(_TARGET, run_name="__main__", alter_sys=True)
 else:

@@ -7,6 +7,7 @@ api_paths:
 - evaluation/candidate_outcomes.py
 - evaluation/candidate_proposals.py
 - evaluation/candidate_quote_coverage.py
+- evaluation/cli.py
 - evaluation/contracts.py
 - evaluation/metrics/__init__.py
 - evaluation/metrics/bootstrap.py
@@ -96,6 +97,7 @@ caller_paths:
 - tests/unit/evaluation/test_candidate_outcomes.py
 - tests/unit/evaluation/test_candidate_proposals.py
 - tests/unit/evaluation/test_candidate_quote_coverage.py
+- tests/unit/evaluation/test_cli.py
 - tests/unit/evaluation/test_chart_overlays.py
 - tests/unit/evaluation/test_cost_decomposition.py
 - tests/unit/evaluation/test_data_plots.py
@@ -142,6 +144,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_bundle_eval.py
 - tests/unit/simulation/test_environment/test_eligibility_wiring.py
 - tests/unit/training/test_dashboard.py
+- tests/unit/training/test_seed_runtime_coverage.py
 - tests/unit/training/test_survival_gate.py
 - tests/unit/training/test_train_rl_decomposition.py
 - training/artifacts/evaluation_result_writer.py

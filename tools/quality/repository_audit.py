@@ -284,7 +284,6 @@ def _audit_file_accountability(root: Path, paths: Iterable[Path]) -> dict[str, A
         "research": "evidence_reporting_engineer",
         "tooling": "evidence_reporting_engineer",
         "live": "quantitative_trading_engineer",
-        "orchestra": "architect",
     }
     integration_owners = {
         "__init__.py": "architect",
