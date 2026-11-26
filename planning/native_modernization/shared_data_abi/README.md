@@ -6,13 +6,16 @@ Status and evidence: `planning/native_modernization/ledger_entries/SHARED-DATA-A
 This document defines the layouts of the arrays that cross from Python into the native kernels, and
 the rules those kernels enforce before they accept an input. Source of truth:
 
-- layouts and refusals: `native/domain/src/abi/` (`layout.rs`, `batches.rs`, `error.rs`);
+- layouts and refusals: `native/domain/src/abi/` (`layout.rs`, `batches.rs`, `error.rs`,
+  `dataset.rs` for `DatasetView` and the cache container);
+- environment flag: `simulation/environment/native_feature_block.py`, behind `env.native_data_abi.enabled`;
 - Python boundary: `native/python/src/abi.rs`;
 - Python producer: `market_data/native_abi.py`, which converts `market_data/arrow_schemas.py` and
   `market_data/event_schemas.py` tables into the arrays below.
 
-The ABI is an in-memory contract between two functions. It is not a file format and has no
-serialization in version 1.
+The ABI layouts are in-memory contracts between two functions. The one file format is the dataset
+cache container of `DatasetView` (below), which has its own version byte and checksum and does not
+change any layout in this document.
 
 ## Version and compatibility rule
 
@@ -165,16 +168,81 @@ cp ../target/debug/libqrl_native.so ../target/python/qrl_native.cpython-312-x86_
 PYTHONPATH=<worktree>:<worktree>/target/python .venv-x86/bin/python -m pytest native/python/tests
 ```
 
-The Rust gate is `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`
+The Rust gate also covers `native/domain/tests/dataset_view.rs` (fold and fitted-state rules, and every
+single-byte and truncation corruption of a container). The Rust gate is `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`
 and `cargo test --workspace`, run from `native/` (the workspace manifest is at the repository root).
 The Python-only gate is `pytest tests/unit/market_data/test_native_abi.py`.
 
+## DatasetView and the cache container
+
+`DatasetView` (`qrl_native.DatasetView`) is an immutable dataset: one validated `BarBatch`, one
+`FeatureRowBlock` with identical decision times and row count, a list of walk-forward folds, and an
+optional fitted-state reference. Its content hash is FNV-1a over its canonical payload, so equal
+views hash equally in every process.
+
+Fold rules (rows are end-exclusive indices into the aligned dataset):
+
+- each training range is non-empty and ends at or before its test fold starts;
+- each test fold is non-empty and ends within the dataset;
+- `test_start - train_end >= purge_rows + embargo_rows` (the label horizon plus the embargo; the
+  sum is the stricter reading);
+- test folds do not overlap, in any input order.
+
+Fitted-state rules: the state id is non-empty; the range is non-empty and within the dataset; the
+range lies inside every fold's training range, so it uses training rows only; a fitted state
+without folds is refused, because folds are the only proof of train-only use.
+
+Sharing: a `DatasetView` is immutable, and in-process sharing goes through reference counting
+(`Arc`), so a second Python handle does not copy the arrays. The lifetime is proven by the count,
+with no unsafe code. Bars and features are copied into the view when it is built (copy-on-ingest).
+Other processes do not share memory with a view. They read the cache bytes. There is no `mmap` or
+Arrow-buffer zero-copy path in version 1: the native side owns copies only.
+
+Cache container, version 1, little-endian:
+`magic "QRLDSV01" (8) | abi_version u32 | payload_len u64 | fnv1a64(payload) u64 | payload`.
+The payload encodes both batches, the folds and the fitted state as length-prefixed sections. The
+decoder checks the magic, the version, the exact payload length and the checksum, then rebuilds
+every batch through the same constructors, so a corrupt container is refused and never repaired.
+FNV-1a detects every single-byte change and every truncation (the tests check every byte and every
+length). It is a corruption guard, not a tamper-proof digest.
+
+Python: `DatasetView.to_cache_bytes()` returns the container; `dataset_view_from_cache_bytes(b)`
+decodes it. Corruption raises `qrl_native.AbiCacheError` (a subclass of `AbiError`). Writes go
+through `market_data.native_abi.write_cache_atomic` (temporary file, fsync, `os.replace`), so a
+reader sees the old file or the complete new one. `native/python/tests/test_dataset_view_processes.py`
+decodes one cache file in two worker processes, using the spawn and fork start methods, and checks
+that both workers agree on the hash and that both refuse a corrupt copy.
+
+## Environment wiring (behind a flag)
+
+`env.native_data_abi.enabled` (default `false` in `config/base/default.yaml`). When true, the
+worker's bundle constructor builds a `qrl_native.FeatureRowBlock` from the bundle's `bar_time_ns`
+and `features_num` arrays (`simulation/environment/native_feature_block.py`). The block takes the
+manifest's `data.primary` as instrument, the bundle version and key as feature version and content
+hash, and the NY eligibility mask as `session_eligible`. Its values are read back and compared with
+the bundle matrix. Any refusal raises: a float32 matrix, a non-finite present value, a missing
+identity, or a missing extension, and nothing is filled. The step path still reads the NumPy
+arrays, so turning the flag on does not change any result. The flag is off by default.
+
+## Real-usage check
+
+`planning/native_modernization/shared_data_abi/real_usage_check.py` runs the ABI the way a user
+calls it: the built extension on `PYTHONPATH`, the Arrow adapter, and the public constructors. It
+reads the tracked pre-2026 sample `data/examples/US100.cash_M1_202412300105_202501020334.csv`
+(2,880 M1 bars, 2024-12-30 to 2025-01-02), refuses any row on or after 2026-01-01, builds the bar
+and feature batches, a `DatasetView` with one fold and a fitted state, writes and re-reads the
+cache, and confirms that a corrupted copy is refused. Its summary is written to
+`real_usage_summary.json` in the output directory. The Slurm job id, partition, CPUs, memory, time,
+exit code and output path are recorded in the ledger entry.
+
 ## Not in version 1
 
-- Zero-copy sharing (`mmap` or Arrow buffers), a `DatasetView` with fold bounds and fitted-state
-  references, and per-node sharing across worker processes. The plan's SHARED-DATA-ABI memory
-  measurements and process spawn and fork tests are not done.
-- Wiring into `simulation/environment/`. The environment does not read these batches yet.
+- Zero-copy sharing through `mmap` or Arrow buffers. Version 1 copies on ingest and shares only in
+  process by reference count.
+- The 1/2/4/8 environment memory scaling measurement. It needs one 8-CPU benchmark allocation,
+  which is a lead request. It is not run and is the one open item.
+- The step path. The flagged check validates the bundle matrix; the environment does not compute
+  with the native batches yet.
 - The `market-event.v2` revision view, `normalized-event.v1` payloads, action and candidate
   layouts, and the entry-state observation extension.
-- Serialization. The layout is in memory only, so a file or wire format needs its own version.
+- A cache format beyond version 1 of the container, and any tamper-proof digest.

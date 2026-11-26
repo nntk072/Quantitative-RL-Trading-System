@@ -19,6 +19,7 @@
 //! The compatibility rule is documented in `planning/native_modernization/shared_data_abi/`.
 
 mod batches;
+mod dataset;
 mod error;
 mod layout;
 
@@ -26,6 +27,7 @@ pub use batches::{
     BarBatch, BarColumns, Column, FeatureRowBlock, FeatureRowColumns, NullableF64,
     ObservationWindow, ObservationWindowColumns, QuoteBatch, QuoteColumns,
 };
+pub use dataset::{DatasetView, FittedState, Fold, CONTAINER_MAGIC};
 pub use error::AbiError;
 pub use layout::{layout, ColumnSpec, Dtype, PayloadKind};
 

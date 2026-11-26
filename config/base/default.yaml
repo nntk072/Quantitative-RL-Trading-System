@@ -364,6 +364,8 @@ features:
     quadrant_ranges: ["yesterday", "lastweek"]  # ranges that get q_* levels
 
 env:
+  native_data_abi:                     # SHARED-DATA-ABI: validate the bundle feature matrix through qrl_native
+    enabled: false                     # off by default; when true, bundle construction fails closed on any ABI refusal
   obs_window: 60                       # T in [T, F] obs
   feature_validity_channels: false     # opt-in sequence layout: values then finite-value masks
   regime_observation: false             # separate completed-D1 context branch for tcn_regime
