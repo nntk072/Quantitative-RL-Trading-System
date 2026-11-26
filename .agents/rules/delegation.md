@@ -144,6 +144,12 @@ on top of the rules above, not a new roster.
 - **One owner per PR.** Every PR body names its owner agent and its flow. The
   CI watcher messages that owner on failure and nobody else. A PR without an
   owner is not opened.
+- **Open a PR when delivered.** A subagent opens a PR only after it finishes one
+  delivery: the work is complete and the fast checks in this file pass locally.
+  The PR's required checks then gate the merge, and the CI watcher follows them.
+  Do not open a PR for work in progress, a partial acceptance, or a draft meant
+  to be finished later. If the work is not complete, hold the branch and report
+  the remaining items to the coordinator.
 - **Owner on call.** An owner stays responsible for its PR until it merges. It
   handles the failures the watcher routes to it. It does not wait for checks. If
   it stops, it hands the PR to a named successor in writing first.
