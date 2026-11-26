@@ -76,7 +76,31 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_purged_walk_forward_yields_expected_splits`](../../../../tests/unit/market_data/test_walkforward.py#L16)
+1. [test fixture: `test_purge_and_embargo_guarantees_of_the_existing_splitter`](../../../../tests/unit/features/test_feature_registry_values.py#L181)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_purge_and_embargo_guarantees_of_the_existing_splitter(bars) -> None:
+    purge, embargo, horizon = 60, 20, 5
+    splits = list(
+        purged_walk_forward(
+            len(bars),
+            n_splits=4,
+            test_size=0.2,
+            purge_bars=purge,
+            embargo_bars=embargo,
+            label_horizon=horizon,
+        )
+    )
+    assert len(splits) == 4
+    seen: list[Any] = []
+    for split in splits:
+        gap = int(split.test_idx.min()) - int(split.train_idx.max()) - 1
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_purged_walk_forward_yields_expected_splits`](../../../../tests/unit/market_data/test_walkforward.py#L16)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,17 +114,6 @@ def test_purged_walk_forward_yields_expected_splits() -> None:
         assert split.fold >= 0
         assert len(split.train_idx) > 0
         assert len(split.test_idx) > 0
-```
-
-2. [test fixture: `test_no_leakage_between_train_and_test`](../../../../tests/unit/market_data/test_walkforward.py#L28)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_no_leakage_between_train_and_test() -> None:
-    splits = list(purged_walk_forward(n=1000, n_splits=5))
-    for split in splits:
-        assert split.train_idx.max() < split.test_idx.min() - 60
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

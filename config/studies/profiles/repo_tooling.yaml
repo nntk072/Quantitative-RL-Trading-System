@@ -94,6 +94,7 @@ api_paths:
 - scripts/research/benchmarks/plan_survival_compute_budget.py
 - scripts/research/experiment_runs/analyze_experiment_run_runtime_scaling.py
 - scripts/research/experiment_runs/audit_experiment_run_source_fidelity.py
+- tools/check_fast.py
 - tools/documentation/api_usage.py
 - tools/documentation/check_docs.py
 - tools/documentation/check_notebooks.py
@@ -195,6 +196,7 @@ caller_paths:
 - tests/unit/research/test_trade_exit_cohorts.py
 - tests/unit/research/test_training_compute_contract.py
 - tests/unit/research/test_variant_details_report.py
+- tests/unit/tooling/test_check_fast.py
 - tests/unit/tooling/test_configuration_reference.py
 - tests/unit/tooling/test_coverage_report.py
 - tests/unit/tooling/test_dependency_security_gate.py
@@ -206,6 +208,7 @@ caller_paths:
 - tests/unit/tooling/test_test_overlap.py
 source_scopes:
   - {path: tools/agent, study_ids: [repo_tooling.architecture_and_documentation_contracts]}
+  - {path: tools/check_fast.py, study_ids: [repo_tooling.architecture_and_documentation_contracts]}
   - {path: tools/documentation, study_ids: [repo_tooling.package_cli_and_dependency_surface, repo_tooling.architecture_and_documentation_contracts]}
   - {path: tools/quality, study_ids: [repo_tooling.architecture_and_documentation_contracts]}
   - {path: scripts/research, study_ids: [repo_tooling.script_inputs_and_output_provenance]}

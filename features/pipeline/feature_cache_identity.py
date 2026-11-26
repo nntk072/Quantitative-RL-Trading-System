@@ -44,8 +44,12 @@ def feature_cache_content_hash(
     Returns:
         Text returned by ``feature_cache_content_hash``.
     """
+    from features.registry import code_identity  # lazy: the registry imports feature modules
+
     h = hashlib.sha256()
     h.update(FEATURE_CACHE_VERSION.encode())
+    # Declared feature-family source (features.registry): a code-only change rebuilds the cache.
+    h.update(code_identity().encode())
     # Retain legacy cache identities for existing experiments. A frozen-fold
     # fit must never consume a cache produced with legacy rolling statistics.
     if normalization_mode != "legacy_masked_window":
