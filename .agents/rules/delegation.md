@@ -102,6 +102,12 @@ on top of the rules above, not a new roster.
   feature branch and a pull request. CI must be green before a merge; the
   repository's branch protection (required CI checks, no direct pushes) is the
   owner's setting to apply, not an agent action.
+- **Gate by target.** A PR's required checks follow its base. A PR into
+  `main-native` needs `main-native`'s checks green; a PR into `main` needs
+  `main`'s checks green. The two integration branches (`main` to `main-native`,
+  and `main-native` to `main`) must be green against both targets. Feature
+  branches may be pushed, rebased and force-pushed freely; `main` and
+  `main-native` stay protected from direct pushes and force-push.
 - **Flows.** Each PR belongs to one flow: stream into `main-native`,
   `main-native` into `main`, `main` into `main-native`, or a change that stays on
   one branch. A flow may open several PRs; each PR is one reviewable unit.
