@@ -1,0 +1,26 @@
+{
+  "schema": "qrl.native.cargo_audit_record.v1",
+  "work_package": "QUALITY-AND-SECURITY",
+  "recorded_on": "2026-11-26",
+  "tool": {
+    "name": "cargo-audit",
+    "version": "cargo-audit-audit 0.23.0"
+  },
+  "command": "cargo audit -d <scratch advisory-db checkout> --deny warnings",
+  "exit_status": 0,
+  "advisory_source": "https://github.com/RustSec/advisory-db.git (fetched 2026-11-26 into a scratch directory)",
+  "advisories_loaded": 1568,
+  "lockfile": {
+    "path": "Cargo.lock",
+    "sha256": "f12ec2f47a4d717604b6f4d6f29154fa5d1e74dbc34a4482672e9050320d0c36",
+    "crate_dependencies_scanned": 16
+  },
+  "findings": [],
+  "notes": [
+    "cargo-audit's default advisory-db lock fails on this NFS home (NFS does not support locking), so the database was fetched to a scratch directory and passed with -d.",
+    "The advisory database git revision was not recorded in this file.",
+    "The crates.io index update warning is a lock failure on the same NFS home and does not affect the advisory scan.",
+    "This record covers the cargo-audit step only. Proptest and fuzz targets, the native CI matrix and the aarch64 build remain open."
+  ],
+  "evidence_ref": "logs/agents/architect/20261126_native_toolchain_acceptance/14_cargo_audit_lockfile.txt (transient, git-ignored)"
+}
