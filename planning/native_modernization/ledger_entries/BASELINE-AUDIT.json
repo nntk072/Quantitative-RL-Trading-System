@@ -9,7 +9,8 @@
     "planning/native_modernization/baseline/dependency_graph.json",
     "planning/native_modernization/baseline/workload_manifests.json",
     "planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py",
-    "planning/native_modernization/ledger_entries/BASELINE-AUDIT.json"
+    "planning/native_modernization/ledger_entries/BASELINE-AUDIT.json",
+    "planning/native_modernization/baseline/mutation_critical_survivors.txt"
   ],
   "tests_executed": [
     {
@@ -74,6 +75,12 @@
       "command": "historical 8-CPU run (prior, not rerun; no commit SHA recorded)",
       "exit_code": 0,
       "result": "1089 passed, 4 skipped; not bound to a3b3e442"
+    },
+    {
+      "command": "tools/check mutation-critical (QRL_CHECK_NO_SYNC=1 QRL_PYTHON=.venv-x86/bin/python QRL_MUTATION_MAX_CHILDREN=8), run by operator runner",
+      "exit_code": 0,
+      "result": "410 mutants: 346 killed, 64 survived (walkforward 34, align 26, risk/contracts 3, decisioning/actions 1); 0 timeouts",
+      "output": "logs: /scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh.log; survivors: planning/native_modernization/baseline/mutation_critical_survivors.txt; job 21877472 (batch-skl, 8 CPUs, node pht54, 13:54:13-13:54:38)"
     }
   ],
   "evidence_refs": [
@@ -84,7 +91,9 @@
     "planning/native_modernization/baseline/workload_manifests.json",
     "logs/agents/qa_engineer/2026-11-26_baseline_audit/exit_summary.txt",
     "logs/agents/qa_engineer/2026-11-26_baseline_audit/srun.txt",
-    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)"
+    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)",
+    "/scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh",
+    "planning/native_modernization/baseline/mutation_critical_survivors.txt"
   ],
   "allocation": {
     "status": "run",
@@ -107,9 +116,20 @@
       "research": 1
     },
     "output_path": "logs/agents/qa_engineer/2026-11-26_baseline_audit/",
-    "note": "Job started before the owner rule that reserves srun and scancel for the resource operator. Not cancelled by this session. Job cap note: the one-CPU-allocation cap was held by job 21873237 until it completed (cancelled by owner rule)."
+    "note": "Job started before the owner rule that reserves srun and scancel for the resource operator. Not cancelled by this session. Job cap note: the one-CPU-allocation cap was held by job 21873237 until it completed (cancelled by owner rule).",
+    "mutation_run": {
+      "job_id": "21877472",
+      "partition": "batch-skl",
+      "cpus": 8,
+      "node": "pht54",
+      "started": "2026-11-26T13:54:13+02:00",
+      "ended": "2026-11-26T13:54:38+02:00",
+      "command": "tools/check mutation-critical via spool inbox 05_baseline_audit_mutation_critical.sh",
+      "exit_code": 0,
+      "output_path": "/scratch/work/nguyenl37/spool/outbox/05_baseline_audit_mutation_critical.sh.log"
+    }
   },
-  "blocker": "(1) mutation-critical check (tools/check mutation-critical; mutmut 3.8.1 locked in uv.lock) is NOT RUN: mutmut is not installed in .venv-x86, its wheel is not in the local uv cache, and the node has no network. External need: install mutmut==3.8.1 into .venv-x86 (network or a pre-provisioned wheel), then one srun for the run. (2) research gate is red on the base: 7 failures, recorded in defects.md as RESEARCH-GATE-RED; repair is not in scope of this audit.",
-  "decision": "Recorded as partial. Accepted is not claimed: the mutation-critical check was not run, the research gate is red on the base, and the prior 8-CPU evidence is not bound to a commit. Unit (3810 passed) and integration (492 passed) gates ran on the current base in allocation 21877444 and exited 0. No defect was fixed; source is unchanged.",
+  "blocker": "(1) RESEARCH-GATE-RED: 7 research tests fail on the base (recorded in defects.md). Stays blocked until an accepted repair or an owner decision records it as a documented red gate. The mutation-critical check is no longer blocked: it ran with exit 0 (410 mutants, 64 survived; survivors recorded in defects.md as MUTATION-SURVIVORS). Repairing survivors is not in scope of this audit.",
+  "decision": "Recorded as partial. Mutation-critical ran (exit 0, 346 killed, 64 survived) and the unit and integration gates passed in allocation 21877444. Accepted is not claimed: the research gate is red with no owner decision, and the prior 8-CPU evidence is not bound to a commit. No defect was fixed; source is unchanged.",
   "reviewer": null
 }
