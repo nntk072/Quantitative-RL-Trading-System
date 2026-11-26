@@ -1,9 +1,9 @@
 """Value-level causal checks of the registry's families on the tracked example bars.
 
 Every check runs the real build path (build_features / build_indicators / align_timeframes) on
-data/examples only. Batch-vs-streaming and incremental-vs-full checks are not applicable: the
-repository has no streaming feature state (no streaming, incremental or partial_fit path in
-features/, market_data/ or live/).
+data/examples only. Batch-vs-streaming equivalence is covered for EMA and ATR in
+test_streaming_registry_equivalence.py. Other families have no streaming state, so their
+batch-vs-streaming and incremental-vs-full equivalence remains open.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from configuration.configuration_loader import load_config
 from features import build_features
 from features.registry import PRIMARY, registry_nodes
 from features.technical import indicators as ind
+from features.technical.structure import detect_session_levels
 from market_data.arrow_schemas import mt5_export_to_bars
 from market_data.splits.walkforward import purged_walk_forward
 from market_data.transforms.align import align_timeframes, timeframe_close_times
@@ -141,6 +142,7 @@ def test_changing_bars_inside_an_open_hour_does_not_reach_earlier_htf_values(bar
 
 def test_warmup_is_exactly_the_declared_leading_null_run(bars, cfg, base) -> None:
     for node in registry_nodes(cfg.features):
+        # prev_day_range has no fixed bar warm-up: its nulls cover the first session day only.
         if node.timeframe != PRIMARY or not node.outputs or node.node_id == "M1.prev_day_range":
             continue
         leads = [leading_nulls(base[column.name]) for column in node.outputs]
@@ -198,11 +200,18 @@ def test_purge_and_embargo_guarantees_of_the_existing_splitter(bars) -> None:
     assert len(np.unique(combined)) == len(combined)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="known defect: detect_session_levels reindexes date-keyed prior-day highs/lows "
-    "against a DatetimeIndex, so prev_day_high and prev_day_low are always null",
-)
-def test_prev_day_high_and_low_are_populated(base: pd.DataFrame) -> None:
-    assert base["prev_day_high"].notna().any()
-    assert base["prev_day_low"].notna().any()
+def test_prev_day_high_and_low_equal_the_previous_calendar_day_extremes(bars) -> None:
+    levels = detect_session_levels(bars)
+    dates = np.asarray(pd.DatetimeIndex(bars.index).date)
+    days = sorted(set(dates))
+    day_high = pd.Series(bars["high"].to_numpy()).groupby(dates).max()
+    day_low = pd.Series(bars["low"].to_numpy()).groupby(dates).min()
+    previous = {day: days[i - 1] for i, day in enumerate(days) if i > 0}
+    expected_high = np.array([day_high[previous[d]] if d in previous else np.nan for d in dates])
+    expected_low = np.array([day_low[previous[d]] if d in previous else np.nan for d in dates])
+    np.testing.assert_array_equal(levels["prev_day_high"].to_numpy(), expected_high)
+    np.testing.assert_array_equal(levels["prev_day_low"].to_numpy(), expected_low)
+    # Only the first session day has no completed prior day, so its rows are the only nulls.
+    first_day_rows = int((dates == days[0]).sum())
+    assert int(levels["prev_day_high"].isna().sum()) == first_day_rows
+    assert leading_nulls(levels["prev_day_low"]) == first_day_rows

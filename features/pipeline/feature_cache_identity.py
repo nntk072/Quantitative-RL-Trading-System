@@ -48,7 +48,8 @@ def feature_cache_content_hash(
 
     h = hashlib.sha256()
     h.update(FEATURE_CACHE_VERSION.encode())
-    # Declared feature-family source (features.registry): a code-only change rebuilds the cache.
+    # Declared family implementations plus every build-path module (features.source_identity):
+    # a code-only change, declared or not, rebuilds the cache.
     h.update(code_identity().encode())
     # Retain legacy cache identities for existing experiments. A frozen-fold
     # fit must never consume a cache produced with legacy rolling statistics.
