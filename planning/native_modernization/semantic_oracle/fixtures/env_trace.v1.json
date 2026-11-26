@@ -1,0 +1,1500 @@
+{
+ "episode": {
+  "actions": "[1,2,0,1,1,2,0,0] x 10",
+  "env": "TradingEnv(obs_window=10, initial_balance=100000, episodic=True, use_sweep_reward=False)",
+  "tape": "_make_deterministic_bars(120), _make_features(bars), seed 42"
+ },
+ "fixture_version": "1.0.0",
+ "kind": "characterization (frozen from the implementation, not hand-calculated); changes require a new version",
+ "n_steps": 60,
+ "n_trades": 76,
+ "ordering_key": "[valuation_bar_index, action_ordinal, trade_seq_within_step]",
+ "schema_version": "semantic-oracle-env-trace.v1",
+ "sha256": "5cd5d28a6d12875ed9145c40e297574d52211ca6071eceee16526909a875435a",
+ "trace": {
+  "steps": [
+   {
+    "action": 1,
+    "equity": 99999.96454,
+    "key": [
+     61,
+     0
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 100001.302396,
+    "key": [
+     62,
+     1
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 100002.264267,
+    "key": [
+     63,
+     2
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 100005.728841,
+    "key": [
+     64,
+     3
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 100009.93219,
+    "key": [
+     65,
+     4
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 100014.620872,
+    "key": [
+     66,
+     5
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 100012.559907,
+    "key": [
+     67,
+     6
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 100009.827408,
+    "key": [
+     68,
+     7
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 100014.898045,
+    "key": [
+     69,
+     8
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 100013.767437,
+    "key": [
+     70,
+     9
+    ],
+    "position_open": true,
+    "reward": 0.0,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 100006.228131,
+    "key": [
+     71,
+     10
+    ],
+    "position_open": true,
+    "reward": -7.230758755635,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99999.530403,
+    "key": [
+     72,
+     11
+    ],
+    "position_open": true,
+    "reward": -4.796210293526,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99994.09644,
+    "key": [
+     73,
+     12
+    ],
+    "position_open": true,
+    "reward": -3.398557110879,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99997.03466,
+    "key": [
+     74,
+     13
+    ],
+    "position_open": true,
+    "reward": 2.049715292409,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99997.876396,
+    "key": [
+     75,
+     14
+    ],
+    "position_open": true,
+    "reward": 0.584098184324,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 100001.957165,
+    "key": [
+     76,
+     15
+    ],
+    "position_open": true,
+    "reward": 2.649546044279,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99999.432102,
+    "key": [
+     77,
+     16
+    ],
+    "position_open": true,
+    "reward": -1.630011055627,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 100000.369071,
+    "key": [
+     78,
+     17
+    ],
+    "position_open": true,
+    "reward": 0.61414064765,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 100004.06631,
+    "key": [
+     79,
+     18
+    ],
+    "position_open": true,
+    "reward": 2.294370162088,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 100002.238072,
+    "key": [
+     80,
+     19
+    ],
+    "position_open": true,
+    "reward": -1.177069803142,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 100004.937614,
+    "key": [
+     81,
+     20
+    ],
+    "position_open": true,
+    "reward": 1.656472945786,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 100001.025632,
+    "key": [
+     82,
+     21
+    ],
+    "position_open": true,
+    "reward": -2.416291172927,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99998.879983,
+    "key": [
+     83,
+     22
+    ],
+    "position_open": true,
+    "reward": -1.302385854428,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99996.623912,
+    "key": [
+     84,
+     23
+    ],
+    "position_open": true,
+    "reward": -1.344658953503,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99989.5565,
+    "key": [
+     85,
+     24
+    ],
+    "position_open": true,
+    "reward": -3.486239408456,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99992.434507,
+    "key": [
+     86,
+     25
+    ],
+    "position_open": true,
+    "reward": 1.699445046199,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99989.66034,
+    "key": [
+     87,
+     26
+    ],
+    "position_open": true,
+    "reward": -1.450464296356,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99989.73418,
+    "key": [
+     88,
+     27
+    ],
+    "position_open": true,
+    "reward": 0.071706991975,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99992.575393,
+    "key": [
+     89,
+     28
+    ],
+    "position_open": true,
+    "reward": 1.656229602154,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99995.214392,
+    "key": [
+     90,
+     29
+    ],
+    "position_open": true,
+    "reward": 1.501927545911,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99999.146818,
+    "key": [
+     91,
+     30
+    ],
+    "position_open": true,
+    "reward": 2.149113796016,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99998.564769,
+    "key": [
+     92,
+     31
+    ],
+    "position_open": true,
+    "reward": -0.312282032636,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99996.063076,
+    "key": [
+     93,
+     32
+    ],
+    "position_open": true,
+    "reward": -1.327172001591,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99995.591941,
+    "key": [
+     94,
+     33
+    ],
+    "position_open": true,
+    "reward": -0.243873052494,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99985.619795,
+    "key": [
+     95,
+     34
+    ],
+    "position_open": true,
+    "reward": -4.009790449432,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99977.06736,
+    "key": [
+     96,
+     35
+    ],
+    "position_open": true,
+    "reward": -3.090708841907,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99969.250205,
+    "key": [
+     97,
+     36
+    ],
+    "position_open": true,
+    "reward": -2.622245731708,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99963.356476,
+    "key": [
+     98,
+     37
+    ],
+    "position_open": true,
+    "reward": -1.996966104737,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99965.719142,
+    "key": [
+     99,
+     38
+    ],
+    "position_open": true,
+    "reward": 1.14668440453,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99960.367761,
+    "key": [
+     100,
+     39
+    ],
+    "position_open": true,
+    "reward": -1.801603141595,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99958.13282,
+    "key": [
+     101,
+     40
+    ],
+    "position_open": true,
+    "reward": -0.793384953774,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99965.811259,
+    "key": [
+     102,
+     41
+    ],
+    "position_open": true,
+    "reward": 3.706823897537,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99963.705739,
+    "key": [
+     103,
+     42
+    ],
+    "position_open": true,
+    "reward": -0.733022006058,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99968.064456,
+    "key": [
+     104,
+     43
+    ],
+    "position_open": true,
+    "reward": 1.94430497737,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99962.546776,
+    "key": [
+     105,
+     44
+    ],
+    "position_open": true,
+    "reward": -1.799559686135,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99961.33264,
+    "key": [
+     106,
+     45
+    ],
+    "position_open": true,
+    "reward": -0.393643994773,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99955.71801,
+    "key": [
+     107,
+     46
+    ],
+    "position_open": true,
+    "reward": -1.762995410564,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99953.714324,
+    "key": [
+     108,
+     47
+    ],
+    "position_open": true,
+    "reward": -0.656126727578,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99958.680545,
+    "key": [
+     109,
+     48
+    ],
+    "position_open": true,
+    "reward": 2.21102088673,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99948.472081,
+    "key": [
+     110,
+     49
+    ],
+    "position_open": true,
+    "reward": -2.571069065911,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99951.039525,
+    "key": [
+     111,
+     50
+    ],
+    "position_open": true,
+    "reward": 1.074438740275,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99952.444543,
+    "key": [
+     112,
+     51
+    ],
+    "position_open": true,
+    "reward": 0.60493653681,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99948.933116,
+    "key": [
+     113,
+     52
+    ],
+    "position_open": true,
+    "reward": -1.07611024147,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99940.386914,
+    "key": [
+     114,
+     53
+    ],
+    "position_open": true,
+    "reward": -2.169230659367,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99940.8132,
+    "key": [
+     115,
+     54
+    ],
+    "position_open": true,
+    "reward": 0.246279455393,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99937.683898,
+    "key": [
+     116,
+     55
+    ],
+    "position_open": true,
+    "reward": -0.913388061277,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99939.059014,
+    "key": [
+     117,
+     56
+    ],
+    "position_open": true,
+    "reward": 0.60673235703,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 2,
+    "equity": 99939.18816,
+    "key": [
+     118,
+     57
+    ],
+    "position_open": true,
+    "reward": 0.140090454667,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 0,
+    "equity": 99948.654674,
+    "key": [
+     119,
+     58
+    ],
+    "position_open": true,
+    "reward": 3.931917579471,
+    "terminated": false,
+    "truncated": false
+   },
+   {
+    "action": 1,
+    "equity": 99947.240082,
+    "key": [
+     120,
+     59
+    ],
+    "position_open": false,
+    "reward": -0.391205105388,
+    "terminated": false,
+    "truncated": true
+   }
+  ],
+  "trades": [
+   {
+    "bar": 60,
+    "key": [
+     61,
+     0,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     61,
+     0,
+     1
+    ],
+    "reason": "",
+    "type": "order_fill"
+   },
+   {
+    "bar": 60,
+    "key": [
+     61,
+     0,
+     2
+    ],
+    "reason": "",
+    "type": "open"
+   },
+   {
+    "bar": 61,
+    "key": [
+     62,
+     1,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     62,
+     1,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 63,
+    "key": [
+     64,
+     3,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     64,
+     3,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 64,
+    "key": [
+     65,
+     4,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     65,
+     4,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 65,
+    "key": [
+     66,
+     5,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     66,
+     5,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 68,
+    "key": [
+     69,
+     8,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     69,
+     8,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 69,
+    "key": [
+     70,
+     9,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     70,
+     9,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 71,
+    "key": [
+     72,
+     11,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     72,
+     11,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 72,
+    "key": [
+     73,
+     12,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     73,
+     12,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 73,
+    "key": [
+     74,
+     13,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     74,
+     13,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 76,
+    "key": [
+     77,
+     16,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     77,
+     16,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 77,
+    "key": [
+     78,
+     17,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     78,
+     17,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 79,
+    "key": [
+     80,
+     19,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     80,
+     19,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 80,
+    "key": [
+     81,
+     20,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     81,
+     20,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 81,
+    "key": [
+     82,
+     21,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     82,
+     21,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 84,
+    "key": [
+     85,
+     24,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     85,
+     24,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 85,
+    "key": [
+     86,
+     25,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     86,
+     25,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 87,
+    "key": [
+     88,
+     27,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     88,
+     27,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 88,
+    "key": [
+     89,
+     28,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     89,
+     28,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 89,
+    "key": [
+     90,
+     29,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     90,
+     29,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 92,
+    "key": [
+     93,
+     32,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     93,
+     32,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 93,
+    "key": [
+     94,
+     33,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     94,
+     33,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 95,
+    "key": [
+     96,
+     35,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     96,
+     35,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 96,
+    "key": [
+     97,
+     36,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     97,
+     36,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 97,
+    "key": [
+     98,
+     37,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     98,
+     37,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 100,
+    "key": [
+     101,
+     40,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     101,
+     40,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 101,
+    "key": [
+     102,
+     41,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     102,
+     41,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 103,
+    "key": [
+     104,
+     43,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     104,
+     43,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 104,
+    "key": [
+     105,
+     44,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     105,
+     44,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 105,
+    "key": [
+     106,
+     45,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     106,
+     45,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 108,
+    "key": [
+     109,
+     48,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     109,
+     48,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 109,
+    "key": [
+     110,
+     49,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     110,
+     49,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 111,
+    "key": [
+     112,
+     51,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     112,
+     51,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 112,
+    "key": [
+     113,
+     52,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     113,
+     52,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 113,
+    "key": [
+     114,
+     53,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     114,
+     53,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 116,
+    "key": [
+     117,
+     56,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     117,
+     56,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 117,
+    "key": [
+     118,
+     57,
+     0
+    ],
+    "reason": "",
+    "type": "order_submit"
+   },
+   {
+    "bar": null,
+    "key": [
+     118,
+     57,
+     1
+    ],
+    "reason": "entry_rejected_at_market_fill",
+    "type": "order_cancel"
+   },
+   {
+    "bar": 119,
+    "key": [
+     120,
+     59,
+     0
+    ],
+    "reason": "session_end",
+    "type": "eod_close"
+   }
+  ]
+ }
+}

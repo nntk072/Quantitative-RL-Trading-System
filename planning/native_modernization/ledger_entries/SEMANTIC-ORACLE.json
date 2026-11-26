@@ -1,7 +1,7 @@
 {
   "id": "SEMANTIC-ORACLE",
-  "status": "partial",
-  "base_sha": "a3b3e442",
+  "status": "accepted",
+  "base_sha": "0ecf92a0 (origin/main-native, rebased)",
   "branch": "feat/semantic-oracle",
   "fixture_version": "2.2.0",
   "changed_paths": [
@@ -24,43 +24,47 @@
     "config/studies/profiles/simulation.yaml",
     "config/studies/profiles/decisioning.yaml",
     "trading/execution/costs.py (docstring only for C2 in 2.1.0)",
-    "tests/unit/simulation/test_semantic_oracle_backtest_target_legs.py"
+    "tests/unit/simulation/test_semantic_oracle_backtest_target_legs.py",
+    "native/domain/tests/semantic_oracle_invariants.rs",
+    "native/python/tests/test_semantic_oracle_parity.py",
+    "tests/unit/simulation/test_environment/test_semantic_oracle_env_trace.py",
+    "planning/native_modernization/semantic_oracle/fixtures/env_trace.v1.json"
   ],
   "tests_executed": [
     {
-      "command": "ruff format --check <4 touched source files and 6 oracle test modules>",
+      "command": "ruff format --check / ruff check (touched Python files)",
       "exit_code": 0,
-      "result": "10 files already formatted"
+      "result": "already formatted; all checks passed"
     },
     {
-      "command": "ruff check <same 10 files>",
+      "command": "python -m mypy (touched Python files, incl. env trace)",
       "exit_code": 0,
-      "result": "All checks passed!"
+      "result": "Success"
     },
     {
-      "command": "python -m mypy <same 10 files>",
+      "command": "python -m pytest env trace, scenarios, causality, fixture replay, study audit",
       "exit_code": 0,
-      "result": "Success: no issues found in 10 source files"
+      "result": "all passed (see parity_report)"
     },
     {
-      "command": "python -m pytest -q -p no:cacheprovider -o addopts= -rxs <oracle modules> tests/unit/trading/test_semantic_oracle_limits_sizing.py tests/unit/research_tools/test_study_audits.py",
-      "exit_code": 0,
-      "result": "168 passed"
+      "command": "spool 11: cargo test -p qrl-domain --offline --locked; cargo build -p qrl-native --release; import qrl_native; pytest native parity",
+      "exit_code": "11 job 1 (domain) 0, build 0, import 0; native pytest 1 then fixed",
+      "result": "see spool_runs"
     },
     {
-      "command": "python -m pytest -q -p no:cacheprovider -o addopts= tests/unit/trading tests/unit/simulation",
+      "command": "spool 12: pytest native/python/tests (parity, limits, position, smoke)",
       "exit_code": 0,
-      "result": "958 passed"
+      "result": "48 passed"
     },
     {
-      "command": "srun --immediate=60 ... realuse_backtest.py 600 (job 21877443)",
+      "command": "spool 13: cargo fmt --all --check; cargo clippy -p qrl-domain -p qrl-native --all-targets -- -D warnings",
+      "exit_code": 0,
+      "result": "clean"
+    },
+    {
+      "command": "srun 21877443 real-usage replay (pre-2026 synthetic)",
       "exit_code": 0,
       "result": "failures []"
-    },
-    {
-      "command": "scripted mutation check on 2.2.0",
-      "exit_code": null,
-      "result": "not performed"
     }
   ],
   "evidence_refs": [
@@ -73,8 +77,8 @@
     "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/regress.log (git-ignored)",
     "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/mutation_check.log (git-ignored, 1.0.0 run)"
   ],
-  "blocker": "Acceptance not fully met, so status stays partial. (1) The plan asks for 'Hypothesis and proptest' with a common fixture format. Hypothesis is done. No proptest (Rust) oracle exists on this branch, and proptest was not run. (2) Native backend parity is skipped with recorded reason: qrl_native is not built or installed in .venv-x86, and building it is out of scope for this package. (3) Full env event-trace freeze with ordering keys: account traces are frozen with ordering keys and env valuation indices are asserted, but no full env step trace is frozen as a golden. Closed for SEMANTIC-ORACLE in 2.2.0: O2, O3, O4, O5 (handed to LEARNER-CONTRACT: truncated-transition bootstrap rule), O6 (two declared rules, no change). Mutation re-run on 2.2.0 not performed.",
-  "decision": "Partial. Closed in 2.2.0: O2 enabled candidate-geometry mask (real env with seams; positive and two adverse cases); O3 cross-session breach latch (two-day tape with session window set to the tape clock; positive control submits in session 2; adverse breach blocks all submits); O4 backtest zero-leg caller (runtime test of _record_target_slot; positive 0.5-lot close; adverse zero leg and clamped runner leg). O5 pinned as declared semantics; decision on truncated-transition bootstrapping handed to LEARNER-CONTRACT. O6 two declared rules pinned (sizer floor; target-leg round-half-even), no change. Not accepted because of the proptest and native backend items and the full env trace freeze listed in the blocker.",
+  "blocker": null,
+  "decision": "Accepted for SEMANTIC-ORACLE. All acceptance items pass: positive and adverse cases for every listed domain (replace is not_applicable with evidence); fixture replay and expected outputs pass; disagreements classified (C1 and C3 fixed, C2 documented, C4 and rounding rules pinned); no silent golden update (manifest digest and version log); native backend parity run (48 passed, 0 skipped); fixed-seed Rust proptest run (6 passed); full env trace frozen and replayed. Scope notes, not failures: the native API covers integer lots, daily-loss limits and integer-lot positions only, so the sizer, target-leg, quote, guard-breach and reward families remain Python-side by design; no mutation re-run on 2.2.0; O5 truncated-transition bootstrapping is handed to LEARNER-CONTRACT.",
   "reviewer": null,
   "realuse_run": {
     "job_id": "21877443",
@@ -96,6 +100,26 @@
       "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/realuse_srun.log"
     ],
     "result": "equity_points 590, all finite, never below zero, 589 policy decisions, ledgers complete, failures []",
-    "note": "logs/ is git-ignored; the outputs are summarized here"
-  }
+    "note": "job 21877443, exit 0, pre-2026 synthetic tape"
+  },
+  "native_build": {
+    "toolchain": "rustc 1.100.0",
+    "command": "cargo build -p qrl-native --release --offline --locked (CARGO_TARGET_DIR=worktree target, linker shim with rust-lld)",
+    "note": "compute node pht54 has no gcc; linking used rust-lld as ld.lld with crt1/crti/crtn for executables"
+  },
+  "spool_runs": [
+    {
+      "job": "11_semantic_oracle_rust_and_native.sh",
+      "allocation": "job 21877472 node pht54",
+      "results": "domain test 55+10+6 passed (exit 0); qrl_native build exit 0; import exit 0; native parity exit 1 (fees_cents called as method; fixed)"
+    },
+    {
+      "job": "12_semantic_oracle_native_parity_rerun.sh",
+      "results": "48 passed, 0 skipped; exit 0"
+    },
+    {
+      "job": "13_semantic_oracle_clippy.sh",
+      "results": "fmt exit 0; clippy -D warnings (qrl-domain, qrl-native, all targets) exit 0"
+    }
+  ]
 }
