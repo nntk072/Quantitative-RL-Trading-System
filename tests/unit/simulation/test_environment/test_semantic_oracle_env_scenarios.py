@@ -9,18 +9,29 @@ claim that the source has no such operation.
 
 from __future__ import annotations
 
+import contextlib
 import functools
 import json
+import re
+import warnings
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 
-from decisioning.trade_setup import candidate_geometry_slot_count
+from decisioning.trade_setup import (
+    TRADE_SETUP_CANDIDATES,
+    candidate_geometry_slot,
+    candidate_geometry_slot_count,
+)
 from market_data.loading.ticks import TickLimitExecutionQuote
+from simulation.environment import candidate_geometry_observation as geometry
 from simulation.environment.candidate_geometry_observation import (
     build_candidate_geometry_observation,
 )
@@ -178,9 +189,150 @@ def _mask_indices(env: SimpleNamespace) -> list[int]:
     return [int(i) for i in range(len(mask)) if bool(mask[i])]
 
 
+SECOND_SESSION_BAR = 1440  # first bar of the second NY window on the two-day tape
+SECOND_DAY_CANDIDATE = 19  # standard_deviation, M1, long
+
+
+def _enabled_env(*, signal: bool) -> TradingEnv:
+    """Real TradingEnv with candidate geometry enabled (O2).
+
+    Synthetic bands and entry-idea signal columns are added so that the real candidate
+    pipeline builds. Zone, age and distance are supplied by the caller through seams.
+    """
+    warnings.filterwarnings("ignore", category=pd.errors.PerformanceWarning)
+    bars, features = _tape()
+    frame = features.copy()
+    extra: dict[str, np.ndarray[Any, Any]] = {}
+    for candidate in TRADE_SETUP_CANDIDATES:
+        side = "long" if int(candidate.direction) == 1 else "short"
+        extra[f"entry_idea_{candidate.idea}_{candidate.setup_timeframe}_{side}"] = np.zeros(
+            len(frame)
+        )
+        if candidate.idea == "standard_deviation":
+            prefix = "" if candidate.setup_timeframe == "M1" else f"{candidate.setup_timeframe}_"
+            extra[f"{prefix}standard_deviation_band_low"] = bars["close"].to_numpy() - 2.0
+            extra[f"{prefix}standard_deviation_band_high"] = bars["close"].to_numpy() + 2.0
+            if signal:
+                extra[f"entry_idea_{candidate.idea}_{candidate.setup_timeframe}_{side}"] = np.ones(
+                    len(frame)
+                )
+    extra["atr_5"] = np.ones(len(frame))
+    frame = pd.concat([frame, pd.DataFrame(extra, index=frame.index)], axis=1)
+    for _ in range(40):
+        try:
+            env = TradingEnv(
+                bars=bars,
+                features=frame,
+                obs_window=10,
+                initial_balance=100_000.0,
+                episodic=True,
+                use_sweep_reward=False,
+                trade_setup_actions=True,
+                candidate_geometry_actions=True,
+                agent_entry_execution=True,
+                strategy_actions=True,
+            )
+            env.reset(seed=42)
+            return env
+        except ValueError as exc:
+            missing = re.findall(r"'([^']+)'", str(exc))
+            if not missing:
+                raise
+            for column in missing:
+                frame[column] = 0.0
+    raise RuntimeError("enabled candidate env could not be built")
+
+
+def _replay_enabled_geometry(sid: str, expect: dict[str, Any]) -> None:
+    signal = sid != "G2-enabled-signal-off"
+    zone_present = sid != "G2-enabled-zone-missing"
+    env = _enabled_env(signal=signal)
+    zone = (19998.0, 20001.0) if zone_present else None
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(
+            mock.patch.object(geometry, "_reference_quote", lambda _e, _i: (20000.0, 20000.1))
+        )
+        stack.enter_context(mock.patch.object(geometry, "_source_zone", lambda *_a: zone))
+        stack.enter_context(
+            mock.patch.object(geometry, "_candidate_age_fraction", lambda *_a: 0.25)
+        )
+        stack.enter_context(
+            mock.patch.object(geometry, "_geometry_distances", lambda *_a: (1.0, 2.0, 1.5, 3.0))
+        )
+        mask = build_candidate_geometry_observation(env)["candidate_mask"]
+    true_indices = [int(i) for i in np.flatnonzero(mask)]
+    if "mask_true_indices" in expect:
+        assert true_indices == expect["mask_true_indices"], f"{sid}: {true_indices}"
+    if "candidate_market_slot_eligible" in expect:
+        slot = candidate_geometry_slot(SECOND_DAY_CANDIDATE, "market")
+        assert bool(mask[slot]), f"{sid}: market slot {slot} not eligible"
+        assert bool(mask[0]), f"{sid}: no-trade slot must always be eligible"
+
+
+def _run_two_day(*, breached: bool, steps: int = 1300) -> dict[str, Any]:
+    """Non-episodic real env on a two-day tape with the session window set to the tape clock (O3)."""
+    bars = _make_deterministic_bars(1500)
+    features = _make_features(bars)
+    env = TradingEnv(
+        bars=bars,
+        features=features,
+        obs_window=10,
+        initial_balance=100_000.0,
+        episodic=False,
+        use_sweep_reward=False,
+        session_start="16:30",
+        session_end="23:00",
+        session_timezone="Etc/GMT-3",
+    )
+    env.reset(seed=42)
+    assert env._session_ids_arr is not None
+    second_session = int(env._session_ids_arr[SECOND_SESSION_BAR])
+    if breached:
+        env.account.close_trade(-11_000.0)
+    second_steps = 0
+    for _ in range(steps):
+        if int(env._session_ids_arr[env.step_idx]) == second_session:
+            second_steps += 1
+        _, _, done, truncated, _ = env.step(1)
+        if done or truncated:
+            break
+    submits = Counter(t.get("session_id") for t in env.trade_log if t.get("type") == "order_submit")
+    opens = sum(1 for t in env.trade_log if t.get("type") == "open")
+    return {
+        "submits_total": sum(submits.values()),
+        "submits_in_second_session": submits.get(second_session, 0),
+        "second_session_steps": second_steps,
+        "opens": opens,
+        "breach_log": list(env.breach_log),
+        "year_failed": bool(getattr(env, "_year_failed", False)),
+    }
+
+
+def _replay_cross_session(sid: str, expect: dict[str, Any]) -> None:
+    observed = _run_two_day(breached=sid == "G4-cross-session-breach-blocks-submits")
+    if "submits_in_second_session_at_least" in expect:
+        assert observed["submits_in_second_session"] >= expect["submits_in_second_session_at_least"]
+    if "second_session_steps_at_least" in expect:
+        assert observed["second_session_steps"] >= expect["second_session_steps_at_least"]
+    if "submits_total" in expect:
+        assert observed["submits_total"] == expect["submits_total"]
+    if "opens" in expect:
+        assert observed["opens"] == expect["opens"]
+    if "breach_log" in expect:
+        assert observed["breach_log"] == expect["breach_log"]
+    if "year_failed" in expect:
+        assert observed["year_failed"] is expect["year_failed"]
+
+
 def _replay(scenario: dict[str, Any]) -> None:
     sid = scenario["id"]
     expect = scenario["expect"]
+    if sid.startswith("G2-enabled"):
+        _replay_enabled_geometry(sid, expect)
+        return
+    if sid.startswith("G4-cross-session"):
+        _replay_cross_session(sid, expect)
+        return
     if sid.startswith("G1-") and sid != "G1-replace":
         fill_offset = {
             "G1-cancel-session-change": None,
@@ -245,17 +397,11 @@ def _replay(scenario: dict[str, Any]) -> None:
 _REPLAYABLE = [
     s for s in SCENARIOS.values() if s["polarity"] in {"positive", "adverse", "not_applicable"}
 ]
-_OPEN = [s for s in SCENARIOS.values() if s["polarity"] == "open"]
 
 
 @pytest.mark.parametrize("scenario", [pytest.param(s, id=s["id"]) for s in _REPLAYABLE])
 def test_env_scenario_matches_hand_expectation(scenario: dict[str, Any]) -> None:
     _replay(scenario)
-
-
-@pytest.mark.parametrize("scenario", [pytest.param(s, id=s["id"]) for s in _OPEN])
-def test_open_env_scenario_is_visible_not_passed(scenario: dict[str, Any]) -> None:
-    pytest.skip(f"open item, not passed: {scenario['classification']}")
 
 
 def test_every_scenario_group_has_a_positive_and_an_adverse_case() -> None:

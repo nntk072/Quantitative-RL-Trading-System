@@ -1,4 +1,4 @@
-# SEMANTIC-ORACLE contracts (fixture version 2.1.0)
+# SEMANTIC-ORACLE contracts (fixture version 2.2.0)
 
 Work package: SEMANTIC-ORACLE (OFFLINE gate). Branch `feat/semantic-oracle`, base `origin/main-native` (a3b3e442).
 Companion files:
@@ -10,7 +10,7 @@ Companion files:
 ## 1. Scope, method and versioning
 
 - Expected values were written by hand, with the arithmetic in each case's `hand_calculation` field, before the replay tests were run. Production formulas were not used to produce expected values.
-- Version 1.0.0 (digest `d0e3f996...`) was the first freeze. Version 2.0.0 (digest `21b68771...`) recorded fixed source defects C1 and C3 and added env scenarios. Version 2.1.0 (current, digest in `MANIFEST.json`) pins the C2 decision (documented semantics, docstring corrected). Each version's `changes_from_*` block lists the change and the evidence it changed.
+- Version 1.0.0 (digest `d0e3f996...`) was the first freeze. Version 2.0.0 (digest `21b68771...`) recorded fixed source defects C1 and C3 and added env scenarios. Version 2.1.0 (digest `0e4528dc...`) pins the C2 decision (documented semantics, docstring corrected). Version 2.2.0 (current, digest in `MANIFEST.json`) closes O2 and O3 with env scenarios and adds the O4 runtime test; it changes no expected value. Each version's `changes_from_*` block lists the change and the evidence it changed.
 - Synthetic tapes only. Captured broker events are not in the tree and were not fabricated. They are not required for offline acceptance.
 - Tests: fixture replay `tests/unit/trading/test_semantic_oracle_fixture_replay.py`; Hypothesis properties `tests/unit/trading/test_semantic_oracle_properties.py`; env metamorphic tests `tests/unit/simulation/test_environment/test_semantic_oracle_env_causality.py`; env scenarios (pending orders, ambiguous bars, breach latch, candidate mask, zero target leg) `tests/unit/simulation/test_environment/test_semantic_oracle_env_scenarios.py`.
 - Native backend parity: **skipped, with recorded reason**. `qrl_native` is not installed in `.venv-x86`. Building it is out of scope for this package.
@@ -95,6 +95,8 @@ Classification uses the four plan categories: source defect, oracle defect, docu
 | RN-04 | event-keyed RNG | bit stream | **Characterization only** (SHA-256 is not hand-calculable). Golden for 2.0.0. |
 | SS-01 | `ny_session_mask` | inclusive endpoints | **Characterization.** Owner to confirm the window convention. |
 | E1 | `TradingEnv` at data end | observation differs from the in-episode observation at the same valuation index | **Documented alternative semantics, open.** A learner must not treat a truncated transition as a normal next state. Owner decision for LEARNER-CONTRACT truncation masking. |
+| O5 | truncation observation (E1) | declared semantics, pinned by `test_declared_semantics_data_end_observation_is_not_the_in_episode_observation` | Closed for SEMANTIC-ORACLE. Decision on bootstrapping truncated transitions is handed to **LEARNER-CONTRACT**. |
+| O6 | rounding, two declared rules | (a) lot sizer: `floor(affordable / lot_step) * lot_step` in float64, pinned by SZ-14 (0.28 at budget 2.9, hand 0.29). (b) target legs: `round(fraction * init_size, 2)` (Python round-half-even on float64), pinned by TG-06 (0.135 to 0.14) and TG-07 (0.125 to 0.12). | Closed for SEMANTIC-ORACLE: both rules documented as separate declared rules and pinned. No change. |
 
 No oracle defect was found. Every expectation that disagreed with the source was re-checked by hand. Each kept expectation is the hand value, and each pinned rule is stated as a rule.
 
@@ -129,13 +131,22 @@ The version 1.0.0 mutation run is recorded in `parity_report.md` section 4. Seve
 
 ## 7. Open items and non-claims
 
-- **O1 (closed in 2.1.0):** C2 resolved as documented semantics; see section 5. Changing `fill_price` slippage needs a new owner decision and a new evidence identity.
-- **O2 G2 enabled candidate geometry:** the enabled mask polarity needs a full synthetic env. Existing `test_candidate_geometry_observation.py` covers part of it. Open.
-- **O3 G4 cross-session latch:** the 1500-bar synthetic tape ends its first NY window at bar 451, so a second session contributes one step. Cross-session persistence needs a tape that reaches a second NY window. Open.
-- **O4 C3 backtest caller:** `simulation/backtest/protective_management.py` now consumes zero legs without a close. No runtime test drives that function. It is covered only by the shared `target_close_size` fixtures.
-- **O5 E1 learner contract:** truncation masking decision for the learner. Open.
-- **O6 Rounding unification:** sizer floors, leg rounds half-even. Pinned, not unified. Owner decision.
-- **Backend parity: skipped.** `qrl_native` is not built or installed in `.venv-x86`. Building it is out of scope for this package.
+Closed in 2.2.0 (positive and adverse cases pass, see parity report):
+
+- **O2 enabled candidate-geometry mask:** the real `TradingEnv` with `trade_setup_actions`, `candidate_geometry_actions` and `agent_entry_execution` builds on a synthetic tape. The zone, age and distance seams are supplied per case. Positive: signal and valid zone make the market slot of candidate 19 eligible. Adverse: signal off gives only the no-trade slot, and a missing zone gives only the no-trade slot. The zone, age and distance inputs are seams (`mock.patch`), so the full causal feature path is not exercised here.
+- **O3 cross-session latch:** `session_start="16:30"`, `session_end="23:00"`, `session_timezone="Etc/GMT-3"` make the 1500-bar two-day tape reach the second NY window (bars 1440 onward). Positive: control submits 58 entries in the second session. Adverse: a rollout breach in session 1 leaves zero submissions and zero opens in both sessions.
+- **O4 backtest zero-leg caller:** `simulation/backtest/protective_management.py` `_record_target_slot` is driven directly. Positive: a 0.5-lot leg reaches `_record_close` with size 0.5. Adverse: a zero leg, and a runner-clamped zero leg, consume the slot with no close.
+
+Declared for SEMANTIC-ORACLE, decision handed on:
+
+- **O5 truncation observation:** the observation returned at data end is not the in-episode observation for the same valuation index. Pinned as current behaviour. **Decision for LEARNER-CONTRACT:** whether truncated transitions are bootstrapped, and how.
+- **O6 rounding:** two separate declared rules (lot sizer floor; target-leg round-half-even), each pinned. **No change.** Unifying them would be an owner decision with a new evidence identity.
+
+Still not claimed:
+
+- **Native backend parity: skipped with recorded reason.** `qrl_native` is not built or installed in `.venv-x86`. Building it is outside this package.
+- **Rust proptest: not run.** The plan asks for Hypothesis and proptest. No Rust oracle exists on this branch, and the native backend is skipped.
+- The 2.2.0 mutation re-run was not performed in this pass.
 - Feature causality (`CAUSAL-FEATURE-GRAPH`) is out of scope. Env tests hold features fixed.
 - No claim about profitability, performance or research evidence.
 
@@ -144,7 +155,7 @@ The version 1.0.0 mutation run is recorded in `parity_report.md` section 4. Seve
 - Source: `trading/execution/costs.py` (C1), `trading/positions/multi_tp.py` (C3), `simulation/environment/protective_level_runtime.py` (C3, two sites), `simulation/backtest/protective_management.py` (C3).
 - Docstring only (C2): `CostModel.total_cost` docstring corrected. No behaviour change.
 - Behavior change: a run that hits a zero-size target leg now keeps the position and consumes the slot, instead of exiting the whole position. A call to `fill_price` with an invalid side now raises. Existing evaluation evidence that depends on either path is **not** comparable with 2.0.0 and needs a new evidence identity.
-- Fixtures: `semantic_oracle_fixtures.v2.json` and `MANIFEST.json` (2.0.0 superseded, digest recorded; 1.0.0 superseded earlier).
+- Fixtures: `semantic_oracle_fixtures.v2.json` and `MANIFEST.json` (2.0.0 and 2.1.0 superseded, digests recorded; 1.0.0 superseded earlier). 2.2.0 changes no expected value; it adds scenarios and the O4 test module.
 - Config: `config/studies/profiles/{market_data,trading,simulation}.yaml` (registrations only).
 
 ## 9. Golden update policy

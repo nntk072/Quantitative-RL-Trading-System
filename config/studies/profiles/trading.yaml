@@ -46,6 +46,7 @@ caller_paths:
 - tests/unit/trading/test_semantic_oracle_fixture_replay.py
 - tests/unit/trading/test_semantic_oracle_properties.py
 - tests/unit/simulation/test_environment/test_semantic_oracle_env_scenarios.py
+- tests/unit/simulation/test_semantic_oracle_backtest_target_legs.py
 - evaluation/candidate_execution.py
 - evaluation/plotting/chart_levels.py
 - evaluation/plotting/order_chart_data.py

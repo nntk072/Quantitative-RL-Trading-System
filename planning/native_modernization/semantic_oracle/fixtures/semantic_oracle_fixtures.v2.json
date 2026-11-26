@@ -1,6 +1,6 @@
 {
   "schema_version": "semantic-oracle-fixtures.v2",
-  "fixture_version": "2.1.0",
+  "fixture_version": "2.2.0",
   "contract_ref": "planning/native_modernization/semantic_oracle/semantic_contracts.md",
   "provenance": {
     "method": "Every expected value below was worked out by hand (the hand_calculation field states the arithmetic). No production formula was copied to produce an expected value. Values were typed in before the replay tests were run.",
@@ -2302,13 +2302,6 @@
       "hand_calculation": "max-loss floor 100000*(1-0.10)=90000 is breached; the rollout-scope breach latches year_failed; no later entry opens"
     },
     {
-      "id": "G4-cross-session-latch",
-      "group": "G4",
-      "polarity": "open",
-      "expect": {},
-      "classification": "open: the 1500-bar synthetic tape stops at the end of the first NY window (only one step falls in the second session), so cross-session persistence is not demonstrated. Needs a tape that reaches a second NY window."
-    },
-    {
       "id": "G2-disabled-candidate-mask",
       "group": "G2",
       "polarity": "positive",
@@ -2334,11 +2327,68 @@
       "hand_calculation": "setup ids present but geometry disabled: candidates stay masked"
     },
     {
-      "id": "G2-enabled-candidate-mask",
+      "id": "G2-enabled-signal-and-zone",
       "group": "G2",
-      "polarity": "open",
-      "expect": {},
-      "classification": "open: enabled-geometry mask polarity is covered only by the existing causal geometry test; a standalone fixture needs a full synthetic env."
+      "polarity": "positive",
+      "setup": "real TradingEnv with trade_setup_actions, candidate_geometry_actions and agent_entry_execution; standard_deviation bands around the close; entry_idea signal 1.0; zone, age and distance seams set to valid values",
+      "expect": {
+        "no_trade_slot_eligible": true,
+        "candidate_market_slot_eligible": {
+          "candidate_index": 19,
+          "entry_type": "market"
+        }
+      },
+      "hand_calculation": "the signal is positive and the zone (19998, 20001) is valid, so the market slot of candidate 19 (standard_deviation, M1, long) is eligible; slot 0 is always eligible"
+    },
+    {
+      "id": "G2-enabled-signal-off",
+      "group": "G2",
+      "polarity": "adverse",
+      "setup": "as above, entry_idea signal 0.0 for every candidate",
+      "expect": {
+        "mask_true_indices": [
+          0
+        ]
+      },
+      "hand_calculation": "a zero signal is not eligible (raw quality must be > 0), so only the no-trade slot remains"
+    },
+    {
+      "id": "G2-enabled-zone-missing",
+      "group": "G2",
+      "polarity": "adverse",
+      "setup": "as the positive case, but the source-zone seam returns None",
+      "expect": {
+        "mask_true_indices": [
+          0
+        ]
+      },
+      "hand_calculation": "without a source zone the candidate has no geometry and cannot be eligible"
+    },
+    {
+      "id": "G4-cross-session-control-submits",
+      "group": "G4",
+      "polarity": "positive",
+      "setup": "non-episodic real TradingEnv, session window 16:30-23:00 Etc/GMT-3, 1500-bar two-day tape, action 1 each step, no breach",
+      "expect": {
+        "submits_in_second_session_at_least": 1,
+        "second_session_steps_at_least": 50
+      },
+      "hand_calculation": "the second NY window (bars 1440 onward) is reached and decisions are submitted there (58 order_submit events observed)"
+    },
+    {
+      "id": "G4-cross-session-breach-blocks-submits",
+      "group": "G4",
+      "polarity": "adverse",
+      "setup": "as above, close_trade(-11000) before the first step",
+      "expect": {
+        "submits_total": 0,
+        "opens": 0,
+        "breach_log": [
+          "max_drawdown"
+        ],
+        "year_failed": true
+      },
+      "hand_calculation": "the rollout breach in session 1 latches year_failed, so no entry is submitted in session 1 or session 2"
     }
   ],
   "changes_from_2_0_0": [
@@ -2350,6 +2400,30 @@
         "fixture QF-08 expectation",
         "tests/unit/trading/test_semantic_oracle_costs.py",
         "fixture digest"
+      ]
+    }
+  ],
+  "changes_from_2_1_0": [
+    {
+      "id": "O2-O3",
+      "change": "Open env scenarios closed: enabled candidate-geometry mask (positive and two adverse) and cross-session breach latch (positive and adverse) on a 1500-bar two-day tape with the session window set to the tape clock. Expectations unchanged for existing ids.",
+      "evidence_changed": [
+        "fixture env_scenarios",
+        "tests/unit/simulation/test_environment/test_semantic_oracle_env_scenarios.py"
+      ]
+    },
+    {
+      "id": "O4",
+      "change": "Backtest zero-leg caller covered by a runtime test (test_semantic_oracle_backtest_target_legs.py). No expectation changed.",
+      "evidence_changed": [
+        "tests/unit/simulation/test_semantic_oracle_backtest_target_legs.py"
+      ]
+    },
+    {
+      "id": "O5-O6",
+      "change": "Declared semantics documented and pinned: truncation observation (O5, decision handed to LEARNER-CONTRACT); sizer floor and leg round-half-even as separate declared rules (O6). No expectation changed.",
+      "evidence_changed": [
+        "semantic_contracts.md"
       ]
     }
   ]
