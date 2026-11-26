@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -58,15 +59,31 @@ def hybrid_tape() -> dict[str, Any]:
 # --- fixture integrity ---------------------------------------------------------
 
 
-def test_committed_tapes_are_exactly_what_the_generator_writes() -> None:
+def _assert_close(committed: Any, regenerated: Any, path: str) -> None:
+    # Byte equality is not portable: libm rounding differs by platform, so values are compared at 1e-12.
+    if isinstance(committed, dict):
+        assert committed.keys() == regenerated.keys(), path
+        for key in committed:
+            _assert_close(committed[key], regenerated[key], f"{path}.{key}")
+    elif isinstance(committed, list):
+        assert len(committed) == len(regenerated), path
+        for i, (a, b) in enumerate(zip(committed, regenerated, strict=True)):
+            _assert_close(a, b, f"{path}[{i}]")
+    elif isinstance(committed, float):
+        assert math.isclose(committed, regenerated, rel_tol=1e-12, abs_tol=1e-12), path
+    else:
+        assert committed == regenerated, path
+
+
+def test_committed_tapes_match_the_generator() -> None:
     generator = _load_generator()
     files = generator.build_all()
-    for name, expected in files.items():
-        assert (FIXTURE_DIR / name).read_bytes() == expected, f"{name} drifted from generator"
     manifest = json.loads((FIXTURE_DIR / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["files"].keys() == files.keys()
-    for name, data in files.items():
-        assert manifest["files"][name]["sha256"] == hashlib.sha256(data).hexdigest()
+    for name, regenerated in files.items():
+        committed = (FIXTURE_DIR / name).read_bytes()
+        assert hashlib.sha256(committed).hexdigest() == manifest["files"][name]["sha256"], name
+        _assert_close(json.loads(committed), json.loads(regenerated), name)
 
 
 def test_implementation_action_centers_match_the_frozen_schema(hybrid_tape: dict[str, Any]) -> None:
