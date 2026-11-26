@@ -97,8 +97,13 @@ CALENDAR_SCHEMA = pa.schema(
 NORMALIZED_EVENT_SCHEMA_ID = "normalized-event.v1"
 FEATURE_ROW_SCHEMA_ID = "feature-row.v1"
 
+BAR_REVISED_SCHEMA_ID = "market-event.v2"
+"""Bars with an integer correction ``revision``; produced only by :mod:`market_data.schema_migration`."""
+
+BAR_REVISED_SCHEMA = pa.schema([*BAR_SCHEMA, pa.field("revision", pa.int64(), nullable=False)])
+
 SUPPORTED_SCHEMA_IDS = frozenset(
-    {SCHEMA_VERSION, NORMALIZED_EVENT_SCHEMA_ID, FEATURE_ROW_SCHEMA_ID}
+    {SCHEMA_VERSION, NORMALIZED_EVENT_SCHEMA_ID, FEATURE_ROW_SCHEMA_ID, BAR_REVISED_SCHEMA_ID}
 )
 """Schema identities this reader accepts. Any other id fails closed; see the README migration policy."""
 
@@ -283,26 +288,26 @@ def validate_calendar(table: pa.Table) -> list[RowProblem]:
     return sorted(problems, key=lambda p: p.row)
 
 
-def require_schema_id(table: pa.Table) -> str:
-    """Return the single schema id of a table, failing closed on unknown or mixed ids.
+def require_schema_id(table: pa.Table, accepted: frozenset[str] = SUPPORTED_SCHEMA_IDS) -> str:
+    """Return the single schema id of a table, failing closed on unknown, mixed or unaccepted ids.
 
     Args:
         table: Normalized table with a ``schema_id`` column.
+        accepted: Ids this caller accepts. Defaults to every id this package supports; a narrower
+            set lets a reader refuse a newer id it cannot interpret.
 
     Returns:
         The one schema id carried by every row.
 
     Raises:
-        ValueError: If the table is empty, mixes ids, or carries an unsupported id.
+        ValueError: If the table is empty, mixes ids, or carries an id outside ``accepted``.
     """
     ids = set(table.column("schema_id").to_pylist())
     if len(ids) != 1:
         raise ValueError(f"table must carry exactly one schema_id, found {sorted(ids)!r}")
     (schema_id,) = ids
-    if schema_id not in SUPPORTED_SCHEMA_IDS:
-        raise ValueError(
-            f"unsupported schema_id {schema_id!r}; supported {sorted(SUPPORTED_SCHEMA_IDS)!r}"
-        )
+    if schema_id not in SUPPORTED_SCHEMA_IDS or schema_id not in accepted:
+        raise ValueError(f"unsupported schema_id {schema_id!r}; supported {sorted(accepted)!r}")
     return str(schema_id)
 
 
