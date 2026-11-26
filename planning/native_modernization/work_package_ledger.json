@@ -254,15 +254,22 @@
       "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
-      "changed_paths": [],
+      "changed_paths": [
+        "docs/reference/public_api.json",
+        "docs/reference/public_api.md",
+        "features/technical/README.md",
+        "features/technical/streaming.py",
+        "tests/unit/features/test_streaming_indicators.py"
+      ],
       "tests_executed": [
-        "tests/unit/features/test_causal_prefix_invariance.py (prefix invariance for ATR and realized vol)"
+        "tests/unit/features/test_causal_prefix_invariance.py (prefix invariance for ATR and realized vol)",
+        "tests/unit/features/test_streaming_indicators.py"
       ],
       "evidence_refs": [],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": "Typed feature DAG, fit-scope and cache-hash rules, held-out perturbation, and batch vs streaming equivalence are not implemented.",
-      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
+      "blocker": "Slice 1 done: EMA and ATR streaming state matches the batch functions on the tracked example (max relative deviation about 1e-15, tolerance 1e-12), with prefix equality, snapshot resume and fail-closed inputs. Open: streaming state for the remaining families and window indicators, incremental invalidation on source corrections, feature-graph integration (registry, fit state, matrix order), and checkpoint layout compatibility.",
+      "decision": "Not accepted. Slice 1 is evidence only; the package stays blocked until the open items run.",
       "reviewer": null,
       "authorization_or_resource": "Offline engineering stream: typed feature DAG, fit-scope and cache-hash rules, batch vs streaming tests; no allocation."
     },

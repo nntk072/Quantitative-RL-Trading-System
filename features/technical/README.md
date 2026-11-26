@@ -33,3 +33,11 @@ classDiagram
     IndicatorsModule ..> CausalTechnicalValues : calculates
     HtfSweepsModule ..> CausalTechnicalValues : records availability
 ```
+
+## Streaming state (slice 1)
+
+`streaming.py` holds append-only state for EMA and ATR. Each update returns a new immutable
+snapshot. It matches the batch functions in `indicators.py` on the tracked example within a relative
+tolerance of 1e-12, and it refuses non-finite inputs instead of carrying them forward. Window-based
+indicators, the feature-graph registry integration and the checkpoint layout are not implemented yet.
+
