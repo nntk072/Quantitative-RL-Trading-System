@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `artifacts.promotion`. Sta
 
 **Purpose:** Validation evidence returned only after every promotion check passes.
 
-**Exact API:** {py:obj}`artifacts.promotion.BaselineValidation` · **Source:** [artifacts/promotion.py:18](../../../../artifacts/promotion.py#L18)
+**Exact API:** {py:obj}`artifacts.promotion.BaselineValidation` · **Source:** [artifacts/promotion.py:19](../../../../artifacts/promotion.py#L19)
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
@@ -35,7 +35,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Validate and atomically publish an artifact as a baseline directory.
 
-**Exact API:** {py:obj}`artifacts.promotion.promote_to_baseline` · **Source:** [artifacts/promotion.py:99](../../../../artifacts/promotion.py#L99)
+**Exact API:** {py:obj}`artifacts.promotion.promote_to_baseline` · **Source:** [artifacts/promotion.py:100](../../../../artifacts/promotion.py#L100)
 
 **Inputs and outputs:**
 
@@ -79,7 +79,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return validation results as a JSON-compatible mapping.
 
-**Exact API:** {py:obj}`artifacts.promotion.BaselineValidation.to_dict` · **Source:** [artifacts/promotion.py:31](../../../../artifacts/promotion.py#L31)
+**Exact API:** {py:obj}`artifacts.promotion.BaselineValidation.to_dict` · **Source:** [artifacts/promotion.py:32](../../../../artifacts/promotion.py#L32)
 
 **Inputs and outputs:**
 
