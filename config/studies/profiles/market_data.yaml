@@ -43,6 +43,8 @@ caller_paths:
 - tests/unit/market_data/test_arrow_schemas.py
 - tests/unit/market_data/test_mt5_export_to_bars.py
 - tests/unit/features/test_causal_prefix_invariance.py
+- tests/unit/features/test_pivot_windows_vectorized.py
+- tests/unit/features/test_structure_retained_levels.py
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
 - evaluation/contracts.py

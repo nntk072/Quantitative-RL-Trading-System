@@ -1,6 +1,6 @@
 # Unsafe audit of the native crates
 
-Scope: every Rust source file in this repository's own crates (`native/domain`, `native/python`).
+Scope: every Rust source file in this repository's own crates (`native/domain`, `native/features`, `native/python`).
 
 ## Result
 
@@ -9,7 +9,8 @@ Scope: every Rust source file in this repository's own crates (`native/domain`, 
   `static mut`, `#[no_mangle]`): **0**.
 - Files audited: `native/domain/src/{lib,units,order,position,account,risk,wire}.rs`,
   `native/domain/tests/properties.rs`, `native/domain/tests/invariants.rs`,
-  `native/python/src/lib.rs`.
+  `native/features/src/{lib,retained}.rs`,
+  `native/features/tests/{retained_cases,retained_properties}.rs`, `native/python/src/lib.rs`.
 
 Verification command (run from the repository root; `target/` and `.venv/` excluded):
 

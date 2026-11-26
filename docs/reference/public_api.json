@@ -13396,7 +13396,7 @@
       "name": "classify_structure",
       "numpy_style": false,
       "package": "features",
-      "source_line": 222,
+      "source_line": 324,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13408,7 +13408,7 @@
       "name": "detect_pivots",
       "numpy_style": false,
       "package": "features",
-      "source_line": 26,
+      "source_line": 69,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13420,7 +13420,7 @@
       "name": "detect_swings",
       "numpy_style": false,
       "package": "features",
-      "source_line": 86,
+      "source_line": 188,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13497,6 +13497,42 @@
       "source_path": "features/technical/indicators.py"
     },
     {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.technical.native_kernels",
+      "kind": "function",
+      "name": "_bool_bytes",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 75,
+      "source_module": "features.technical.native_kernels",
+      "source_path": "features/technical/native_kernels.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.technical.native_kernels",
+      "kind": "function",
+      "name": "_float_bytes",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 63,
+      "source_module": "features.technical.native_kernels",
+      "source_path": "features/technical/native_kernels.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.technical.native_kernels",
+      "kind": "function",
+      "name": "_from_bytes",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 50,
+      "source_module": "features.technical.native_kernels",
+      "source_path": "features/technical/native_kernels.py"
+    },
+    {
       "classification": "cross-package internal",
       "documented": true,
       "exported_from": "features.technical.streaming",
@@ -13564,7 +13600,7 @@
       "name": "MAX_RETAINED_LEVELS",
       "numpy_style": false,
       "package": "features",
-      "source_line": 333,
+      "source_line": 435,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13576,7 +13612,7 @@
       "name": "TIMEFRAME_CONFIG",
       "numpy_style": false,
       "package": "features",
-      "source_line": 12,
+      "source_line": 13,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13588,7 +13624,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "features",
-      "source_line": 20,
+      "source_line": 22,
       "source_module": "features.technical.structure",
       "source_path": "features/technical/structure.py"
     },
@@ -13600,7 +13636,7 @@
       "name": "classify_structure",
       "numpy_style": false,
       "package": "features",
-      "source_line": 222,
+      "source_line": 324,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13612,7 +13648,7 @@
       "name": "detect_pivots",
       "numpy_style": false,
       "package": "features",
-      "source_line": 26,
+      "source_line": 69,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13624,7 +13660,7 @@
       "name": "detect_session_levels",
       "numpy_style": false,
       "package": "features",
-      "source_line": 117,
+      "source_line": 120,
       "source_module": "features.technical.structure",
       "source_path": "features/technical/structure.py"
     },
@@ -13636,7 +13672,7 @@
       "name": "detect_swings",
       "numpy_style": false,
       "package": "features",
-      "source_line": 86,
+      "source_line": 188,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13660,7 +13696,7 @@
       "name": "recent_unswept_swing_candidates",
       "numpy_style": false,
       "package": "features",
-      "source_line": 459,
+      "source_line": 572,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13672,7 +13708,7 @@
       "name": "retained_swing_levels",
       "numpy_style": false,
       "package": "features",
-      "source_line": 336,
+      "source_line": 438,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13684,7 +13720,7 @@
       "name": "structure_levels",
       "numpy_style": false,
       "package": "features",
-      "source_line": 35,
+      "source_line": 37,
       "source_module": "features.technical.structure",
       "source_path": "features/technical/structure.py"
     },
@@ -13696,7 +13732,7 @@
       "name": "swing_features",
       "numpy_style": false,
       "package": "features",
-      "source_line": 275,
+      "source_line": 377,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },
@@ -13708,7 +13744,19 @@
       "name": "_bars_since",
       "numpy_style": false,
       "package": "features",
-      "source_line": 575,
+      "source_line": 688,
+      "source_module": "features.technical.swings",
+      "source_path": "features/technical/swings.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.technical.swings",
+      "kind": "function",
+      "name": "_pivot_frame",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 27,
       "source_module": "features.technical.swings",
       "source_path": "features/technical/swings.py"
     },

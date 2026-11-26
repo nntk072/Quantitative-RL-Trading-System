@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 506 |
-| private implementation | 1105 |
+| private implementation | 1109 |
 
 ## Public package exports
 
@@ -329,9 +329,9 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `detect_po3_entries` | function | [features.po3.trigger_rules](../../features/po3/trigger_rules.py#L372) | stable |
 | `atr` | function | [features.technical.indicators](../../features/technical/indicators.py#L111) | stable |
 | `build_indicators` | function | [features.technical.indicators](../../features/technical/indicators.py#L484) | stable |
-| `classify_structure` | function | [features.technical.swings](../../features/technical/swings.py#L222) | stable |
-| `detect_pivots` | function | [features.technical.swings](../../features/technical/swings.py#L26) | stable |
-| `detect_swings` | function | [features.technical.swings](../../features/technical/swings.py#L86) | stable |
+| `classify_structure` | function | [features.technical.swings](../../features/technical/swings.py#L324) | stable |
+| `detect_pivots` | function | [features.technical.swings](../../features/technical/swings.py#L69) | stable |
+| `detect_swings` | function | [features.technical.swings](../../features/technical/swings.py#L188) | stable |
 
 ### `integrations`
 

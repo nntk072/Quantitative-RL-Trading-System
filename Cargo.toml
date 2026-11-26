@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["native/domain", "native/python"]
+members = ["native/domain", "native/features", "native/python"]
 
 [workspace.package]
 edition = "2021"

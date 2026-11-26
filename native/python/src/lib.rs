@@ -4,7 +4,9 @@
 
 use pyo3::exceptions::{PyOverflowError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::types::{PyBytes, PyTuple};
 use qrl_domain::{DomainError, Fill, Price, Quantity, Side};
+use qrl_features::{KernelError, RetainedInput};
 
 /// Maps a domain refusal to Python: overflow to `OverflowError`, invalid input to `ValueError`.
 fn to_py_err(err: DomainError) -> PyErr {
@@ -119,8 +121,119 @@ impl PyPosition {
     }
 }
 
+/// Decodes little-endian `f64` values from a bytes buffer, refusing a partial element.
+fn decode_f64(name: &str, bytes: &[u8]) -> PyResult<Vec<f64>> {
+    if !bytes.len().is_multiple_of(8) {
+        return Err(PyValueError::new_err(format!(
+            "{name} must be a whole number of float64 values, got {} bytes",
+            bytes.len()
+        )));
+    }
+    let (words, _) = bytes.as_chunks::<8>();
+    Ok(words.iter().map(|word| f64::from_le_bytes(*word)).collect())
+}
+
+/// Decodes a boolean array sent as one byte per bar; any byte other than 0 or 1 is refused.
+fn decode_bool(name: &str, bytes: &[u8]) -> PyResult<Vec<bool>> {
+    bytes
+        .iter()
+        .map(|byte| match byte {
+            0 => Ok(false),
+            1 => Ok(true),
+            other => Err(PyValueError::new_err(format!(
+                "{name} must contain only 0 or 1 bytes, found {other}"
+            ))),
+        })
+        .collect()
+}
+
+/// Encodes values as little-endian bytes so Python reads them as `<f8` / `<i8` arrays.
+fn encode_f64(values: &[f64]) -> Vec<u8> {
+    values
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect()
+}
+
+fn encode_i64(values: &[i64]) -> Vec<u8> {
+    values
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect()
+}
+
+/// Retained unswept swing levels per side. Arrays cross the boundary as little-endian bytes:
+/// `float64` for prices, locations and bar series; one byte per bar for the boolean events.
+/// Returns the ten output arrays in the order of `retained_swing_levels_outputs` on the Python side.
+#[pyfunction]
+#[pyo3(signature = (
+    swing_high_event,
+    swing_low_event,
+    swing_high_extreme,
+    swing_low_extreme,
+    swing_high_location,
+    swing_low_location,
+    high,
+    low,
+    close,
+    width
+))]
+#[allow(clippy::too_many_arguments)]
+fn retained_swing_levels<'py>(
+    py: Python<'py>,
+    swing_high_event: &[u8],
+    swing_low_event: &[u8],
+    swing_high_extreme: &[u8],
+    swing_low_extreme: &[u8],
+    swing_high_location: &[u8],
+    swing_low_location: &[u8],
+    high: &[u8],
+    low: &[u8],
+    close: &[u8],
+    width: usize,
+) -> PyResult<Bound<'py, PyTuple>> {
+    let swing_high_event = decode_bool("swing_high_event", swing_high_event)?;
+    let swing_low_event = decode_bool("swing_low_event", swing_low_event)?;
+    let swing_high_extreme = decode_f64("swing_high_extreme", swing_high_extreme)?;
+    let swing_low_extreme = decode_f64("swing_low_extreme", swing_low_extreme)?;
+    let swing_high_location = decode_f64("swing_high_location", swing_high_location)?;
+    let swing_low_location = decode_f64("swing_low_location", swing_low_location)?;
+    let high = decode_f64("high", high)?;
+    let low = decode_f64("low", low)?;
+    let close = decode_f64("close", close)?;
+    let input = RetainedInput {
+        swing_high_event: &swing_high_event,
+        swing_low_event: &swing_low_event,
+        swing_high_extreme: &swing_high_extreme,
+        swing_low_extreme: &swing_low_extreme,
+        swing_high_location: &swing_high_location,
+        swing_low_location: &swing_low_location,
+        high: &high,
+        low: &low,
+        close: &close,
+    };
+    let out = qrl_features::retained_swing_levels(&input, width).map_err(|err| match err {
+        KernelError::SizeOverflow => PyOverflowError::new_err(err.to_string()),
+        _ => PyValueError::new_err(err.to_string()),
+    })?;
+    let parts = [
+        PyBytes::new(py, &encode_i64(&out.n_retained_highs)),
+        PyBytes::new(py, &encode_i64(&out.n_retained_lows)),
+        PyBytes::new(py, &encode_f64(&out.swept_high)),
+        PyBytes::new(py, &encode_f64(&out.swept_low)),
+        PyBytes::new(py, &encode_f64(&out.swept_high_loc)),
+        PyBytes::new(py, &encode_f64(&out.swept_low_loc)),
+        PyBytes::new(py, &encode_f64(&out.retained_highs)),
+        PyBytes::new(py, &encode_f64(&out.retained_high_locs)),
+        PyBytes::new(py, &encode_f64(&out.retained_lows)),
+        PyBytes::new(py, &encode_f64(&out.retained_low_locs)),
+    ];
+    PyTuple::new(py, parts)
+}
+
 #[pymodule]
 fn qrl_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(retained_swing_levels, module)?)?;
     module.add_function(wrap_pyfunction!(domain_schema_version, module)?)?;
     module.add_function(wrap_pyfunction!(checked_add_units, module)?)?;
     module.add_function(wrap_pyfunction!(canonical_daily_loss_cents, module)?)?;

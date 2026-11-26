@@ -6,6 +6,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from numpy.lib.stride_tricks import sliding_window_view
 
 from features.technical.indicators import atr as compute_atr
 
@@ -23,12 +24,113 @@ TIMEFRAME_CONFIG: dict[str, dict[str, float | int]] = {
 }
 
 
+def _pivot_frame(
+    df: pd.DataFrame,
+    ev_h: np.ndarray[Any, Any],
+    price_h: np.ndarray[Any, Any],
+    ext_h: np.ndarray[Any, Any],
+    loc_h: np.ndarray[Any, Any],
+    ev_l: np.ndarray[Any, Any],
+    price_l: np.ndarray[Any, Any],
+    ext_l: np.ndarray[Any, Any],
+    loc_l: np.ndarray[Any, Any],
+) -> pd.DataFrame:
+    """Assemble the pivot output frame from per-bar arrays (shared by both implementations).
+
+    Args:
+        df: Source frame; only its index is used.
+        ev_h: High-pivot confirmation events.
+        price_h: High-pivot prices at confirmation.
+        ext_h: High-pivot extremes at confirmation.
+        loc_h: High-pivot bar positions at confirmation.
+        ev_l: Low-pivot confirmation events.
+        price_l: Low-pivot prices at confirmation.
+        ext_l: Low-pivot extremes at confirmation.
+        loc_l: Low-pivot bar positions at confirmation.
+
+    Returns:
+        Frame with the eight ``pivot_*`` columns on ``df.index``.
+    """
+    return pd.DataFrame(
+        {
+            "pivot_high_event": ev_h,
+            "pivot_high_price": price_h,
+            "pivot_high_extreme": ext_h,
+            "pivot_high_location": loc_h,
+            "pivot_low_event": ev_l,
+            "pivot_low_price": price_l,
+            "pivot_low_extreme": ext_l,
+            "pivot_low_location": loc_l,
+        },
+        index=df.index,
+    )
+
+
 def detect_pivots(df: pd.DataFrame, left: int = 2, right: int = 2) -> pd.DataFrame:
     """Detect fractal pivots; features populate only from the confirmation bar.
 
     A pivot at bar ``i`` is known at bar ``i + right``. High pivots use the
     highest wick and low pivots use the lowest wick; both become visible only
-    at the confirmation bar.
+    at the confirmation bar. The vectorized form uses sliding windows over the
+    same left and right spans as :func:`detect_pivots_reference`; NaN in a
+    window propagates through ``max``/``min`` exactly as in the loop, so a
+    window containing NaN never confirms a pivot.
+
+    Args:
+        df: OHLC frame with a DatetimeIndex.
+        left: Bars before the pivot that must be strictly lower/higher; at least 0.
+        right: Confirmation bars after the pivot; at least 0.
+
+    Returns:
+        Frame with pivot high/low event, price, extreme, and location columns.
+
+    Raises:
+        ValueError: If ``left`` or ``right`` is negative.
+    """
+    if left < 0 or right < 0:
+        raise ValueError("pivot windows must be non-negative")
+    n = len(df)
+    high = df["high"].to_numpy(dtype=float)
+    low = df["low"].to_numpy(dtype=float)
+    ev_h = np.zeros(n, dtype=bool)
+    ev_l = np.zeros(n, dtype=bool)
+    price_h = np.full(n, np.nan)
+    price_l = np.full(n, np.nan)
+    ext_h = np.full(n, np.nan)
+    ext_l = np.full(n, np.nan)
+    loc_h = np.full(n, np.nan)
+    loc_l = np.full(n, np.nan)
+
+    count = n - right - left  # candidate centres i in [left, n - right)
+    if left >= 1 and right >= 1 and count > 0:
+        # Row k of a window view is values[k : k + width]. For centre i the left span is
+        # high[i - left : i] (row i - left) and the right span is high[i + 1 : i + right + 1]
+        # (row i + 1), so both views are sliced to the same centre range.
+        left_high = sliding_window_view(high, left)[:count].max(axis=1)
+        right_high = sliding_window_view(high, right)[left + 1 : left + 1 + count].max(axis=1)
+        left_low = sliding_window_view(low, left)[:count].min(axis=1)
+        right_low = sliding_window_view(low, right)[left + 1 : left + 1 + count].min(axis=1)
+        centres = np.arange(left, left + count)
+        high_c = high[left : left + count]
+        low_c = low[left : left + count]
+        is_high = (high_c > left_high) & (high_c > right_high)
+        is_low = (low_c < left_low) & (low_c < right_low)
+        conf_h = centres[is_high] + right
+        conf_l = centres[is_low] + right
+        ev_h[conf_h] = True
+        price_h[conf_h] = high[centres[is_high]]
+        ext_h[conf_h] = high[centres[is_high]]
+        loc_h[conf_h] = centres[is_high]
+        ev_l[conf_l] = True
+        price_l[conf_l] = low[centres[is_low]]
+        ext_l[conf_l] = low[centres[is_low]]
+        loc_l[conf_l] = centres[is_low]
+
+    return _pivot_frame(df, ev_h, price_h, ext_h, loc_h, ev_l, price_l, ext_l, loc_l)
+
+
+def detect_pivots_reference(df: pd.DataFrame, left: int = 2, right: int = 2) -> pd.DataFrame:
+    """Sequential loop reference for :func:`detect_pivots`; kept as the differential-test oracle.
 
     Args:
         df: OHLC frame with a DatetimeIndex.
@@ -338,6 +440,7 @@ def retained_swing_levels(
     bars: pd.DataFrame,
     *,
     max_levels: int = MAX_RETAINED_LEVELS,
+    backend: str = "python",
 ) -> pd.DataFrame:
     """Retain every currently-unswept confirmed swing level per side.
 
@@ -359,6 +462,9 @@ def retained_swing_levels(
         swings: Output of :func:`detect_swings`.
         bars: OHLC frame aligned with ``swings``; needs ``high``/``low``.
         max_levels: Cap on retained levels per side per bar (fixed-width).
+        backend: ``"python"`` runs the reference loop below (default and test oracle);
+            ``"native"`` runs the Rust kernel in ``qrl_native`` and raises ``ImportError``
+            when it is unavailable. There is no silent fallback between the two.
 
     Returns:
         Frame indexed like ``swings`` with, per side:
@@ -368,6 +474,13 @@ def retained_swing_levels(
         ``swept_high`` / ``swept_low`` (level swept this bar, else NaN),
         ``swept_high_loc`` / ``swept_low_loc`` (its bar location, else NaN).
     """
+    if backend == "native":
+        from features.technical.native_kernels import retained_swing_levels_native
+
+        return retained_swing_levels_native(swings, bars, max_levels=max_levels)
+    if backend != "python":
+        raise ValueError(f"unknown retained-level backend {backend!r}")
+
     n = len(swings)
     ev_h = swings["swing_high_event"].to_numpy(dtype=bool)
     ev_l = swings["swing_low_event"].to_numpy(dtype=bool)

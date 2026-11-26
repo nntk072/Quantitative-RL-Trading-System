@@ -1,0 +1,150 @@
+{
+  "id": "FEATURE-KERNELS",
+  "status": "partial",
+  "branch": "feat/feature-kernels",
+  "base": "origin/main-native",
+  "changed_paths": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "native/features/Cargo.toml",
+    "native/features/src/lib.rs",
+    "native/features/src/retained.rs",
+    "native/features/tests/retained_cases.rs",
+    "native/features/tests/retained_properties.rs",
+    "native/python/Cargo.toml",
+    "native/python/src/lib.rs",
+    "native/UNSAFE_AUDIT.md",
+    "features/technical/swings.py",
+    "features/technical/structure.py",
+    "features/technical/native_kernels.py",
+    "tests/unit/features/test_pivot_windows_vectorized.py",
+    "tests/unit/features/test_structure_retained_levels.py",
+    "tests/unit/features/test_native_retained_levels.py",
+    "config/studies/profiles/features.yaml",
+    "config/studies/profiles/market_data.yaml",
+    "docs/reference/public_api.json",
+    "docs/reference/public_api.md",
+    "planning/native_modernization/feature_kernels/benchmarks/bench_feature_hotpaths.py",
+    "planning/native_modernization/feature_kernels/kernel_decisions.json",
+    "planning/native_modernization/feature_kernels/measurements/small_input_before_after.json",
+    "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.json",
+    "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.log",
+    "planning/native_modernization/feature_kernels/measurements/srun_command.txt",
+    "planning/native_modernization/ledger_entries/FEATURE-KERNELS.json"
+  ],
+  "tests_executed": [
+    {
+      "command": "cd native && cargo fmt --all -- --check",
+      "exit_code": 0
+    },
+    {
+      "command": "cd native && cargo clippy --workspace --all-targets -- -D warnings",
+      "exit_code": 0
+    },
+    {
+      "command": "cd native && cargo test --workspace",
+      "exit_code": 0,
+      "counts": "qrl-domain 55 unit + 10 properties; qrl-features 8 cases + 4 proptest properties"
+    },
+    {
+      "command": ".venv-x86/bin/python -m ruff format --check (7 touched Python files)",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv-x86/bin/python -m ruff check (7 touched Python files)",
+      "exit_code": 0
+    },
+    {
+      "command": ".venv-x86/bin/python -m ruff format --check . (full tree)",
+      "exit_code": 0,
+      "counts": "1500 files already formatted"
+    },
+    {
+      "command": ".venv-x86/bin/python -m ruff check . (full tree)",
+      "exit_code": 0
+    },
+    {
+      "command": "PYTHONPATH=<wt> .venv-x86/bin/python -m mypy (7 touched Python files)",
+      "exit_code": 0
+    },
+    {
+      "command": "PYTHONPATH=<wt> .venv-x86/bin/python -m mypy . (full tree)",
+      "exit_code": 0,
+      "counts": "1453 source files"
+    },
+    {
+      "command": "PYTHONPATH=<wt>:<stage>/native_module pytest tests/unit/features tests/unit/research_tools/test_study_audits.py -q",
+      "exit_code": 0,
+      "counts": "674 passed, 1 xfailed (native backend tests ran)"
+    },
+    {
+      "command": "PYTHONPATH=<wt> pytest tests/unit/features tests/unit/research_tools/test_study_audits.py -q (no native module)",
+      "exit_code": 0,
+      "counts": "607 passed, 1 skipped (native tests), 1 xfailed"
+    },
+    {
+      "command": "PYTHONPATH=<wt> pytest tests/architecture -q",
+      "exit_code": 0,
+      "counts": "69 passed"
+    },
+    {
+      "command": "python -m tools.documentation.public_api --check",
+      "exit_code": 0
+    },
+    {
+      "command": "pytest native/python/tests (qrl_native binding parity, --confcutdir native/python)",
+      "exit_code": 0,
+      "counts": "40 passed"
+    },
+    {
+      "command": "grep -rn --include=*.rs -E '\\bunsafe\\b' native",
+      "exit_code": 1,
+      "note": "no matches"
+    },
+    {
+      "command": "login-node differential scripts: pivots 14400 cases, structure vs HEAD copy 108 cases, native retained 954 cases",
+      "exit_code": 0,
+      "note": "scratch scripts, all exact; the pivot and structure cases are also in the committed tests"
+    }
+  ],
+  "srun": {
+    "job_id": 21877445,
+    "partition": "batch-skl",
+    "node": "pht20",
+    "cpus": 8,
+    "memory": "16G",
+    "time_limit": "00:30:00",
+    "tmux_session": "qrl-feature-kernels-cpu",
+    "immediate": 60,
+    "started_before_resource_operator_rule": true,
+    "command_file": "planning/native_modernization/feature_kernels/measurements/srun_command.txt",
+    "exact_command": "srun --immediate=60 --cpus-per-task=8 --mem=16G --time=00:30:00 --job-name=qrl-fk-real-usage <venv>/bin/python planning/native_modernization/feature_kernels/benchmarks/bench_feature_hotpaths.py --sizes 2000 20000 200000 --repeats 5 --head-dir <wt>/target/feature_kernels_stage/head_copy --out <wt>/planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.json",
+    "exit_code": 0,
+    "output_path": "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.json",
+    "log_path": "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.log",
+    "inputs": "tracked 2880-row US100 M1 example (2024-12-30 to 2025-01-02, real pre-2026) and seeded synthetic M1 random walks dated 2025-01-02 (synthetic)"
+  },
+  "evidence_refs": [
+    "planning/native_modernization/feature_kernels/kernel_decisions.json",
+    "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.json",
+    "planning/native_modernization/feature_kernels/measurements/small_input_before_after.json",
+    "tests/unit/features/test_pivot_windows_vectorized.py",
+    "tests/unit/features/test_structure_retained_levels.py",
+    "tests/unit/features/test_native_retained_levels.py",
+    "native/features/tests/retained_cases.rs",
+    "native/features/tests/retained_properties.rs"
+  ],
+  "measured_compute_node_200000_rows_synthetic_median_s": {
+    "pivots_loop_reference": 1.11487,
+    "pivots_numpy_windows": 0.04981,
+    "structure_levels_head_before_change": 5.7858,
+    "structure_levels_python_backend": 1.85526,
+    "structure_levels_native_backend": 0.50182,
+    "retained_levels_python_backend": 1.47384,
+    "retained_levels_native_backend": 0.14363,
+    "swings_python_loop": 0.2391
+  },
+  "blocker": "(1) Promotion of the retained_swing_levels native backend to default needs a full-data BENCH measurement under PERFORMANCE-POLICY. The only real pre-2026 sample is the 2880-row example and no full M1 dataset is in this worktree, so full-data timing was not run. (2) Acceptance item 'benchmark representative full data and incremental updates' is not met; streaming kernels are not part of this package. (3) CAUSAL-FEATURE-GRAPH is still blocked in work_package_ledger.json; this package was implemented as instructed and does not unblock it.",
+  "decision": "Partial, not accepted. Shipped: (a) detect_pivots as NumPy sliding windows, exact, loop kept as oracle (default); (b) structure_levels assembly without per-row loops or list round trip (exact, default); (c) Rust qrl-features retained-level kernel exposed through qrl_native, explicit opt-in backend='native', default python, no silent fallback. Rejected with measured reasons: Polars resample, pandas ewm indicators, swing_history/swing_features/classify (small share), TA-Lib/ta-rs (offline, not evaluated), rayon (no parallel branch). Deferred: Rust zigzag detect_swings (48 percent of the compute-node native-backend structure_levels call at 200000 rows; needs implementation and measurement) and the Polars masked rolling z-score (masked path not measured). Tolerance 0 (bit-exact, check_exact=True). No fast-math. Cargo.lock changed only by adding the qrl-features workspace member, built with pinned toolchain 1.100.0.",
+  "reviewer": null
+}

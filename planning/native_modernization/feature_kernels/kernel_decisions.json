@@ -1,0 +1,109 @@
+{
+  "schema": "qrl.feature_kernels.decisions.v1",
+  "work_package": "FEATURE-KERNELS",
+  "scope": "features/technical pivots, structure level assembly and retained swing levels",
+  "numerical_contract": {
+    "tolerance": "0 (bit-exact on float64 outputs; the frozen tolerance was declared before comparison and no tolerance was needed)",
+    "comparison": "pandas.testing.assert_frame_equal(check_exact=True) against the Python reference, including dtypes, column order, index and NaN positions",
+    "fast_math": "not used; Rust kernels use IEEE-754 f64 with the same operation order as the reference",
+    "precision": "f64 for all state and outputs; no f32 model-ready path was introduced"
+  },
+  "accepted": [
+    {
+      "id": "pivots_numpy_windows",
+      "function": "features.technical.swings.detect_pivots",
+      "implementation": "numpy sliding_window_view over the left and right spans, same confirmation rule",
+      "reference_oracle": "features.technical.swings.detect_pivots_reference (verbatim loop)",
+      "default_backend": "vectorized (single implementation; oracle kept for tests)",
+      "evidence": [
+        "tests/unit/features/test_pivot_windows_vectorized.py",
+        "login-node differential run: 14400 cases (n<60, windows 0..5, NaN injection) exact, exit 0",
+        "measurements/small_input_before_after.json (login node, small inputs)"
+      ]
+    },
+    {
+      "id": "structure_levels_assembly",
+      "function": "features.technical.structure.structure_levels",
+      "implementation": "finite-location time gather vectorized; retained columns taken as numpy arrays instead of a per-cell to_dict('list') round trip",
+      "reference_oracle": "legacy assembly reproduced in tests/unit/features/test_structure_retained_levels.py; HEAD copy compared in login-node differential (108 cases, exact)",
+      "default_backend": "vectorized (single implementation)",
+      "evidence": [
+        "tests/unit/features/test_structure_retained_levels.py",
+        "measurements/small_input_before_after.json"
+      ]
+    },
+    {
+      "id": "retained_swing_levels_native",
+      "function": "features.technical.swings.retained_swing_levels(backend='native')",
+      "implementation": "Rust crate native/features (qrl-features), exposed through qrl_native.retained_swing_levels; Python wrapper features/technical/native_kernels.py",
+      "reference_oracle": "features.technical.swings.retained_swing_levels(backend='python')",
+      "default_backend": "python (explicit opt-in only; no silent fallback). Promotion to default is blocked: PERFORMANCE-POLICY requires the full-data BENCH result, see ledger blocker",
+      "evidence": [
+        "native/features/tests/retained_cases.rs (8 hand-computed cases)",
+        "native/features/tests/retained_properties.rs (4 proptest properties: prefix causality, width cap, close invalidation, unused NaN slots)",
+        "tests/unit/features/test_native_retained_levels.py (60 seeded and 80 hypothesis frames, exact; refusal and ImportError paths)",
+        "login-node differential: 954 cases exact, including adversarial NaN and tie frames",
+        "measurements/small_input_before_after.json (login node) and the srun run recorded in the ledger entry"
+      ]
+    }
+  ],
+  "rejected": [
+    {
+      "id": "polars_resample_ohlc",
+      "reason": "Polars group_by_dynamic including pandas-to-Polars conversion is 1.1 to 1.3x faster than pandas resample on 2880 and 20000 rows, below the 1.5x threshold; pandas resample is about 0.7 percent of the M1 structure chain. Kept pandas.",
+      "evidence": "measurements/small_input_before_after.json: resample_M5_pandas vs resample_M5_polars_incl_conversion"
+    },
+    {
+      "id": "polars_rolling_mean_std",
+      "reason": "Deferred, not implemented. On the unmasked rolling mean and population std, Polars including conversion is slower than pandas at 2880 rows (3.2 ms vs 1.7 ms) and at 20000 rows (3.9 ms vs 5.0 ms), but 2.2x faster at 200000 rows on the compute node (0.017 s vs 0.038 s). The production masked path (where/ffill, train-only) was not ported or measured, and rolling_zscore_legacy_masked is 0.070 s at 200000 rows and outside the structure chain. Keep pandas until the masked path is measured.",
+      "evidence": "measurements/srun_pre2026_real_usage.json: rolling_mean_std_pandas_no_mask vs rolling_mean_std_polars_incl_conversion (synthetic_m1_200000); small_input_before_after.json for 2880 and 20000 rows"
+    },
+    {
+      "id": "pandas_ewm_indicators",
+      "reason": "EMA, ATR, RSI and Bollinger are already vectorized pandas (C-backed ewm and rolling). Measured 0.1 to 4.8 ms at 20000 rows and not on the structure hot path. No kernel.",
+      "evidence": "measurements/small_input_before_after.json: ema/atr/rsi/bollinger cases"
+    },
+    {
+      "id": "swing_history_swing_features_classify",
+      "reason": "swing_history is about 40 ms, swing_features about 20 ms and classify_structure about 6 ms at 20000 rows (about 7, 4 and 1 percent of the chain). Below threshold. Candidates for a NumPy rewrite only if the full-data run shows them larger.",
+      "evidence": "login-node component timing, not in the JSON; see ledger entry for the srun run"
+    },
+    {
+      "id": "ta_lib_or_ta_rs_standard_indicators",
+      "reason": "not evaluated. No TA-Lib or ta-rs dependency is present, and the sandbox has no network access to add one. Status not_applicable_with_evidence for this run only.",
+      "evidence": "cargo registry listing shows no ta-rs crate"
+    },
+    {
+      "id": "rayon_bounded_pool",
+      "reason": "no independent parallel branch was measured in these kernels; the retained-level and zigzag kernels are sequential. Not used.",
+      "evidence": "native/features/src/retained.rs has no parallel section"
+    }
+  ],
+  "not_run": [
+    {
+      "item": "full-data timing on the full historical M1 dataset",
+      "reason": "no full pre-2026 M1 dataset is in this worktree (the repository contains only the 2880-row example); the 200000-row synthetic run is the largest input measured. The owner rule also restricts srun to the resource operator from now on; one srun (job 21877445, exit 0) ran before that rule with the lead's authorization, and no further srun was started."
+    },
+    {
+      "item": "incremental (streaming) update timing",
+      "reason": "the streaming indicator state from CAUSAL-FEATURE-GRAPH slice 1 is not part of this package, so no incremental kernel was benchmarked."
+    }
+  ],
+  "deferred": [
+    {
+      "id": "detect_swings_zigzag_rust",
+      "status": "deferred_pending_new_measurement",
+      "reason": "A first login-node measurement rejected this port: the zigzag loop was 25 ms of a 557 ms M1 structure chain at 20000 rows (about 4.6 percent). The compute-node run at 200000 rows changes that conclusion for the native path. There, detect_swings takes 0.239 s of the 0.502 s structure_levels native-backend call (about 48 percent), and about 8.7 percent of the python-backend chain (2.736 s). A Rust zigzag port could therefore roughly halve the native-backend structure_levels time. It is not implemented in this package, so no speed-up is claimed for it. Next step: implement behind the same explicit backend switch, run the same differential and property tests, and measure through the resource operator's spool.",
+      "evidence": [
+        "measurements/srun_pre2026_real_usage.json: swings_python_loop, structure_levels_native_backend, m1_structure_chain (synthetic_m1_200000)",
+        "measurements/small_input_before_after.json: swings_python_loop at 20000 rows"
+      ]
+    }
+  ],
+  "measurements": {
+    "login_node_small_inputs": "measurements/small_input_before_after.json (2880 example rows, 2000 and 20000 synthetic rows, 7 repeats, shared login node, loadavg about 13-15; the HEAD-pivot timing in this file is unexplained noise and is superseded by the compute-node run)",
+    "compute_node_pre2026_real_usage": "measurements/srun_pre2026_real_usage.json and measurements/srun_pre2026_real_usage.log; Slurm job 21877445, partition batch-skl, node pht20, 8 CPUs, 16G, time limit 30 min, 5 repeats after one warm-up, median and min and max reported in the JSON. Inputs: the tracked 2024-12-30 to 2025-01-02 US100 M1 example (2880 rows, real) and seeded synthetic M1 random walks dated 2025-01-02 (2000, 20000, 200000 rows; synthetic, not market data)",
+    "srun_command": "measurements/srun_command.txt",
+    "srun_exit_code": 0
+  }
+}

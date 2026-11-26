@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -41,6 +43,7 @@ def structure_levels(
     swing_candidate_count: int = 1,
     price_increment: float | None = None,
     confirmation_delay_ms: int = 0,
+    retained_backend: str = "python",
 ) -> pd.DataFrame:
     """Compute causal swing price levels for structure-based SL/TP.
 
@@ -65,6 +68,8 @@ def structure_levels(
         price_increment: Optional instrument tick size for candidate deduplication.
         confirmation_delay_ms: Duration from the left-labeled source bar to its
             completed-bar confirmation instant.
+        retained_backend: ``"python"`` (default reference) or ``"native"`` for the
+            Rust retained-level kernel; see :func:`retained_swing_levels`.
 
     Returns:
         Frame with ``last_swing_*`` (legacy) plus retained-set and compact
@@ -77,25 +82,23 @@ def structure_levels(
     loc_l = swings["swing_low_location"].to_numpy(dtype=float)
     sh_times = np.full(len(bars), np.datetime64("NaT"), dtype="datetime64[ns]")
     sl_times = np.full(len(bars), np.datetime64("NaT"), dtype="datetime64[ns]")
-    for i, loc in enumerate(loc_h):
-        if np.isfinite(loc):
-            sh_times[i] = times[int(loc)]
-    for i, loc in enumerate(loc_l):
-        if np.isfinite(loc):
-            sl_times[i] = times[int(loc)]
-    base = {
+    # Vectorized gather: a finite location maps to the bar time at that position.
+    finite_h = np.isfinite(loc_h)
+    finite_l = np.isfinite(loc_l)
+    sh_times[finite_h] = times[loc_h[finite_h].astype(np.intp)]
+    sl_times[finite_l] = times[loc_l[finite_l].astype(np.intp)]
+    base: dict[str, Any] = {
         "last_swing_high": swings["swing_high_extreme"].to_numpy(dtype=float),
         "last_swing_low": swings["swing_low_extreme"].to_numpy(dtype=float),
         "last_swing_high_time": pd.Series(sh_times, index=bars.index, dtype=bars.index.dtype),
         "last_swing_low_time": pd.Series(sl_times, index=bars.index, dtype=bars.index.dtype),
     }
-    retained = {
-        str(k): list(v)
-        for k, v in retained_swing_levels(swings, bars, max_levels=retained_max)
-        .to_dict("list")
-        .items()
-    }
-    base.update(retained)
+    retained_frame = retained_swing_levels(
+        swings, bars, max_levels=retained_max, backend=retained_backend
+    )
+    # Column arrays keep their numpy dtypes; a per-cell list round trip boxed every value.
+    for column in retained_frame.columns:
+        base[str(column)] = retained_frame[column].to_numpy()
     result = pd.DataFrame(base, index=bars.index)
     if swing_candidate_count > 1:
         result = pd.concat(

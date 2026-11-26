@@ -305,11 +305,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "qrl-features"
+version = "0.1.0"
+dependencies = [
+ "proptest",
+]
+
+[[package]]
 name = "qrl-native"
 version = "0.1.0"
 dependencies = [
  "pyo3",
  "qrl-domain",
+ "qrl-features",
 ]
 
 [[package]]
