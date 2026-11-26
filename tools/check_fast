@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Fast pre-push checks for files changed against origin/main-native.
+# Usage: ./tools/check_fast [--base REF]
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+PY="${QRL_PYTHON:-/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python}"
+exec "$PY" -m tools.check_fast "$@"

@@ -41,6 +41,8 @@ caller_paths:
 - tests/unit/experiments/test_experiment_run_policy_overrides.py
 - tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py
 - tests/unit/features/test_build_pipeline.py
+- tests/unit/features/test_feature_registry.py
+- tests/unit/features/test_feature_registry_values.py
 - tests/unit/features/test_pd_context.py
 - tests/unit/features/test_synthetic_entry_timing_examples.py
 - tests/unit/models/test_lite_tcn_agent.py

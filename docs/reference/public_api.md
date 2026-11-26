@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 471 |
-| private implementation | 989 |
+| private implementation | 1001 |
 
 ## Public package exports
 
@@ -25,12 +25,12 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `ArtifactId` | class | [artifacts.identity](../../artifacts/identity.py#L11) | stable |
 | `ArtifactLayout` | class | [artifacts.layout](../../artifacts/layout.py#L27) | stable |
 | `ArtifactManifest` | class | [artifacts.manifest](../../artifacts/manifest.py#L14) | stable |
-| `BaselineValidation` | class | [artifacts.promotion](../../artifacts/promotion.py#L18) | stable |
+| `BaselineValidation` | class | [artifacts.promotion](../../artifacts/promotion.py#L19) | stable |
 | `ExperimentRunArtifactLayout` | class | [artifacts.layout](../../artifacts/layout.py#L129) | stable |
 | `RetentionClass` | class | [artifacts.retention](../../artifacts/retention.py#L6) | stable |
 | `artifact_id` | function | [artifacts.identity](../../artifacts/identity.py#L31) | stable |
 | `file_sha256` | function | [artifacts.identity](../../artifacts/identity.py#L47) | stable |
-| `promote_to_baseline` | function | [artifacts.promotion](../../artifacts/promotion.py#L99) | stable |
+| `promote_to_baseline` | function | [artifacts.promotion](../../artifacts/promotion.py#L100) | stable |
 | `write_config_snapshot` | function | [artifacts.config_snapshot](../../artifacts/config_snapshot.py#L13) | stable |
 | `write_json_atomic` | function | [artifacts.atomic](../../artifacts/atomic.py#L75) | stable |
 | `write_text_atomic` | function | [artifacts.atomic](../../artifacts/atomic.py#L41) | stable |
@@ -66,7 +66,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `ExperimentRunArtifactLayout.worker_logs` | method | [artifacts.layout](../../artifacts/layout.py#L162) | stable |
 | `ArtifactManifest.read` | method | [artifacts.manifest](../../artifacts/manifest.py#L61) | stable |
 | `ArtifactManifest.to_dict` | method | [artifacts.manifest](../../artifacts/manifest.py#L50) | stable |
-| `BaselineValidation.to_dict` | method | [artifacts.promotion](../../artifacts/promotion.py#L31) | stable |
+| `BaselineValidation.to_dict` | method | [artifacts.promotion](../../artifacts/promotion.py#L32) | stable |
 
 ### `compute`
 
@@ -290,7 +290,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
 | `feature_cache_content_hash` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L20) | stable |
-| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L153) | stable |
+| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L157) | stable |
 | `input_view_from_frame` | function | [features.input_view](../../features/input_view.py#L10) | stable |
 | `select_legacy_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L125) | compatibility-only |
 | `select_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L152) | stable |
@@ -307,7 +307,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
 | `feature_cache_content_hash` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L20) | stable |
-| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L153) | stable |
+| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L157) | stable |
 | `fit_rolling_zscore_state` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L40) | stable |
 | `rolling_zscore` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L158) | stable |
 | `select_legacy_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L125) | compatibility-only |

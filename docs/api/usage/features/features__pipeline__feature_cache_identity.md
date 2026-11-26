@@ -94,7 +94,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
 
-**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:153](../../../../features/pipeline/feature_cache_identity.py#L153)
+**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:157](../../../../features/pipeline/feature_cache_identity.py#L157)
 
 **Inputs and outputs:**
 
@@ -245,7 +245,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
 
-**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:153](../../../../features/pipeline/feature_cache_identity.py#L153)
+**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:157](../../../../features/pipeline/feature_cache_identity.py#L157)
 
 **Inputs and outputs:**
 

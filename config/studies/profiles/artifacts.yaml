@@ -1,6 +1,7 @@
 module_id: artifacts
 source_roots: [artifacts, research_tools/artifacts]
 api_paths:
+- artifacts/integrity.py
 - artifacts/__init__.py
 - artifacts/atomic.py
 - artifacts/config_snapshot.py
@@ -9,6 +10,8 @@ api_paths:
 - artifacts/layout.py
 - artifacts/manifest.py
 caller_paths:
+- market_data/partitioned_bars.py
+- tests/unit/artifacts/test_artifact_store_offline.py
 - compute/slurm/continuation.py
 - compute/slurm/worker_dispatch.py
 - evaluation/reanalysis/checkpoint_reanalysis.py
@@ -61,6 +64,7 @@ caller_paths:
 - training/runner/survival_campaign.py
 - training/runner/walk_forward_validation.py
 source_scopes:
+  - {path: artifacts/integrity.py, study_ids: [artifacts.identity_and_atomic_storage]}
   - {path: artifacts/atomic.py, study_ids: [artifacts.identity_and_atomic_storage]}
   - {path: artifacts/identity.py, study_ids: [artifacts.identity_and_atomic_storage]}
   - {path: artifacts/layout.py, study_ids: [artifacts.identity_and_atomic_storage]}
