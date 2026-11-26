@@ -42,9 +42,15 @@
       "low",
       "close",
       "volume"
-    ]
+    ],
+    "timestamp_retention": {
+      "event_time": "UTC open, derived from the source DATE and TIME labels and SOURCE_CLOCK",
+      "source_sequence": "0-based index of the source row in the export body",
+      "source_label": "the DATE and TIME of a row are recoverable exactly from the immutable source file at source_sequence, with the source sha256 in this ledger"
+    }
   },
   "reconciliation": {
+    "reconciled_from": "bars.parquet read back from disk",
     "source_rows": 351432,
     "converted_rows": 351432,
     "quarantined_rows": 0,
@@ -75,12 +81,18 @@
     "first_source_label": "2024.12.30 01:05:00 Europe/Helsinki",
     "last_source_label": "2025.12.31 23:49:00 Europe/Helsinki",
     "strictly_increasing": true,
-    "duplicate_event_times": 0
+    "duplicate_event_times": 0,
+    "off_grid_bars": 0
   },
   "gaps": {
     "threshold": "spacing between consecutive converted event_time values > 1 minute",
     "gap_minutes": "end - start in whole minutes (spacing between bar opens)",
-    "missing_bars": "gap_minutes - 1",
+    "missing_bars": "grid minutes strictly between the two bar opens",
+    "calendar": null,
+    "classification_note": "no authoritative venue session calendar is supplied; config/README.md states that config/ny_session_schedule.csv is not asserted to be one, so every gap stays unclassified",
+    "status_counts": {
+      "unclassified": 297
+    },
     "count": 297,
     "total_missing_bars": 176973,
     "items": [
@@ -88,1783 +100,2377 @@
         "start": "2024-12-30T21:49:00Z",
         "end": "2024-12-30T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2024-12-31T21:49:00Z",
         "end": "2025-01-01T23:05:00Z",
         "gap_minutes": 1516,
-        "missing_bars": 1515
+        "missing_bars": 1515,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-02T21:49:00Z",
         "end": "2025-01-02T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-03T21:49:00Z",
         "end": "2025-01-05T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-06T21:49:00Z",
         "end": "2025-01-06T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-07T21:49:00Z",
         "end": "2025-01-07T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-08T21:49:00Z",
         "end": "2025-01-08T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-09T14:29:00Z",
         "end": "2025-01-09T23:05:00Z",
         "gap_minutes": 516,
-        "missing_bars": 515
+        "missing_bars": 515,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-10T21:49:00Z",
         "end": "2025-01-12T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-13T21:49:00Z",
         "end": "2025-01-13T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-14T21:49:00Z",
         "end": "2025-01-14T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-15T21:49:00Z",
         "end": "2025-01-15T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-16T21:49:00Z",
         "end": "2025-01-16T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-17T21:49:00Z",
         "end": "2025-01-19T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-20T17:59:00Z",
         "end": "2025-01-20T23:05:00Z",
         "gap_minutes": 306,
-        "missing_bars": 305
+        "missing_bars": 305,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-21T21:49:00Z",
         "end": "2025-01-21T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-22T21:49:00Z",
         "end": "2025-01-22T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-23T21:49:00Z",
         "end": "2025-01-23T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-24T21:49:00Z",
         "end": "2025-01-26T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-27T21:49:00Z",
         "end": "2025-01-27T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-28T21:49:00Z",
         "end": "2025-01-28T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-29T21:49:00Z",
         "end": "2025-01-29T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-30T21:49:00Z",
         "end": "2025-01-30T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-01-31T21:49:00Z",
         "end": "2025-02-02T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-03T21:49:00Z",
         "end": "2025-02-03T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-04T21:49:00Z",
         "end": "2025-02-04T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-05T21:49:00Z",
         "end": "2025-02-05T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-06T21:49:00Z",
         "end": "2025-02-06T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-07T21:49:00Z",
         "end": "2025-02-09T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-10T21:49:00Z",
         "end": "2025-02-10T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-11T21:49:00Z",
         "end": "2025-02-11T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-12T21:49:00Z",
         "end": "2025-02-12T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-13T21:49:00Z",
         "end": "2025-02-13T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-14T21:49:00Z",
         "end": "2025-02-16T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-17T17:59:00Z",
         "end": "2025-02-17T23:05:00Z",
         "gap_minutes": 306,
-        "missing_bars": 305
+        "missing_bars": 305,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-18T21:49:00Z",
         "end": "2025-02-18T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-18T23:06:00Z",
         "end": "2025-02-18T23:13:00Z",
         "gap_minutes": 7,
-        "missing_bars": 6
+        "missing_bars": 6,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-19T00:18:00Z",
         "end": "2025-02-19T00:20:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-19T00:33:00Z",
         "end": "2025-02-19T00:37:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-19T21:49:00Z",
         "end": "2025-02-19T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-20T21:49:00Z",
         "end": "2025-02-20T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-21T21:49:00Z",
         "end": "2025-02-23T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-24T21:49:00Z",
         "end": "2025-02-24T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-25T21:49:00Z",
         "end": "2025-02-25T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-26T21:49:00Z",
         "end": "2025-02-26T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-27T21:49:00Z",
         "end": "2025-02-27T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-02-28T21:49:00Z",
         "end": "2025-03-02T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-03T21:49:00Z",
         "end": "2025-03-03T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-04T21:49:00Z",
         "end": "2025-03-04T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-05T21:49:00Z",
         "end": "2025-03-05T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-06T21:49:00Z",
         "end": "2025-03-06T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-07T21:49:00Z",
         "end": "2025-03-09T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-10T21:49:00Z",
         "end": "2025-03-10T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-11T21:49:00Z",
         "end": "2025-03-11T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-12T21:49:00Z",
         "end": "2025-03-12T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-13T21:49:00Z",
         "end": "2025-03-13T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-14T21:49:00Z",
         "end": "2025-03-16T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-17T21:49:00Z",
         "end": "2025-03-17T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-18T21:49:00Z",
         "end": "2025-03-18T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-19T21:49:00Z",
         "end": "2025-03-19T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-20T21:49:00Z",
         "end": "2025-03-20T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-21T21:49:00Z",
         "end": "2025-03-23T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-24T21:49:00Z",
         "end": "2025-03-24T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-25T21:49:00Z",
         "end": "2025-03-25T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-26T21:49:00Z",
         "end": "2025-03-26T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-27T21:49:00Z",
         "end": "2025-03-27T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-28T21:49:00Z",
         "end": "2025-03-30T22:05:00Z",
         "gap_minutes": 2896,
-        "missing_bars": 2895
+        "missing_bars": 2895,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-03-31T20:49:00Z",
         "end": "2025-03-31T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-01T20:49:00Z",
         "end": "2025-04-01T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-02T11:01:00Z",
         "end": "2025-04-02T11:05:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-02T20:30:00Z",
         "end": "2025-04-02T20:32:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-02T20:49:00Z",
         "end": "2025-04-02T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-03T20:49:00Z",
         "end": "2025-04-03T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-04T20:49:00Z",
         "end": "2025-04-06T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-07T20:49:00Z",
         "end": "2025-04-07T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-08T20:49:00Z",
         "end": "2025-04-08T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-09T20:49:00Z",
         "end": "2025-04-09T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-10T20:49:00Z",
         "end": "2025-04-10T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-11T20:49:00Z",
         "end": "2025-04-13T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-14T20:49:00Z",
         "end": "2025-04-14T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-15T20:49:00Z",
         "end": "2025-04-15T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-16T20:49:00Z",
         "end": "2025-04-16T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-17T20:49:00Z",
         "end": "2025-04-20T22:05:00Z",
         "gap_minutes": 4396,
-        "missing_bars": 4395
+        "missing_bars": 4395,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-21T20:49:00Z",
         "end": "2025-04-21T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-22T20:49:00Z",
         "end": "2025-04-22T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-23T20:49:00Z",
         "end": "2025-04-23T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-24T20:49:00Z",
         "end": "2025-04-24T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-25T20:49:00Z",
         "end": "2025-04-27T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-28T20:49:00Z",
         "end": "2025-04-28T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-29T20:49:00Z",
         "end": "2025-04-29T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-04-30T20:49:00Z",
         "end": "2025-04-30T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-01T20:49:00Z",
         "end": "2025-05-01T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-02T20:49:00Z",
         "end": "2025-05-04T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-05T20:49:00Z",
         "end": "2025-05-05T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-06T20:49:00Z",
         "end": "2025-05-06T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-07T20:49:00Z",
         "end": "2025-05-07T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-08T20:49:00Z",
         "end": "2025-05-08T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-09T20:49:00Z",
         "end": "2025-05-11T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-12T20:49:00Z",
         "end": "2025-05-12T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-13T20:49:00Z",
         "end": "2025-05-13T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-14T20:49:00Z",
         "end": "2025-05-14T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-15T20:49:00Z",
         "end": "2025-05-15T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-16T20:49:00Z",
         "end": "2025-05-18T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-19T20:49:00Z",
         "end": "2025-05-19T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-20T20:49:00Z",
         "end": "2025-05-20T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-21T20:49:00Z",
         "end": "2025-05-21T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-22T20:49:00Z",
         "end": "2025-05-22T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-23T20:49:00Z",
         "end": "2025-05-25T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-26T16:59:00Z",
         "end": "2025-05-26T22:05:00Z",
         "gap_minutes": 306,
-        "missing_bars": 305
+        "missing_bars": 305,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-27T20:49:00Z",
         "end": "2025-05-27T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-28T20:49:00Z",
         "end": "2025-05-28T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-29T20:49:00Z",
         "end": "2025-05-29T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-05-30T20:49:00Z",
         "end": "2025-06-01T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-02T20:49:00Z",
         "end": "2025-06-02T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-03T20:49:00Z",
         "end": "2025-06-03T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-04T20:49:00Z",
         "end": "2025-06-04T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-05T20:49:00Z",
         "end": "2025-06-05T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-06T20:49:00Z",
         "end": "2025-06-08T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-09T20:49:00Z",
         "end": "2025-06-09T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-10T20:49:00Z",
         "end": "2025-06-10T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-11T20:49:00Z",
         "end": "2025-06-11T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-12T20:49:00Z",
         "end": "2025-06-12T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-13T20:49:00Z",
         "end": "2025-06-15T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-16T20:49:00Z",
         "end": "2025-06-16T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-17T20:49:00Z",
         "end": "2025-06-17T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-18T20:49:00Z",
         "end": "2025-06-18T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-19T16:59:00Z",
         "end": "2025-06-19T22:05:00Z",
         "gap_minutes": 306,
-        "missing_bars": 305
+        "missing_bars": 305,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-20T20:49:00Z",
         "end": "2025-06-22T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-23T20:49:00Z",
         "end": "2025-06-23T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-24T20:49:00Z",
         "end": "2025-06-24T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-25T20:49:00Z",
         "end": "2025-06-25T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-26T20:49:00Z",
         "end": "2025-06-26T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-27T20:49:00Z",
         "end": "2025-06-29T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-06-30T20:49:00Z",
         "end": "2025-06-30T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-01T20:49:00Z",
         "end": "2025-07-01T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-02T20:49:00Z",
         "end": "2025-07-02T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-03T17:14:00Z",
         "end": "2025-07-03T22:05:00Z",
         "gap_minutes": 291,
-        "missing_bars": 290
+        "missing_bars": 290,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-04T16:59:00Z",
         "end": "2025-07-06T22:05:00Z",
         "gap_minutes": 3186,
-        "missing_bars": 3185
+        "missing_bars": 3185,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-07T20:49:00Z",
         "end": "2025-07-07T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-08T20:49:00Z",
         "end": "2025-07-08T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-09T20:49:00Z",
         "end": "2025-07-09T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-10T20:49:00Z",
         "end": "2025-07-10T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-11T20:49:00Z",
         "end": "2025-07-13T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-14T20:49:00Z",
         "end": "2025-07-14T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-15T20:49:00Z",
         "end": "2025-07-15T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-16T20:49:00Z",
         "end": "2025-07-16T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-17T20:49:00Z",
         "end": "2025-07-17T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-18T20:49:00Z",
         "end": "2025-07-20T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-21T20:49:00Z",
         "end": "2025-07-21T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-22T20:49:00Z",
         "end": "2025-07-22T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-23T20:49:00Z",
         "end": "2025-07-23T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-24T20:49:00Z",
         "end": "2025-07-24T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-25T20:49:00Z",
         "end": "2025-07-27T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-28T20:49:00Z",
         "end": "2025-07-28T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-29T20:49:00Z",
         "end": "2025-07-29T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-30T20:49:00Z",
         "end": "2025-07-30T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-07-31T20:49:00Z",
         "end": "2025-07-31T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-01T20:49:00Z",
         "end": "2025-08-03T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-04T20:49:00Z",
         "end": "2025-08-04T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-05T20:49:00Z",
         "end": "2025-08-05T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-06T20:49:00Z",
         "end": "2025-08-06T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-07T20:49:00Z",
         "end": "2025-08-07T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-08T20:49:00Z",
         "end": "2025-08-10T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-11T20:49:00Z",
         "end": "2025-08-11T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-12T20:49:00Z",
         "end": "2025-08-12T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-13T20:49:00Z",
         "end": "2025-08-13T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-14T20:49:00Z",
         "end": "2025-08-14T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-15T20:49:00Z",
         "end": "2025-08-17T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-18T20:49:00Z",
         "end": "2025-08-18T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-19T20:49:00Z",
         "end": "2025-08-19T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-20T20:49:00Z",
         "end": "2025-08-20T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-21T20:49:00Z",
         "end": "2025-08-21T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-22T20:49:00Z",
         "end": "2025-08-24T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-25T20:49:00Z",
         "end": "2025-08-25T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-26T20:49:00Z",
         "end": "2025-08-26T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-27T20:49:00Z",
         "end": "2025-08-27T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-28T20:49:00Z",
         "end": "2025-08-28T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-08-29T20:49:00Z",
         "end": "2025-08-31T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-01T16:59:00Z",
         "end": "2025-09-01T22:05:00Z",
         "gap_minutes": 306,
-        "missing_bars": 305
+        "missing_bars": 305,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-02T20:49:00Z",
         "end": "2025-09-02T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-03T20:49:00Z",
         "end": "2025-09-03T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-04T20:49:00Z",
         "end": "2025-09-04T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-05T20:49:00Z",
         "end": "2025-09-07T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-08T20:49:00Z",
         "end": "2025-09-08T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-09T20:49:00Z",
         "end": "2025-09-09T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-10T20:49:00Z",
         "end": "2025-09-10T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-11T20:49:00Z",
         "end": "2025-09-11T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-12T20:49:00Z",
         "end": "2025-09-14T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-15T20:49:00Z",
         "end": "2025-09-15T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-16T20:49:00Z",
         "end": "2025-09-16T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-17T20:49:00Z",
         "end": "2025-09-17T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-18T20:49:00Z",
         "end": "2025-09-18T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-19T20:49:00Z",
         "end": "2025-09-21T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-22T20:49:00Z",
         "end": "2025-09-22T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-23T20:49:00Z",
         "end": "2025-09-23T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-24T20:49:00Z",
         "end": "2025-09-24T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-25T20:49:00Z",
         "end": "2025-09-25T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-26T20:49:00Z",
         "end": "2025-09-28T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-29T20:49:00Z",
         "end": "2025-09-29T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-09-30T20:49:00Z",
         "end": "2025-09-30T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-01T20:49:00Z",
         "end": "2025-10-01T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-02T20:49:00Z",
         "end": "2025-10-02T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-03T20:49:00Z",
         "end": "2025-10-05T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-06T20:49:00Z",
         "end": "2025-10-06T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-07T20:49:00Z",
         "end": "2025-10-07T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-08T20:49:00Z",
         "end": "2025-10-08T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-09T20:49:00Z",
         "end": "2025-10-09T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-10T20:49:00Z",
         "end": "2025-10-12T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-13T20:49:00Z",
         "end": "2025-10-13T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-14T20:49:00Z",
         "end": "2025-10-14T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-15T20:49:00Z",
         "end": "2025-10-15T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-16T20:49:00Z",
         "end": "2025-10-16T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-17T20:49:00Z",
         "end": "2025-10-19T22:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-20T20:49:00Z",
         "end": "2025-10-20T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-21T20:49:00Z",
         "end": "2025-10-21T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-22T20:49:00Z",
         "end": "2025-10-22T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-23T20:49:00Z",
         "end": "2025-10-23T22:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-24T20:49:00Z",
         "end": "2025-10-26T23:05:00Z",
         "gap_minutes": 3016,
-        "missing_bars": 3015
+        "missing_bars": 3015,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-27T21:49:00Z",
         "end": "2025-10-27T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-28T21:49:00Z",
         "end": "2025-10-28T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-29T21:49:00Z",
         "end": "2025-10-29T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-30T21:49:00Z",
         "end": "2025-10-30T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-10-31T21:49:00Z",
         "end": "2025-11-02T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-03T21:49:00Z",
         "end": "2025-11-03T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-04T21:49:00Z",
         "end": "2025-11-04T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-05T21:49:00Z",
         "end": "2025-11-05T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-06T21:49:00Z",
         "end": "2025-11-06T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-07T21:49:00Z",
         "end": "2025-11-09T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-10T21:49:00Z",
         "end": "2025-11-10T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-11T21:49:00Z",
         "end": "2025-11-11T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-12T21:49:00Z",
         "end": "2025-11-12T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-13T21:49:00Z",
         "end": "2025-11-13T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-14T21:49:00Z",
         "end": "2025-11-16T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-17T21:49:00Z",
         "end": "2025-11-17T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-18T21:49:00Z",
         "end": "2025-11-18T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-19T21:49:00Z",
         "end": "2025-11-19T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-20T21:49:00Z",
         "end": "2025-11-20T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-21T21:49:00Z",
         "end": "2025-11-23T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-24T21:49:00Z",
         "end": "2025-11-24T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-25T21:49:00Z",
         "end": "2025-11-25T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-26T21:49:00Z",
         "end": "2025-11-26T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-27T17:59:00Z",
         "end": "2025-11-27T23:05:00Z",
         "gap_minutes": 306,
-        "missing_bars": 305
+        "missing_bars": 305,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T02:02:00Z",
         "end": "2025-11-28T02:04:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T02:45:00Z",
         "end": "2025-11-28T02:48:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T02:48:00Z",
         "end": "2025-11-28T02:52:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T02:52:00Z",
         "end": "2025-11-28T02:57:00Z",
         "gap_minutes": 5,
-        "missing_bars": 4
+        "missing_bars": 4,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T02:57:00Z",
         "end": "2025-11-28T03:00:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T03:00:00Z",
         "end": "2025-11-28T03:16:00Z",
         "gap_minutes": 16,
-        "missing_bars": 15
+        "missing_bars": 15,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T03:16:00Z",
         "end": "2025-11-28T03:21:00Z",
         "gap_minutes": 5,
-        "missing_bars": 4
+        "missing_bars": 4,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T03:21:00Z",
         "end": "2025-11-28T03:24:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T03:24:00Z",
         "end": "2025-11-28T04:00:00Z",
         "gap_minutes": 36,
-        "missing_bars": 35
+        "missing_bars": 35,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T04:00:00Z",
         "end": "2025-11-28T04:12:00Z",
         "gap_minutes": 12,
-        "missing_bars": 11
+        "missing_bars": 11,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T04:12:00Z",
         "end": "2025-11-28T04:36:00Z",
         "gap_minutes": 24,
-        "missing_bars": 23
+        "missing_bars": 23,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T04:36:00Z",
         "end": "2025-11-28T06:00:00Z",
         "gap_minutes": 84,
-        "missing_bars": 83
+        "missing_bars": 83,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T06:00:00Z",
         "end": "2025-11-28T06:48:00Z",
         "gap_minutes": 48,
-        "missing_bars": 47
+        "missing_bars": 47,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T06:48:00Z",
         "end": "2025-11-28T13:50:00Z",
         "gap_minutes": 422,
-        "missing_bars": 421
+        "missing_bars": 421,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-11-28T18:14:00Z",
         "end": "2025-11-30T23:05:00Z",
         "gap_minutes": 3171,
-        "missing_bars": 3170
+        "missing_bars": 3170,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-01T21:49:00Z",
         "end": "2025-12-01T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T09:01:00Z",
         "end": "2025-12-02T09:10:00Z",
         "gap_minutes": 9,
-        "missing_bars": 8
+        "missing_bars": 8,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T09:18:00Z",
         "end": "2025-12-02T09:21:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T09:21:00Z",
         "end": "2025-12-02T09:25:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T09:26:00Z",
         "end": "2025-12-02T09:46:00Z",
         "gap_minutes": 20,
-        "missing_bars": 19
+        "missing_bars": 19,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T09:46:00Z",
         "end": "2025-12-02T09:54:00Z",
         "gap_minutes": 8,
-        "missing_bars": 7
+        "missing_bars": 7,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T09:54:00Z",
         "end": "2025-12-02T10:29:00Z",
         "gap_minutes": 35,
-        "missing_bars": 34
+        "missing_bars": 34,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T12:57:00Z",
         "end": "2025-12-02T12:59:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T14:30:00Z",
         "end": "2025-12-02T14:32:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T15:28:00Z",
         "end": "2025-12-02T15:31:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T15:31:00Z",
         "end": "2025-12-02T15:34:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T15:34:00Z",
         "end": "2025-12-02T15:36:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T15:36:00Z",
         "end": "2025-12-02T15:40:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-02T21:49:00Z",
         "end": "2025-12-02T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-03T05:50:00Z",
         "end": "2025-12-03T05:54:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-03T13:05:00Z",
         "end": "2025-12-03T13:15:00Z",
         "gap_minutes": 10,
-        "missing_bars": 9
+        "missing_bars": 9,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-03T13:43:00Z",
         "end": "2025-12-03T13:45:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-03T21:49:00Z",
         "end": "2025-12-03T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-04T13:29:00Z",
         "end": "2025-12-04T13:34:00Z",
         "gap_minutes": 5,
-        "missing_bars": 4
+        "missing_bars": 4,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-04T17:18:00Z",
         "end": "2025-12-04T17:22:00Z",
         "gap_minutes": 4,
-        "missing_bars": 3
+        "missing_bars": 3,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-04T21:49:00Z",
         "end": "2025-12-04T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-05T07:16:00Z",
         "end": "2025-12-05T07:18:00Z",
         "gap_minutes": 2,
-        "missing_bars": 1
+        "missing_bars": 1,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-05T21:49:00Z",
         "end": "2025-12-07T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-08T13:20:00Z",
         "end": "2025-12-08T13:23:00Z",
         "gap_minutes": 3,
-        "missing_bars": 2
+        "missing_bars": 2,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-08T21:49:00Z",
         "end": "2025-12-08T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-09T21:49:00Z",
         "end": "2025-12-09T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-10T21:49:00Z",
         "end": "2025-12-10T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-11T21:49:00Z",
         "end": "2025-12-11T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-12T21:49:00Z",
         "end": "2025-12-14T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-15T21:49:00Z",
         "end": "2025-12-15T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-16T21:49:00Z",
         "end": "2025-12-16T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-17T21:49:00Z",
         "end": "2025-12-17T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-18T21:49:00Z",
         "end": "2025-12-18T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-19T21:49:00Z",
         "end": "2025-12-21T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-22T21:49:00Z",
         "end": "2025-12-22T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-23T21:49:00Z",
         "end": "2025-12-23T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-24T18:14:00Z",
         "end": "2025-12-25T23:05:00Z",
         "gap_minutes": 1731,
-        "missing_bars": 1730
+        "missing_bars": 1730,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-26T21:49:00Z",
         "end": "2025-12-28T23:05:00Z",
         "gap_minutes": 2956,
-        "missing_bars": 2955
+        "missing_bars": 2955,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-29T21:49:00Z",
         "end": "2025-12-29T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2025-12-30T21:49:00Z",
         "end": "2025-12-30T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       }
     ]
   }

@@ -12,7 +12,9 @@ import pytest
 from market_data.arrow_schemas import (
     BAR_SCHEMA,
     CALENDAR_SCHEMA,
+    CALENDAR_SCHEMA_ID,
     INSTRUMENT_SCHEMA,
+    QUOTE_EVENT_SCHEMA_ID,
     QUOTE_SCHEMA,
     SCHEMA_VERSION,
     TRADE_SCHEMA,
@@ -35,7 +37,8 @@ def _quote(**overrides: object) -> dict[str, object]:
         "source_sequence": 1,
         "instrument_id": "US100",
         "source_id": "mt5",
-        "schema_id": SCHEMA_VERSION,
+        "schema_id": QUOTE_EVENT_SCHEMA_ID,
+        "origin": "observed",
         "bid": 100.0,
         "ask": 100.2,
         "bid_size": None,
@@ -177,7 +180,7 @@ def _session(**overrides: object) -> dict[str, object]:
         "session_close": T1,
         "session_kind": "trading",
         "source_id": "calendar",
-        "schema_id": SCHEMA_VERSION,
+        "schema_id": CALENDAR_SCHEMA_ID,
     }
     row.update(overrides)
     return row

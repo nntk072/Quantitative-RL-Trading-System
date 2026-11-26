@@ -1,0 +1,101 @@
+{
+  "id": "DATA-SCHEMAS",
+  "status": "partial",
+  "changed_paths": [
+    "config/studies/profiles/market_data.yaml",
+    "docs/reference/public_api.json",
+    "docs/reference/public_api.md",
+    "market_data/arrow_schemas.py",
+    "market_data/event_schemas.py",
+    "market_data/schema_migration.py",
+    "market_data/tick_reconciliation.py",
+    "market_data/coverage.py",
+    "planning/native_modernization/data_schemas/README.md",
+    "planning/native_modernization/data_schemas/build_quality_ledger.py",
+    "planning/native_modernization/data_schemas/build_data_manifest.py",
+    "planning/native_modernization/data_schemas/data_manifest.json",
+    "planning/native_modernization/data_schemas/quality_ledger.json",
+    "planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json",
+    "planning/native_modernization/ledger_entries/DATA-SCHEMAS.json",
+    "tests/unit/market_data/test_arrow_schemas.py",
+    "tests/unit/market_data/test_data_schema_ledger.py",
+    "tests/unit/market_data/test_event_schemas.py",
+    "tests/unit/market_data/test_schema_migration.py",
+    "tests/unit/market_data/test_schema_contract_rules.py",
+    "tests/unit/market_data/test_timestamp_units_and_grid_coverage.py"
+  ],
+  "tests_executed": [
+    {
+      "command": "ruff format --check <12 touched files>",
+      "exit_code": 0,
+      "result": "12 files already formatted"
+    },
+    {
+      "command": "ruff check <12 touched files>",
+      "exit_code": 0,
+      "result": "All checks passed"
+    },
+    {
+      "command": "mypy market_data/arrow_schemas.py market_data/event_schemas.py market_data/schema_migration.py market_data/coverage.py market_data/tick_reconciliation.py",
+      "exit_code": 0,
+      "result": "Success: no issues found in 5 source files"
+    },
+    {
+      "command": "pytest tests/unit/market_data tests/unit/research_tools/test_study_audits.py",
+      "exit_code": 0,
+      "result": "299 passed, 0 skipped"
+    },
+    {
+      "command": "pytest tests/architecture tests/unit/research_tools/test_study_catalog.py",
+      "exit_code": 1,
+      "result": "89 passed, 1 failed: test_generated_public_api_inventory_matches_source (docs were stale at run time)"
+    },
+    {
+      "command": "pytest tests/architecture/test_documentation_contracts.py::test_generated_public_api_inventory_matches_source",
+      "exit_code": 0,
+      "result": "1 passed after tools.documentation.public_api --write"
+    },
+    {
+      "command": "python -m tools.documentation.public_api --check",
+      "exit_code": 0,
+      "result": "679/679 documented; 0 gaps"
+    },
+    {
+      "command": "build_quality_ledger.py (tracked example, regenerated)",
+      "exit_code": 0,
+      "result": "2880 rows, 0 quarantined, reconciles; test_data_schema_ledger 4 passed"
+    },
+    {
+      "command": "build_quality_ledger.py --window-before 2026.01.01 --parquet-dir (pre-2026 M1)",
+      "exit_code": 0,
+      "result": "351432 converted, 0 quarantined, reconciles; 297 gaps unclassified"
+    },
+    {
+      "command": "build_timeframe_reconciliation.py --window-before 2026.01.01",
+      "exit_code": 0,
+      "result": "byte-identical to prior ledger"
+    },
+    {
+      "command": "build_data_manifest.py --data-dir <main data>",
+      "exit_code": 0,
+      "result": "manifest written; ledger checksum test passes"
+    },
+    {
+      "command": "reconcile_tick_export on first 200000 pre-cutoff rows (scratch smoke, not evidence)",
+      "exit_code": 0,
+      "result": "200000 converted, 0 quarantined, reconciles"
+    }
+  ],
+  "evidence_refs": [
+    "planning/native_modernization/data_schemas/data_manifest.json",
+    "planning/native_modernization/data_schemas/quality_ledger.json",
+    "planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json",
+    "planning/native_modernization/data_schemas/timeframe_reconciliation_pre2026.json",
+    "planning/native_modernization/data_schemas/tick_reconciliation_pre2026.json",
+    "planning/native_modernization/data_schemas/README.md",
+    "logs/agents/data_scientist_engineer/2026-11-26_data_schemas/ (gitignored: bars.parquet, quarantine.parquet, manifest.json for the pre-2026 M1 run)"
+  ],
+  "blocker": "(1) One bounded CPU allocation approved by the resource operator to regenerate planning/native_modernization/data_schemas/build_tick_reconciliation.py over the full pre-2026 tick window (about 6 GB, about 56M rows, 29 parts) under quote-event.v1, after exact-repeat counting is added. (2) An owner- or provider-supplied US100.cash (and US500.cash) session calendar as session-calendar.v1 for gap classification; without it all 297 M1 gaps stay unclassified. (3) An instrument registry export for US100.cash and US500.cash (contract size, price tick, lot step, currency, validity intervals) as instrument-metadata.v1. (4) Trading-role decision on the untagged bar-derived quote: trading/execution/costs.py CostModel.bar_quote returns (close, close+spread) with no origin tag and is used by simulation fill quotes.",
+  "decision": "Partial, not accepted. Accepted as run: quote-event.v1 with explicit origin tag; null, order, schema-id, size, bid<=ask, instrument, calendar and grid validators; epoch unit guard; explicit legacy quote migration (second schema id exercised); normalized-event and feature-row hardening; M1 pre-2026 reconciliation read back from Parquet (351,432 rows, 0 quarantined, reconciles); timeframe reconciliation reproduced byte-identically; manifest and schema catalog generated from code. Not accepted: tick evidence under the current schema (ledger is from the prior revision; bounded smoke only); gap classification (no authoritative calendar); exact-repeat tick counting; instrument registry input; untagged bar-derived quote in execution (trading role). Reviewer not assigned.",
+  "reviewer": null
+}

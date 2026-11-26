@@ -238,3 +238,21 @@ def test_normalized_and_feature_tables_round_trip_through_parquet_and_polars(
     polars_values = pl.read_parquet(tmp_path / "features.parquet")["values"].to_list()
     assert polars_values == [[None, 1.5], [2.0, 2.5]]
     assert pl.read_parquet(tmp_path / "events.parquet")["value_d"].to_list() == [100.5, 100.5]
+
+
+def test_feature_row_with_no_content_hash_is_a_row_defect() -> None:
+    table = _feature_table([[1.0], [2.0]])
+    hashes = pa.array([None, "abc123"], type=pa.string())
+    table = table.set_column(table.schema.get_field_index("content_hash"), "content_hash", hashes)
+    assert [(p.row, p.reason) for p in validate_feature_rows(table, ["a"])] == [
+        (0, "null in non-nullable field content_hash")
+    ]
+
+
+def test_a_null_feature_row_is_a_row_defect_not_a_width_error() -> None:
+    table = _feature_table([[1.0], [2.0]])
+    values = pa.array([None, [2.0]], type=pa.list_(pa.field("item", pa.float64(), nullable=True)))
+    table = table.set_column(table.schema.get_field_index("values"), "values", values)
+    assert [(p.row, p.reason) for p in validate_feature_rows(table, ["a"])] == [
+        (0, "null in non-nullable field values")
+    ]

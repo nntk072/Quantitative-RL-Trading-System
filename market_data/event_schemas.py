@@ -25,6 +25,12 @@ from market_data.arrow_schemas import (
     RowProblem,
     _as_ns,
     _column,
+    _duplicate_problems,
+    _null_problems,
+    _order_problems,
+    _require_accepted_ids,
+    _require_columns,
+    _sorted,
 )
 
 _UTC_NS = pa.timestamp("ns", tz="UTC")
@@ -76,13 +82,21 @@ FEATURE_ROW_SCHEMA = pa.schema(
 def validate_normalized_events(table: pa.Table) -> list[RowProblem]:
     """Return rule violations for a normalized event table.
 
+    A quote must have both sides, bid and ask, and bid must not exceed ask. Rows are checked for
+    duplicate ``(instrument, source_sequence)`` and for event times that move backwards.
+
     Args:
-        table: Table with the NORMALIZED_EVENT_SCHEMA columns.
+        table: Table with the NORMALIZED_EVENT_SCHEMA columns and schema id ``normalized-event.v1``.
 
     Returns:
         Every violation with its row index and reason; an empty list when the table is valid.
+
+    Raises:
+        ValueError: If a column is missing or the schema id is not ``normalized-event.v1``.
     """
-    problems: list[RowProblem] = []
+    _require_accepted_ids(table, frozenset({NORMALIZED_EVENT_SCHEMA_ID}))
+    _require_columns(table, NORMALIZED_EVENT_SCHEMA)
+    problems, bad = _null_problems(table, NORMALIZED_EVENT_SCHEMA)
     event_ns = _as_ns(table, "event_time")
     avail_ns = _as_ns(table, "available_at")
     seq = _as_ns(table, "source_sequence")
@@ -93,18 +107,11 @@ def validate_normalized_events(table: pa.Table) -> list[RowProblem]:
         for name in ("value_a", "value_b", "value_c", "value_d", "size")
     }
 
-    seen: dict[tuple[str, int], int] = {}
-    dupes: set[tuple[str, int]] = set()
     for i in range(table.num_rows):
-        key = (str(instr[i]), int(seq[i]))
-        if key in seen:
-            dupes.add(key)
-        seen.setdefault(key, i)
-    for i in range(table.num_rows):
+        if bad[i]:
+            continue
         if avail_ns[i] < event_ns[i]:
             problems.append(RowProblem(i, "available_at precedes event_time"))
-        if (str(instr[i]), int(seq[i])) in dupes:
-            problems.append(RowProblem(i, "duplicate (instrument, source_sequence)"))
         kind = kinds[i]
         if kind not in EVENT_TYPES:
             problems.append(RowProblem(i, f"unknown event_type {kind!r}"))
@@ -121,20 +128,29 @@ def validate_normalized_events(table: pa.Table) -> list[RowProblem]:
         size = payload["size"][i]
         if size is not None and not (math.isfinite(size) and size >= 0):
             problems.append(RowProblem(i, "size must be finite and non-negative"))
+        if (
+            kind == "quote"
+            and all(payload[n][i] is not None for n in ("value_a", "value_b"))
+            and payload["value_a"][i] > payload["value_b"][i]
+        ):
+            problems.append(RowProblem(i, "bid exceeds ask"))
         if kind == "bar" and all(
             payload[n][i] is not None for n in ("value_a", "value_b", "value_c", "value_d")
         ):
             o, h, lo, c = (payload[n][i] for n in ("value_a", "value_b", "value_c", "value_d"))
             if h < max(o, c, lo) or lo > min(o, c, h):
                 problems.append(RowProblem(i, "OHLC bounds violated"))
-    return sorted(problems, key=lambda p: p.row)
+    problems += _duplicate_problems([instr, seq], bad, "duplicate (instrument, source_sequence)")
+    problems += _order_problems(instr, seq, event_ns, bad)
+    return _sorted(problems)
 
 
 def validate_feature_rows(table: pa.Table, feature_names: Sequence[str]) -> list[RowProblem]:
     """Return rule violations for a feature-row table of one feature set.
 
-    The width of every row must equal the number of names declared by the feature-set manifest, or
-    the table is rejected outright: a width mismatch is a schema error, not a row defect.
+    The width of every non-null row must equal the number of names declared by the feature-set
+    manifest, or the table is rejected outright: a width mismatch is a schema error, not a row
+    defect. A null row is a row defect.
 
     Args:
         table: Table with the FEATURE_ROW_SCHEMA columns.
@@ -144,10 +160,11 @@ def validate_feature_rows(table: pa.Table, feature_names: Sequence[str]) -> list
         Every per-row violation; an empty list when the table is valid.
 
     Raises:
-        ValueError: If a row's value width differs from the declared feature count, or the table
-            mixes feature sets or feature versions.
+        ValueError: If a non-null row's value width differs from the declared feature count, the
+            table mixes feature sets or feature versions, or a column is missing.
     """
-    problems: list[RowProblem] = []
+    _require_columns(table, FEATURE_ROW_SCHEMA)
+    problems, bad = _null_problems(table, FEATURE_ROW_SCHEMA)
     width = len(feature_names)
     sets = set(table.column("feature_set_id").to_pylist())
     versions = set(table.column("feature_version").to_pylist())
@@ -157,10 +174,8 @@ def validate_feature_rows(table: pa.Table, feature_names: Sequence[str]) -> list
         )
     values_column: list[list[Any] | None] = table.column("values").to_pylist()
     for i, row in enumerate(values_column):
-        if row is None or len(row) != width:
-            raise ValueError(
-                f"row {i} has width {None if row is None else len(row)}, expected {width}"
-            )
+        if row is not None and len(row) != width:
+            raise ValueError(f"row {i} has width {len(row)}, expected {width}")
 
     event_ns = _as_ns(table, "event_time")
     avail_ns = _as_ns(table, "available_at")
@@ -168,23 +183,19 @@ def validate_feature_rows(table: pa.Table, feature_names: Sequence[str]) -> list
     schema_ids = table.column("schema_id").to_pylist()
     hashes = table.column("content_hash").to_pylist()
 
-    seen: dict[tuple[str, int], int] = {}
-    dupes: set[tuple[str, int]] = set()
+    problems += _duplicate_problems(
+        [instr, event_ns], bad, "duplicate (instrument, event_time) for feature set"
+    )
     for i in range(table.num_rows):
-        key = (str(instr[i]), int(event_ns[i]))
-        if key in seen:
-            dupes.add(key)
-        seen.setdefault(key, i)
-    for i in range(table.num_rows):
+        if bad[i]:
+            continue
         if avail_ns[i] > event_ns[i]:
             problems.append(
                 RowProblem(i, "feature uses information available after its event_time")
             )
-        if (str(instr[i]), int(event_ns[i])) in dupes:
-            problems.append(RowProblem(i, "duplicate (instrument, event_time) for feature set"))
         if schema_ids[i] != FEATURE_ROW_SCHEMA_ID:
             problems.append(RowProblem(i, f"schema_id must be {FEATURE_ROW_SCHEMA_ID!r}"))
-        if not str(hashes[i]):
+        if hashes[i] in (None, ""):
             problems.append(RowProblem(i, "content_hash is required"))
         for value in values_column[i] or []:
             if value is not None and not math.isfinite(value):
@@ -192,7 +203,7 @@ def validate_feature_rows(table: pa.Table, feature_names: Sequence[str]) -> list
                     RowProblem(i, "feature value must be finite or null, not NaN or inf")
                 )
                 break
-    return sorted(problems, key=lambda p: p.row)
+    return _sorted(problems)
 
 
 def normalized_events_from_arrays(

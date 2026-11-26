@@ -32,6 +32,7 @@ api_paths:
 - market_data/transforms/session_schedule.py
 - market_data/transforms/sessions.py
 - market_data/event_schemas.py
+- market_data/coverage.py
 - market_data/export_window.py
 - market_data/reconciliation.py
 - market_data/tick_reconciliation.py
@@ -179,6 +180,8 @@ caller_paths:
 - tests/unit/market_data/test_tick_reconciliation.py
 - tests/unit/market_data/test_timeframe_reconciliation.py
 - tests/unit/market_data/test_schema_migration.py
+- tests/unit/market_data/test_schema_contract_rules.py
+- tests/unit/market_data/test_timestamp_units_and_grid_coverage.py
 source_scopes:
 - path: market_data/partitioned_bars.py
   study_ids:
@@ -255,6 +258,9 @@ source_scopes:
 - path: market_data/timeframe_reconciliation.py
   study_ids:
   - market_data.timeframe_resampling_and_close_alignment
+- path: market_data/coverage.py
+  study_ids:
+  - market_data.raw_data_quality_and_coverage
 - path: market_data/schema_migration.py
   study_ids:
   - market_data.source_parsing_and_quality

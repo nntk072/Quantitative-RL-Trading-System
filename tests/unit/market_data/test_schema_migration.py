@@ -13,13 +13,18 @@ from market_data.arrow_schemas import (
     BAR_REVISED_SCHEMA,
     BAR_REVISED_SCHEMA_ID,
     BAR_SCHEMA,
+    LEGACY_QUOTE_SCHEMA,
+    QUOTE_EVENT_SCHEMA_ID,
+    QUOTE_SCHEMA,
     SCHEMA_VERSION,
     require_schema_id,
+    validate_quotes,
 )
 from market_data.schema_migration import (
     append_correction,
     latest_revision,
     migrate_bars_v1_to_v2,
+    migrate_quotes_v1_to_quote_v1,
     validate_revised_bars,
 )
 
@@ -160,3 +165,84 @@ def test_a_revised_table_round_trips_through_parquet_with_its_schema_id(tmp_path
     assert back.column("revision").to_pylist() == [0, 1]
     assert set(back.column("schema_id").to_pylist()) == {BAR_REVISED_SCHEMA_ID}
     assert validate_revised_bars(back) == []
+
+
+def _legacy_quote_row(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "event_time": datetime(2025, 1, 2, 9, 30, tzinfo=UTC),
+        "available_at": datetime(2025, 1, 2, 9, 30, tzinfo=UTC),
+        "source_sequence": 1,
+        "instrument_id": "US100.cash",
+        "source_id": "mt5-tick",
+        "schema_id": SCHEMA_VERSION,
+        "bid": 100.0,
+        "ask": 100.2,
+        "bid_size": None,
+        "ask_size": None,
+        "source_flags": 6,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_quote_migration_tags_every_legacy_row_observed_under_the_second_schema_id(
+    tmp_path: Path,
+) -> None:
+    legacy = pa.Table.from_pylist(
+        [
+            _legacy_quote_row(),
+            _legacy_quote_row(
+                source_sequence=2,
+                event_time=datetime(2025, 1, 2, 9, 31, tzinfo=UTC),
+                available_at=datetime(2025, 1, 2, 9, 31, tzinfo=UTC),
+                bid=None,
+            ),
+        ],
+        schema=LEGACY_QUOTE_SCHEMA,
+    )
+    migrated = migrate_quotes_v1_to_quote_v1(legacy)
+    assert migrated.schema.equals(QUOTE_SCHEMA)
+    assert migrated.column("origin").to_pylist() == ["observed", "observed"]
+    assert set(migrated.column("schema_id").to_pylist()) == {QUOTE_EVENT_SCHEMA_ID}
+    assert migrated.column("bid").to_pylist() == [100.0, None]
+    assert validate_quotes(migrated) == []
+    path = tmp_path / "quotes.parquet"
+    pq.write_table(migrated, path)
+    assert pq.read_table(path).equals(migrated)
+
+
+def test_quote_migration_refuses_a_table_already_in_the_quote_layout() -> None:
+    current = pa.Table.from_pylist(
+        [_legacy_quote_row(schema_id=QUOTE_EVENT_SCHEMA_ID, origin="observed")],
+        schema=QUOTE_SCHEMA,
+    )
+    with pytest.raises(ValueError, match="not a legacy quote table"):
+        migrate_quotes_v1_to_quote_v1(current)
+
+
+def test_quote_migration_refuses_a_bar_table_passed_as_quotes() -> None:
+    bars = _v1_table([_v1_bar(datetime(2025, 1, 2, 9, 30, tzinfo=UTC))])
+    with pytest.raises(ValueError, match="not a legacy quote table"):
+        migrate_quotes_v1_to_quote_v1(bars)
+
+
+def test_quote_migration_refuses_an_invalid_legacy_quote() -> None:
+    crossed = pa.Table.from_pylist(
+        [_legacy_quote_row(bid=100.5, ask=100.2)], schema=LEGACY_QUOTE_SCHEMA
+    )
+    with pytest.raises(ValueError, match="cannot migrate invalid legacy quotes: bid exceeds ask"):
+        migrate_quotes_v1_to_quote_v1(crossed)
+
+
+def test_quote_migration_of_an_empty_legacy_table_is_an_empty_quote_table() -> None:
+    empty = pa.Table.from_pylist([], schema=LEGACY_QUOTE_SCHEMA)
+    migrated = migrate_quotes_v1_to_quote_v1(empty)
+    assert migrated.num_rows == 0
+    assert migrated.schema.equals(QUOTE_SCHEMA)
+
+
+def test_a_revision_with_a_null_is_a_row_defect_not_a_type_error() -> None:
+    rows = [_v2_row(datetime(2025, 1, 2, 9, 30, tzinfo=UTC), 0)]
+    rows[0]["revision"] = None
+    problems = validate_revised_bars(pa.Table.from_pylist(rows, schema=BAR_REVISED_SCHEMA))
+    assert [(p.row, p.reason) for p in problems] == [(0, "null in non-nullable field revision")]

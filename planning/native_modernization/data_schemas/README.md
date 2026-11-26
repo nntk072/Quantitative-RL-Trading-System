@@ -1,88 +1,193 @@
-# DATA-SCHEMAS quality ledger
+# DATA-SCHEMAS
 
-Scope: the tracked example export `data/examples/US100.cash_M1_202412300105_202501020334.csv`
-(2024-12-30 01:05 to 2025-01-02 03:34 Helsinki). It is an engineering fixture for the
-normalized-bar schema. It is not a research dataset and is not scientific evidence.
+Canonical Arrow/Parquet schemas, validators, migrations, the data manifest and the data-quality ledgers
+for the market-data inputs. Scope: the tracked example export and the pre-2026 offline windows of the
+local US100.cash MT5 exports. None of these outputs is a research dataset or scientific evidence.
 
-Files:
+## Files
 
-- `build_quality_ledger.py`: generator. Converts an MT5 M1 export with
-  `market_data.arrow_schemas.mt5_export_to_bars`, reconciles every source row with
-  `market_data.reconciliation`, and writes a JSON ledger. Default input: the example above.
-- `quality_ledger_pre2026_m1.json`: the same ledger for the pre-2026 window of the local M1 source
-  (see below).
-- `quality_ledger.json`: output. Source name and sha256, source and converted row counts,
-  quarantined rows with reasons, gaps longer than one minute, first and last event time,
-  schema version, and generator path.
+| File | Role |
+|---|---|
+| `data_manifest.json` | Data manifest: source identities and checksums, ledger checksums, and the canonical schema catalog generated from code. |
+| `build_data_manifest.py` | Writes `data_manifest.json`. Reads ledgers and present sources; reads no 2026 value. |
+| `quality_ledger.json` | Data-quality ledger for the tracked example (2,880 M1 rows). |
+| `quality_ledger_pre2026_m1.json` | Data-quality ledger for the pre-2026 M1 window. |
+| `build_quality_ledger.py` | Generator for both M1 ledgers. |
+| `tick_reconciliation_pre2026.json` | Tick/quote ledger, counts only. **Produced before the quote-event.v1 change; see Open items.** |
+| `build_tick_reconciliation.py` | Generator for the tick ledger (bounded CPU allocation). |
+| `timeframe_reconciliation_pre2026.json` | M3 to D1 exports compared with M1 resampled to the same local buckets. |
+| `build_timeframe_reconciliation.py` | Generator for the timeframe ledger. |
 
-The causal prefix-invariance check for CAUSAL-FEATURE-GRAPH lives in
-`tests/unit/features/test_causal_prefix_invariance.py` and runs on the same example bars.
+Code: `market_data/arrow_schemas.py` (schemas, validators, `mt5_export_to_bars`),
+`market_data/event_schemas.py` (normalized events, feature rows), `market_data/coverage.py` (grid, gaps,
+calendar classification), `market_data/schema_migration.py` (migrations, corrections),
+`market_data/reconciliation.py` (row-wise reconciliation, quarantine, round trips),
+`market_data/tick_reconciliation.py`, `market_data/timeframe_reconciliation.py`, `market_data/export_window.py`.
 
-Regenerate with:
+Regenerate (sources are gitignored; pass the repository `data/` directory):
 
     .venv-x86/bin/python planning/native_modernization/data_schemas/build_quality_ledger.py
+    .venv-x86/bin/python planning/native_modernization/data_schemas/build_quality_ledger.py \
+        --source <data>/US100.cash_M1_202412300105_202610162349.csv --window-before 2026.01.01 \
+        --out planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json \
+        --parquet-dir logs/agents/data_scientist_engineer/2026-11-26_data_schemas
+    .venv-x86/bin/python planning/native_modernization/data_schemas/build_timeframe_reconciliation.py \
+        --data-dir <data> --window-before 2026.01.01 \
+        --out planning/native_modernization/data_schemas/timeframe_reconciliation_pre2026.json
+    .venv-x86/bin/python planning/native_modernization/data_schemas/build_data_manifest.py --data-dir <data>
 
-## Assumptions
+## Canonical schema definitions
 
-- **Source clock.** The export's `<DATE>` and `<TIME>` are Helsinki wall-clock labels. This follows
-  `config/base/default.yaml` (`data.timestamp_clock: "europe_helsinki"`). In code the clock is the
-  constant `SOURCE_CLOCK = "Europe/Helsinki"` in `market_data/arrow_schemas.py`. That constant is
-  not read from YAML yet, so it is a duplicated setting to reconcile before the config is treated as
-  the single source of truth.
-- **Bar timestamps.** Bars are stamped at the open (`data.bar_timestamp_convention: "open"`).
-  `event_time` is the UTC open. `close_time` is open plus one minute for M1. `available_at` equals
-  `close_time`, so no bar is visible before it closes.
-- **Volume.** `<TICKVOL>` is used as `volume`. It is a tick count, not traded volume. `<VOL>`
-  (zero in this file) and `<SPREAD>` are not carried into the bar schema.
-- **Gaps.** A gap is a spacing above one minute between consecutive converted bar opens. The ledger
-  lists gaps and does not classify them. The two gaps in this file (a daily break and a full-day
-  closure on 2025-01-01) are expected from the instrument calendar, but classifying them belongs to
-  the session schedule, not to this ledger.
-- **Quarantine.** Rows that fail `validate_bars` or the DST local-time mapping are reported with a
-  reason. Rows that are dropped from the table (DST gaps or overlaps) are marked
-  `excluded_from_table`. Rows kept with a bar-rule violation are marked `retained_flagged`. This
-  example has no quarantined rows.
-- **Identity.** `instrument_id` is `US100.cash` and `source_id` is `mt5-export`. Identity comes from
-  the instrument registry, not the filename.
+Field names, Arrow types and nullability are in `data_manifest.json` under `schemas.tables`, generated
+from the code constants. The code is the authority; `tests/unit/market_data/test_data_schema_ledger.py`
+checks the manifest against it.
 
-## Pre-2026 window run
+| Table | Schema id | Purpose |
+|---|---|---|
+| `QUOTE_SCHEMA` | `quote-event.v1` | Source quotes: bid, ask, optional sizes, explicit `origin` tag. |
+| `LEGACY_QUOTE_SCHEMA` | `market-event.v1` | Untagged quote layout written before `quote-event.v1`. Read only by the migration. |
+| `BAR_SCHEMA` | `market-event.v1` | OHLC bars: open (`event_time`), `close_time`, `available_at`, optional volume. |
+| `BAR_REVISED_SCHEMA` | `market-event.v2` | Bars with an integer correction `revision`. |
+| `TRADE_SCHEMA` | `market-event.v1` | Trades: price, optional size. |
+| `INSTRUMENT_SCHEMA` | `instrument-metadata.v1` | Contract size, price tick, lot step, currency, session calendar, validity interval. |
+| `CALENDAR_SCHEMA` | `session-calendar.v1` | Half-open session intervals (`trading`, `early_close`, `closed`). |
+| `NORMALIZED_EVENT_SCHEMA` | `normalized-event.v1` | One row per quote, trade or bar with a positional payload. |
+| `FEATURE_ROW_SCHEMA` | `feature-row.v1` | One decision-clock row of a feature set: `values` is `list<float64 nullable>` in manifest order. |
+| `QUARANTINE_SCHEMA` | none | Quarantine record: source row, reason, action taken. |
 
-The owner-approved offline window is every M1 source row dated before `2026.01.01`. The local
-source `data/US100.cash_M1_202412300105_202610162349.csv` is gitignored and is read-only input here.
-Rows on or after the cutoff are never parsed, converted or checked; their line count is recorded
-so the source line total reconciles. The 2026 reporting interval is not used for any result.
+The bar and trade layouts share `market-event.v1`, as recorded in the existing bar ledgers. The quote
+layout does not, because it gained the `origin` field (see Migration).
+
+## Time and identity contract
+
+- Every event time is `timestamp[ns, tz=UTC]`. Arrow stores it as int64 nanoseconds since the epoch.
+- The source clock is `Europe/Helsinki` for MT5 chart and tick exports (`SOURCE_CLOCK`, checked against
+  `config/base/default.yaml` by a test). It is recorded in the manifest and in every ledger, not as a
+  per-row column. The source label of each row is recoverable from the immutable source file at its
+  `source_sequence` (0-based index into the export body), with the source sha256 in the ledger.
+- Bars: `event_time` is the UTC open, `close_time` is open plus the timeframe, and `available_at` is
+  `close_time`. An incomplete bar is never available.
+- Quotes and trades: `available_at` equals `event_time` for tick exports. No latency is measured, so the
+  field is not a claim about delivery time.
+- Identity: `instrument_id` and `source_id` come from the converter constants and the registry, never
+  from filenames. Each table carries `schema_id`, and the validators refuse any other id.
+- `source_sequence` is the stable tie-breaker within an instrument.
+
+## Quotes, missing values and synthetic data
+
+- Missing values are null. Zero, NaN and infinity are never used as missing markers. A one-sided tick keeps
+  an explicit null on the missing side.
+- Every quote row in a market-data table carries `origin`: `observed` (from the source) or `ohlc_synthetic`
+  (derived from bars). A null or unknown origin is a row defect.
+- Outside the tables, the execution model derives an untagged quote from a bar. `CostModel.bar_quote` in
+  `trading/execution/costs.py` returns bid = close and ask = close + spread. The backtest and environment fill
+  quotes call it (`simulation/backtest/quotes.py`, `simulation/environment/fill_quote_runtime.py`). That output
+  carries no origin tag. It is owned by the trading and simulation roles, so it is open item 9, not a change
+  in this stream.
+- A legacy quote table without `origin` is refused by `validate_quotes` until it is migrated.
+
+## Validation rules
+
+Each validator returns every violation with its row index and a reason. Schema errors (a missing column, a
+mixed or unaccepted schema id, a feature width mismatch) raise `ValueError`. A row defect quarantines that
+row and never stops the table.
+
+| Rule | Where | Test |
+|---|---|---|
+| Null in a non-nullable field is a row defect, reported as such | all `validate_*` | `test_schema_contract_rules.py` |
+| Duplicate key: every occurrence flagged, not only the second | quotes, trades, bars, normalized, features | `test_arrow_schemas.py`, `test_event_schemas.py` |
+| Order: event time must not move backwards in source sequence (per instrument) | quotes, trades, bars, normalized | `test_schema_contract_rules.py` |
+| Finite, positive prices; finite, non-negative sizes and volume | quotes, trades, bars, normalized, instruments | `test_schema_contract_rules.py` |
+| `bid <= ask`, for both quote tables and normalized quotes | quotes, normalized | `test_arrow_schemas.py`, `test_schema_contract_rules.py` |
+| OHLC bounds, `close_time > event_time`, `available_at >= close_time` | bars | `test_arrow_schemas.py` |
+| `available_at >= event_time` | quotes, trades, normalized | `test_arrow_schemas.py` |
+| Instrument: positive tick, lot step, contract size; three-letter currency; non-overlapping validity | instruments | `test_schema_contract_rules.py` |
+| Calendar: `close > open`, known kind, no overlap per instrument | calendar | `test_arrow_schemas.py` |
+| DST: nonexistent and ambiguous Helsinki labels quarantined with a reason | `mt5_export_to_bars`, ticks | `test_mt5_export_to_bars.py`, `test_reconciliation.py` |
+| Timestamp unit: integer epoch values must fall within 1990 to 2100 UTC for the declared unit | `epoch_to_utc_ns` | `test_timestamp_units_and_grid_coverage.py` |
+| Feature row: no information after `event_time`; no NaN or inf; content hash present; one feature set | feature rows | `test_event_schemas.py` |
+| Coverage: grid off-grid rows, gaps with missing slots, calendar classification | `coverage.grid_report` | `test_timestamp_units_and_grid_coverage.py` |
+| Chronology: strictly increasing event times across chunk boundaries (ticks) | `tick_reconciliation` | `test_tick_reconciliation.py` |
+
+Validators read whole columns with NumPy and pandas, not row loops, except the calendar, the instrument
+overlap sweep and the normalized-event payload rules. The tick converter still runs per chunk in Python.
+
+## Quarantine, duplicates, corrections
+
+- Rows that fail a rule are reported with a reason. A row that cannot be converted to a UTC instant is
+  excluded from the table and kept in the quarantine record with its source date, time and reason.
+- Duplicate quotes are not merged or dropped. Exact repeats are a policy point that the tick ledger does not
+  yet count (see Open items).
+- A corrected bar is never overwritten. `append_correction` appends it as the next `revision` for the same
+  `(instrument_id, event_time)`; the earlier rows remain. `latest_revision` gives the current view.
+- Nothing is repaired silently. A dropped or corrected row is always named in a ledger or a quarantine
+  record.
+
+## Gaps and coverage
+
+- `coverage.grid_report` lists every gap longer than one grid step, its missing slots, and off-grid rows.
+- A gap is classified only against a session calendar the caller supplies, and only when that calendar
+  covers the whole missing interval:
+  - `calendar_closed`: covered, and no trading session overlaps it;
+  - `unexplained`: covered, and a trading session overlaps it;
+  - `unclassified`: no calendar, or the calendar does not cover it.
+- No authoritative US100.cash calendar is in the repository. `config/README.md` states that
+  `config/ny_session_schedule.csv` is not asserted to be one, so every gap in the current ledgers is
+  `unclassified`. This is the blocker for gap classification (see Open items).
+
+## Schema versions and migration
+
+- `market_data.arrow_schemas.SUPPORTED_SCHEMA_IDS` lists the ids this package reads: `market-event.v1`,
+  `market-event.v2`, `quote-event.v1`, `session-calendar.v1`, `instrument-metadata.v1`,
+  `normalized-event.v1` and `feature-row.v1`.
+- `require_schema_id(table, accepted=...)` fails closed on an unknown id, a mixed table, or an id the caller
+  does not accept. A reader that cannot interpret a newer id passes a narrower `accepted` set.
+- Two explicit migrations, each reading one old id and writing one new id, refusing invalid input:
+  - `migrate_bars_v1_to_v2`: `market-event.v1` bars to `market-event.v2`, revision 0 on every row.
+  - `migrate_quotes_v1_to_quote_v1`: legacy quotes to `quote-event.v1`, every row tagged `observed`, because
+    no legacy row could have been tagged synthetic. The migration refuses a table already in the new layout,
+    a bar table passed as quotes, and any legacy row that fails the quote rules.
+- Any change to a field's type, nullability or meaning requires a new schema id. An additive change still
+  needs one if an older reader would misread the table. A new id ships with its converter, a migration or a
+  refusal test, and a regenerated manifest.
+- Old ledgers keep the id they were written with and are not rewritten.
+
+## Round trips
+
+- Every Parquet write is read back with PyArrow and with Polars. `polars>=2.2` is declared in `pyproject.toml`.
+  The ledgers record `polars_values_equal`. The normalized-event and feature round-trip test uses
+  `importorskip`, so a venv without Polars would skip it rather than fail. `.venv-x86` has Polars.
+- The M1 reconciliation runs on `bars.parquet` read back from disk when `--parquet-dir` is given.
+
+## Evidence
+
+### Tracked example (`quality_ledger.json`)
+
+2,880 source rows, 2,880 converted, 0 quarantined, reconciles. Two gaps, 1,590 missing minutes, both
+`unclassified`. Regenerates exactly (`test_committed_example_ledger_regenerates_exactly`).
+
+### Pre-2026 M1 window (`quality_ledger_pre2026_m1.json`)
 
 | Item | Value |
 |---|---|
-| Source sha256 | `4c46c6c9820cba15cea38487228d9c334467087b8bb109e3ffad7ca234d83f8c` |
-| Body lines in file / in window / on or after cutoff | 630,787 / 351,432 / 279,355 |
-| Converted bars / quarantined / reconciles | 351,432 / 0 / true |
-| Independent oracle disagreements | 0 (event time, DST class, values) |
-| Parquet round trip | 351,432 rows, schema and values equal |
-| Gaps | 297 gaps, 176,973 missing bars (not classified; see the session schedule) |
+| Source sha256 | `4c46c6c9820cba15cea38487228d9c334467087b8bb109e3ffad7ca234d83f8c` (recomputed and matched) |
+| Body lines / in window / on or after cutoff | 630,787 / 351,432 / 279,355 |
+| Converted / quarantined / reconciles | 351,432 / 0 / true (read back from `bars.parquet`) |
+| Oracle disagreements (event time, DST class, values) | 0 |
+| Parquet round trip | PyArrow and Polars equal |
+| Gaps | 297 gaps, 176,973 missing minutes, all `unclassified` |
+| Off-grid bars, duplicate event times | 0, 0 |
 
-Regenerate:
+The source has no rows on the two Helsinki DST-switch Sundays (2025-03-30, 2025-10-26), so the window has no
+nonexistent or ambiguous labels. The DST branch is covered by the synthetic fixtures in
+`tests/unit/market_data/test_mt5_export_to_bars.py` and `test_reconciliation.py`.
 
-    .venv-x86/bin/python planning/native_modernization/data_schemas/build_quality_ledger.py \
-        --source data/US100.cash_M1_202412300105_202610162349.csv --window-before 2026.01.01 \
-        --out planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json \
-        --parquet-dir logs/agents/data_scientist_engineer/2026-11-26_data_schemas
+### Higher-timeframe exports (`timeframe_reconciliation_pre2026.json`)
 
-The Parquet files and `manifest.json` (sha256 of `bars.parquet` and `quarantine.parquet`) are in the
-git-ignored logs tree, not tracked.
+Regenerated with the current code; byte-identical to the prior ledger. Every export bar matches the
+resampled M1 bucket on open, high, low, close and tick volume:
 
-Finding: the source has no rows at all on the two Helsinki DST-switch Sundays (2025-03-30 and
-2025-10-26), so the window has no nonexistent or ambiguous labels. The DST branch is exercised only
-by the synthetic fixtures in `tests/unit/market_data/test_mt5_export_to_bars.py` and
-`tests/unit/market_data/test_reconciliation.py`, not by source data.
-
-## Higher-timeframe exports against resampled M1
-
-`build_timeframe_reconciliation.py` writes `timeframe_reconciliation_pre2026.json`. It resamples the
-pre-2026 M1 bars to each export's local wall-clock buckets (M3 to D1) and compares every export bar.
-Counts and labels only. The window split is `market_data/export_window.py`, shared with the M1 ledger.
-
-| Timeframe | Export bars | Matched | Export-only | Resampled-only | Any field mismatch |
+| Timeframe | Export bars | Matched | Export-only | Resampled-only | Field mismatches |
 |---|---|---|---|---|---|
 | M3 | 117,424 | 117,424 | 0 | 0 | 0 |
 | M5 | 70,308 | 70,308 | 0 | 0 | 0 |
@@ -93,75 +198,50 @@ Counts and labels only. The window split is `market_data/export_window.py`, shar
 | H4 | 1,552 | 1,552 | 0 | 0 | 0 |
 | D1 | 260 | 260 | 0 | 0 | 0 |
 
-Every bucket agrees on open, high, low, close and tick volume. The first bucket of each export opens
-before the first M1 bar in the window, so it is partial at the window edge; it is counted
-(`window_edge_partial_matched`). This is evidence that the MT5 higher-timeframe exports agree with the M1
-source over the pre-2026 window. It is not independent of the broker feed, so it does not prove the feed.
+The first bucket of each export opens before the first M1 bar in the window and is counted as
+`window_edge_partial_matched`. This agreement is not independent of the broker feed.
 
-## Normalized event and feature-row schemas
+### Tick/quote export (`tick_reconciliation_pre2026.json`): prior revision, not current
 
-`market_data/event_schemas.py` defines two Arrow schemas with validators and tests.
+The ledger's full-window run (Slurm job 21871047, exit 0) reported 56,245,046 window rows, 0 quarantined,
+0 unexplained, 0 oracle and value mismatches, strictly ordered, 261 gaps over one hour, and 29 Parquet parts
+read back equal. It was produced by the code before the `quote-event.v1` change, so it is **not** evidence
+for the current schema. A bounded smoke run of the current converter on the first 200,000 pre-cutoff rows
+converted all of them with zero quarantine and zero mismatches. That smoke run is engineering evidence only;
+it is not a window result.
 
-- `NORMALIZED_EVENT_SCHEMA` (`normalized-event.v1`): one row per quote, trade or completed bar, with a
-  common header (`event_time`, `available_at`, `source_sequence`, identities) and a positional payload
-  (`value_a` to `value_d`, `size`). A field that does not apply is null. A one-sided quote stays in the
-  quote table, not here.
-- `FEATURE_ROW_SCHEMA` (`feature-row.v1`): one decision-clock row per feature set, with
-  `values: list<float64 nullable>` in manifest order. A null is missing (warm-up or no data); NaN and
-  infinity are refused. `available_at` must not be later than `event_time`, so a feature cannot use
-  information from after its decision time. A table whose row width differs from the manifest is a
-  schema error and is rejected outright.
+## Open items
 
-## Parquet round trip with Polars
+Each item names the exact external need.
 
-Every Parquet write in this package is read back with PyArrow and with Polars (Polars 2.2.0 in
-`.venv-x86`). The M1 ledgers record `polars_values_equal`. The normalized-event and feature-row tests
-round-trip through both readers. The Polars test uses `importorskip`, so a venv without Polars skips it
-rather than failing. Polars is not in `pyproject.toml` or `uv.lock`.
+1. **Tick evidence under the current schema.** Re-run `build_tick_reconciliation.py` over the full pre-cutoff
+   window with the current code. This needs one bounded CPU allocation (about 56M rows, 29 parts). The
+   resource operator must approve it. Until then the tick ledger is stale for `quote-event.v1`.
+2. **Authoritative US100.cash session calendar.** Gap classification needs a broker or venue calendar of
+   trading sessions and closures, supplied as `session-calendar.v1`. Without it, all 297 M1 gaps stay
+   `unclassified`. The owner or the data provider must supply it.
+3. **Exact tick repeats.** The tick ledger does not count exact repeats (same instant, bid, ask and flags) as
+   the policy requires. Adding this needs the tick re-run in item 1.
+4. **Whole-file identity reads.** The source checksums and post-cutoff line counts read the full files,
+   including 2026 bytes, because a whole-file sha256 is the raw identity. No 2026 value is parsed or
+   reported. The lead should confirm this is acceptable for the reporting interval, or accept an identity
+   that does not read the exposed interval.
+5. **Polars in the lock file.** `pyproject.toml` declares Polars; this stream did not update `uv.lock`.
+6. **Instrument registry.** `instrument-metadata.v1` has a schema and a validator, but the repository holds no
+   registry export for US100.cash or US500.cash (contract size, price tick, lot step, currency, validity
+   intervals). The owner or the broker must supply it before any instrument row can be written.
+7. **Integer-epoch sources.** `epoch_to_utc_ns` refuses implausible values for a declared unit. The MT5 converters
+   parse wall-clock text, not epochs, so no current converter calls it. It is ready for a source that writes epochs.
+8. **Tick Parquet reconciliation from disk.** The tick converter reconciles each in-memory chunk and then reads
+   every written part back for an equality check. It does not re-reconcile the parts from disk as the M1 ledger does.
 
-## Correction and revision policy
+9. **Untagged bar-derived quote in the execution model.** Reproducer:
+   `CostModel(spread_points=0.6).bar_quote(close=20000.0)` returns `(20000.0, 20000.6)` with no origin. The
+   trading role should return a tagged `ohlc_synthetic` quote or route it through `quote-event.v1`, and the
+   simulation role should record the tag on fills. This stream does not edit `trading/execution`.
 
-- Source files are immutable. A converted table records the source sha256 and row counts.
-- Duplicate quotes are not merged or removed. Exact repeats are reported, not dropped.
-- A corrected bar is never overwritten. `market_data.schema_migration.append_correction` appends it as the
-  next `revision` for the same `(instrument_id, event_time)`; the earlier rows stay. `latest_revision` gives
-  the current view. Corrections are covered by `tests/unit/market_data/test_schema_migration.py`.
-- Rows that fail a rule are excluded from the table and kept in the quarantine record with a reason.
-  Nothing is repaired silently.
+## Limits
 
-## Schema migration policy
-
-- `market_data.arrow_schemas.SUPPORTED_SCHEMA_IDS` lists the ids this package supports:
-  `market-event.v1`, `market-event.v2`, `normalized-event.v1` and `feature-row.v1`.
-- `require_schema_id(table, accepted=...)` fails closed on an unknown id, a table that mixes ids, or an id
-  outside `accepted`. A reader that cannot interpret a newer id passes a narrower `accepted` set and is refused.
-- `market-event.v2` adds an integer `revision` to bars. It is produced only by
-  `market_data.schema_migration.migrate_bars_v1_to_v2`, which reads only v1, writes only v2 with revision 0
-  on every row, and refuses invalid v1 bars. The migration test covers this with a second schema id on a
-  fixture: v2 is refused by v1 readers, and a v2 table is refused as migration input.
-- Any change to a field's type, nullability or meaning requires a new schema id. An additive change
-  still needs a new id if an older reader would misread the table.
-- A new id ships with its converter, a test that reads the old and new ids, and a regenerated ledger.
-  Old ledgers keep their id and are not rewritten.
-
-## Tick/quote export
-
-`market_data/tick_reconciliation.py` converts and reconciles the tick export (about 6 GB, gitignored) over
-the pre-2026 window. It runs as one bounded CPU allocation (`build_tick_reconciliation.py`). Each row
-lands once in the quote table or the quarantine record. Each kept row's UTC instant is checked against
-a zoneinfo oracle on whole seconds, plus its milliseconds. One-sided ticks keep an explicit null. Crossed
-quotes, DST labels, empty FLAGS and non-numeric fields are quarantined with a reason.
-
-Result (`tick_reconciliation_pre2026.json`, Slurm job 21871047, batch-skl, exit 0): 56,245,046 window
-rows; 56,245,046 converted; 0 quarantined; 0 unexplained; 0 oracle event, DST and value mismatches;
-strictly ordered; 261 gaps over one hour (largest about 73 hours, weekend and holiday closures); 29 Parquet
-parts, each read back equal with PyArrow and Polars. The 78,798,505 lines dated 2026 or later were counted
-by label only. The Parquet parts and manifest are in the git-ignored logs tree.
-
-## Limits (recorded, not blockers)
-
-- The source has no rows on the two DST-switch Sundays (2025-03-30 and 2025-10-26). The DST branch is
-  covered by synthetic tests only.
-- The 2026 reporting interval is never parsed or used. Lines dated 2026 are counted by label only.
-- Gaps (297 in the pre-2026 M1 window, 176,973 missing bars) are not classified against the session schedule.
-- `SOURCE_CLOCK` is still a code constant; a test keeps it equal to `config/base/default.yaml`.
+- The source has no rows on the two DST-switch Sundays, so the DST branch is covered only by synthetic fixtures.
+- `SOURCE_CLOCK` is a code constant, checked against `config/base/default.yaml` by a test.
+- Duplicate-tick counting and the calendar-based gap classification are not implemented in the tick ledger.

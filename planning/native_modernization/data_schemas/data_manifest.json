@@ -1,0 +1,775 @@
+{
+  "manifest": "DATA-SCHEMAS data manifest",
+  "scope": "identities, checksums, ledgers and canonical schema definitions for the tracked example and the pre-2026 offline windows; not scientific evidence",
+  "generator": "planning/native_modernization/data_schemas/build_data_manifest.py",
+  "identity_policy": "instrument_id and source_id come from the converter constants and the instrument registry, never from filenames",
+  "raw_source_policy": "raw sources are read-only; checksums are recorded and no source is rewritten",
+  "reporting_interval_policy": "the 2026 interval is never parsed, converted, checked or reported; whole-file checksums and post-cutoff line counts are the only 2026 facts recorded",
+  "timestamps": {
+    "storage": "timestamp[ns, tz=UTC]",
+    "source_clock": "Europe/Helsinki",
+    "bar_timestamp_convention": "open",
+    "available_at": "bar: close_time; tick: event_time (no measured latency)"
+  },
+  "sources": [
+    {
+      "role": "example_m1_tracked",
+      "file": "US100.cash_M1_202412300105_202501020334.csv",
+      "path": "data/examples/US100.cash_M1_202412300105_202501020334.csv",
+      "sha256": "856022af89ca53330ed3525fd3dcf686553337080fdbc006e4e1d4d2415d920d",
+      "bytes": 191653,
+      "body_lines_in_file": 2880,
+      "window": null,
+      "scope": "tracked engineering fixture; not a research dataset"
+    },
+    {
+      "role": "m1_pre2026",
+      "file": "US100.cash_M1_202412300105_202610162349.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "4c46c6c9820cba15cea38487228d9c334467087b8bb109e3ffad7ca234d83f8c",
+      "bytes": 42077931,
+      "body_lines_in_file": 630787,
+      "window": {
+        "window_before": "2026.01.01",
+        "rows_in_window": 351432,
+        "lines_on_or_after_cutoff": 279355
+      },
+      "scope": "pre-2026 offline window; the ledger is the evidence"
+    },
+    {
+      "role": "tick_pre2026",
+      "file": "US100.cash_202412300105_202610162349.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "e70a971fb84bf1c32083886eebbaa0691c2e122d9775394b87b644905d52afcb",
+      "bytes": 6345169212,
+      "body_lines_in_file": 135043551,
+      "window": {
+        "window_before": "2026.01.01",
+        "window_rows": 56245046,
+        "lines_on_or_after_cutoff": 78798505
+      },
+      "scope": "pre-2026 offline window",
+      "status": {
+        "evidence_revision": "not recorded in the ledger; schema_version market-event.v1",
+        "current_schema_id": "quote-event.v1",
+        "rerun_required": true,
+        "reason": "the tick ledger was produced before the quote-event.v1 origin tag and the order rule; the full window needs a bounded CPU allocation to regenerate"
+      }
+    },
+    {
+      "role": "export_M3_pre2026",
+      "file": "US100.cash_M3_202412300103_202610162348.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "21c200a927db10622022dbf3f846c48f5f8eba0a4eb4cfc998d21d55bee40ac2",
+      "bytes": 14138570,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_M5_pre2026",
+      "file": "US100.cash_M5_202412300105_202610162345.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "10ecf18c879731c716d1e569534eb0b1b7931b4d31b64da615ed31b20d40a319",
+      "bytes": 8506586,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_M10_pre2026",
+      "file": "US100.cash_M10_202412300100_202610162340.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "4fa1998033185ec06eac79343853bcb4128d1a22b45bd002426222c7d5b18eb9",
+      "bytes": 4287341,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_M15_pre2026",
+      "file": "US100.cash_M15_202412300100_202610162345.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "b7c43a6beb51f12b8bf6ca81598539ec5829e25de851cc661c864c1355abe08f",
+      "bytes": 2883224,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_M30_pre2026",
+      "file": "US100.cash_M30_202412300100_202610162330.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "250a746d65064190035d90ba99acf9f956cf4e2fd8e3fe6e97240518e60904b5",
+      "bytes": 1447422,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_H1_pre2026",
+      "file": "US100.cash_H1_202412300100_202610162300.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "c9e398bd45a3d2f6bb9e1991a4bac6a48d06b17afacc76da36b4c44529f48610",
+      "bytes": 728311,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_H4_pre2026",
+      "file": "US100.cash_H4_202412300000_202610162000.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "9aa409187df685642350faae6f9652fe804befb5e569a0e00def4385506dfc51",
+      "bytes": 191698,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    },
+    {
+      "role": "export_D1_pre2026",
+      "file": "US100.cash_D1_202412300000_202610160000.csv",
+      "path": "data/ (gitignored, read-only)",
+      "sha256": "75153c50cde25e1ed7625c9c95dcfae1be8a9949adef8b8781f7ff809a895bc2",
+      "bytes": 28282,
+      "window": {
+        "window_before": "2026.01.01"
+      },
+      "scope": "pre-2026 export compared with resampled M1; counts only in the ledger"
+    }
+  ],
+  "ledgers": [
+    {
+      "file": "quality_ledger.json",
+      "sha256": "43be7f61b3b0dd399031b2e8e85888b92ec22bd811701491b09700fce3b893c5",
+      "schema_version": "market-event.v1"
+    },
+    {
+      "file": "quality_ledger_pre2026_m1.json",
+      "sha256": "f35a8c1288440ed0080a672ad5ad13f3653c855826fa063d62026bd8916f981b",
+      "schema_version": "market-event.v1"
+    },
+    {
+      "file": "tick_reconciliation_pre2026.json",
+      "sha256": "630371fdd226da776c537280d7aa8e90d73b9c6ee3275ea9a4182e296780d533",
+      "schema_version": "market-event.v1"
+    },
+    {
+      "file": "timeframe_reconciliation_pre2026.json",
+      "sha256": "09f5f618a1ae1d58ad3721aae63db96c0b51df525425ae4640d251b8a2705cff",
+      "schema_version": null
+    }
+  ],
+  "schemas": {
+    "supported_schema_ids": [
+      "feature-row.v1",
+      "instrument-metadata.v1",
+      "market-event.v1",
+      "market-event.v2",
+      "normalized-event.v1",
+      "quote-event.v1",
+      "session-calendar.v1"
+    ],
+    "quote_origins": [
+      "observed",
+      "ohlc_synthetic"
+    ],
+    "timestamp_units": [
+      "ms",
+      "ns",
+      "s",
+      "us"
+    ],
+    "plausible_utc_range": {
+      "min": "1990-01-01",
+      "max_exclusive": "2100-01-01"
+    },
+    "tables": {
+      "QUOTE_SCHEMA": {
+        "schema_id": "quote-event.v1",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "source_sequence",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "origin",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "bid",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "ask",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "bid_size",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "ask_size",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "source_flags",
+            "type": "int32",
+            "nullable": false
+          }
+        ]
+      },
+      "LEGACY_QUOTE_SCHEMA": {
+        "schema_id": "market-event.v1",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "source_sequence",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "bid",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "ask",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "bid_size",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "ask_size",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "source_flags",
+            "type": "int32",
+            "nullable": false
+          }
+        ]
+      },
+      "BAR_SCHEMA": {
+        "schema_id": "market-event.v1",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "close_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "source_sequence",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "open",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "high",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "low",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "close",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "volume",
+            "type": "double",
+            "nullable": true
+          }
+        ]
+      },
+      "BAR_REVISED_SCHEMA": {
+        "schema_id": "market-event.v2",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "close_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "source_sequence",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "open",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "high",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "low",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "close",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "volume",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "revision",
+            "type": "int64",
+            "nullable": false
+          }
+        ]
+      },
+      "TRADE_SCHEMA": {
+        "schema_id": "market-event.v1",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "source_sequence",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "price",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "size",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "source_flags",
+            "type": "int32",
+            "nullable": false
+          }
+        ]
+      },
+      "INSTRUMENT_SCHEMA": {
+        "schema_id": "instrument-metadata.v1",
+        "fields": [
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "contract_size",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "price_tick",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "lot_step",
+            "type": "double",
+            "nullable": false
+          },
+          {
+            "name": "currency",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "session_calendar",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "valid_from",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "valid_to",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": true
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          }
+        ]
+      },
+      "CALENDAR_SCHEMA": {
+        "schema_id": "session-calendar.v1",
+        "fields": [
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "session_open",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "session_close",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "session_kind",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          }
+        ]
+      },
+      "NORMALIZED_EVENT_SCHEMA": {
+        "schema_id": "normalized-event.v1",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "source_sequence",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "event_type",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "value_a",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "value_b",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "value_c",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "value_d",
+            "type": "double",
+            "nullable": true
+          },
+          {
+            "name": "size",
+            "type": "double",
+            "nullable": true
+          }
+        ]
+      },
+      "FEATURE_ROW_SCHEMA": {
+        "schema_id": "feature-row.v1",
+        "fields": [
+          {
+            "name": "event_time",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "available_at",
+            "type": "timestamp[ns, tz=UTC]",
+            "nullable": false
+          },
+          {
+            "name": "instrument_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "feature_set_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "feature_version",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "content_hash",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "schema_id",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "session_eligible",
+            "type": "bool",
+            "nullable": false
+          },
+          {
+            "name": "values",
+            "type": "list<item: double>",
+            "nullable": false
+          }
+        ]
+      },
+      "QUARANTINE_SCHEMA": {
+        "schema_id": null,
+        "fields": [
+          {
+            "name": "source_row_index",
+            "type": "int64",
+            "nullable": false
+          },
+          {
+            "name": "source_date",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "source_time",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "reason",
+            "type": "string",
+            "nullable": false
+          },
+          {
+            "name": "action",
+            "type": "string",
+            "nullable": false
+          }
+        ]
+      }
+    },
+    "validators": {
+      "arrow_schemas": [
+        "validate_quotes",
+        "validate_bars",
+        "validate_trades",
+        "validate_instruments",
+        "validate_calendar"
+      ],
+      "event_schemas": [
+        "validate_normalized_events",
+        "validate_feature_rows"
+      ],
+      "schema_migration": [
+        "validate_revised_bars"
+      ],
+      "coverage": [
+        "grid_report"
+      ]
+    },
+    "migrations": [
+      {
+        "from": "market-event.v1 (bar layout)",
+        "to": "market-event.v2",
+        "function": "market_data.schema_migration.migrate_bars_v1_to_v2",
+        "revision": 0
+      },
+      {
+        "from": "market-event.v1 (legacy quote layout)",
+        "to": "quote-event.v1",
+        "function": "market_data.schema_migration.migrate_quotes_v1_to_quote_v1",
+        "origin": "observed"
+      }
+    ]
+  }
+}

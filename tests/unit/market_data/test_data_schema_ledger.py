@@ -94,3 +94,31 @@ def test_parquet_outputs_are_written_with_a_manifest(tmp_path: Path) -> None:
     assert (out_dir / "bars.parquet").is_file()
     assert (out_dir / "quarantine.parquet").is_file()
     assert ledger["parquet_round_trip"]["values_equal"] is True
+
+
+def _load_manifest_generator() -> ModuleType:
+    path = REPO / "planning" / "native_modernization" / "data_schemas" / "build_data_manifest.py"
+    spec = importlib.util.spec_from_file_location("build_data_manifest", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_committed_manifest_schema_catalog_matches_the_code_declarations() -> None:
+    manifest_path = (
+        REPO / "planning" / "native_modernization" / "data_schemas" / "data_manifest.json"
+    )
+    committed = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert committed["schemas"] == _load_manifest_generator().schema_catalog()
+
+
+def test_every_manifest_ledger_checksum_matches_the_committed_file() -> None:
+    import hashlib
+
+    base = REPO / "planning" / "native_modernization" / "data_schemas"
+    committed = json.loads((base / "data_manifest.json").read_text(encoding="utf-8"))
+    for entry in committed["ledgers"]:
+        digest = hashlib.sha256((base / entry["file"]).read_bytes()).hexdigest()
+        assert entry["sha256"] == digest, entry["file"]

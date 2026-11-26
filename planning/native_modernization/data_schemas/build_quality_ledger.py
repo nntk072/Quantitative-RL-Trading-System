@@ -1,4 +1,4 @@
-"""Build the DATA-SCHEMAS quality ledger for an MT5 M1 export.
+r"""Build the DATA-SCHEMAS quality ledger for an MT5 M1 export.
 
 Default: the tracked example ``data/examples/US100.cash_M1_202412300105_202501020334.csv``, written to
 ``quality_ledger.json`` next to this file.
@@ -8,10 +8,13 @@ cutoff. Rows on or after the cutoff are never parsed, converted or checked; they
 line, so reconciliation can show every source line is accounted for. The window is an owner-approved
 offline input (BLOCKER_INVENTORY: DATA-SCHEMAS). The 2026 reporting interval is never used.
 
+When ``--parquet-dir`` is given, the reconciliation runs on the Parquet file read back from disk, not on
+the in-memory table, so the persisted artifact is what is checked.
+
     .venv-x86/bin/python planning/native_modernization/data_schemas/build_quality_ledger.py
-    .venv-x86/bin/python planning/native_modernization/data_schemas/build_quality_ledger.py \
-        --source data/US100.cash_M1_202412300105_202610162349.csv --window-before 2026.01.01 \
-        --out planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json \
+    .venv-x86/bin/python planning/native_modernization/data_schemas/build_quality_ledger.py \\
+        --source data/US100.cash_M1_202412300105_202610162349.csv --window-before 2026.01.01 \\
+        --out planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json \\
         --parquet-dir logs/agents/data_scientist_engineer/2026-11-26_data_schemas
 """
 
@@ -22,10 +25,10 @@ import hashlib
 import json
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
-import numpy as np
 import pandas as pd
 import polars as pl
 import pyarrow as pa  # type: ignore[import-untyped]
@@ -43,6 +46,7 @@ from market_data.arrow_schemas import (  # noqa: E402
     mt5_export_to_bars,
     require_schema_id,
 )
+from market_data.coverage import grid_report  # noqa: E402
 from market_data.export_window import split_export_window, window_frame  # noqa: E402
 from market_data.reconciliation import (  # noqa: E402
     parquet_round_trip,
@@ -56,7 +60,11 @@ GENERATOR_RELATIVE = "planning/native_modernization/data_schemas/build_quality_l
 INSTRUMENT_ID = "US100.cash"
 TIMEFRAME = "M1"
 SOURCE_ID = "mt5-export"
-ONE_MINUTE = pd.Timedelta(minutes=1)
+MINUTE_NS = 60 * 1_000_000_000
+CALENDAR_NOTE = (
+    "no authoritative venue session calendar is supplied; config/README.md states that "
+    "config/ny_session_schedule.csv is not asserted to be one, so every gap stays unclassified"
+)
 
 
 def _iso(value: pd.Timestamp) -> str:
@@ -72,11 +80,13 @@ def build_ledger(
         source: MT5 M1 export (tab-separated, CRLF or LF).
         window_before: Optional ``YYYY.MM.DD`` cutoff; rows with DATE on or after it are excluded.
         parquet_dir: Optional directory for ``bars.parquet``, ``quarantine.parquet`` and
-            ``manifest.json``. When None, the Parquet round trip runs in a temporary directory and
-            only its outcome is recorded.
+            ``manifest.json``. When given, the reconciliation reads ``bars.parquet`` back from disk.
+            When None, the reconciliation runs on the in-memory table and the Parquet round trip runs
+            in a temporary directory.
 
     Returns:
-        The ledger dict. Raises RuntimeError when a row count or chronology check fails.
+        The ledger dict. Raises RuntimeError when a row count, chronology, grid or reconciliation
+        check fails.
     """
     raw = source.read_bytes()
     sha256 = hashlib.sha256(raw).hexdigest()
@@ -94,10 +104,6 @@ def build_ledger(
     source_rows = len(frame)
     kept_rows = set(table.column("source_sequence").to_pylist())
     quarantine = quarantine_table(frame, problems, kept_rows)
-    reconciliation = reconcile_export_to_bars(frame, table, problems)
-    if not reconciliation.reconciles:
-        raise RuntimeError(f"reconciliation failed: {reconciliation}")
-
     schema_id = require_schema_id(table)
     with tempfile.TemporaryDirectory() as scratch:
         round_trip = parquet_round_trip(table, Path(scratch) / "bars_roundtrip.parquet")
@@ -108,45 +114,54 @@ def build_ledger(
         and round_trip.rows == table.num_rows
     ):
         raise RuntimeError(f"parquet round trip failed: {round_trip}")
+
+    reconciled = table
     if parquet_dir is not None:
         parquet_dir.mkdir(parents=True, exist_ok=True)
         bars_path = parquet_dir / "bars.parquet"
         quarantine_path = parquet_dir / "quarantine.parquet"
         pq.write_table(table, bars_path)
         pq.write_table(quarantine, quarantine_path)
+        reconciled = pq.read_table(bars_path)
         manifest = {
             "source_sha256": sha256,
             "schema_id": schema_id,
             "bars_parquet_sha256": hashlib.sha256(bars_path.read_bytes()).hexdigest(),
-            "bars_rows": table.num_rows,
+            "bars_rows": reconciled.num_rows,
             "quarantine_parquet_sha256": hashlib.sha256(quarantine_path.read_bytes()).hexdigest(),
             "quarantine_rows": quarantine.num_rows,
         }
         (parquet_dir / "manifest.json").write_text(
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
         )
+    reconciliation = reconcile_export_to_bars(frame, reconciled, problems)
+    if not reconciliation.reconciles:
+        raise RuntimeError(f"reconciliation failed: {reconciliation}")
 
-    event = pd.DatetimeIndex(table.column("event_time").to_pandas())
-    deltas = event[1:] - event[:-1]
-    strictly_increasing = bool(np.all(deltas > pd.Timedelta(0)))
+    event_ns = reconciled.column("event_time").cast(pa.int64()).to_numpy()
+    grid = grid_report(event_ns, MINUTE_NS)
+    if grid.off_grid_rows:
+        raise RuntimeError(f"{len(grid.off_grid_rows)} bars are off the minute grid")
     gaps: list[dict[str, Any]] = []
-    for i in np.flatnonzero(deltas > ONE_MINUTE):
-        spacing = deltas[i]
-        if spacing % ONE_MINUTE != pd.Timedelta(0):
-            raise RuntimeError(f"non-whole-minute gap at position {i}: {spacing}")
-        minutes = int(spacing // ONE_MINUTE)
+    for gap in grid.gaps:
+        if (gap.end_ns - gap.start_ns) % MINUTE_NS != 0:
+            raise RuntimeError("non-whole-minute gap")
         gaps.append(
             {
-                "start": _iso(event[i]),
-                "end": _iso(event[i + 1]),
-                "gap_minutes": minutes,
-                "missing_bars": minutes - 1,
+                "start": _iso(pd.Timestamp(gap.start_ns, tz="UTC")),
+                "end": _iso(pd.Timestamp(gap.end_ns, tz="UTC")),
+                "gap_minutes": (gap.end_ns - gap.start_ns) // MINUTE_NS,
+                "missing_bars": gap.missing_slots,
+                "status": gap.status,
+                "reason": gap.reason,
             }
         )
+    status_counts = Counter(gap.status for gap in grid.gaps)
 
     first_label, last_label = frame.iloc[0], frame.iloc[-1]
     quarantined = quarantine.to_pylist()
     excluded = sum(1 for q in quarantined if q["action"] == "excluded_from_table")
+    event = pd.DatetimeIndex(reconciled.column("event_time").to_pandas())
     return {
         "ledger": "DATA-SCHEMAS quality ledger",
         "scope": (
@@ -182,12 +197,23 @@ def build_ledger(
             "available_at": "close_time",
             "volume_column": "TICKVOL",
             "schema_id": schema_id,
-            "converted_row_count": table.num_rows,
+            "converted_row_count": reconciled.num_rows,
             "bar_schema_fields": BAR_SCHEMA.names,
+            "timestamp_retention": {
+                "event_time": "UTC open, derived from the source DATE and TIME labels and SOURCE_CLOCK",
+                "source_sequence": "0-based index of the source row in the export body",
+                "source_label": (
+                    "the DATE and TIME of a row are recoverable exactly from the immutable source file at"
+                    " source_sequence, with the source sha256 in this ledger"
+                ),
+            },
         },
         "reconciliation": {
+            "reconciled_from": "bars.parquet read back from disk"
+            if parquet_dir is not None
+            else "in-memory table (no parquet_dir given)",
             "source_rows": source_rows,
-            "converted_rows": table.num_rows,
+            "converted_rows": reconciled.num_rows,
             "quarantined_rows": reconciliation.quarantined_rows,
             "excluded_from_table": excluded,
             "unexplained_rows": reconciliation.unexplained_rows,
@@ -215,15 +241,19 @@ def build_ledger(
             "last_event_time_utc": _iso(event[-1]),
             "first_source_label": f"{first_label['DATE']} {first_label['TIME']} {SOURCE_CLOCK}",
             "last_source_label": f"{last_label['DATE']} {last_label['TIME']} {SOURCE_CLOCK}",
-            "strictly_increasing": strictly_increasing,
+            "strictly_increasing": grid.rows < 2 or bool((event[1:] > event[:-1]).all()),
             "duplicate_event_times": int(event.duplicated().sum()),
+            "off_grid_bars": len(grid.off_grid_rows),
         },
         "gaps": {
             "threshold": "spacing between consecutive converted event_time values > 1 minute",
             "gap_minutes": "end - start in whole minutes (spacing between bar opens)",
-            "missing_bars": "gap_minutes - 1",
+            "missing_bars": "grid minutes strictly between the two bar opens",
+            "calendar": None,
+            "classification_note": CALENDAR_NOTE,
+            "status_counts": dict(sorted(status_counts.items())),
             "count": len(gaps),
-            "total_missing_bars": sum(g["missing_bars"] for g in gaps),
+            "total_missing_bars": grid.missing_slots,
             "items": gaps,
         },
     }

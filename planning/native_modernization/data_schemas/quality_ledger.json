@@ -42,9 +42,15 @@
       "low",
       "close",
       "volume"
-    ]
+    ],
+    "timestamp_retention": {
+      "event_time": "UTC open, derived from the source DATE and TIME labels and SOURCE_CLOCK",
+      "source_sequence": "0-based index of the source row in the export body",
+      "source_label": "the DATE and TIME of a row are recoverable exactly from the immutable source file at source_sequence, with the source sha256 in this ledger"
+    }
   },
   "reconciliation": {
+    "reconciled_from": "in-memory table (no parquet_dir given)",
     "source_rows": 2880,
     "converted_rows": 2880,
     "quarantined_rows": 0,
@@ -75,12 +81,18 @@
     "first_source_label": "2024.12.30 01:05:00 Europe/Helsinki",
     "last_source_label": "2025.01.02 03:34:00 Europe/Helsinki",
     "strictly_increasing": true,
-    "duplicate_event_times": 0
+    "duplicate_event_times": 0,
+    "off_grid_bars": 0
   },
   "gaps": {
     "threshold": "spacing between consecutive converted event_time values > 1 minute",
     "gap_minutes": "end - start in whole minutes (spacing between bar opens)",
-    "missing_bars": "gap_minutes - 1",
+    "missing_bars": "grid minutes strictly between the two bar opens",
+    "calendar": null,
+    "classification_note": "no authoritative venue session calendar is supplied; config/README.md states that config/ny_session_schedule.csv is not asserted to be one, so every gap stays unclassified",
+    "status_counts": {
+      "unclassified": 2
+    },
     "count": 2,
     "total_missing_bars": 1590,
     "items": [
@@ -88,13 +100,17 @@
         "start": "2024-12-30T21:49:00Z",
         "end": "2024-12-30T23:05:00Z",
         "gap_minutes": 76,
-        "missing_bars": 75
+        "missing_bars": 75,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       },
       {
         "start": "2024-12-31T21:49:00Z",
         "end": "2025-01-01T23:05:00Z",
         "gap_minutes": 1516,
-        "missing_bars": 1515
+        "missing_bars": 1515,
+        "status": "unclassified",
+        "reason": "no authoritative session calendar supplied"
       }
     ]
   }

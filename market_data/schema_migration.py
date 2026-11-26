@@ -1,13 +1,17 @@
-"""Explicit v1-to-v2 bar migration and the append-only correction policy (DATA-SCHEMAS).
+"""Explicit schema migrations and the append-only correction policy (DATA-SCHEMAS).
 
-``market-event.v1`` bars have no revision. ``market-event.v2`` bars add an integer ``revision``.
-Migration is explicit: :func:`migrate_bars_v1_to_v2` reads only v1 and writes only v2, with revision 0
-for every row. Any other id, including v2, is refused rather than guessed at.
+Two migrations are explicit. Each reads exactly one old schema id, writes exactly one new id, and
+refuses invalid input rather than guessing:
 
-Correction policy: a corrected bar is never an overwrite. :func:`append_correction` appends the
-correction as a new row with the next revision for the same ``(instrument_id, event_time)``, and the
-earlier rows stay in the table. :func:`latest_revision` selects the highest revision per key when a
-consumer needs the current view. Source revisions and corrections therefore remain auditable.
+- ``market-event.v1`` bars to ``market-event.v2``: :func:`migrate_bars_v1_to_v2` adds an integer
+  ``revision`` with 0 on every row.
+- ``market-event.v1`` quotes to ``quote-event.v1``: :func:`migrate_quotes_v1_to_quote_v1` adds the
+  ``origin`` tag. Every legacy quote came from the source, so every migrated row is ``observed``.
+
+A corrected bar is never an overwrite. :func:`append_correction` appends the correction as a new row
+with the next revision for the same ``(instrument_id, event_time)``, and the earlier rows stay in the
+table. :func:`latest_revision` selects the highest revision per key when a consumer needs the
+current view.
 """
 
 from __future__ import annotations
@@ -19,10 +23,15 @@ from market_data.arrow_schemas import (
     BAR_REVISED_SCHEMA,
     BAR_REVISED_SCHEMA_ID,
     BAR_SCHEMA,
+    LEGACY_QUOTE_SCHEMA,
+    QUOTE_EVENT_SCHEMA_ID,
+    QUOTE_SCHEMA,
     SCHEMA_VERSION,
     RowProblem,
+    _null_problems,
     require_schema_id,
     validate_bars,
+    validate_quotes,
 )
 
 
@@ -53,6 +62,49 @@ def migrate_bars_v1_to_v2(table: pa.Table) -> pa.Table:
     return pa.table(columns, schema=BAR_REVISED_SCHEMA)
 
 
+def migrate_quotes_v1_to_quote_v1(table: pa.Table) -> pa.Table:
+    """Convert a legacy market-event.v1 quote table to quote-event.v1, tagging every row observed.
+
+    The legacy layout has no ``origin`` column, so no row can have been tagged as synthetic. The
+    migration therefore tags every row ``observed`` and refuses the table if it is not the legacy
+    quote layout or if any row fails the quote rules after the tag is added.
+
+    Args:
+        table: Legacy quote table with the LEGACY_QUOTE_SCHEMA columns and schema id
+            ``market-event.v1``.
+
+    Returns:
+        A table with QUOTE_SCHEMA and schema id ``quote-event.v1``. Values, times and nulls are
+        unchanged.
+
+    Raises:
+        ValueError: If the table is not the legacy quote layout, mixes ids, carries an unknown id,
+            or violates the quote rules.
+    """
+    if table.num_rows == 0:
+        return QUOTE_SCHEMA.empty_table()
+    missing = [name for name in LEGACY_QUOTE_SCHEMA.names if name not in table.column_names]
+    if missing or "origin" in table.column_names:
+        raise ValueError(
+            f"not a legacy quote table: missing {missing}, origin present: "
+            f"{'origin' in table.column_names}"
+        )
+    require_schema_id(table, accepted=frozenset({SCHEMA_VERSION}))
+    rows = table.num_rows
+    columns: dict[str, pa.Array | pa.ChunkedArray] = {
+        name: table.column(name) for name in LEGACY_QUOTE_SCHEMA.names if name != "schema_id"
+    }
+    columns["schema_id"] = pa.array([QUOTE_EVENT_SCHEMA_ID] * rows, type=pa.string())
+    columns["origin"] = pa.array(["observed"] * rows, type=pa.string())
+    migrated = pa.table(columns, schema=QUOTE_SCHEMA)
+    problems = validate_quotes(migrated)
+    if problems:
+        raise ValueError(
+            f"cannot migrate invalid legacy quotes: {problems[0].reason} at row {problems[0].row}"
+        )
+    return migrated
+
+
 def _key(table: pa.Table) -> list[tuple[str, int]]:
     """Return the ``(instrument_id, event_time)`` key of every row, with event_time in nanoseconds.
 
@@ -63,15 +115,16 @@ def _key(table: pa.Table) -> list[tuple[str, int]]:
         One key per row, in row order.
     """
     instrument = table.column("instrument_id").to_pylist()
-    event = table.column("event_time").cast(pa.int64()).to_pylist()
+    event = table.column("event_time").cast(pa.int64()).fill_null(0).to_pylist()
     return list(zip(instrument, event, strict=True))
 
 
 def validate_revised_bars(table: pa.Table) -> list[RowProblem]:
     """Return rule violations for a market-event.v2 bar table.
 
-    Each row must have a non-negative revision. No ``(instrument_id, event_time, revision)`` may repeat.
-    Each row must satisfy the v1 bar rules on its own; several revisions of one bar are allowed.
+    Each row must have a non-negative revision. No ``(instrument_id, event_time, revision)`` may
+    repeat. Each row must satisfy the v1 bar rules on its own; several revisions of one bar are
+    allowed. A null in any non-nullable field, including ``revision``, is a row defect.
 
     Args:
         table: Table with the BAR_REVISED_SCHEMA columns.
@@ -82,13 +135,16 @@ def validate_revised_bars(table: pa.Table) -> list[RowProblem]:
     Raises:
         ValueError: If the table is not exactly one market-event.v2 id.
     """
-    require_schema_id(table, accepted=frozenset({BAR_REVISED_SCHEMA_ID}))
-    problems: list[RowProblem] = []
-    revisions = table.column("revision").to_pylist()
+    if table.num_rows:
+        require_schema_id(table, accepted=frozenset({BAR_REVISED_SCHEMA_ID}))
+    problems, bad = _null_problems(table, BAR_REVISED_SCHEMA)
+    revisions = table.column("revision").fill_null(0).to_pylist()
     keys = _key(table)
     seen: dict[tuple[str, int, int], int] = {}
     repeated: set[tuple[str, int, int]] = set()
     for i, (key, revision) in enumerate(zip(keys, revisions, strict=True)):
+        if bad[i]:
+            continue
         if revision < 0:
             problems.append(RowProblem(i, "revision must be non-negative"))
         full_key = (key[0], key[1], revision)
@@ -96,9 +152,11 @@ def validate_revised_bars(table: pa.Table) -> list[RowProblem]:
             repeated.add(full_key)
         seen.setdefault(full_key, i)
     for i, (key, revision) in enumerate(zip(keys, revisions, strict=True)):
-        if (key[0], key[1], revision) in repeated:
+        if not bad[i] and (key[0], key[1], revision) in repeated:
             problems.append(RowProblem(i, "duplicate (instrument, event_time, revision)"))
     for i in range(table.num_rows):
+        if bad[i]:
+            continue
         for problem in validate_bars(table.slice(i, 1).select(BAR_SCHEMA.names)):
             if problem.reason.startswith("duplicate bar open time"):
                 continue

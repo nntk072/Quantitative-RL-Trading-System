@@ -28,8 +28,8 @@ import pandas as pd
 import pyarrow as pa  # type: ignore[import-untyped]
 
 from market_data.arrow_schemas import (
+    QUOTE_EVENT_SCHEMA_ID,
     QUOTE_SCHEMA,
-    SCHEMA_VERSION,
     SOURCE_CLOCK,
     validate_quotes,
 )
@@ -155,6 +155,7 @@ class ChunkResult:
     oracle_dst_mismatches: int = 0
     value_mismatches: int = 0
     unexplained_rows: int = 0
+    last_chain_ns: int | None = None
 
 
 def _numeric(raw: pd.Series, name: str, problems: dict[int, str]) -> np.ndarray[Any, Any]:
@@ -225,7 +226,8 @@ def convert_chunk(
             "source_sequence": pa.array(first_sequence + candidate, type=pa.int64()),
             "instrument_id": pa.array([INSTRUMENT_ID] * len(candidate), type=pa.string()),
             "source_id": pa.array([TICK_SOURCE_ID] * len(candidate), type=pa.string()),
-            "schema_id": pa.array([SCHEMA_VERSION] * len(candidate), type=pa.string()),
+            "schema_id": pa.array([QUOTE_EVENT_SCHEMA_ID] * len(candidate), type=pa.string()),
+            "origin": pa.array(["observed"] * len(candidate), type=pa.string()),
             "bid": pa.array(
                 np.where(np.isnan(bid[candidate]), 0.0, bid[candidate]),
                 mask=np.isnan(bid[candidate]),
@@ -262,7 +264,8 @@ def convert_chunk(
             "source_sequence": pa.array(first_sequence + kept_idx, type=pa.int64()),
             "instrument_id": pa.array([INSTRUMENT_ID] * len(kept_idx), type=pa.string()),
             "source_id": pa.array([TICK_SOURCE_ID] * len(kept_idx), type=pa.string()),
-            "schema_id": pa.array([SCHEMA_VERSION] * len(kept_idx), type=pa.string()),
+            "schema_id": pa.array([QUOTE_EVENT_SCHEMA_ID] * len(kept_idx), type=pa.string()),
+            "origin": pa.array(["observed"] * len(kept_idx), type=pa.string()),
             "bid": pa.array(
                 np.where(np.isnan(bid[kept_idx]), 0.0, bid[kept_idx]),
                 mask=np.isnan(bid[kept_idx]),
@@ -331,8 +334,15 @@ def convert_chunk(
     # A row that is neither kept nor excluded would have no explanation (for example a timestamp the
     # parser rejects without a reason). Such rows are counted, never dropped silently.
     unexplained = int(np.count_nonzero(~ok_time & ~excluded))
+    # Chronology is checked on every parsed row, including rows the quote rules later quarantine, so
+    # an out-of-order export fails reconciliation instead of being hidden by its quarantine.
     kept_event = table_event
-    chain = kept_event if prev_event_ns is None else np.concatenate([[prev_event_ns], kept_event])
+    candidate_event = utc_ns[candidate]
+    chain = (
+        candidate_event
+        if prev_event_ns is None
+        else np.concatenate([[prev_event_ns], candidate_event])
+    )
     diffs = np.diff(chain) if len(chain) > 1 else np.array([], dtype=np.int64)
     inversions = int(np.count_nonzero(diffs < 0))
     gap_ns = diffs[diffs > 0]
@@ -351,6 +361,7 @@ def convert_chunk(
         oracle_dst_mismatches=dst_mismatch,
         value_mismatches=value_mismatch,
         unexplained_rows=unexplained,
+        last_chain_ns=int(candidate_event[-1]) if len(candidate_event) else prev_event_ns,
     )
 
 
@@ -451,7 +462,8 @@ def reconcile_tick_export(
             first_ns = result.first_event_ns
         if result.last_event_ns is not None:
             last_ns = result.last_event_ns
-            prev_ns = result.last_event_ns
+        if result.last_chain_ns is not None:
+            prev_ns = result.last_chain_ns
         offset += result.rows
 
     if totals["rows"] != scan.pre_lines:
@@ -496,7 +508,7 @@ def reconcile_tick_export(
             "rows dated before the cutoff; rows on or after it were counted by label, not parsed; "
             "counts only; not scientific evidence"
         ),
-        "schema_version": SCHEMA_VERSION,
+        "schema_version": QUOTE_EVENT_SCHEMA_ID,
         "window_before": window_before,
         "source": {
             "file": path.name,
