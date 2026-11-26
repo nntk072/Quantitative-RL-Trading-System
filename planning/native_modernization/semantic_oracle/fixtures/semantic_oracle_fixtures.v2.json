@@ -1,6 +1,6 @@
 {
   "schema_version": "semantic-oracle-fixtures.v2",
-  "fixture_version": "2.0.0",
+  "fixture_version": "2.1.0",
   "contract_ref": "planning/native_modernization/semantic_oracle/semantic_contracts.md",
   "provenance": {
     "method": "Every expected value below was worked out by hand (the hand_calculation field states the arithmetic). No production formula was copied to produce an expected value. Values were typed in before the replay tests were run.",
@@ -209,11 +209,11 @@
           "ask": 100.5,
           "direction": 1
         },
-        "expect": 101.0,
+        "expect": 100.5,
         "tol": "price_abs",
-        "polarity": "defect",
-        "classification": "source defect C2 (or total_cost docstring defect): slippage_points is not applied in fill_price. Owner decision pending; source NOT changed.",
-        "hand_calculation": "total_cost docstring says spread and slippage are modeled in fill_price. Documented intent: long pays ask + 0.5 = 101.0. Actual: 100.5."
+        "polarity": "documented_rule",
+        "classification": "documented semantics (former C2), pinned: fill_price returns the quote side and does not apply slippage_points. Slippage is applied on quote paths (tick, protective) before fill_price. Changing this would double count config slippage (5.0) on env fills; see semantic_contracts.md section 5.",
+        "hand_calculation": "long pays the ask 100.5; slippage_points 0.5 is NOT added inside fill_price (it is applied on the quote paths). Pinned at 100.5 to guard against a double-count change."
       },
       {
         "id": "QF-09",
@@ -2339,6 +2339,18 @@
       "polarity": "open",
       "expect": {},
       "classification": "open: enabled-geometry mask polarity is covered only by the existing causal geometry test; a standalone fixture needs a full synthetic env."
+    }
+  ],
+  "changes_from_2_0_0": [
+    {
+      "id": "C2",
+      "change": "Resolved as documented semantics. total_cost docstring corrected (no behaviour change). QF-08 changed from defect (expected 101.0) to documented_rule (expected 100.5): fill_price selects the quote side and does not apply slippage_points, because slippage is applied on the quote paths. Pinned with a test that names the double-count risk (config slippage 5.0).",
+      "evidence_changed": [
+        "trading/execution/costs.py docstring",
+        "fixture QF-08 expectation",
+        "tests/unit/trading/test_semantic_oracle_costs.py",
+        "fixture digest"
+      ]
     }
   ]
 }

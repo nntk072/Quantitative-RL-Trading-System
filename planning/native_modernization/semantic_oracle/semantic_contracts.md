@@ -1,4 +1,4 @@
-# SEMANTIC-ORACLE contracts (fixture version 2.0.0)
+# SEMANTIC-ORACLE contracts (fixture version 2.1.0)
 
 Work package: SEMANTIC-ORACLE (OFFLINE gate). Branch `feat/semantic-oracle`, base `origin/main-native` (a3b3e442).
 Companion files:
@@ -10,7 +10,7 @@ Companion files:
 ## 1. Scope, method and versioning
 
 - Expected values were written by hand, with the arithmetic in each case's `hand_calculation` field, before the replay tests were run. Production formulas were not used to produce expected values.
-- Version 1.0.0 (digest `d0e3f996...`) was the first freeze. Version 2.0.0 (current, digest in `MANIFEST.json`) is a **semantic** version. It records fixed source defects and adds scenarios. Its `changes_from_1_0_0` block lists each change and the evidence it changed.
+- Version 1.0.0 (digest `d0e3f996...`) was the first freeze. Version 2.0.0 (digest `21b68771...`) recorded fixed source defects C1 and C3 and added env scenarios. Version 2.1.0 (current, digest in `MANIFEST.json`) pins the C2 decision (documented semantics, docstring corrected). Each version's `changes_from_*` block lists the change and the evidence it changed.
 - Synthetic tapes only. Captured broker events are not in the tree and were not fabricated. They are not required for offline acceptance.
 - Tests: fixture replay `tests/unit/trading/test_semantic_oracle_fixture_replay.py`; Hypothesis properties `tests/unit/trading/test_semantic_oracle_properties.py`; env metamorphic tests `tests/unit/simulation/test_environment/test_semantic_oracle_env_causality.py`; env scenarios (pending orders, ambiguous bars, breach latch, candidate mask, zero target leg) `tests/unit/simulation/test_environment/test_semantic_oracle_env_scenarios.py`.
 - Native backend parity: **skipped, with recorded reason**. `qrl_native` is not installed in `.venv-x86`. Building it is out of scope for this package.
@@ -85,7 +85,7 @@ Classification uses the four plan categories: source defect, oracle defect, docu
 | ID | Location | Observed in 1.0.0 | Decision and status in 2.0.0 |
 |---|---|---|---|
 | C1 | `trading/execution/costs.py` `CostModel.fill_price` | direction 0 returned bid | **Source defect, fixed in 2.0.0.** `fill_price` raises `ValueError` for any direction other than +1 or -1. QF-07 is an adverse positive. Every caller passes +1 or -1. |
-| C2 | `CostModel.fill_price` vs `CostModel.total_cost` docstring | slippage 0.5 long returned ask 100.5; docstring intent 101.0 | **NOT applied: decision conflict, open.** Applying `slippage_points` inside `fill_price` would **double count** slippage the environment already applies on the quote. Evidence: `config/base/default.yaml` sets `costs.slippage_points: 5.0`; `trading_environment_factory.py` builds the env `CostModel` from it; `fill_quote_runtime._open_at_quote` applies `_adverse_tick_fill_quote` before `broker.open_position`; `protective_level_fill_quote` applies slippage before `broker.close_position`. Both then call `fill_price`, so a fix there charges 5 points twice on market and protective fills and changes evaluation evidence. The owner decision is either to correct the `total_cost` docstring (no behavior change), or to move all slippage into `Broker` and out of the quote paths (behavior change, new evidence identity). QF-08 stays a strict xfail. |
+| C2 | `CostModel.fill_price` vs `CostModel.total_cost` docstring | slippage 0.5 long returned ask 100.5; the `total_cost` docstring said slippage was modeled in `fill_price` | **Documented semantics, resolved in 2.1.0 (owner decision).** `fill_price` selects the quote side and does not apply `slippage_points`. Slippage is applied to the quote on the tick and protective paths before `fill_price`. The `total_cost` docstring was corrected, with no behaviour change. QF-08 is pinned at 100.5 by `test_fill_price_does_not_apply_slippage_points_double_count_guard`. Applying slippage inside `fill_price` would double count configured slippage (`config/base/default.yaml` `costs.slippage_points: 5.0`) on market and protective fills, so it is not done. |
 | C3 | `trading/positions/multi_tp.py` `target_close_size` | zero leg returned the whole position | **Source defect, fixed in 2.0.0.** The function returns 0.0 for a zero leg, a runner-clamped leg, or an inactive slot. Three callers consume the slot without a broker close: `protective_level_runtime.py` (OHLC path and tick path) and `simulation/backtest/protective_management.py`. TG-05 is an adverse positive. Env regression: `test_zero_target_leg_consumes_slot_and_keeps_position`. The backtest caller is not runtime-tested here (O4). |
 | C4 | `Broker.open_position` | equity not refreshed after open (balance 9998, equity 10000) | **Known broker-boundary limit, pinned (not a defect in the env path).** The env calls `mark_to_market` right after every open (`entry_execution_runtime.py`), which restores `equity = balance + open_pnl`. Pinned by `test_known_broker_boundary_limit_open_position_equity_is_refreshed_by_mark` (AC-A2). |
 | SZ-14 | `compute_lots_with_execution_reserve` | budget 2.9, stop 10 returns 0.28 (hand 0.29) | **Documented rule, pinned, not changed.** Lots are `floor(affordable / lot_step) * lot_step` in float64, with no epsilon added. The sizer's comment explains why (a budget of 0.8999999999 must not round up). At exact lot multiples the float quotient can fall just below an integer (`0.29 / 0.01 = 28.999999999999996`), so the result is one step smaller. This is conservative and never breaches the risk budget. |
@@ -110,7 +110,7 @@ The version 1.0.0 mutation run is recorded in `parity_report.md` section 4. Seve
 | bid/ask | QF-01, QF-02, QF-05, QF-06 | QF-03 zero spread; quote invariants | fixture + properties | covered |
 | spread | QF-01, QF-04 | QF-03, QF-27 | fixture | covered (units caveat) |
 | fees | QF-09 | QF-10, QF-11; commission partition AC-C, AC-C2 | fixture + scenario | covered |
-| slippage | QF-12, QF-13, QF-18..22, QF-24 | QF-23 negative slippage | fixture + properties | covered for quote paths; **fill_price slippage (C2) open** |
+| slippage | QF-12, QF-13, QF-18..22, QF-24, QF-08 (documented: fill_price ignores slippage) | QF-23 negative slippage | fixture + properties | covered; fill_price slippage pinned as documented semantics (C2) |
 | lot and tick rounding | SZ-02, SZ-03, SZ-09, SZ-10, TG-01 | SZ-11, SZ-12, SZ-13, SZ-14 pinned, TG-03 | fixture + properties | covered; rules documented |
 | partial fill | TG-01, TG-02, TG-04, AC-B | TG-03, TG-05 (C3 fixed); env zero-leg test | fixture + properties + env | covered |
 | pending, cancel, replace | G1-cancel-session-change, G1-fill-within-interval | G1-session-change-beats-available-fill, G1-no-fill-after-interval | env scenarios | **cancel, fill and pending covered; replace is not_applicable** (no replace operation in source; grep evidence in fixture) |
@@ -129,7 +129,7 @@ The version 1.0.0 mutation run is recorded in `parity_report.md` section 4. Seve
 
 ## 7. Open items and non-claims
 
-- **O1 C2, slippage in `fill_price`:** decision conflict described in section 5. Not changed.
+- **O1 (closed in 2.1.0):** C2 resolved as documented semantics; see section 5. Changing `fill_price` slippage needs a new owner decision and a new evidence identity.
 - **O2 G2 enabled candidate geometry:** the enabled mask polarity needs a full synthetic env. Existing `test_candidate_geometry_observation.py` covers part of it. Open.
 - **O3 G4 cross-session latch:** the 1500-bar synthetic tape ends its first NY window at bar 451, so a second session contributes one step. Cross-session persistence needs a tape that reaches a second NY window. Open.
 - **O4 C3 backtest caller:** `simulation/backtest/protective_management.py` now consumes zero legs without a close. No runtime test drives that function. It is covered only by the shared `target_close_size` fixtures.
@@ -142,8 +142,9 @@ The version 1.0.0 mutation run is recorded in `parity_report.md` section 4. Seve
 ## 8. Evidence identity changed by 2.0.0
 
 - Source: `trading/execution/costs.py` (C1), `trading/positions/multi_tp.py` (C3), `simulation/environment/protective_level_runtime.py` (C3, two sites), `simulation/backtest/protective_management.py` (C3).
+- Docstring only (C2): `CostModel.total_cost` docstring corrected. No behaviour change.
 - Behavior change: a run that hits a zero-size target leg now keeps the position and consumes the slot, instead of exiting the whole position. A call to `fill_price` with an invalid side now raises. Existing evaluation evidence that depends on either path is **not** comparable with 2.0.0 and needs a new evidence identity.
-- Fixtures: `semantic_oracle_fixtures.v2.json` and `MANIFEST.json` (1.0.0 superseded, digest recorded).
+- Fixtures: `semantic_oracle_fixtures.v2.json` and `MANIFEST.json` (2.0.0 superseded, digest recorded; 1.0.0 superseded earlier).
 - Config: `config/studies/profiles/{market_data,trading,simulation}.yaml` (registrations only).
 
 ## 9. Golden update policy

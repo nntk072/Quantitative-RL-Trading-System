@@ -1,6 +1,6 @@
-# SEMANTIC-ORACLE parity report (fixture version 2.0.0)
+# SEMANTIC-ORACLE parity report (fixture version 2.1.0)
 
-Branch `feat/semantic-oracle`. Base `origin/main-native` at `a3b3e442`. Fixture digest `21b687717b36617f1956b6783fd300427457bf03ca1947db20262c85d3f8794c` (`fixtures/semantic_oracle_fixtures.v2.json`, pinned in `fixtures/MANIFEST.json`).
+Branch `feat/semantic-oracle`. Base `origin/main-native` at `a3b3e442`. Fixture digest `0e4528dcc87905c40e53342e791a464f05ce18450f79ad2982d2c4b6c7a8c977` (`fixtures/semantic_oracle_fixtures.v2.json`, version 2.1.0, pinned in `fixtures/MANIFEST.json`; 2.0.0 digest `21b68771...` superseded).
 Python: `/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python` (3.12.14, pytest 9.1.1, hypothesis 6.170.14), `PYTHONPATH` set to the worktree, `OMP_NUM_THREADS=2`. No network, no broker, no orders, no Slurm.
 Raw logs (git-ignored): `logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/`. The lines below are exact.
 
@@ -13,12 +13,12 @@ Final battery, log `final2_checks.log`:
 | 1 | `ruff format --check` on 4 touched source files and 5 test modules | 0 | `9 files already formatted` |
 | 2 | `ruff check` on the same 9 files | 0 | `All checks passed!` |
 | 3 | `python -m mypy` on the same 9 files | 0 | `Success: no issues found in 9 source files` |
-| 4 | `python -m pytest -q -p no:cacheprovider -o addopts= -rxs` on the 5 new or changed oracle modules, `test_semantic_oracle_limits_sizing.py` and `tests/unit/research_tools/test_study_audits.py` | 0 | `158 passed, 2 skipped, 2 xfailed in 16.44s` |
-| 5 | `sha256sum` of the v2 fixture | 0 | `21b687717b36617f1956b6783fd300427457bf03ca1947db20262c85d3f8794c` (equal to `MANIFEST.json`; the manifest test passes) |
+| 4 | `python -m pytest -q -p no:cacheprovider -o addopts= -rxs` on the 5 new or changed oracle modules, `test_semantic_oracle_limits_sizing.py` and `tests/unit/research_tools/test_study_audits.py` | 0 | `160 passed, 2 skipped in 21.38s` |
+| 5 | `sha256sum` of the v2 fixture | 0 | `0e4528dcc87905c40e53342e791a464f05ce18450f79ad2982d2c4b6c7a8c977` (equal to `MANIFEST.json`) |
 
-The 2 skips are the open items O2 and O3 (`test_open_env_scenario_is_visible_not_passed`). The 2 xfails are QF-08 and its costs-file twin, which are the open slippage decision (C2).
+The 2 skips are the open items O2 and O3 (`test_open_env_scenario_is_visible_not_passed`). No xfails remain: C2 is resolved as documented semantics in 2.1.0.
 
-Wider regression (log `regress.log`): `python -m pytest -q -p no:cacheprovider -o addopts= tests/unit/trading tests/unit/simulation` gave `948 passed, 2 skipped, 2 xfailed, 4 warnings in 108.22s`, exit 0. Run after the C1 and C3 source changes.
+Wider regression (log `regress.log`): `python -m pytest -q -p no:cacheprovider -o addopts= tests/unit/trading tests/unit/simulation` gave `948 passed, 2 skipped, 2 xfailed, 4 warnings in 108.22s`, exit 0 (before C2). Re-run after the C2 docstring and test changes: `950 passed, 2 skipped, 4 warnings in 87.53s`, exit 0 (log `final3_checks.log`).
 
 Study-catalog audit: first failure was the inventory check. It was fixed by registering the new callers and API paths in `config/studies/profiles/{market_data,trading,simulation,decisioning}.yaml`. Final `test_study_audits.py`: `4 passed in 42.88s`, exit 0.
 
@@ -37,7 +37,7 @@ Behavior changed by C1 and C3, so evaluation evidence that depends on them is no
 
 | ID | Decision | Evidence |
 |---|---|---|
-| C2 | **Not applied (decision conflict, open).** Applying `slippage_points` inside `fill_price` would double count it on market and protective fills | Source trace, not a numerical run: `config/base/default.yaml` `costs.slippage_points: 5.0`; `simulation/environment/trading_environment_factory.py` builds the env `CostModel` from it; `fill_quote_runtime._open_at_quote` applies `_adverse_tick_fill_quote` before `broker.open_position`; `protective_level_fill_quote` applies slippage before `broker.close_position`; both paths call `CostModel.fill_price`. QF-08 remains a strict xfail. |
+| C2 | **Resolved as documented semantics (version 2.1.0, owner decision).** `fill_price` selects the quote side and does not apply `slippage_points`. Slippage is applied to the quote on the tick and protective paths before `fill_price`. The `total_cost` docstring was corrected (no behaviour change). QF-08 is pinned at 100.5, and `test_fill_price_does_not_apply_slippage_points_double_count_guard` names the double-count risk. Evidence for the risk: `config/base/default.yaml` `costs.slippage_points: 5.0` reaches the env `CostModel` (`trading_environment_factory.py`), and both quote paths apply it before `CostModel.fill_price`. Source trace, not a numerical run. |
 | C4 | Known broker-boundary limit, pinned | `test_known_broker_boundary_limit_open_position_equity_is_refreshed_by_mark`: after `Broker.open_position` with commission 2.0, balance 9998.0, equity 10000.0 (stale), open_pnl 0.0. After `mark_to_market` at bid 100.0 / ask 100.6, equity 9938.0 = balance + open_pnl. The env calls mark after every open (`entry_execution_runtime.py`). |
 | SZ-14 | Documented rule pinned: floor in float64, no epsilon | fixture SZ-14 `expect 0.28`; hand value 0.29 is kept in the note. Probe output: `reserve lots 0.29: 0.28` and `0.29/0.01 = 28.999999999999996 floor: 28.0` |
 | TG-06, TG-07 | Documented rule pinned: `round(x, 2)`, round-half-even on float64 | TG-06 `0.135 -> 0.14`; TG-07 `0.125 -> 0.12` (exact midpoint goes to the even neighbour) |
