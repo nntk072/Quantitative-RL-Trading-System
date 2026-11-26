@@ -1,0 +1,42 @@
+{
+  "id": "BASELINE-AUDIT",
+  "status": "partial",
+  "base_sha": "a3b3e4422fe7a2c694cf71d837fbb205fbee6f2a",
+  "changed_paths": [
+    "planning/native_modernization/baseline/baseline_inventory.json",
+    "planning/native_modernization/baseline/baseline_check_results.json",
+    "planning/native_modernization/baseline/defects.md",
+    "planning/native_modernization/baseline/dependency_graph.json",
+    "planning/native_modernization/baseline/workload_manifests.json",
+    "planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py",
+    "planning/native_modernization/ledger_entries/BASELINE-AUDIT.json"
+  ],
+  "tests_executed": [
+    {"command": "ruff format --check . (full tree)", "exit_code": 0, "result": "1491 files already formatted"},
+    {"command": "ruff check . (full tree)", "exit_code": 0, "result": "All checks passed"},
+    {"command": "python -m mypy . (full tree; launcher .venv-x86/bin/mypy exits 127 with a missing shebang interpreter)", "exit_code": 0, "result": "no issues in 1444 source files"},
+    {"command": "python -m tools.quality.module_size", "exit_code": 0, "result": "all product modules within limit"},
+    {"command": "python -m pytest -q -p no:cacheprovider tests/architecture", "exit_code": 0, "result": "69 passed"},
+    {"command": "python -m pytest -q -p no:cacheprovider <8 scoped oracle/session/walk-forward/alignment/cost test files>", "exit_code": 0, "result": "114 passed, 2 xfailed (strict C1/C2 candidate defects)"},
+    {"command": "python -m pytest -q -p no:cacheprovider tests/unit/trading/test_risk.py tests/unit/trading/test_risk_policy_contract.py tests/unit/trading/test_risk_properties.py", "exit_code": 0, "result": "33 passed"},
+    {"command": "python planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py", "exit_code": 0, "result": "8 of 8 defects reproduced"},
+    {"command": "historical 8-CPU run (not rerun; prior evidence, no commit SHA recorded)", "exit_code": 0, "result": "1089 passed, 4 skipped; not bound to a3b3e442"}
+  ],
+  "evidence_refs": [
+    "planning/native_modernization/baseline/baseline_inventory.json",
+    "planning/native_modernization/baseline/baseline_check_results.json",
+    "planning/native_modernization/baseline/defects.md",
+    "planning/native_modernization/baseline/dependency_graph.json",
+    "planning/native_modernization/baseline/workload_manifests.json",
+    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)",
+    "logs/agents/qa_engineer/2026-11-26_baseline_audit/ (run script run_gates_in_allocation.sh; ignored)"
+  ],
+  "allocation": {
+    "status": "not run",
+    "planned": "one srun --immediate=60 --partition=batch-skl --cpus-per-task=8 from named tmux session qrl-baseline-audit-r2-8cpu, running logs/agents/qa_engineer/2026-11-26_baseline_audit/run_gates_in_allocation.sh (unit, integration, research gate selections with -n 8)",
+    "blocker_detail": "CPU allocation 21873237 (interactive partition, 16 CPUs, 64G, owner not this session, qrl-fullcov-final) holds the one-CPU-allocation cap; at last check 25 minutes remained. Not scancel-able by this session."
+  },
+  "blocker": "(1) Real-usage srun run of the workload manifest selections (T-UNIT 3815, T-INTEGRATION 494, T-RESEARCH 499) is pending the one-CPU-allocation cap, currently held by job 21873237. (2) The mutation check (tools/check mutation-critical, mutmut 3.8.1 per uv.lock) cannot run: mutmut is not installed in .venv-x86, its wheel is not in the local uv cache, and network is disabled. Needs an install of mutmut==3.8.1 with network, or a pre-provisioned wheel, then one srun for the run.",
+  "decision": "Recorded as partial. Accepted is not claimed: the real-usage srun run and the mutation check were not run, and the prior 8-CPU evidence is not bound to a commit. No defect was fixed; the C1, C2, PREV-DAY-LEVELS, WF-SILENT-EMPTY, ARTIFACT-ID-COERCION, ATOMIC-NEW-FILE-MODE and JOIN-SAME-STAMP-REVIEW findings are recorded in defects.md. Source is unchanged.",
+  "reviewer": null
+}

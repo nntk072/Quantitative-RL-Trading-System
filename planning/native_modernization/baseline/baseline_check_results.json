@@ -1,0 +1,123 @@
+{
+  "schema": "qrl.baseline-audit.check-results.v1",
+  "source_revision": "a3b3e4422fe7a2c694cf71d837fbb205fbee6f2a",
+  "base_branch": "origin/main-native",
+  "interpreter": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python (Python 3.12.14, x86_64)",
+  "env": {"PYTHONPATH": "<worktree>", "OMP_NUM_THREADS": "2"},
+  "notes": [
+    "Exit codes are the process exit codes of the commands shown. A check is recorded as passed only when its command ran and exited 0.",
+    "Checks run on the login node (login5.triton.aalto.fi) only where they are light, per the repository gate rules. Heavy suites are run in the 8-CPU allocation described under T-UNIT, T-INTEGRATION and T-RESEARCH.",
+    "The .venv-x86/bin/mypy launcher has a shebang to a missing interpreter (/scratch/work/nguyenl37/Aalto_MS_Thesis/.venv-x86/bin/python) and exits 127. mypy was therefore run as a module with the same interpreter."
+  ],
+  "checks": [
+    {
+      "id": "CHK-WORKTREE",
+      "description": "Create feat/baseline-audit worktree from origin/main-native",
+      "command": "git worktree add -b feat/baseline-audit /scratch/work/nguyenl37/worktrees/baseline-audit origin/main-native",
+      "exit_code": 0,
+      "result": "HEAD at a3b3e442",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-RUFF-FORMAT",
+      "description": "Full-tree format check (repository commit gate)",
+      "command": "ruff format --check .",
+      "tool": "ruff 0.15.22",
+      "exit_code": 0,
+      "result": "1491 files already formatted",
+      "evidence_source": "ran in this session; log in logs/agents/qa_engineer/2026-11-26_baseline_audit/ (ignored), scratchpad ruff_format_full.log"
+    },
+    {
+      "id": "CHK-RUFF-CHECK",
+      "description": "Full-tree lint (repository commit gate)",
+      "command": "ruff check .",
+      "tool": "ruff 0.15.22",
+      "exit_code": 0,
+      "result": "All checks passed!",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-MYPY",
+      "description": "Full-tree type check (repository commit gate)",
+      "command": "python -m mypy .  (run via .venv-x86/bin/python; the mypy launcher itself is broken, see notes)",
+      "tool": "mypy 2.3.0",
+      "exit_code": 0,
+      "result": "Success: no issues found in 1444 source files",
+      "duration": "3m38s",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-MYPY-LAUNCHER",
+      "description": "Invocation of .venv-x86/bin/mypy launcher",
+      "command": ".venv-x86/bin/mypy .",
+      "exit_code": 127,
+      "result": "bad interpreter: shebang points to /scratch/work/nguyenl37/Aalto_MS_Thesis/.venv-x86/bin/python, not present. Environment invocation issue, not a type result.",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-MODULE-SIZE",
+      "description": "Architecture gate part 1: product module size limit",
+      "command": "python -m tools.quality.module_size",
+      "exit_code": 0,
+      "result": "All product Python modules are at most 1000 lines or documented.",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-ARCHITECTURE-TESTS",
+      "description": "Architecture gate part 2: tests/architecture (repo gate tools/check architecture)",
+      "command": "python -m pytest -q -p no:cacheprovider tests/architecture",
+      "exit_code": 0,
+      "result": "69 passed in 63.95s",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-SCOPED-ORACLE-AND-DEFECTS",
+      "description": "Scoped tests for cost model (C1/C2 strict xfails), session levels, walk-forward, alignment, cost model",
+      "command": "python -m pytest -q -p no:cacheprovider tests/unit/trading/test_semantic_oracle_costs.py tests/unit/trading/test_semantic_oracle_limits_sizing.py tests/unit/features/test_session_levels.py tests/unit/market_data/test_walkforward.py tests/unit/market_data/test_walkforward_properties.py tests/unit/features/test_alignment_properties.py tests/unit/features/test_htf_alignment.py tests/unit/trading/test_cost_model.py",
+      "exit_code": 0,
+      "result": "114 passed, 2 xfailed in 7.65s (the 2 xfailed are the strict C1 and C2 candidate-defect tests)",
+      "evidence_source": "ran in this session; log scratchpad scoped_pytest_defects.log"
+    },
+    {
+      "id": "CHK-SCOPED-RISK",
+      "description": "Scoped risk policy tests (trading/risk and account contract)",
+      "command": "python -m pytest -q -p no:cacheprovider tests/unit/trading/test_risk.py tests/unit/trading/test_risk_policy_contract.py tests/unit/trading/test_risk_properties.py",
+      "exit_code": 0,
+      "result": "33 passed in 1.07s",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-DEFECT-REPRODUCERS",
+      "description": "Baseline defect reproducers (planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py)",
+      "command": "PYTHONPATH=<worktree> .venv-x86/bin/python planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py",
+      "exit_code": 0,
+      "result": "SUMMARY reproduced=8 not_reproduced=[]",
+      "evidence_source": "ran in this session"
+    },
+    {
+      "id": "CHK-ALLOC-HISTORICAL-8CPU",
+      "description": "Historical 8-CPU run: features + learning + integration (job 21870262, batch-skl, 8 CPUs)",
+      "command": "pytest tests/unit/features tests/unit/learning tests/integration -n 8",
+      "exit_code": 0,
+      "result": "1089 passed, 4 skipped, 3 warnings in 213.96s",
+      "evidence_source": "reused from logs/agents/architect/2026-11-26_goal/baseline_audit/ (pytest.log, exit.txt=EXIT=0, srun.txt=tmux-exit=0), read only",
+      "reuse_status": "NOT bound to a commit. The log records rootdir /scratch/work/nguyenl37/worktrees/main-native but no HEAD SHA, and the checkout HEAD at run time is unknown. Reported as evidence of a prior run only, not as a result for a3b3e442. Superseded by CHK-ALLOC-T-UNIT-T-INTEGRATION-T-RESEARCH if that run completes."
+    },
+    {
+      "id": "CHK-ALLOC-T-UNIT-T-INTEGRATION-T-RESEARCH",
+      "description": "Repository gate selections on the current base in one 8-CPU allocation (tools/check unit, integration, research selections)",
+      "command": "bash logs/agents/qa_engineer/2026-11-26_baseline_audit/run_gates_in_allocation.sh (inside srun --immediate=60 --cpus-per-task=8, tmux session qrl-baseline-audit-r2-8cpu)",
+      "exit_code": null,
+      "result": "PENDING. Not run: allocation 21873237 (one CPU allocation, owner not this session) is holding the one-CPU-allocation cap. Waiting for release.",
+      "evidence_source": "pending"
+    },
+    {
+      "id": "CHK-MUTATION-CRITICAL",
+      "description": "Scoped risk / feature / learning mutation checks (tools/check mutation-critical, mutmut 3.8.1 with curated only_mutate set)",
+      "command": "./tools/check mutation-critical (QRL_CHECK_NO_SYNC=1 QRL_PYTHON=.venv-x86/bin/python)",
+      "exit_code": null,
+      "result": "NOT RUN. mutmut is not installed in .venv-x86 and no mutmut wheel is in the local uv cache (only its metadata). Network is disabled, so it cannot be installed. No substitute harness was written.",
+      "blocker": "Install mutmut==3.8.1 (uv.lock) into .venv-x86 from the package index or a pre-provisioned wheel, with network enabled for that install."
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "schema": "qrl.baseline-audit.workload-manifests.v1",
+  "source_revision": "a3b3e4422fe7a2c694cf71d837fbb205fbee6f2a",
+  "environment": {
+    "host": "login5.triton.aalto.fi (x86_64, login node for checks; allocation runs on batch-skl)",
+    "python": "3.12.14 (.venv-x86 symlink to uv-managed cpython)",
+    "numpy": "2.2.6",
+    "pandas": "2.3.2",
+    "torch": "2.14.0+cu130",
+    "pytest": "9.1.1",
+    "pytest_xdist": "3.8.0",
+    "ruff": "0.15.22",
+    "mypy": "2.3.0",
+    "mutmut_locked_version": "3.8.1 (uv.lock); not installed in any reachable environment",
+    "omp_num_threads": 2
+  },
+  "test_selections": [
+    {
+      "id": "T-UNIT",
+      "gate": "tools/check unit",
+      "marker_expression": "unit and not slow and not integration and not architecture and not gpu and not triton and not research",
+      "path": "tests",
+      "xdist_workers": 8,
+      "collected": 3815,
+      "nodeid_sha256": "3a1ed539cb81922d9f6276fc29f5107a2e2806d2d424abeae7a7c93ce056c2ae"
+    },
+    {
+      "id": "T-INTEGRATION",
+      "gate": "tools/check integration",
+      "marker_expression": "integration and not slow",
+      "path": "tests",
+      "xdist_workers": 8,
+      "collected": 494,
+      "nodeid_sha256": "aeca55610f79e23383887970c78c1bef4d87f0c053f8032a9c696e829eb94b8c"
+    },
+    {
+      "id": "T-RESEARCH",
+      "gate": "tools/check research",
+      "marker_expression": "research and not slow",
+      "path": "tests",
+      "xdist_workers": 8,
+      "collected": 499,
+      "nodeid_sha256": "13409dabb1b13298088bcd5b8ff749da9252f0d77df8f569a2091f34f626c7b3"
+    },
+    {
+      "id": "T-ARCHITECTURE",
+      "gate": "tools/check architecture (pytest part)",
+      "marker_expression": null,
+      "path": "tests/architecture",
+      "xdist_workers": 0,
+      "collected": 69,
+      "nodeid_sha256": "00eb01752cc2672a52f45ffffb6eaa7b29c46fd0b9f07a30866b0a61276163ed"
+    },
+    {
+      "id": "T-HISTORICAL-8CPU",
+      "gate": "historical allocation run (job 21870262)",
+      "marker_expression": null,
+      "path": "tests/unit/features tests/unit/learning tests/integration",
+      "xdist_workers": 8,
+      "recorded_result": "1089 passed, 4 skipped, 3 warnings, exit 0",
+      "source_revision_recorded": false,
+      "evidence": "logs/agents/architect/2026-11-26_goal/baseline_audit/ (read-only, main-native checkout)"
+    }
+  ],
+  "mutation_critical": {
+    "gate": "tools/check mutation-critical (mutmut run --max-children 4 by default)",
+    "config": "pyproject.toml [tool.mutmut]",
+    "only_mutate": [
+      "trading/account/limits.py",
+      "trading/policy/config.py",
+      "trading/risk/budget.py",
+      "trading/risk/contracts.py",
+      "decisioning/actions.py",
+      "market_data/splits/walkforward.py",
+      "market_data/transforms/align.py"
+    ],
+    "test_selection_cli_args": [
+      "tests/unit/trading/test_risk_properties.py",
+      "tests/unit/trading/test_risk_policy_contract.py",
+      "tests/unit/trading/test_risk.py",
+      "tests/unit/decisioning/test_trade_setup_properties.py",
+      "tests/unit/decisioning/test_trade_setup_contract.py",
+      "tests/unit/models/test_action_schema_contract.py",
+      "tests/unit/market_data/test_walkforward.py",
+      "tests/unit/market_data/test_walkforward_properties.py",
+      "tests/unit/features/test_alignment_properties.py",
+      "tests/unit/features/test_htf_alignment.py::test_empty_higher_timeframe_does_not_hide_later_timeframes",
+      "tests/unit/features/test_htf_alignment.py::test_align_timeframes_completed_bar",
+      "tests/unit/features/test_htf_alignment.py::test_align_timeframes_uses_explicit_close_times_for_short_final_bar"
+    ],
+    "mutate_only_covered_lines": true,
+    "run_status": "not run: mutmut 3.8.1 is not installed and its wheel is not in the local uv cache; network is disabled"
+  },
+  "scoped_defect_tests_run_on_login": {
+    "command": "pytest -q -p no:cacheprovider tests/unit/trading/test_semantic_oracle_costs.py tests/unit/trading/test_semantic_oracle_limits_sizing.py tests/unit/features/test_session_levels.py tests/unit/market_data/test_walkforward.py tests/unit/market_data/test_walkforward_properties.py tests/unit/features/test_alignment_properties.py tests/unit/features/test_htf_alignment.py tests/unit/trading/test_cost_model.py"
+  },
+  "seeds": {
+    "source": "config/research/prospective_research_protocol.yaml and config/research/representation_study.yaml",
+    "prospective_research_protocol_seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "prospective_research_protocol_rng_seed": 42,
+    "representation_study_seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "representation_study_rng_seed": 42,
+    "note": "Seeds are declared identities only; no run was executed with them in this audit."
+  },
+  "dataset_fingerprints": [
+    {
+      "path": "data/examples/US100.cash_M1_202412300105_202501020334.csv",
+      "sha256": "856022af89ca53330ed3525fd3dcf686553337080fdbc006e4e1d4d2415d920d",
+      "bytes": 191653,
+      "window": "2024-12-30 01:05 to 2025-01-02 03:34 (pre-2026 example)",
+      "data_rows_excluding_header": 2880,
+      "note": "Only the first and last rows were displayed to identify the window; no 2026 data was read."
+    },
+    {
+      "path": "data/news/usd_high_impact_calendar.csv",
+      "sha256": "6abae301a619a9495f28b8324f94cce2f6d780405e3d3b1f2b1d8482429afb0d",
+      "bytes": 18772
+    }
+  ],
+  "config_fingerprints": [
+    {
+      "path": "config/base/default.yaml",
+      "sha256": "6ddf7f79a5acefaa62d1392b57d732d80e4bac14fa3e7223524d4aaa8403748d"
+    },
+    {
+      "path": "config/variant_catalog.yaml",
+      "sha256": "979fab3a6993589bd17b74bb7f5537d28d2437f919b628a92ef7519e19e140b3"
+    },
+    {
+      "path": "config/research/prospective_research_protocol.yaml",
+      "sha256": "f87a7f2cd4658c54630d67598c9cb9a754e5200dc04d9db738445c6f9efd9c00"
+    }
+  ],
+  "locked_oos": "Exposed 2026 reporting interval is excluded from every workload here; it was not read or used for selection."
+}
