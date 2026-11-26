@@ -77,6 +77,7 @@ deps-check: lock-check
 	if ! diff -q $$tmp/requirements.txt requirements.txt \
 	  || ! diff -q $$tmp/requirements-dev.txt requirements-dev.txt \
 	  || ! diff -q $$tmp/constraints.txt constraints.txt; then \
+	    for f in requirements.txt requirements-dev.txt constraints.txt; do diff -u $$tmp/$$f $$f || true; done; \
 	    echo 'ERROR: pip pin files are out of date with uv.lock. Run `make lock-export`.'; \
 	    cp $$tmp/requirements.txt $$tmp/requirements-dev.txt $$tmp/constraints.txt .; \
 	    rm -rf $$tmp; exit 1; \
