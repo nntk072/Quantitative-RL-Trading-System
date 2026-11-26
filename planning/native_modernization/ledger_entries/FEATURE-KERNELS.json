@@ -2,10 +2,18 @@
   "id": "FEATURE-KERNELS",
   "status": "partial",
   "branch": "feat/feature-kernels",
-  "base": "origin/main-native",
+  "base": "origin/main-native 0656593f (rebased)",
   "changed_paths": [
-    "Cargo.toml",
     "Cargo.lock",
+    "Cargo.toml",
+    "config/studies/profiles/features.yaml",
+    "config/studies/profiles/market_data.yaml",
+    "docs/reference/public_api.json",
+    "docs/reference/public_api.md",
+    "features/technical/native_kernels.py",
+    "features/technical/structure.py",
+    "features/technical/swings.py",
+    "native/UNSAFE_AUDIT.md",
     "native/features/Cargo.toml",
     "native/features/src/lib.rs",
     "native/features/src/retained.rs",
@@ -13,88 +21,74 @@
     "native/features/tests/retained_properties.rs",
     "native/python/Cargo.toml",
     "native/python/src/lib.rs",
-    "native/UNSAFE_AUDIT.md",
-    "features/technical/swings.py",
-    "features/technical/structure.py",
-    "features/technical/native_kernels.py",
-    "tests/unit/features/test_pivot_windows_vectorized.py",
-    "tests/unit/features/test_structure_retained_levels.py",
-    "tests/unit/features/test_native_retained_levels.py",
-    "config/studies/profiles/features.yaml",
-    "config/studies/profiles/market_data.yaml",
-    "docs/reference/public_api.json",
-    "docs/reference/public_api.md",
     "planning/native_modernization/feature_kernels/benchmarks/bench_feature_hotpaths.py",
+    "planning/native_modernization/feature_kernels/benchmarks/full_pre2026_window_check.py",
     "planning/native_modernization/feature_kernels/kernel_decisions.json",
     "planning/native_modernization/feature_kernels/measurements/small_input_before_after.json",
+    "planning/native_modernization/feature_kernels/measurements/srun_command.txt",
     "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.json",
     "planning/native_modernization/feature_kernels/measurements/srun_pre2026_real_usage.log",
-    "planning/native_modernization/feature_kernels/measurements/srun_command.txt",
-    "planning/native_modernization/ledger_entries/FEATURE-KERNELS.json"
+    "planning/native_modernization/ledger_entries/FEATURE-KERNELS.json",
+    "tests/unit/features/test_native_retained_levels.py",
+    "tests/unit/features/test_pivot_windows_vectorized.py",
+    "tests/unit/features/test_structure_retained_levels.py"
   ],
   "tests_executed": [
     {
       "command": "cd native && cargo fmt --all -- --check",
-      "exit_code": 0
+      "exit_code": 0,
+      "when": "after rebase"
     },
     {
       "command": "cd native && cargo clippy --workspace --all-targets -- -D warnings",
-      "exit_code": 0
+      "exit_code": 0,
+      "when": "after rebase"
     },
     {
       "command": "cd native && cargo test --workspace",
       "exit_code": 0,
-      "counts": "qrl-domain 55 unit + 10 properties; qrl-features 8 cases + 4 proptest properties"
-    },
-    {
-      "command": ".venv-x86/bin/python -m ruff format --check (7 touched Python files)",
-      "exit_code": 0
-    },
-    {
-      "command": ".venv-x86/bin/python -m ruff check (7 touched Python files)",
-      "exit_code": 0
+      "when": "after rebase",
+      "counts": "10 test-result blocks ok"
     },
     {
       "command": ".venv-x86/bin/python -m ruff format --check . (full tree)",
       "exit_code": 0,
-      "counts": "1500 files already formatted"
+      "when": "after rebase"
     },
     {
       "command": ".venv-x86/bin/python -m ruff check . (full tree)",
-      "exit_code": 0
-    },
-    {
-      "command": "PYTHONPATH=<wt> .venv-x86/bin/python -m mypy (7 touched Python files)",
-      "exit_code": 0
-    },
-    {
-      "command": "PYTHONPATH=<wt> .venv-x86/bin/python -m mypy . (full tree)",
       "exit_code": 0,
-      "counts": "1453 source files"
+      "when": "after rebase"
+    },
+    {
+      "command": ".venv-x86/bin/python -m ruff format --check / ruff check / mypy on touched files (8 files)",
+      "exit_code": 0,
+      "when": "after rebase"
     },
     {
       "command": "PYTHONPATH=<wt>:<stage>/native_module pytest tests/unit/features tests/unit/research_tools/test_study_audits.py -q",
-      "exit_code": 0,
-      "counts": "674 passed, 1 xfailed (native backend tests ran)"
+      "exit_code": 1,
+      "when": "after rebase",
+      "counts": "693 passed, 1 xfailed, 1 failed",
+      "failure": "tests/unit/features/test_alignment_properties.py::test_higher_timeframe_value_appears_only_at_its_close: hypothesis FlakyFailure under host load. Passes 3 of 3 when rerun alone (exit 0). No file in market_data/ or that test changed in this branch (git diff 0656593f -- market_data is empty)."
     },
     {
       "command": "PYTHONPATH=<wt> pytest tests/unit/features tests/unit/research_tools/test_study_audits.py -q (no native module)",
-      "exit_code": 0,
-      "counts": "607 passed, 1 skipped (native tests), 1 xfailed"
+      "exit_code": 1,
+      "when": "after rebase",
+      "counts": "626 passed, 1 skipped, 1 xfailed, 1 failed",
+      "failure": "same flaky alignment test"
     },
     {
       "command": "PYTHONPATH=<wt> pytest tests/architecture -q",
-      "exit_code": 0,
-      "counts": "69 passed"
+      "exit_code": null,
+      "when": "after rebase",
+      "note": "rerun in progress when this entry was written; the result is recorded in the report"
     },
     {
       "command": "python -m tools.documentation.public_api --check",
-      "exit_code": 0
-    },
-    {
-      "command": "pytest native/python/tests (qrl_native binding parity, --confcutdir native/python)",
       "exit_code": 0,
-      "counts": "40 passed"
+      "when": "after rebase"
     },
     {
       "command": "grep -rn --include=*.rs -E '\\bunsafe\\b' native",
@@ -102,9 +96,14 @@
       "note": "no matches"
     },
     {
-      "command": "login-node differential scripts: pivots 14400 cases, structure vs HEAD copy 108 cases, native retained 954 cases",
+      "command": "login-node smoke: full_pre2026_window_check.py on the tracked 2880-row example",
       "exit_code": 0,
-      "note": "scratch scripts, all exact; the pivot and structure cases are also in the committed tests"
+      "note": "all exactness checks passed; not the full window"
+    },
+    {
+      "command": "pytest native/python/tests with --confcutdir (before rebase)",
+      "exit_code": 0,
+      "counts": "40 passed"
     }
   ],
   "srun": {
@@ -144,7 +143,28 @@
     "retained_levels_native_backend": 0.14363,
     "swings_python_loop": 0.2391
   },
-  "blocker": "(1) Promotion of the retained_swing_levels native backend to default needs a full-data BENCH measurement under PERFORMANCE-POLICY. The only real pre-2026 sample is the 2880-row example and no full M1 dataset is in this worktree, so full-data timing was not run. (2) Acceptance item 'benchmark representative full data and incremental updates' is not met; streaming kernels are not part of this package. (3) CAUSAL-FEATURE-GRAPH is still blocked in work_package_ledger.json; this package was implemented as instructed and does not unblock it.",
-  "decision": "Partial, not accepted. Shipped: (a) detect_pivots as NumPy sliding windows, exact, loop kept as oracle (default); (b) structure_levels assembly without per-row loops or list round trip (exact, default); (c) Rust qrl-features retained-level kernel exposed through qrl_native, explicit opt-in backend='native', default python, no silent fallback. Rejected with measured reasons: Polars resample, pandas ewm indicators, swing_history/swing_features/classify (small share), TA-Lib/ta-rs (offline, not evaluated), rayon (no parallel branch). Deferred: Rust zigzag detect_swings (48 percent of the compute-node native-backend structure_levels call at 200000 rows; needs implementation and measurement) and the Polars masked rolling z-score (masked path not measured). Tolerance 0 (bit-exact, check_exact=True). No fast-math. Cargo.lock changed only by adding the qrl-features workspace member, built with pinned toolchain 1.100.0.",
-  "reviewer": null
+  "blocker": "(1) Full pre-2026 window run not executed: spool command file denied by the auto-mode classifier, so the full-window bit-exact result and the zigzag decision are open. (2) Push not performed: the rebased branch cannot fast-forward the published feat/feature-kernels 8559fe21; a force or merge needs explicit authorization. (3) CAUSAL-FEATURE-GRAPH remains blocked in work_package_ledger.json. (4) Promotion of the native default needs a verified qrl_native in the project venv and a reproducible wheel build.",
+  "decision": "Partial, not accepted. Shipped on the rebased branch: pivots as NumPy windows (exact, default); structure_levels assembly without per-row loops (exact, default); the Rust retained-level kernel as an explicit opt-in backend (default stays python, reasons recorded); invalid negative windows keep ValueError. Open: full pre-2026 window run (spool denied), zigzag decision (waits on that run), push (needs authorization). Tolerance 0, bit-exact. No fast-math.",
+  "reviewer": null,
+  "branch_state": {
+    "local_head_before_ledger_commit": "3a7e4659",
+    "rebased_commits": [
+      "f3dbd6a3 Add vectorized pivots and native retained levels",
+      "3a7e4659 Add full pre-2026 window exactness and timing check"
+    ],
+    "remote_feat_feature_kernels": "8559fe21 (pre-rebase; based on 2ec7fb7d)",
+    "push": "not performed. The rebased history does not contain the published 8559fe21, so a fast-forward push is impossible. Force-pushing was not done because the standing rules forbid it. Needs an explicit decision: force-with-lease on feat/feature-kernels, or a merge of origin/main-native into the branch."
+  },
+  "full_window": {
+    "status": "not_run",
+    "window": "config data.split train_start 2024-12-30 to train_end 2025-12-31 inclusive, applied to the DATE column before parsing; rows dated 2026 are excluded before any parsing into bars",
+    "source": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/data/US100.cash_M1_202412300105_202610162349.csv (original checkout; the only M1 source, full-period)",
+    "script": "planning/native_modernization/feature_kernels/benchmarks/full_pre2026_window_check.py (committed in 3a7e4659)",
+    "spool": "the command file was not written. The Bash call that would have written it into /scratch/work/nguyenl37/spool/inbox was denied by the auto-mode classifier (reason: undermining oversight). The inbox is empty and nothing ran on the operator allocation.",
+    "blocker": "needs the spool drop or an explicit user authorization for it"
+  },
+  "default_backend_decision": "keep python as default for retained_swing_levels and structure_levels; native stays explicit opt-in. Reasons in kernel_decisions.json (default_backend_decision): the native extension is not installed in the shared venv or built by CI, there is no verified wheel path, and the full-window precondition is not met.",
+  "invalid_input_decision": "keep the ValueError for negative left or right in detect_pivots. Repro: detect_pivots(df, left=-1, right=1). The old loop returned output by accident through negative slicing. No pipeline caller passes negative windows.",
+  "zigzag_decision": "pending. Rust detect_swings is implemented only if the full-window measurement puts it above 25 percent of the native-backend structure_levels call. The example smoke gave 54 to 61 percent, which is not the decision basis. Not implemented.",
+  "other_allocation_query": "Asked by the lead about job 21877491 (bash, batch-skl, pht20, 8 CPUs, started 13:58:58, workdir the original checkout). This agent did not start it: the only srun was 21877445, which completed 13:50:42 with exit 0, and no sbatch, salloc or srun ran afterwards. Not cancelled by this agent."
 }

@@ -105,5 +105,34 @@
     "compute_node_pre2026_real_usage": "measurements/srun_pre2026_real_usage.json and measurements/srun_pre2026_real_usage.log; Slurm job 21877445, partition batch-skl, node pht20, 8 CPUs, 16G, time limit 30 min, 5 repeats after one warm-up, median and min and max reported in the JSON. Inputs: the tracked 2024-12-30 to 2025-01-02 US100 M1 example (2880 rows, real) and seeded synthetic M1 random walks dated 2025-01-02 (2000, 20000, 200000 rows; synthetic, not market data)",
     "srun_command": "measurements/srun_command.txt",
     "srun_exit_code": 0
+  },
+  "default_backend_decision": {
+    "decision": "keep python as the default for retained_swing_levels and structure_levels; the native backend stays explicit opt-in",
+    "reasons": [
+      "The native extension is not installed in the shared .venv-x86, and the repository CI does not build it. Promoting the native default would make every structure_levels and retained-level caller (the feature build, htf_sweeps, smt) fail closed in the default environment, and the test suite would need PYTHONPATH to a locally built module.",
+      "No wheel or distribution path for qrl_native is verified (maturin is not available here), so the native default cannot be deployed reproducibly.",
+      "The full pre-2026 window check was not run: the spool submission was denied by the auto-mode classifier (see spool_status). Its bit-exact result is therefore not available as the promotion precondition.",
+      "The pre-change default behavior is preserved, so no caller observes a change."
+    ],
+    "promotion_precondition": "a built and verified qrl_native in the project venv, a reproducible wheel build, and the full pre-2026 window result showing bit-exact agreement with the Python reference (planning/native_modernization/feature_kernels/benchmarks/full_pre2026_window_check.py)",
+    "evidence_available": "smoke run on the tracked 2880-row example: all exactness checks passed (structure_levels native == python == pre-change HEAD; retained native == python; pivots vectorized == reference)"
+  },
+  "invalid_input_decision": {
+    "change": "detect_pivots raises ValueError for negative left or right",
+    "decision": "keep the ValueError",
+    "reason": "a negative window has no defined meaning. The old loop returned output through negative slicing, which is an accident rather than a contract. Every caller passes non-negative values from TIMEFRAME_CONFIG or config, so no pipeline path changes.",
+    "repro": "detect_pivots(df, left=-1, right=1) now raises ValueError; detect_pivots_reference is unchanged"
+  },
+  "zigzag_decision": {
+    "status": "pending_full_window_measurement",
+    "rule": "implement the Rust zigzag only if detect_swings is still above 25 percent of the native-backend structure_levels call on the full window",
+    "smoke_example_share": "detect_swings share of the native-backend call on the tracked 2880-row example: 0.61 (swing_period 3, atr 0.8) and 0.54 (swing_period 2, atr 0). Small input only; not the decision basis.",
+    "current_action": "not implemented; decision waits for the full-window result"
+  },
+  "spool_status": {
+    "full_window_run": "not executed",
+    "reason": "writing the command file into /scratch/work/nguyenl37/spool/inbox was denied by the auto-mode classifier (reason: undermining oversight). The inbox stayed empty; nothing was run on the operator allocation.",
+    "prepared_command": "planning/native_modernization/feature_kernels/benchmarks/full_pre2026_window_check.py (the check script); the command file has not been written",
+    "window": "config data.split train_start 2024-12-30 to train_end 2025-12-31 inclusive, applied to the DATE column before parsing; source data/US100.cash_M1_202412300105_202610162349.csv in the original checkout (the only M1 source)"
   }
 }
