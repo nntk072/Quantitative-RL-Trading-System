@@ -9,6 +9,7 @@ be quarantined rather than silently dropped.
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any
 
@@ -63,6 +64,32 @@ INSTRUMENT_SCHEMA = pa.schema(
         pa.field("session_calendar", pa.string(), nullable=False),
         pa.field("valid_from", _UTC_NS, nullable=False),
         pa.field("valid_to", _UTC_NS, nullable=True),
+    ]
+)
+
+
+TRADE_SCHEMA = pa.schema(
+    [
+        pa.field("event_time", _UTC_NS, nullable=False),
+        pa.field("available_at", _UTC_NS, nullable=False),
+        pa.field("source_sequence", pa.int64(), nullable=False),
+        pa.field("instrument_id", pa.string(), nullable=False),
+        pa.field("source_id", pa.string(), nullable=False),
+        pa.field("schema_id", pa.string(), nullable=False),
+        pa.field("price", pa.float64(), nullable=False),
+        pa.field("size", pa.float64(), nullable=True),
+        pa.field("source_flags", pa.int32(), nullable=False),
+    ]
+)
+
+CALENDAR_SCHEMA = pa.schema(
+    [
+        pa.field("instrument_id", pa.string(), nullable=False),
+        pa.field("session_name", pa.string(), nullable=False),
+        pa.field("open_time", _UTC_NS, nullable=False),
+        pa.field("close_time", _UTC_NS, nullable=False),
+        pa.field("source_id", pa.string(), nullable=False),
+        pa.field("schema_id", pa.string(), nullable=False),
     ]
 )
 
@@ -174,6 +201,73 @@ def validate_bars(table: pa.Table) -> list[RowProblem]:
             continue
         if h[i] < max(o[i], c[i], lo[i]) or lo[i] > min(o[i], c[i], h[i]):
             problems.append(RowProblem(i, "OHLC bounds violated"))
+    return problems
+
+
+def validate_trades(table: pa.Table) -> list[RowProblem]:
+    """Return rule violations for a normalized trade table.
+
+    Args:
+        table: Normalized trade table with the TRADE_SCHEMA columns.
+
+    Returns:
+        Every violation with its row index and reason; an empty list when the table is valid.
+    """
+    problems: list[RowProblem] = []
+    event_ns = _as_ns(table, "event_time")
+    avail_ns = _as_ns(table, "available_at")
+    seq = _as_ns(table, "source_sequence")
+    instr = _column(table, "instrument_id")
+    price = _column(table, "price")
+    size = table.column("size").to_numpy(zero_copy_only=False)
+    size_null = table.column("size").is_null().to_numpy(zero_copy_only=False)
+    keys = list(zip(instr, seq.tolist(), strict=True))
+    counts = Counter(keys)
+    for i in range(table.num_rows):
+        if avail_ns[i] < event_ns[i]:
+            problems.append(RowProblem(i, "available_at precedes event_time"))
+        if counts[keys[i]] > 1:
+            problems.append(RowProblem(i, "duplicate (instrument, source_sequence)"))
+        if not (np.isfinite(price[i]) and price[i] > 0):
+            problems.append(RowProblem(i, "price must be finite and positive"))
+        if not size_null[i] and not (np.isfinite(size[i]) and size[i] >= 0):
+            problems.append(RowProblem(i, "size must be finite and non-negative"))
+    return problems
+
+
+def validate_calendar(table: pa.Table) -> list[RowProblem]:
+    """Return rule violations for a session calendar table.
+
+    Sessions of one instrument must not overlap. Sessions of different instruments may.
+
+    Args:
+        table: Session calendar table with the CALENDAR_SCHEMA columns.
+
+    Returns:
+        Every violation with its row index and reason; an empty list when the table is valid.
+    """
+    problems: list[RowProblem] = []
+    open_ns = _as_ns(table, "open_time")
+    close_ns = _as_ns(table, "close_time")
+    instr = _column(table, "instrument_id")
+    for i in range(table.num_rows):
+        if close_ns[i] <= open_ns[i]:
+            problems.append(RowProblem(i, "close_time must follow open_time"))
+    by_instrument: dict[str, list[int]] = {}
+    for i in range(table.num_rows):
+        if close_ns[i] > open_ns[i]:
+            by_instrument.setdefault(str(instr[i]), []).append(i)
+    for rows in by_instrument.values():
+        rows.sort(key=lambda i: (int(open_ns[i]), int(close_ns[i]), i))
+        latest_close: int | None = None
+        for i in rows:
+            if latest_close is not None and open_ns[i] < latest_close:
+                problems.append(
+                    RowProblem(i, "session overlaps a previous session of the same instrument")
+                )
+            latest_close = (
+                int(close_ns[i]) if latest_close is None else max(latest_close, int(close_ns[i]))
+            )
     return problems
 
 
