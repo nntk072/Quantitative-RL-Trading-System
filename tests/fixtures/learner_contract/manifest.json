@@ -1,0 +1,15 @@
+{
+ "files": {
+  "hybrid_distribution_tape.json": {
+   "bytes": 34797,
+   "sha256": "177082ec82a149fb5dd0358c960b293dec70b2f6b23de884e8ad56171f0e4aad"
+  },
+  "ppo_gae_tape.json": {
+   "bytes": 3814,
+   "sha256": "4028951446fcb8d6fd12af11e33da69e69244dce87ee44ad8bbe66f5f517bedb"
+  }
+ },
+ "generator": "learner-contract-tapes-v1",
+ "schema": "qrl.learner-contract.tape-manifest.v1",
+ "seed": 20261126
+}
