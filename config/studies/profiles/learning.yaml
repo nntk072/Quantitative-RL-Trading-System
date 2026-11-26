@@ -16,6 +16,7 @@ api_paths:
 - learning/rl/hybrid.py
 - learning/rl/learner.py
 - learning/rl/ppo.py
+- learning/rl/resume.py
 - learning/rl/rollout_buffer.py
 - learning/rl/semantic.py
 - learning/rl/stopping.py
@@ -38,6 +39,8 @@ caller_paths:
 - tests/unit/learning/test_checkpoint_resume.py
 - tests/unit/learning/test_feature_graph.py
 - tests/unit/learning/test_host_mask_check.py
+- tests/unit/learning/test_learner_contract_compat.py
+- tests/unit/learning/test_learner_contract_resume.py
 - tests/unit/learning/test_learner_contract_tapes.py
 - tests/unit/learning/test_learning_contracts.py
 - tests/unit/learning/test_learning_supervised_reference.py
