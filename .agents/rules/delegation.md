@@ -49,6 +49,11 @@ scientific claims. Paths are ownership defaults, not access-control: for a
 shared file the coordinator names one writer before edits, then assigns all
 other work on that file read-only.
 
+The roster with workflow mode, push and merge rights, read-only and CI-watch
+flags is in [`roles.md`](roles.md). Adding a role and the brief fields are
+defined there too. A role needs lead approval and a roster row before it gets
+any work.
+
 ## Assignment and handoff
 
 Every assignment states goal, acceptance, owned/forbidden paths, source anchors,
