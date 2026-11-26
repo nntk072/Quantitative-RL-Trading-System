@@ -96,14 +96,25 @@ on top of the rules above, not a new roster.
   what changed there. The main-native tracker is report-only: it finds fixes
   that also belong on `main`. Neither tracker pushes unless the coordinator names
   the commits and the batch.
-- **Gate.** CI on each pull request is the gate. Merge only when every required
-  check is green, using rebase or squash. No merge commits, no force-push on
-  `main`, and force-push only on feature branches.
+
+- **Flows.** Each PR belongs to one flow: stream into `main-native`,
+  `main-native` into `main`, `main` into `main-native`, or a change that stays on
+  one branch. A flow may open several PRs; each PR is one reviewable unit.
+- **Gate.** CI on each pull request is the full check and the gate. Merge only
+  when every required check is green, using rebase or squash. No merge commits.
+  Force-push only on feature branches, never on `main`.
+- **Local checks.** Run only the fastest checks locally: format, lint and the
+  touched test files. Full-suite runs belong to CI. Use Slurm for the smallest
+  necessary check, never for the full suite.
+- **Mypy.** Mypy is not in CI yet, so run it locally on the touched files
+  until a CI job exists.
+- **CI watcher.** One subagent watches every open PR and reports each failing
+  job to the flow that owns the branch. That owner fixes it and pushes again.
+  The watcher never pushes, edits code or merges, unless the coordinator names
+  the PR to merge.
 - **Resource operator.** The coordinator alone requests Slurm allocations (one
   `srun` at a time) and owns the file-quota budget. Streams never run Slurm.
-- **Gates that CI does not enforce.** A check not in CI is run locally before
-  the PR is opened. Today this includes full-tree mypy; add a CI job when one is
-  created.
+
 - **Subprocess imports.** Tests that run a script or subprocess from a worktree
   set `PYTHONPATH` to that checkout, because a shared virtualenv can point at a
   different checkout.
