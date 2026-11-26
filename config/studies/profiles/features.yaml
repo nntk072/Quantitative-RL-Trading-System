@@ -1,6 +1,7 @@
 module_id: features
 source_roots: [features, research_tools/features, research_tools/studies/handlers/features.py]
 api_paths:
+- features/graph.py
 - features/__init__.py
 - features/context/entry_ideas.py
 - features/context/liquidity.py
@@ -32,6 +33,7 @@ api_paths:
 - features/technical/structure.py
 - features/technical/swings.py
 caller_paths:
+- tests/unit/features/test_feature_graph.py
 - tests/unit/features/test_causal_prefix_invariance.py
 - tests/unit/training/test_observation_memmap.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
@@ -154,6 +156,7 @@ source_scopes:
   - {path: features/context, study_ids: [features.causal_availability, features.context_candidates_and_session_masks, features.candidate_geometry_and_proposal_preflight, features.liquidity_sweep_events, features.order_block_event_identity, features.premium_discount_boundaries, features.session_level_rollovers, features.smt_symbol_time_alignment, features.entry_idea_eligibility_and_expiry, features.reachability_and_target_geometry]}
   - {path: features/po3, study_ids: [features.causal_availability, features.context_candidates_and_session_masks, features.fvg_ifvg_event_lifecycle, features.po3_setup_state_transitions]}
   - {path: features/contracts.py, study_ids: [features.family_schema_and_cache]}
+  - {path: features/graph.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/input_view.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/__init__.py, study_ids: [features.family_schema_and_cache]}
   - {path: research_tools/studies/handlers/features.py, study_ids: [features.causal_availability, features.prefix_causality_and_fit_scope, features.candidate_geometry_and_proposal_preflight]}

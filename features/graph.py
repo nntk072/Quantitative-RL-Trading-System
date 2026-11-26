@@ -77,7 +77,14 @@ class FeatureNode:
 
 
 def _topological_order(nodes: Mapping[str, FeatureNode]) -> tuple[str, ...]:
-    """Return a deterministic order: ready layers, each sorted by node_id."""
+    """Return a deterministic order: ready layers, each sorted by node_id.
+
+    Args:
+        nodes: Mapping from node_id to FeatureNode.
+
+    Returns:
+        Node ids in dependency order.
+    """
     sorter = TopologicalSorter({nid: set(nodes[nid].dependencies) for nid in sorted(nodes)})
     try:
         sorter.prepare()
@@ -95,7 +102,11 @@ class FeatureGraph:
     """Validated feature DAG with deterministic order and per-node content hashes."""
 
     def __init__(self, nodes: Sequence[FeatureNode]) -> None:
-        """Validate duplicates, dependencies, output names and acyclicity."""
+        """Validate duplicates, dependencies, output names and acyclicity.
+
+        Args:
+            nodes: Feature nodes to validate and order.
+        """
         by_id: dict[str, FeatureNode] = {}
         for node in nodes:
             if node.node_id in by_id:
@@ -118,11 +129,22 @@ class FeatureGraph:
 
     @property
     def order(self) -> tuple[str, ...]:
-        """Return node ids in deterministic topological order."""
+        """Return the deterministic topological order of the node ids.
+
+        Returns:
+            Node ids in dependency order.
+        """
         return self._order
 
     def content_hashes(self, source_hashes: Mapping[str, str]) -> dict[str, str]:
-        """Return a sha256 hash per node from its definition, source, config and upstream."""
+        """Return a sha256 hash per node from its definition, source, config and upstream.
+
+        Args:
+            source_hashes: Source data hash per timeframe.
+
+        Returns:
+            Mapping from node_id to hex digest.
+        """
         hashes: dict[str, str] = {}
         for nid in self._order:
             node = self._nodes[nid]
@@ -150,7 +172,13 @@ class FeatureGraph:
 
 
 def assert_train_only_fit(node: FeatureNode, fit_times: Sequence[int], train_cutoff: int) -> None:
-    """Refuse fitting a train_only node on any row later than the training cutoff."""
+    """Refuse a train-only fit whose rows are later than the training cutoff.
+
+    Args:
+        node: Feature node being fit.
+        fit_times: Timestamps of the rows used to fit.
+        train_cutoff: Last timestamp allowed for training.
+    """
     if node.fit_scope != "train_only" or not fit_times:
         return
     latest = max(fit_times)

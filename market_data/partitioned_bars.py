@@ -40,21 +40,49 @@ class PublishedDataset:
 
 
 def read_mt5_export(path: Path) -> pd.DataFrame:
-    """Read a tab-separated MT5 chart export with bracketed header names stripped."""
+    """Read an MT5 chart export file into a DataFrame.
+
+    Args:
+        path: Path to the tab-separated export.
+
+    Returns:
+        Raw export rows as a DataFrame.
+    """
     return pd.read_csv(path, sep="\t", dtype=str).rename(columns=lambda name: name.strip("<>"))
 
 
 def write_partition(table: pa.Table, path: Path) -> None:
-    """Write one partition file; the only write hook, replaced by tests to inject faults."""
+    """Write one partition table to a Parquet file.
+
+    Args:
+        table: Arrow table to write.
+        path: Destination file path.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(table, path)
 
 
 def _sha256(data: bytes) -> str:
+    """Return the SHA-256 hex digest of the given bytes.
+
+    Args:
+        data: Bytes to hash.
+
+    Returns:
+        Hex digest string.
+    """
     return hashlib.sha256(data).hexdigest()
 
 
 def _ipc_bytes(table: pa.Table) -> bytes:
+    """Serialize an Arrow table to Arrow IPC stream bytes.
+
+    Args:
+        table: Arrow table to serialize.
+
+    Returns:
+        IPC stream bytes.
+    """
     sink = pa.BufferOutputStream()
     with pa.ipc.new_stream(sink, table.schema) as writer:
         writer.write_table(table)
@@ -65,7 +93,17 @@ def _ipc_bytes(table: pa.Table) -> bytes:
 def _partitions(
     table: pa.Table, source_id: str, instrument_id: str, event_kind: str
 ) -> list[tuple[str, pa.Table]]:
-    """Split rows into ``(relative path, partition table)`` pairs ordered by UTC date."""
+    """Split rows into (relative path, partition table) pairs ordered by UTC date.
+
+    Args:
+        table: Normalized bar table.
+        source_id: Source identity.
+        instrument_id: Instrument identity.
+        event_kind: Event kind, for example bar.
+
+    Returns:
+        List of (relative path, partition table) pairs.
+    """
     days = table.column("event_time").cast(pa.int64()).to_numpy() // _NS_PER_DAY
     parts: list[tuple[str, pa.Table]] = []
     for day in np.unique(days):
@@ -86,6 +124,18 @@ def _canonical_manifest(
     event_kind: str,
     partitions: list[tuple[str, pa.Table]],
 ) -> str:
+    """Build the canonical manifest JSON for a dataset.
+
+    Args:
+        source_sha256: SHA-256 of the source file.
+        source_id: Source identity.
+        instrument_id: Instrument identity.
+        event_kind: Event kind.
+        partitions: Partition pairs from _partitions.
+
+    Returns:
+        Canonical JSON text of the manifest.
+    """
     entries = [
         {"path": rel, "row_count": part.num_rows, "content_sha256": _sha256(_ipc_bytes(part))}
         for rel, part in partitions
@@ -115,8 +165,16 @@ def publish_bars_dataset(
 ) -> PublishedDataset:
     """Convert an MT5 chart export and publish it as an identity-named partitioned dataset.
 
-    Raises:
-        ValueError: If any row fails bar validation (the publish fails closed).
+    Args:
+        csv_path: MT5 export file to convert.
+        store: Root folder for published datasets.
+        instrument_id: Instrument identity.
+        timeframe: Native timeframe label, for example M1.
+        source_id: Source identity.
+        event_kind: Event kind.
+
+    Returns:
+        PublishedDataset with the identity and partition counts.
     """
     with csv_path.open("rb") as handle:
         source_sha256 = hashlib.file_digest(handle, "sha256").hexdigest()
