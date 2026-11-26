@@ -1,0 +1,63 @@
+{
+  "id": "SEMANTIC-ORACLE",
+  "status": "partial",
+  "base_sha": "a3b3e442",
+  "branch": "feat/semantic-oracle",
+  "changed_paths": [
+    "planning/native_modernization/semantic_oracle/semantic_contracts.md",
+    "planning/native_modernization/semantic_oracle/parity_report.md",
+    "planning/native_modernization/semantic_oracle/fixtures/semantic_oracle_fixtures.v1.json",
+    "planning/native_modernization/semantic_oracle/fixtures/MANIFEST.json",
+    "planning/native_modernization/ledger_entries/SEMANTIC-ORACLE.json",
+    "tests/unit/trading/test_semantic_oracle_fixture_replay.py",
+    "tests/unit/trading/test_semantic_oracle_properties.py",
+    "tests/unit/simulation/test_environment/test_semantic_oracle_env_causality.py",
+    "config/studies/profiles/market_data.yaml",
+    "config/studies/profiles/trading.yaml",
+    "config/studies/profiles/simulation.yaml"
+  ],
+  "tests_executed": [
+    {
+      "command": "ruff format --check <3 new test modules>",
+      "exit_code": 0,
+      "result": "3 files already formatted"
+    },
+    {
+      "command": "ruff check <3 new test modules>",
+      "exit_code": 0,
+      "result": "All checks passed!"
+    },
+    {
+      "command": "python -m mypy <3 new test modules>",
+      "exit_code": 0,
+      "result": "Success: no issues found in 3 source files"
+    },
+    {
+      "command": "python -m pytest -q -p no:cacheprovider -o addopts= -rxX <3 new modules> tests/unit/trading/test_semantic_oracle_costs.py tests/unit/trading/test_semantic_oracle_limits_sizing.py tests/unit/research_tools/test_study_audits.py",
+      "exit_code": 0,
+      "result": "137 passed, 7 xfailed (strict defect cases C1, C2, C3, C4, SZ-14)"
+    },
+    {
+      "command": "python -m pytest tests/unit/research_tools/test_study_audits.py (after profile registrations)",
+      "exit_code": 0,
+      "result": "4 passed"
+    },
+    {
+      "command": "scripted mutation check, 8 injected source faults, restored after each",
+      "exit_code": null,
+      "result": "M1-M7 killed; M8 survived on invalid direction 0 only (defect C1 branch)"
+    }
+  ],
+  "evidence_refs": [
+    "planning/native_modernization/semantic_oracle/semantic_contracts.md",
+    "planning/native_modernization/semantic_oracle/parity_report.md",
+    "planning/native_modernization/semantic_oracle/fixtures/semantic_oracle_fixtures.v1.json",
+    "planning/native_modernization/semantic_oracle/fixtures/MANIFEST.json",
+    "planning/native_modernization/baseline_audit/mutation_check.md",
+    "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/final_checks.log (git-ignored, not durable in the repository)",
+    "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/mutation_check.log (git-ignored, not durable in the repository)"
+  ],
+  "blocker": "Owner decisions are required on source defects C1 (fill_price fails open for direction 0), C2 (slippage_points not applied in fill_price, or docstring defect), C3 (target_close_size returns a whole-position exit when a leg rounds to zero), C4 (Broker.open_position leaves equity stale until mark-to-market) and SZ-14 (undocumented one-step under-size at exact lot multiples). They are strict xfails; source is unchanged. Coverage gaps remain: G1 pending/cancel/replace, G2 candidate mask and geometry, G3 ambiguous both-level bars at env level, G4 breach-latch persistence across sessions. Native backend parity needs a built qrl_native wheel, which is not in .venv-x86. Captured broker events are not required for this package and were not used.",
+  "decision": "Partial. Delivered: hand-calculated versioned fixtures (73 cases, 9 account traces, 1 latent defect) with a digest manifest, replay tests, Hypothesis properties, environment metamorphic tests, and a disagreement classification. No source semantics were changed. Disagreements are recorded as strict xfail so a silent fix fails loudly. Acceptance item 'every domain-critical invariant has a positive and an adverse case' is not met for G1 to G4, so the status is partial, not accepted.",
+  "reviewer": null
+}

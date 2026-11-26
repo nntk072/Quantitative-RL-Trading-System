@@ -38,9 +38,13 @@ api_paths:
 - trading/strategies/feature_row_contract.py
 - trading/strategies/po3_ifvg.py
 - trading/strategies/strategy_contract.py
+- trading/positions/multi_tp.py
+- trading/risk/execution_reserve.py
 caller_paths:
 - tests/unit/trading/test_semantic_oracle_limits_sizing.py
 - tests/unit/trading/test_semantic_oracle_costs.py
+- tests/unit/trading/test_semantic_oracle_fixture_replay.py
+- tests/unit/trading/test_semantic_oracle_properties.py
 - evaluation/candidate_execution.py
 - evaluation/plotting/chart_levels.py
 - evaluation/plotting/order_chart_data.py
