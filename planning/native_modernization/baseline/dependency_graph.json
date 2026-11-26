@@ -1,0 +1,1054 @@
+{
+  "schema": "qrl.baseline-audit.dependency-graph.v1",
+  "source_revision": "a3b3e4422fe7a2c694cf71d837fbb205fbee6f2a",
+  "method": "AST scan of git-tracked *.py; absolute imports only; first path segment is the package; intra-package relative imports ignored; no code executed.",
+  "production_packages": [
+    "artifacts",
+    "compute",
+    "configuration",
+    "decisioning",
+    "evaluation",
+    "experiments",
+    "features",
+    "integrations",
+    "learning",
+    "live",
+    "market_data",
+    "models",
+    "orchestra",
+    "simulation",
+    "trading",
+    "training"
+  ],
+  "support_packages": [
+    "docs",
+    "native",
+    "planning",
+    "research_tools",
+    "scripts",
+    "tests",
+    "tools"
+  ],
+  "python_files_per_package": {
+    "artifacts": 10,
+    "compute": 16,
+    "configuration": 5,
+    "decisioning": 10,
+    "docs": 1,
+    "evaluation": 91,
+    "experiments": 25,
+    "features": 43,
+    "integrations": 30,
+    "learning": 26,
+    "live": 5,
+    "market_data": 41,
+    "models": 24,
+    "native": 3,
+    "orchestra": 31,
+    "planning": 4,
+    "research_tools": 174,
+    "root": 3,
+    "scripts": 175,
+    "simulation": 82,
+    "tests": 522,
+    "tools": 19,
+    "trading": 47,
+    "training": 56
+  },
+  "edges": [
+    {
+      "from": "compute",
+      "to": "artifacts",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "compute/slurm/continuation.py:14",
+        "compute/slurm/worker_dispatch.py:20"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "artifacts",
+      "module_level_imports": 16,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "evaluation/reanalysis/checkpoint_reanalysis.py:20",
+        "evaluation/reanalysis/checkpoint_reanalysis.py:21",
+        "evaluation/reanalysis/datasets.py:13"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "configuration",
+      "module_level_imports": 5,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "evaluation/reanalysis/checkpoint_reanalysis.py:22",
+        "evaluation/reanalysis/checkpoint_reanalysis.py:23",
+        "evaluation/reanalysis/datasets.py:14"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "decisioning",
+      "module_level_imports": 14,
+      "lazy_or_type_checking_imports": 7,
+      "examples": [
+        "evaluation/candidate_proposals.py:18",
+        "evaluation/contracts.py:7",
+        "evaluation/metrics/trade_setup_policy.py:11"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "features",
+      "module_level_imports": 17,
+      "lazy_or_type_checking_imports": 5,
+      "examples": [
+        "evaluation/plotting/chart_indicators.py:158",
+        "evaluation/plotting/chart_indicators.py:9",
+        "evaluation/plotting/chart_overlays.py:16"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "learning",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "evaluation/reanalysis/sb3_checkpoint_backend.py:3",
+        "evaluation/reanalysis/sb3_checkpoint_backend.py:7"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "market_data",
+      "module_level_imports": 14,
+      "lazy_or_type_checking_imports": 8,
+      "examples": [
+        "evaluation/__init__.py:3",
+        "evaluation/candidate_execution.py:17",
+        "evaluation/contracts.py:8"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "simulation",
+      "module_level_imports": 5,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "evaluation/metrics/trade_setup_policy.py:19",
+        "evaluation/reanalysis/checkpoint_reanalysis.py:76",
+        "evaluation/rollout/matched_setup_baselines.py:37"
+      ]
+    },
+    {
+      "from": "evaluation",
+      "to": "trading",
+      "module_level_imports": 10,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "evaluation/candidate_execution.py:26",
+        "evaluation/plotting/chart_levels.py:24",
+        "evaluation/plotting/chart_levels.py:25"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "artifacts",
+      "module_level_imports": 12,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/orchestration/weekly.py:14",
+        "experiments/runs/baseline_cache_rebuild.py:18",
+        "experiments/runs/cache_failure_recovery.py:15"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "compute",
+      "module_level_imports": 13,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/runs/execution.py:27",
+        "experiments/runs/execution.py:30",
+        "experiments/runs/execution.py:33"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "configuration",
+      "module_level_imports": 6,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/runs/baseline_cache_rebuild.py:19",
+        "experiments/runs/checkpoints.py:11",
+        "experiments/runs/constants.py:3"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "evaluation",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/variants/variant_ablation_runner.py:19",
+        "experiments/variants/variant_ablation_runner.py:20"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "features",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/runs/baseline_cache_rebuild.py:20",
+        "experiments/runs/named_cache_rebuild.py:34"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "learning",
+      "module_level_imports": 0,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "experiments/runs/checkpoint_lineage.py:393"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "market_data",
+      "module_level_imports": 4,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/runs/baseline_cache_rebuild.py:21",
+        "experiments/runs/baseline_cache_rebuild.py:22",
+        "experiments/runs/named_cache_rebuild.py:39"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "models",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "experiments/variants/catalog.py:13"
+      ]
+    },
+    {
+      "from": "experiments",
+      "to": "training",
+      "module_level_imports": 7,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "experiments/runs/baseline_cache_rebuild.py:23",
+        "experiments/runs/baseline_cache_rebuild.py:24",
+        "experiments/runs/named_cache_rebuild.py:41"
+      ]
+    },
+    {
+      "from": "features",
+      "to": "artifacts",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "features/pipeline/feature_matrix_builder.py:22"
+      ]
+    },
+    {
+      "from": "features",
+      "to": "configuration",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "features/pipeline/feature_cache_identity.py:14",
+        "features/pipeline/feature_matrix_builder.py:23"
+      ]
+    },
+    {
+      "from": "features",
+      "to": "decisioning",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "features/context/entry_ideas.py:17",
+        "features/context/trade_setup_candidates.py:12"
+      ]
+    },
+    {
+      "from": "features",
+      "to": "market_data",
+      "module_level_imports": 16,
+      "lazy_or_type_checking_imports": 8,
+      "examples": [
+        "features/context/policy_market.py:10",
+        "features/context/policy_market.py:11",
+        "features/context/premium_discount.py:21"
+      ]
+    },
+    {
+      "from": "integrations",
+      "to": "features",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "integrations/mt5/domain/strategies/trend_breakout_strategy.py:4"
+      ]
+    },
+    {
+      "from": "integrations",
+      "to": "live",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "integrations/mt5/robot/rl_robot.py:26",
+        "integrations/mt5/robot/rl_robot.py:27"
+      ]
+    },
+    {
+      "from": "learning",
+      "to": "artifacts",
+      "module_level_imports": 3,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "learning/contracts.py:9",
+        "learning/rl/learner.py:9",
+        "learning/supervised/reference.py:19"
+      ]
+    },
+    {
+      "from": "learning",
+      "to": "compute",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "learning/rl/agent.py:26"
+      ]
+    },
+    {
+      "from": "learning",
+      "to": "decisioning",
+      "module_level_imports": 8,
+      "lazy_or_type_checking_imports": 3,
+      "examples": [
+        "learning/rl/agent.py:27",
+        "learning/rl/agent.py:28",
+        "learning/rl/agent.py:304"
+      ]
+    },
+    {
+      "from": "learning",
+      "to": "market_data",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "learning/contracts.py:10",
+        "learning/self_supervised/vae_pre_ny.py:14"
+      ]
+    },
+    {
+      "from": "learning",
+      "to": "models",
+      "module_level_imports": 5,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "learning/rl/agent.py:34",
+        "learning/rl/agent.py:35",
+        "learning/rl/auxiliary.py:31"
+      ]
+    },
+    {
+      "from": "live",
+      "to": "configuration",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "live/runtime/strategy.py:20",
+        "live/runtime/strategy.py:21"
+      ]
+    },
+    {
+      "from": "live",
+      "to": "decisioning",
+      "module_level_imports": 3,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "live/runtime/strategy.py:22",
+        "live/runtime/strategy.py:23",
+        "live/runtime/strategy.py:31"
+      ]
+    },
+    {
+      "from": "live",
+      "to": "features",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "live/runtime/strategy.py:170",
+        "live/runtime/strategy.py:41"
+      ]
+    },
+    {
+      "from": "live",
+      "to": "trading",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 2,
+      "examples": [
+        "live/runtime/strategy.py:217",
+        "live/runtime/strategy.py:221",
+        "live/runtime/strategy.py:43"
+      ]
+    },
+    {
+      "from": "market_data",
+      "to": "artifacts",
+      "module_level_imports": 7,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "market_data/cache/__init__.py:1",
+        "market_data/cache/identity.py:5",
+        "market_data/cache/storage.py:11"
+      ]
+    },
+    {
+      "from": "market_data",
+      "to": "configuration",
+      "module_level_imports": 5,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "market_data/commands/discover.py:16",
+        "market_data/commands/prebuild_experiment_run_cache.py:13",
+        "market_data/commands/prepare.py:8"
+      ]
+    },
+    {
+      "from": "models",
+      "to": "decisioning",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "models/encoders/sequence_encoder_components.py:11",
+        "models/encoders/tcn_regime.py:10"
+      ]
+    },
+    {
+      "from": "orchestra",
+      "to": "artifacts",
+      "module_level_imports": 4,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "orchestra/cost.py:10",
+        "orchestra/health.py:18",
+        "orchestra/router.py:12"
+      ]
+    },
+    {
+      "from": "planning",
+      "to": "market_data",
+      "module_level_imports": 6,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "planning/native_modernization/data_schemas/build_quality_ledger.py:39",
+        "planning/native_modernization/data_schemas/build_quality_ledger.py:46",
+        "planning/native_modernization/data_schemas/build_quality_ledger.py:47"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "artifacts",
+      "module_level_imports": 35,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/artifacts/audits/build_research_release_bundle.py:13",
+        "research_tools/artifacts/audits/verify_final_research_outputs.py:13",
+        "research_tools/artifacts/evidence/build_final_research_outputs.py:19"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "compute",
+      "module_level_imports": 3,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/learning/benchmarks/measure_ppo_throughput.py:49",
+        "research_tools/learning/benchmarks/measure_ppo_throughput.py:50",
+        "research_tools/learning/benchmarks/measure_ppo_throughput.py:51"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "configuration",
+      "module_level_imports": 119,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:19",
+        "research_tools/artifacts/evidence/audit_selected_checkpoint_recoverability.py:15",
+        "research_tools/artifacts/evidence/build_final_research_outputs.py:20"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "decisioning",
+      "module_level_imports": 14,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:20",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:21",
+        "research_tools/artifacts/evidence/representation_run_artifacts.py:17"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "evaluation",
+      "module_level_imports": 48,
+      "lazy_or_type_checking_imports": 3,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:22",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:23",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:24"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "experiments",
+      "module_level_imports": 6,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/artifacts/evidence/verify_research_provenance_bytes.py:18",
+        "research_tools/experiments/experiment_runs/audit_experiment_run_checkpoint_loads.py:17",
+        "research_tools/experiments/experiment_runs/audit_experiment_run_checkpoint_loads.py:22"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "features",
+      "module_level_imports": 47,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:36",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:41",
+        "research_tools/compute/benchmarks/measure_env_memory.py:33"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "learning",
+      "module_level_imports": 7,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:42",
+        "research_tools/compute/benchmarks/measure_shared_ppo_memory.py:24",
+        "research_tools/features/features/audit_vae_pre_ny_sequence_validity.py:17"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "market_data",
+      "module_level_imports": 124,
+      "lazy_or_type_checking_imports": 7,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:46",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:47",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:48"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "models",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/simulation/evaluation/rescore_sl_fill.py:45"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "simulation",
+      "module_level_imports": 32,
+      "lazy_or_type_checking_imports": 3,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:54",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:55",
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:56"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "trading",
+      "module_level_imports": 9,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "research_tools/evaluation/evaluation/run_baseline_eval.py:36",
+        "research_tools/evaluation/evaluation/test_oos.py:28",
+        "research_tools/evaluation/evidence/verify_numerical_report.py:29"
+      ]
+    },
+    {
+      "from": "research_tools",
+      "to": "training",
+      "module_level_imports": 46,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "research_tools/artifacts/evidence/audit_checkpoint_frame_bundle_parity.py:57",
+        "research_tools/artifacts/evidence/representation_run_artifacts.py:20",
+        "research_tools/artifacts/evidence/representation_run_artifacts.py:21"
+      ]
+    },
+    {
+      "from": "root",
+      "to": "decisioning",
+      "module_level_imports": 0,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "live_trading_rl.py:210"
+      ]
+    },
+    {
+      "from": "root",
+      "to": "integrations",
+      "module_level_imports": 4,
+      "lazy_or_type_checking_imports": 6,
+      "examples": [
+        "demo_trading.py:3",
+        "live_trading.py:10",
+        "live_trading_rl.py:52"
+      ]
+    },
+    {
+      "from": "root",
+      "to": "live",
+      "module_level_imports": 0,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "live_trading_rl.py:216"
+      ]
+    },
+    {
+      "from": "scripts",
+      "to": "artifacts",
+      "module_level_imports": 1,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "scripts/maintenance/artifacts/inventory_checkpoint_serialized_classes.py:13"
+      ]
+    },
+    {
+      "from": "scripts",
+      "to": "configuration",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py:17",
+        "scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py:18"
+      ]
+    },
+    {
+      "from": "scripts",
+      "to": "experiments",
+      "module_level_imports": 3,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "scripts/maintenance/data-and-cache/rebuild_named_prebuilt_feature_caches.py:4",
+        "scripts/maintenance/data-and-cache/rebuild_prebuilt_baseline_cache.py:4",
+        "scripts/maintenance/migrations/migrate_preflight_experiment_run.py:4"
+      ]
+    },
+    {
+      "from": "scripts",
+      "to": "market_data",
+      "module_level_imports": 5,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py:19",
+        "scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py:20",
+        "scripts/maintenance/data-and-cache/rebuild_full_period_data_cache.py:21"
+      ]
+    },
+    {
+      "from": "simulation",
+      "to": "decisioning",
+      "module_level_imports": 28,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "simulation/backtest/event_driven_backtest.py:35",
+        "simulation/backtest/event_driven_backtest.py:36",
+        "simulation/backtest/event_driven_backtest.py:45"
+      ]
+    },
+    {
+      "from": "simulation",
+      "to": "features",
+      "module_level_imports": 21,
+      "lazy_or_type_checking_imports": 7,
+      "examples": [
+        "simulation/backtest/event_driven_backtest.py:58",
+        "simulation/backtest/event_driven_backtest.py:59",
+        "simulation/backtest/event_driven_backtest.py:863"
+      ]
+    },
+    {
+      "from": "simulation",
+      "to": "market_data",
+      "module_level_imports": 28,
+      "lazy_or_type_checking_imports": 6,
+      "examples": [
+        "simulation/backtest/event_driven_backtest.py:108",
+        "simulation/backtest/event_driven_backtest.py:66",
+        "simulation/backtest/event_driven_backtest.py:72"
+      ]
+    },
+    {
+      "from": "simulation",
+      "to": "trading",
+      "module_level_imports": 67,
+      "lazy_or_type_checking_imports": 3,
+      "examples": [
+        "simulation/backtest/accounting.py:10",
+        "simulation/backtest/accounting.py:18",
+        "simulation/backtest/cross_validation/backtrader_runner.py:109"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "artifacts",
+      "module_level_imports": 14,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "tests/integration/backtest/test_local_trace_source_clock.py:20",
+        "tests/unit/artifacts/test_artifact_lifecycle.py:12",
+        "tests/unit/artifacts/test_artifact_lifecycle.py:13"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "compute",
+      "module_level_imports": 24,
+      "lazy_or_type_checking_imports": 12,
+      "examples": [
+        "tests/integration/test_device.py:11",
+        "tests/integration/test_device.py:20",
+        "tests/integration/test_device.py:234"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "configuration",
+      "module_level_imports": 36,
+      "lazy_or_type_checking_imports": 18,
+      "examples": [
+        "tests/integration/evaluation/test_matched_setup_baselines.py:13",
+        "tests/integration/test_ablation_oos_smoke.py:17",
+        "tests/integration/test_strategy_integration.py:14"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "decisioning",
+      "module_level_imports": 92,
+      "lazy_or_type_checking_imports": 8,
+      "examples": [
+        "tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py:9",
+        "tests/integration/backtest/test_agent_selected_entry_execution.py:14",
+        "tests/integration/backtest/test_agent_selected_entry_execution.py:15"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "evaluation",
+      "module_level_imports": 118,
+      "lazy_or_type_checking_imports": 38,
+      "examples": [
+        "tests/integration/backtest/test_account_transition_parity.py:12",
+        "tests/integration/backtest/test_agent_selected_entry_execution.py:25",
+        "tests/integration/backtest/test_agent_selected_entry_execution.py:26"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "experiments",
+      "module_level_imports": 17,
+      "lazy_or_type_checking_imports": 8,
+      "examples": [
+        "tests/integration/test_ablation_oos_smoke.py:18",
+        "tests/unit/experiments/test_command_boundaries.py:12",
+        "tests/unit/experiments/test_command_boundaries.py:13"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "features",
+      "module_level_imports": 105,
+      "lazy_or_type_checking_imports": 29,
+      "examples": [
+        "tests/architecture/test_functional_filename_contracts.py:6",
+        "tests/architecture/test_public_imports.py:113",
+        "tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py:15"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "integrations",
+      "module_level_imports": 11,
+      "lazy_or_type_checking_imports": 7,
+      "examples": [
+        "tests/unit/integrations/test_volatility_analyzer.py:20",
+        "tests/unit/live/test_crossover_robot.py:20",
+        "tests/unit/live/test_mt5_cli_applications.py:24"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "learning",
+      "module_level_imports": 53,
+      "lazy_or_type_checking_imports": 17,
+      "examples": [
+        "tests/architecture/test_public_imports.py:124",
+        "tests/integration/backtest/test_agent_selected_entry_execution.py:33",
+        "tests/integration/test_sac_agent_integration.py:19"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "live",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 13,
+      "examples": [
+        "tests/unit/features/test_stage_a_observation.py:20",
+        "tests/unit/live/test_rl_bridge.py:201",
+        "tests/unit/live/test_rl_bridge.py:37"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "market_data",
+      "module_level_imports": 97,
+      "lazy_or_type_checking_imports": 15,
+      "examples": [
+        "tests/architecture/test_functional_filename_contracts.py:7",
+        "tests/architecture/test_functional_filename_contracts.py:8",
+        "tests/architecture/test_public_imports.py:114"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "models",
+      "module_level_imports": 22,
+      "lazy_or_type_checking_imports": 19,
+      "examples": [
+        "tests/architecture/test_public_imports.py:125",
+        "tests/architecture/test_public_imports.py:126",
+        "tests/integration/test_device.py:453"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "orchestra",
+      "module_level_imports": 23,
+      "lazy_or_type_checking_imports": 16,
+      "examples": [
+        "tests/unit/orchestra/test_agent_output.py:5",
+        "tests/unit/orchestra/test_backup.py:7",
+        "tests/unit/orchestra/test_ci_gate.py:7"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "research_tools",
+      "module_level_imports": 33,
+      "lazy_or_type_checking_imports": 4,
+      "examples": [
+        "tests/integration/backtest/test_action_tape_replay.py:13",
+        "tests/integration/backtest/test_local_trace_source_clock.py:12",
+        "tests/integration/backtest/test_local_trace_source_clock.py:15"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "scripts",
+      "module_level_imports": 104,
+      "lazy_or_type_checking_imports": 2,
+      "examples": [
+        "tests/integration/backtest/test_local_tick_action_trace.py:8",
+        "tests/integration/evaluation/test_matched_setup_baselines.py:11",
+        "tests/integration/test_ablation_oos_smoke.py:11"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "simulation",
+      "module_level_imports": 112,
+      "lazy_or_type_checking_imports": 108,
+      "examples": [
+        "tests/architecture/test_public_imports.py:103",
+        "tests/architecture/test_public_imports.py:104",
+        "tests/architecture/test_public_imports.py:146"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "tools",
+      "module_level_imports": 21,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "tests/architecture/test_documentation_contracts.py:14",
+        "tests/architecture/test_documentation_contracts.py:21",
+        "tests/architecture/test_documentation_contracts.py:9"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "trading",
+      "module_level_imports": 125,
+      "lazy_or_type_checking_imports": 41,
+      "examples": [
+        "tests/architecture/test_public_imports.py:54",
+        "tests/architecture/test_public_imports.py:55",
+        "tests/architecture/test_public_imports.py:56"
+      ]
+    },
+    {
+      "from": "tests",
+      "to": "training",
+      "module_level_imports": 70,
+      "lazy_or_type_checking_imports": 21,
+      "examples": [
+        "tests/architecture/test_public_imports.py:127",
+        "tests/integration/test_ablation_oos_smoke.py:19",
+        "tests/integration/test_action_schema_contract.py:57"
+      ]
+    },
+    {
+      "from": "trading",
+      "to": "features",
+      "module_level_imports": 8,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "trading/baselines/breakout.py:12",
+        "trading/baselines/breakout.py:13",
+        "trading/baselines/classical.py:13"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "artifacts",
+      "module_level_imports": 11,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "training/artifacts/aggregation.py:13",
+        "training/artifacts/evaluation_result_writer.py:10",
+        "training/artifacts/snapshots.py:6"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "compute",
+      "module_level_imports": 4,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "training/runner/configuration_stage.py:8",
+        "training/runner/configuration_stage.py:9",
+        "training/runner/lstm_baseline.py:32"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "configuration",
+      "module_level_imports": 9,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "training/configuration/cli.py:15",
+        "training/configuration/quality.py:48",
+        "training/configuration/strategy_overlays.py:9"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "decisioning",
+      "module_level_imports": 5,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "training/configuration/survival_gate.py:17",
+        "training/configuration/survival_gate.py:22",
+        "training/runner/seed_runtime.py:18"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "evaluation",
+      "module_level_imports": 20,
+      "lazy_or_type_checking_imports": 3,
+      "examples": [
+        "training/artifacts/evaluation_result_writer.py:11",
+        "training/artifacts/manifests.py:10",
+        "training/callbacks/dashboard.py:22"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "features",
+      "module_level_imports": 7,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "training/configuration/survival_gate.py:34",
+        "training/runner/data_stage.py:19",
+        "training/runner/data_stage.py:24"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "learning",
+      "module_level_imports": 11,
+      "lazy_or_type_checking_imports": 3,
+      "examples": [
+        "training/runner/data_stage.py:311",
+        "training/runner/seed_runtime.py:31",
+        "training/runner/seed_runtime.py:32"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "market_data",
+      "module_level_imports": 18,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "training/runner/backtest.py:29",
+        "training/runner/backtest.py:30",
+        "training/runner/backtest.py:31"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "models",
+      "module_level_imports": 2,
+      "lazy_or_type_checking_imports": 0,
+      "examples": [
+        "training/configuration/variant_resolution.py:20",
+        "training/runner/vae.py:31"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "simulation",
+      "module_level_imports": 11,
+      "lazy_or_type_checking_imports": 11,
+      "examples": [
+        "training/artifacts/manifests.py:11",
+        "training/artifacts/manifests.py:12",
+        "training/callbacks/dashboard.py:29"
+      ]
+    },
+    {
+      "from": "training",
+      "to": "trading",
+      "module_level_imports": 8,
+      "lazy_or_type_checking_imports": 1,
+      "examples": [
+        "training/configuration/survival_gate.py:804",
+        "training/runner/backtest.py:39",
+        "training/runner/backtest.py:40"
+      ]
+    }
+  ],
+  "module_level_cycles_up_to_length_5": [],
+  "unparsed_files": []
+}
