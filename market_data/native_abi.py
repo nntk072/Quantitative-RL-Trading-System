@@ -20,7 +20,10 @@ that both sides agree, so a change on one side fails until the other side is cha
 
 from __future__ import annotations
 
+import os
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -278,6 +281,42 @@ def feature_block_inputs(table: pa.Table, *, width: int) -> FeatureBlockInputs:
     )
 
 
+def write_cache_atomic(path: Path, data: bytes) -> None:
+    """Write a cache container so that readers see either the old file or the complete new one.
+
+    The bytes go to a temporary file in the same directory, are flushed and fsynced, and then
+    replace the target with ``os.replace``. A crash leaves at most a stray temporary file, never a
+    partial container under the final name.
+
+    Args:
+        path: Final cache file path.
+        data: Container bytes from ``DatasetView.to_cache_bytes``.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temp_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp_name, path)
+    except BaseException:
+        Path(temp_name).unlink(missing_ok=True)
+        raise
+
+
+def read_cache(path: Path) -> bytes:
+    """Return the bytes of a cache container. Validation happens in the native decoder.
+
+    Args:
+        path: Cache file path.
+
+    Returns:
+        The raw container bytes.
+    """
+    return path.read_bytes()
+
+
 __all__ = [
     "BAR_ABI_LAYOUT",
     "BatchInputs",
@@ -289,4 +328,6 @@ __all__ = [
     "bar_inputs",
     "feature_block_inputs",
     "quote_inputs",
+    "read_cache",
+    "write_cache_atomic",
 ]

@@ -14,6 +14,7 @@ from trading.strategies import BaselineStrategy, DistributionStrategy, PO3IFVGSt
 
 from .distribution_reward import DistributionReward
 from .env import TradingEnv
+from .native_feature_block import native_data_abi_enabled
 from .po3_reward import PO3Reward
 from .spec import EnvSpec
 
@@ -227,6 +228,7 @@ def make_bundle_env(spec: EnvSpec) -> TradingEnv:
     data = _block(cfg, "data")
     return TradingEnv.from_bundle(
         spec.bundle_dir,
+        native_data_abi=native_data_abi_enabled(cfg),
         obs_window=int(env.get("obs_window", 60)),
         initial_balance=float(account.get("initial_balance", 100_000.0)),
         cost_model=cost_model(cfg),

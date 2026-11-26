@@ -6,15 +6,16 @@
 //! `qrl_domain::abi`; this module only converts Python objects and maps refusals to exceptions.
 
 use std::ffi::CStr;
+use std::sync::Arc;
 
 use pyo3::buffer::{Element, PyUntypedBuffer};
 use pyo3::exceptions::{PyKeyError, PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyTuple};
 use qrl_domain::abi::{
-    self, layout, AbiError as Refusal, BarBatch, BarColumns, Column, ColumnSpec, FeatureRowBlock,
-    FeatureRowColumns, ObservationWindow, ObservationWindowColumns, PayloadKind, QuoteBatch,
-    QuoteColumns, SchemaId,
+    self, layout, AbiError as Refusal, BarBatch, BarColumns, Column, ColumnSpec, DatasetView,
+    FeatureRowBlock, FeatureRowColumns, FittedState, Fold, ObservationWindow,
+    ObservationWindowColumns, PayloadKind, QuoteBatch, QuoteColumns, SchemaId,
 };
 
 /// Python exception types of the ABI. `AbiVersionError` is a subclass of `AbiError`.
@@ -34,9 +35,16 @@ mod exceptions {
         AbiError,
         "The schema identity or ABI version is unknown or not accepted for this payload."
     );
+
+    pyo3::create_exception!(
+        qrl_native,
+        AbiCacheError,
+        AbiError,
+        "A dataset cache container is truncated, corrupt or malformed; it is refused, not repaired."
+    );
 }
 
-pub(crate) use exceptions::{AbiError, AbiVersionError};
+pub(crate) use exceptions::{AbiCacheError, AbiError, AbiVersionError};
 
 /// Maps a refusal to the Python exception class that names its category.
 ///
@@ -52,6 +60,7 @@ fn to_py(err: Refusal) -> PyErr {
         Refusal::UnsupportedSchema { .. } | Refusal::UnsupportedAbiVersion { .. } => {
             AbiVersionError::new_err(message)
         }
+        Refusal::Cache { .. } => AbiCacheError::new_err(message),
         _ => AbiError::new_err(message),
     }
 }
@@ -561,4 +570,121 @@ impl PyObservationWindow {
             other => return Err(unknown_column(other)),
         })
     }
+}
+
+/// Immutable dataset: validated bars, aligned feature rows, folds and a fitted-state reference.
+///
+/// The view is shared in process by reference counting: a Python object that wraps the same
+/// view does not copy the arrays. Other processes read the cache bytes from `to_cache_bytes`.
+#[pyclass(name = "DatasetView", module = "qrl_native", frozen)]
+pub(crate) struct PyDatasetView {
+    inner: Arc<DatasetView>,
+}
+
+#[pymethods]
+impl PyDatasetView {
+    /// Builds a view from validated batches.
+    ///
+    /// `folds` is a list of `(train_start, train_end, test_start, test_end, purge_rows,
+    /// embargo_rows)` tuples. `fitted` is `(state_id, fit_start, fit_end)` or `None`. The bars
+    /// and features are copied into the view.
+    #[new]
+    #[pyo3(signature = (bars, features, folds, fitted=None))]
+    fn new(
+        bars: PyRef<'_, PyBarBatch>,
+        features: PyRef<'_, PyFeatureRowBlock>,
+        folds: Vec<(usize, usize, usize, usize, usize, usize)>,
+        fitted: Option<(String, usize, usize)>,
+    ) -> PyResult<Self> {
+        let folds = folds
+            .into_iter()
+            .map(
+                |(train_start, train_end, test_start, test_end, purge_rows, embargo_rows)| Fold {
+                    train_start,
+                    train_end,
+                    test_start,
+                    test_end,
+                    purge_rows,
+                    embargo_rows,
+                },
+            )
+            .collect();
+        let fitted = fitted.map(|(state_id, fit_start, fit_end)| FittedState {
+            state_id,
+            fit_start,
+            fit_end,
+        });
+        let inner = DatasetView::try_new(bars.inner.clone(), features.inner.clone(), folds, fitted)
+            .map_err(to_py)?;
+        Ok(Self {
+            inner: Arc::new(inner),
+        })
+    }
+
+    /// Number of aligned rows.
+    #[getter]
+    fn rows(&self) -> usize {
+        self.inner.rows()
+    }
+
+    /// FNV-1a digest of the canonical payload, as 16 lowercase hex digits.
+    #[getter]
+    fn content_hash(&self) -> String {
+        format!("{:016x}", self.inner.content_hash())
+    }
+
+    /// Folds as `(train_start, train_end, test_start, test_end, purge_rows, embargo_rows)`.
+    #[getter]
+    fn folds(&self) -> Vec<(usize, usize, usize, usize, usize, usize)> {
+        self.inner
+            .folds()
+            .iter()
+            .map(|fold| {
+                (
+                    fold.train_start,
+                    fold.train_end,
+                    fold.test_start,
+                    fold.test_end,
+                    fold.purge_rows,
+                    fold.embargo_rows,
+                )
+            })
+            .collect()
+    }
+
+    /// Fitted-state reference as `(state_id, fit_start, fit_end)`, or `None`.
+    #[getter]
+    fn fitted(&self) -> Option<(String, usize, usize)> {
+        self.inner
+            .fitted()
+            .map(|state| (state.state_id.clone(), state.fit_start, state.fit_end))
+    }
+
+    /// Serializes the view into a checksummed cache container.
+    fn to_cache_bytes<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new(py, &self.inner.to_bytes())
+    }
+
+    /// Copy of the bar batch.
+    fn bars(&self) -> PyBarBatch {
+        PyBarBatch {
+            inner: self.inner.bars().clone(),
+        }
+    }
+
+    /// Copy of the feature-row block.
+    fn features(&self) -> PyFeatureRowBlock {
+        PyFeatureRowBlock {
+            inner: self.inner.features().clone(),
+        }
+    }
+}
+
+/// Decodes and re-validates a dataset cache container. Corrupt input raises `AbiCacheError`.
+#[pyfunction]
+pub(crate) fn dataset_view_from_cache_bytes(data: &[u8]) -> PyResult<PyDatasetView> {
+    let inner = DatasetView::from_bytes(data).map_err(to_py)?;
+    Ok(PyDatasetView {
+        inner: Arc::new(inner),
+    })
 }

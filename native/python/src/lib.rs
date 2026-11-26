@@ -139,10 +139,19 @@ fn qrl_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_class::<abi::PyBarBatch>()?;
     module.add_class::<abi::PyFeatureRowBlock>()?;
     module.add_class::<abi::PyObservationWindow>()?;
+    module.add_class::<abi::PyDatasetView>()?;
+    module.add_function(wrap_pyfunction!(
+        abi::dataset_view_from_cache_bytes,
+        module
+    )?)?;
     module.add("AbiError", module.py().get_type::<abi::AbiError>())?;
     module.add(
         "AbiVersionError",
         module.py().get_type::<abi::AbiVersionError>(),
+    )?;
+    module.add(
+        "AbiCacheError",
+        module.py().get_type::<abi::AbiCacheError>(),
     )?;
     Ok(())
 }

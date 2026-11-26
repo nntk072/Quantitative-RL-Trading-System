@@ -23,6 +23,7 @@ from .episode_runtime import EpisodeRuntimeMixin
 from .execution_runtime import ExecutionRuntimeMixin
 from .initialization_runtime import InitializationRuntimeMixin
 from .market_access import MarketAccessMixin
+from .native_feature_block import build_native_feature_block
 from .observation_runtime import ObservationRuntimeMixin
 from .position_runtime import PositionRuntimeMixin
 from .risk_runtime import RiskRuntimeMixin
@@ -160,6 +161,7 @@ class TradingEnv(
         observation_age_scale_bars: float = 60.0,
         reachable_r_validity_mask: bool = False,
         bundle_data: Any | None = None,
+        native_data_abi: bool = False,
         strict_research_eligibility: bool = False,
         legacy_sequence_columns: bool | None = None,
         trading_policy: dict[str, Any] | None = None,
@@ -281,6 +283,7 @@ class TradingEnv(
             observation_age_scale_bars: Market bar or price data used for initialize the trading environment through semantic runtime stages.
             reachable_r_validity_mask: Whether to append the reachability-validity sequence feature.
             bundle_data: Bundle data used by the operation described above.
+            native_data_abi: Validate the bundle feature matrix through the shared data ABI (off by default).
             strict_research_eligibility: Whether to enable or require the strict research eligibility.
             legacy_sequence_columns: Legacy sequence columns used by the operation described above.
             trading_policy: Key-value data used for the trading policy.
@@ -292,6 +295,11 @@ class TradingEnv(
         self._session_timezone = str(session_timezone)
         self._source_clock_model = str(source_clock_model)
         self._initialize_market_source(bars, features, bundle_data, strict_research_eligibility)
+        self.native_feature_block: Any | None = None
+        if native_data_abi:
+            if bundle_data is None:
+                raise ValueError("native_data_abi requires a shared bundle (bundle_data)")
+            self.native_feature_block = build_native_feature_block(bundle_data, self._ny_indices)
         self._initialize_account_policy(
             obs_window,
             initial_balance,

@@ -27,6 +27,7 @@ api_paths:
 - simulation/environment/po3_reward.py
 - simulation/environment/rewards.py
 - simulation/environment/shared_bundle.py
+- simulation/environment/native_feature_block.py
 - simulation/environment/spec.py
 - simulation/environment/sweep_reward.py
 - simulation/environment/timebase.py
@@ -107,6 +108,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_regime_observation.py
 - tests/unit/simulation/test_environment/test_risk_alignment.py
 - tests/unit/simulation/test_environment/test_shared_bundle.py
+- tests/unit/simulation/test_environment/test_native_feature_block.py
 - tests/unit/simulation/test_environment/test_simulation_transition_contract.py
 - tests/unit/simulation/test_environment/test_sl_tp_fill.py
 - tests/unit/simulation/test_environment/test_strategy_env.py

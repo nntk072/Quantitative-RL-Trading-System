@@ -2,19 +2,31 @@
   "id": "SHARED-DATA-ABI",
   "status": "partial",
   "changed_paths": [
+    "config/base/default.yaml",
     "config/studies/profiles/market_data.yaml",
+    "config/studies/profiles/simulation.yaml",
+    "market_data/native_abi.py",
     "native/domain/src/lib.rs",
     "native/domain/src/abi/mod.rs",
     "native/domain/src/abi/layout.rs",
     "native/domain/src/abi/error.rs",
     "native/domain/src/abi/batches.rs",
+    "native/domain/src/abi/dataset.rs",
     "native/domain/tests/abi.rs",
+    "native/domain/tests/dataset_view.rs",
     "native/python/src/lib.rs",
     "native/python/src/abi.rs",
+    "native/python/tests/conftest.py",
     "native/python/tests/test_shared_data_abi.py",
-    "market_data/native_abi.py",
+    "native/python/tests/test_dataset_view.py",
+    "native/python/tests/test_dataset_view_processes.py",
+    "simulation/environment/env.py",
+    "simulation/environment/worker.py",
+    "simulation/environment/native_feature_block.py",
     "tests/unit/market_data/test_native_abi.py",
+    "tests/unit/simulation/test_environment/test_native_feature_block.py",
     "planning/native_modernization/shared_data_abi/README.md",
+    "planning/native_modernization/shared_data_abi/real_usage_check.py",
     "planning/native_modernization/ledger_entries/SHARED-DATA-ABI.json"
   ],
   "tests_executed": [
@@ -24,64 +36,89 @@
       "result": "clean"
     },
     {
-      "command": "cargo clippy --workspace --all-targets --offline -- -D warnings (cwd native/)",
+      "command": "cargo clippy --workspace --all-targets --offline -- -D warnings",
       "exit_code": 0,
       "result": "no warnings"
     },
     {
-      "command": "cargo test --workspace --offline (cwd native/)",
+      "command": "cargo test --workspace --offline",
       "exit_code": 0,
-      "result": "71 domain unit + 44 abi integration + 10 property tests passed, 0 failed"
+      "result": "domain unit 71, abi integration 44, dataset_view integration 18, property 10; 0 failed"
     },
     {
-      "command": "cargo build -p qrl-native --offline, then cp target/debug/libqrl_native.so target/python/qrl_native.cpython-312-x86_64-linux-gnu.so",
+      "command": "cargo build -p qrl-native --offline; cp target/debug/libqrl_native.so target/python/qrl_native.cpython-312-x86_64-linux-gnu.so",
       "exit_code": 0,
-      "result": "in-tree cdylib staged; no maturin wheel built (maturin is not installed in .venv-x86 and no network)"
+      "result": "in-tree cdylib staged; no maturin wheel (not installed, no network)"
     },
     {
-      "command": "PYTHONPATH=<worktree>:<worktree>/target/python .venv-x86/bin/python -m pytest native/python/tests -q -rs",
+      "command": "PYTHONPATH=<wt>:<wt>/target/python .venv-x86/bin/python -m pytest native/python/tests -q -rs",
       "exit_code": 0,
-      "result": "86 passed, 0 skipped (40 pre-existing + 46 new)"
+      "result": "101 passed, 0 skipped (includes spawn and fork two-worker process tests)"
     },
     {
-      "command": "PYTHONPATH=<worktree> .venv-x86/bin/python -m pytest tests/unit/market_data/test_native_abi.py -q -rs",
+      "command": "PYTHONPATH=<wt>:<wt>/target/python .venv-x86/bin/python -m pytest tests/unit/market_data/test_native_abi.py tests/unit/simulation/test_environment/test_native_feature_block.py -q -rs",
       "exit_code": 0,
-      "result": "15 passed"
+      "result": "22 passed, 0 skipped"
     },
     {
-      "command": "PYTHONPATH=<worktree> .venv-x86/bin/python -m pytest tests/unit/research_tools/test_study_audits.py -q -rs",
+      "command": "PYTHONPATH=<wt> .venv-x86/bin/python -m pytest tests/unit/research_tools/test_study_audits.py -q -rs",
       "exit_code": 0,
       "result": "4 passed"
     },
     {
-      "command": "PYTHONPATH=<worktree> .venv-x86/bin/python -m pytest tests/unit/research_tools/test_study_catalog.py -q",
+      "command": "PYTHONPATH=<wt> .venv-x86/bin/python -m pytest tests/unit/research_tools/test_study_catalog.py -q",
       "exit_code": 0,
-      "result": "21 passed (extra: the profile registration affects the catalog)"
+      "result": "21 passed"
     },
     {
-      "command": ".venv-x86/bin/ruff format --check market_data/native_abi.py native/python/tests/test_shared_data_abi.py tests/unit/market_data/test_native_abi.py",
+      "command": ".venv-x86/bin/ruff format --check and ruff check on the 11 touched Python files",
       "exit_code": 0,
-      "result": "formatted"
+      "result": "clean"
     },
     {
-      "command": ".venv-x86/bin/ruff check (same three files)",
+      "command": ".venv-x86/bin/python -m mypy on the 11 touched Python files",
       "exit_code": 0,
-      "result": "passed"
-    },
-    {
-      "command": ".venv-x86/bin/python -m mypy (same three files; the venv mypy script has a stale shebang, so the module form is used)",
-      "exit_code": 0,
-      "result": "no issues in 3 files"
+      "result": "no issues in 11 files"
     },
     {
       "command": "grep -rn --include=*.rs -E \"\\bunsafe\\b\" native",
       "exit_code": 1,
-      "result": "no matches (exit 1 means none)"
+      "result": "no matches"
     },
     {
-      "command": "baseline before changes: cargo fmt --check, clippy -D warnings, cargo test --workspace, pytest native/python/tests",
+      "command": "gate script: logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/run_gates.sh",
       "exit_code": 0,
-      "result": "all green on 2ec7fb7d; pytest 40 passed"
+      "result": "all gates above, summary in gate_summary.txt"
+    }
+  ],
+  "slurm_runs": [
+    {
+      "job_id": "21877472",
+      "partition": "batch-skl",
+      "cpus": 8,
+      "memory_mb": 65536,
+      "time_limit": "2:00:00 (operator job)",
+      "started": "2026-11-26T13:53:22",
+      "owner": "operator spool",
+      "command": "spool script 07_shared_data_abi_real_usage.sh (pre-final code)",
+      "exit_code": 0,
+      "output": "logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/real_usage_srun/real_usage_summary.json"
+    },
+    {
+      "job_id": "21877472",
+      "partition": "batch-skl",
+      "cpus": 8,
+      "memory_mb": 65536,
+      "time_limit": "2:00:00 (operator job)",
+      "started": "2026-11-26T13:53:22",
+      "owner": "operator spool",
+      "command": "spool script 08_shared_data_abi_real_usage_final.sh (final code)",
+      "exit_code": 0,
+      "output": "logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/real_usage_final/real_usage_summary.json"
+    },
+    {
+      "job_id": "none",
+      "note": "an early inbox file containing a bare srun was executed by the operator and failed with 'Requested nodes are busy' against job 21877472; no compute ran; the file was removed from the inbox"
     }
   ],
   "evidence_refs": [
@@ -90,14 +127,17 @@
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/cargo_test.log",
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/clippy.log",
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/pytest_native.log",
+    "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/pytest_unit.log",
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/study_audits.log",
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/study_catalog.log",
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/mypy.log",
+    "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/real_usage_srun/real_usage_summary.json",
+    "/scratch/work/nguyenl37/worktrees/shared-data-abi/logs/agents/quantitative_trading_engineer/20261126_shared-data-abi/real_usage_final/real_usage_summary.json",
     "/scratch/work/nguyenl37/worktrees/shared-data-abi/planning/native_modernization/shared_data_abi/README.md",
-    "base: origin/main-native 2ec7fb7d (branch feat/shared-data-abi created from it)",
-    "logs are in the git-ignored logs/ tree of the worktree and are not pushed"
+    "base: origin/main-native 0ecf92a0 (rebased); prior commit 8ee0d245",
+    "logs and real_usage outputs are in the git-ignored logs/ tree and are not pushed"
   ],
-  "blocker": "External: a benchmark allocation (lead request) is needed for the plan's memory measurements (RSS/PSS per worker, 1/2/4/8 environment scaling). Internal: CAUSAL-FEATURE-GRAPH is blocked in work_package_ledger.json, so the feature-row contract is taken from the Python feature-row schema, not from the feature graph output. Not implemented: DatasetView with mmap or Arrow-buffer sharing, fold bounds and fitted-state reference, process spawn and fork tests, cache corruption rejection, and wiring into simulation/environment.",
-  "decision": "Partial. ABI version 1 is implemented as a validated boundary for quote, bar, feature-row and observation payloads: typed Rust constructors in qrl-domain (no unsafe), a pyo3 buffer boundary that checks format, byte order, contiguity and shape before copying, and typed exceptions (TypeError, AbiVersionError, AbiError). Round-trip and rejection tests pass. Layout and schema identities match market_data/arrow_schemas.py, market_data/event_schemas.py and decisioning/observations.py by test. Copy-on-ingest is the only ownership model; no sharing. The plan's acceptance items on shared memory and environment wiring are not met, so the package is not accepted. Cargo.lock is unchanged. The profile change in market_data.yaml registers market_data/native_abi.py under market_data.source_parsing_and_quality, as the study-catalog test requires. Not independently reviewed.",
+  "blocker": "External, the only open item: the plan's 1/2/4/8 environment memory scaling needs one 8-CPU benchmark allocation for the scaling run, which needs a lead request. It has not been run. All offline items pass: DatasetView (copy-on-ingest, shared in process by Arc), fold bounds and fitted-state checks, cache corruption rejection, two-worker spawn and fork tests, and the flagged environment wiring. Status is partial because the BENCH scaling acceptance item is open; the lead may choose to treat it as outside this gate.",
+  "decision": "Partial. Every offline item passes: ABI v1 layouts and boundary; DatasetView with immutable Arc sharing (in-process) and copy-on-ingest (no mmap); fold purge/embargo/non-overlap and fitted-state train-only rules; FNV-checksummed container with exhaustive single-byte and truncation refusal; two-process spawn and fork decoding; environment wiring behind env.native_data_abi.enabled (default off), fail-closed. Real-usage check on the tracked pre-2026 sample ran in operator job 21877472 with exit 0 (final code and earlier code). Study profiles registered only where the catalog requires. Not independently reviewed (reviewer null).",
   "reviewer": null
 }

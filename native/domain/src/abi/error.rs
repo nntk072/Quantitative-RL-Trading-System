@@ -134,6 +134,11 @@ pub enum AbiError {
         /// Row index.
         row: usize,
     },
+    /// A cache container is truncated, corrupt, or malformed.
+    Cache {
+        /// Reason the container was refused.
+        reason: &'static str,
+    },
     /// A record-level rule failed (ordering, causality, OHLC bounds, padding and similar).
     Rule {
         /// Payload name.
@@ -206,6 +211,7 @@ impl fmt::Display for AbiError {
             }
             Self::Negative { column, row } => write!(f, "{column}[{row}]: value must not be negative"),
             Self::Rule { table, row, rule } => write!(f, "{table}[{row}]: {rule}"),
+            Self::Cache { reason } => write!(f, "cache container refused: {reason}"),
         }
     }
 }
