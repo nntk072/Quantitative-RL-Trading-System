@@ -121,6 +121,7 @@ caller_paths:
 - tests/unit/evaluation/test_evaluation_report_dataset.py
 - tests/unit/experiments/test_triton_prebuild_cache.py
 - tests/unit/features/test_alignment_properties.py
+- tests/unit/features/test_causal_feature_graph_acceptance.py
 - tests/unit/features/test_feature_build_inputs.py
 - tests/unit/features/test_feature_registry.py
 - tests/unit/features/test_feature_registry_values.py
