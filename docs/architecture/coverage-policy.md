@@ -16,13 +16,14 @@ enforced rule today.
 
 ## Latest measured coverage
 
-PR CI run `45718360244` at target-branch head `7d2cda5d` measured 37,014 of
-44,790 product statements covered (82.64%), with 7,776 statements missing.
-Product branch coverage is 11,517 of 16,428 (70.11%), informational only.
-The artifact's all-source total is 37,045/44,873 lines and 11,517/16,442
-branches; it includes the informational `research_tools` helper at 31/83 lines
-(37.35%) and 0/14 branches. This artifact measures only
-`perf/env-step-speedup`; it is not a repository-wide coverage percentage.
+PR CI run `45720631954` at source commit `54abfbb8` measured 37,247 of
+44,898 product statements covered (82.96%), with 7,651 statements missing.
+Product branch coverage is 11,580 of 16,472 (70.30%), informational only.
+The artifact's all-source total is 37,278/44,981 lines (82.87%) and
+11,580/16,486 branches (70.24%); it includes the informational
+`research_tools` helper at 31/83 lines (37.35%) and 0/14 branches. This
+artifact measures only `perf/env-step-speedup`; it is not a repository-wide
+coverage percentage.
 
 | Product package | Covered / statements | Line coverage |
 |---|---:|---:|
@@ -30,17 +31,17 @@ branches; it includes the informational `research_tools` helper at 31/83 lines
 | `compute` | 919/1,177 | 78.08% |
 | `configuration` | 194/199 | 97.49% |
 | `decisioning` | 577/604 | 95.53% |
-| `evaluation` | 9,745/11,600 | 84.01% |
+| `evaluation` | 9,758/11,600 | 84.12% |
 | `experiments` | 2,470/3,250 | 76.00% |
 | `features` | 3,908/4,151 | 94.15% |
 | `integrations` | 965/1,703 | 56.66% |
 | `learning` | 2,853/3,438 | 82.98% |
 | `live` | 140/169 | 82.84% |
-| `market_data` | 2,064/2,354 | 87.68% |
+| `market_data` | 2,169/2,462 | 88.10% |
 | `models` | 822/861 | 95.47% |
 | `simulation` | 6,138/7,277 | 84.35% |
-| `trading` | 2,300/2,637 | 87.22% |
-| `training` | 3,576/5,010 | 71.38% |
+| `trading` | 2,309/2,637 | 87.56% |
+| `training` | 3,682/5,010 | 73.49% |
 
 ## Exclusions
 
