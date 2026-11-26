@@ -111,14 +111,17 @@ on top of the rules above, not a new roster.
   `main-native` needs `main-native`'s checks green; a PR into `main` needs
   `main`'s checks green. The two integration branches (`main` to `main-native`,
   and `main-native` to `main`) must be green against both targets. Feature
-  branches may be pushed, rebased and force-pushed freely; `main` and
-  `main-native` stay protected from direct pushes and force-push.
+  branches may be pushed and rebased; force-push follows the Force-push rule.
+  `main` and `main-native` stay protected from direct pushes and force-push.
 - **Flows.** Each PR belongs to one flow: stream into `main-native`,
   `main-native` into `main`, `main` into `main-native`, or a change that stays on
   one branch. A flow may open several PRs; each PR is one reviewable unit.
 - **Gate.** CI on each pull request is the full check and the gate. Merge only
   when every required check is green, using rebase or squash. No merge commits.
   Force-push only on feature branches, never on `main`.
+- **Force-push.** Force-push is allowed only on feature branches named `feat/*`
+  or `rules/*`, and only with `--force-with-lease`. `main` and `main-native`
+  take no force-push and no direct push.
 - **Fast check before commit and push.** Before every commit and every push,
   run `ruff format --check` and `ruff check` on the changed files, and `mypy` on
   the changed Python files. Also run the touched test files and the
