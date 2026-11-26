@@ -1,0 +1,32 @@
+{
+  "schema": "qrl.native.cargo_audit_record.v2",
+  "work_package": "QUALITY-AND-SECURITY",
+  "recorded_on": "2026-11-26",
+  "supersedes": "planning/native_modernization/native_toolchain/cargo_audit_record.json for the committed lockfile; that record covers Cargo.lock sha256 f12ec2f4..., which NATIVE-DOMAIN (2ec7fb7d) replaced",
+  "tool": {
+    "name": "cargo-audit",
+    "version": "cargo-audit-audit 0.23.0"
+  },
+  "command": "cargo audit -d <scratch advisory-db checkout> --no-fetch --deny warnings",
+  "working_directory": "worktree root (feat/quality-security)",
+  "exit_status": 0,
+  "advisory_source": {
+    "url": "https://github.com/RustSec/advisory-db.git",
+    "checkout": "scratch advisory-db directory under the session scratchpad",
+    "revision": "b9b8a3c2cb1f2a3c76ab17a551193568c9f8b7a4",
+    "revision_date": "2026-11-25 12:10:30 +0100"
+  },
+  "advisories_loaded": 1568,
+  "lockfile": {
+    "path": "Cargo.lock",
+    "sha256": "9174ef475eb3ec952e18414235af4de360f0cd79db617d2a66ca874d5702f8ab",
+    "crate_dependencies_scanned": 60,
+    "git_status_at_audit": "unchanged from the committed lockfile"
+  },
+  "findings": [],
+  "notes": [
+    "--no-fetch was passed so that the audit makes no network call; the database is the local checkout.",
+    "cargo-audit printed 'couldn't open crates.io index' because the default cargo package-cache lock fails on this NFS home. This is a lock warning, not an advisory warning, and the exit status is 0.",
+    "The earlier record covered 16 crate dependencies at lockfile sha256 f12ec2f4...; the committed lockfile now has 60 crate dependencies."
+  ]
+}

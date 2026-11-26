@@ -1,0 +1,48 @@
+{
+  "id": "QUALITY-AND-SECURITY",
+  "status": "accepted",
+  "base_sha": "2ec7fb7d",
+  "branch": "feat/quality-security",
+  "changed_paths": [
+    "native/domain/tests/invariants.rs",
+    "native/python/tests/test_boundary_randomized.py",
+    "native/UNSAFE_AUDIT.md",
+    "planning/native_modernization/ledger_entries/QUALITY-AND-SECURITY.json",
+    "planning/native_modernization/ledger_entries/QUALITY-AND-SECURITY_cargo_audit.json",
+    "planning/native_modernization/ledger_entries/QUALITY-AND-SECURITY_ci_matrix_change.md"
+  ],
+  "tests_executed": [
+    "cargo fmt --all -- --check (baseline before edits) -> exit 0",
+    "cargo test --workspace (baseline before edits) -> exit 0 (55 unit, 10 properties.rs)",
+    "cargo fmt --all -- --check -> exit 0",
+    "cargo clippy --workspace --all-targets -- -D warnings -> exit 0",
+    "cargo test --workspace -> exit 0 (55 unit, 10 properties.rs, 10 invariants.rs)",
+    "cargo test -p qrl-domain --test invariants -> exit 0 (10 passed, fixed seed, 512 cases each)",
+    "mutation A (remove floor at zero in remaining_daily_capacity) -> cargo test --test invariants exit 101, 2 properties failed, source restored",
+    "mutation B (latch never set on observation) -> cargo test --test invariants exit 101, 1 property failed, source restored",
+    "mutation C (average entry shifted by one tick) -> cargo test --test invariants exit 101, 1 property failed, source restored",
+    "PYO3_PYTHON=.venv-x86/bin/python cargo build -p qrl-native --release -> exit 0; cdylib staged as qrl_native.so under the session scratchpad, not in the venv",
+    "PYTHONPATH=<scratch native_site>:<worktree> .venv-x86/bin/python -m pytest native/python/tests -q -rs -p no:cacheprovider -> exit 0, 46 passed, 0 skipped",
+    "mutation D (wrapping add in qrl_domain::checked_add_units) -> pytest native/python/tests/test_boundary_randomized.py exit 1, 1 failed; source restored and rebuilt",
+    "cargo audit -d <scratch advisory-db, revision b9b8a3c2> --no-fetch --deny warnings (committed Cargo.lock, 60 crate dependencies) -> exit 0, 1568 advisories, no findings",
+    "grep -rn --include=*.rs -E \"\\bunsafe\\b\" native -> exit 1 (no match)",
+    ".venv-x86/bin/ruff format --check native/python/tests/test_boundary_randomized.py -> exit 0",
+    ".venv-x86/bin/ruff check native/python/tests/test_boundary_randomized.py -> exit 0",
+    ".venv-x86/bin/ruff format --check . -> exit 0 (1496 files)",
+    ".venv-x86/bin/ruff check . -> exit 0",
+    ".venv-x86/bin/python -m mypy . -> exit 0 (1449 source files)",
+    ".venv-x86/bin/python -m pytest tests/unit/research_tools/test_study_audits.py -q -> exit 0 (4 passed)"
+  ],
+  "evidence_refs": [
+    "logs/agents/ci_operation_engineer/20261126_quality_security/ (transient, git-ignored: 00-55 command outputs, mutation logs 12-14 and 22)",
+    "planning/native_modernization/ledger_entries/QUALITY-AND-SECURITY_cargo_audit.json",
+    "planning/native_modernization/ledger_entries/QUALITY-AND-SECURITY_ci_matrix_change.md",
+    "planning/native_modernization/native_toolchain/cargo_audit_record.json (superseded for the committed lockfile; kept unchanged)",
+    "native/domain/tests/properties.rs (existing, unchanged)"
+  ],
+  "benchmark_ids": [],
+  "compatibility": null,
+  "blocker": null,
+  "decision": "Accepted 2026-11-26 under the stated criteria. (1) Proptest: native/domain/tests/invariants.rs adds 10 properties with fixed seed 0x5152_4c44_0000_0002 and 512 cases each, and failure persistence off. They cover integer units (exact or Overflow, never wrap), daily floor and capacity (exact, floored at zero, monotone in equity and limit), the breach latch against a session model, lots/fees/cash/PnL conservation with refused fills atomic, valuation, and frame length/version checks. Three seeded defects were each caught. (2) Boundary harness: native/python/tests/test_boundary_randomized.py is a bounded randomized test of the six Python-facing native functions, with seed 20261126 and 2000 iterations per function, checked against exact Python integers. It was chosen over cargo-fuzz, which needs a nightly toolchain and an install. A seeded wrapping-add defect was caught. The cdylib was built with cargo, not maturin, and staged outside the shared venv, so the Python tests ran against that build and not a wheel. (3) CI matrix: not applied. Adding a gated job requires editing the existing ci-success aggregator, and no tools/check gate runs cargo. The exact change is in QUALITY-AND-SECURITY_ci_matrix_change.md and includes an explicit import check, because importorskip would otherwise hide a missing module. Corrections: the earlier cargo-audit record covers Cargo.lock f12ec2f4, which NATIVE-DOMAIN replaced with 9174ef47. The committed lock was re-audited here (60 crate dependencies, exit 0). Semantic notes for the NATIVE-DOMAIN owner, with no change made: (a) DailyLossGuard's module doc says every failing method leaves the guard unchanged, but observe_equity sets the latch before a failing capacity computation, and the existing test asserts that. (b) remaining_daily_capacity returns Overflow for a deep breach whose clamped value would be zero, because the intermediate difference leaves i64. Existing tests assert this on purpose. Reproducer: qrl_native.remaining_daily_capacity_cents(9223372036854775799, -9223372036854775801, 1) raises OverflowError. (c) properties.rs uses random seeds and the default case count, so it is not reproducible. The new file supersedes it for the fixed-seed contract without modifying it. Not claimed: any hosted CI result, the aarch64 build, and GH200 runs.",
+  "reviewer": null
+}
