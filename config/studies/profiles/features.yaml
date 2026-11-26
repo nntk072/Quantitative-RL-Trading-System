@@ -32,6 +32,7 @@ api_paths:
 - features/technical/__init__.py
 - features/technical/htf_sweeps.py
 - features/technical/indicators.py
+- features/technical/streaming.py
 - features/technical/structure.py
 - features/technical/swings.py
 caller_paths:
@@ -111,6 +112,7 @@ caller_paths:
 - tests/unit/features/test_feature_cache_and_fit_scope.py
 - tests/unit/features/test_feature_registry.py
 - tests/unit/features/test_feature_registry_values.py
+- tests/unit/features/test_streaming_indicators.py
 - tests/unit/features/test_fold_normalize.py
 - tests/unit/features/test_htf_alignment.py
 - tests/unit/features/test_htf_sweeps.py
