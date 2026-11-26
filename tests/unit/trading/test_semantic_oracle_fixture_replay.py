@@ -53,7 +53,7 @@ from trading.risk.sizing import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_DIR = REPO_ROOT / "planning" / "native_modernization" / "semantic_oracle" / "fixtures"
-FIXTURE_PATH = FIXTURE_DIR / "semantic_oracle_fixtures.v1.json"
+FIXTURE_PATH = FIXTURE_DIR / "semantic_oracle_fixtures.v2.json"
 MANIFEST_PATH = FIXTURE_DIR / "MANIFEST.json"
 
 
@@ -320,7 +320,7 @@ def test_fixture_case_ids_are_unique() -> None:
 
 
 def test_every_fixture_case_declares_a_known_polarity() -> None:
-    allowed = {"positive", "adverse", "boundary", "characterization", "defect"}
+    allowed = {"positive", "adverse", "boundary", "characterization", "defect", "documented_rule"}
     polarities = [case["polarity"] for cases in FIXTURE["cases"].values() for case in cases]
     polarities += [case["polarity"] for case in FIXTURE["cases"]["rewards"]]
     assert set(polarities) <= allowed
@@ -329,7 +329,7 @@ def test_every_fixture_case_declares_a_known_polarity() -> None:
 def test_defect_and_characterization_cases_carry_a_classification() -> None:
     for cases in FIXTURE["cases"].values():
         for case in cases:
-            if case["polarity"] in {"defect", "characterization"}:
+            if case["polarity"] in {"defect", "characterization", "documented_rule"}:
                 assert case.get("classification"), case["id"]
 
 
@@ -472,18 +472,15 @@ def test_account_event_trace_matches_hand_ledger(scenario: dict[str, Any]) -> No
         _check_expect(event["expect"], observed, f"{scenario['id']}@{event['key']}")
 
 
-@pytest.mark.parametrize(
-    "case",
-    [
-        pytest.param(
-            c,
-            id=c["id"],
-            marks=[pytest.mark.xfail(strict=True, reason=f"{c['id']}: {c['classification']}")],
-        )
-        for c in FIXTURE["defect_cases"]
-    ],
-)
-def test_open_position_keeps_equity_identity_at_once(case: dict[str, Any]) -> None:
+@pytest.mark.parametrize("case", [pytest.param(c, id=c["id"]) for c in FIXTURE["defect_cases"]])
+def test_known_broker_boundary_limit_open_position_equity_is_refreshed_by_mark(
+    case: dict[str, Any],
+) -> None:
+    """Known limit (not a defect in the env path). Broker.open_position does not refresh equity.
+
+    The environment calls mark_to_market right after every open, which restores the
+    identity. This pins both facts so a change to either is visible.
+    """
     args = case["args"]
     acc = AccountState(initial_balance=float(args["initial_balance"]))
     broker = Broker(
@@ -491,13 +488,16 @@ def test_open_position_keeps_equity_identity_at_once(case: dict[str, Any]) -> No
         margin_pct=float(args["broker"]["margin_pct"]),
         cost_model=_cost_model(args["cost_model"]),
     )
-    broker.open_position(acc, _tuple(args["quote"]), args["lots"], args["direction"])
     expected = case["expect"]
+    position = broker.open_position(acc, _tuple(args["quote"]), args["lots"], args["direction"])
+    assert position is not None
     assert acc.balance == pytest.approx(expected["balance"], abs=1e-6)
-    assert acc.equity == pytest.approx(acc.balance + acc.open_pnl, abs=1e-6), (
-        f"equity {acc.equity} != balance {acc.balance} + open_pnl {acc.open_pnl}"
-    )
-    assert acc.equity == pytest.approx(expected["equity"], abs=1e-6)
+    assert acc.equity == pytest.approx(expected["equity_after_open"], abs=1e-6)
+    assert acc.open_pnl == pytest.approx(expected["open_pnl_after_open"], abs=1e-6)
+    assert acc.equity != pytest.approx(acc.balance + acc.open_pnl, abs=1e-6)
+    broker.mark_to_market(acc, position, _tuple(expected["mark_quote"]))
+    assert acc.equity == pytest.approx(expected["equity_after_mark"], abs=1e-6)
+    assert acc.equity == pytest.approx(acc.balance + acc.open_pnl, abs=1e-6)
 
 
 # --- fixture integrity --------------------------------------------------------------

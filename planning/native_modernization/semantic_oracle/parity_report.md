@@ -1,140 +1,73 @@
-# SEMANTIC-ORACLE parity report
+# SEMANTIC-ORACLE parity report (fixture version 2.0.0)
 
-Branch `feat/semantic-oracle`, base `origin/main-native` at `a3b3e442`. Fixture version 1.0.0 (digest in `fixtures/MANIFEST.json`).
-Python: `/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python` (3.12.14, pytest 9.1.1, hypothesis 6.170.14, numpy 2.2.6), `PYTHONPATH` set to the worktree, `OMP_NUM_THREADS=2`. No network, no broker, no orders, no Slurm.
-Raw logs: `logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/` (git-ignored; the exact lines are reproduced below).
+Branch `feat/semantic-oracle`. Base `origin/main-native` at `a3b3e442`. Fixture digest `21b687717b36617f1956b6783fd300427457bf03ca1947db20262c85d3f8794c` (`fixtures/semantic_oracle_fixtures.v2.json`, pinned in `fixtures/MANIFEST.json`).
+Python: `/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python` (3.12.14, pytest 9.1.1, hypothesis 6.170.14), `PYTHONPATH` set to the worktree, `OMP_NUM_THREADS=2`. No network, no broker, no orders, no Slurm.
+Raw logs (git-ignored): `logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/`. The lines below are exact.
 
 ## 1. Required checks (exit codes)
 
-Files touched by this package are the three new test modules. No source module under `trading/`, `simulation/`, `market_data/` or `config/base/` was changed.
+Final battery, log `final2_checks.log`:
 
-| # | Command | Exit | Result |
+| # | Command | Exit | Output |
 |---|---|---|---|
-| 1 | `ruff format --check` on the three new test modules | 0 | `3 files already formatted` |
-| 2 | `ruff check` on the three new test modules | 0 | `All checks passed!` |
-| 3 | `python -m mypy` on the three new test modules | 0 | `Success: no issues found in 3 source files` |
-| 4 | `python -m pytest -q -p no:cacheprovider -o addopts= -rxX` on the three new modules, `test_semantic_oracle_costs.py`, `test_semantic_oracle_limits_sizing.py` and `tests/unit/research_tools/test_study_audits.py` | 0 | `137 passed, 7 xfailed in 24.15s` |
-| 5 | `python -c` load of the fixture JSON | 0 | `fixture-json-valid semantic-oracle-fixtures.v1` |
-| 6 | `sha256sum` of the fixture | 0 | `d0e3f9961ce6418634595f8e8a59e689ffc2189884fe274e5cc013e132736e22` (equal to `MANIFEST.json`) |
+| 1 | `ruff format --check` on 4 touched source files and 5 test modules | 0 | `9 files already formatted` |
+| 2 | `ruff check` on the same 9 files | 0 | `All checks passed!` |
+| 3 | `python -m mypy` on the same 9 files | 0 | `Success: no issues found in 9 source files` |
+| 4 | `python -m pytest -q -p no:cacheprovider -o addopts= -rxs` on the 5 new or changed oracle modules, `test_semantic_oracle_limits_sizing.py` and `tests/unit/research_tools/test_study_audits.py` | 0 | `158 passed, 2 skipped, 2 xfailed in 16.44s` |
+| 5 | `sha256sum` of the v2 fixture | 0 | `21b687717b36617f1956b6783fd300427457bf03ca1947db20262c85d3f8794c` (equal to `MANIFEST.json`; the manifest test passes) |
 
-The seven xfails are the strict defect cases listed in section 3. Each xfail prints its classification as its reason.
+The 2 skips are the open items O2 and O3 (`test_open_env_scenario_is_visible_not_passed`). The 2 xfails are QF-08 and its costs-file twin, which are the open slippage decision (C2).
 
-Study-catalog audit. The first run of `tests/unit/research_tools/test_study_audits.py` failed on the inventory check. The fixes were registrations only, in three profiles, and each was made because the audit named it:
+Wider regression (log `regress.log`): `python -m pytest -q -p no:cacheprovider -o addopts= tests/unit/trading tests/unit/simulation` gave `948 passed, 2 skipped, 2 xfailed, 4 warnings in 108.22s`, exit 0. Run after the C1 and C3 source changes.
 
-- `config/studies/profiles/market_data.yaml`: `caller_paths` gained the two trading test modules that import `market_data`.
-- `config/studies/profiles/trading.yaml`: `api_paths` gained `trading/positions/multi_tp.py` and `trading/risk/execution_reserve.py`. `caller_paths` gained the two trading test modules.
-- `config/studies/profiles/simulation.yaml`: `caller_paths` gained the env causality module and the two trading test modules.
+Study-catalog audit: first failure was the inventory check. It was fixed by registering the new callers and API paths in `config/studies/profiles/{market_data,trading,simulation,decisioning}.yaml`. Final `test_study_audits.py`: `4 passed in 42.88s`, exit 0.
 
-Failure before the registrations, verbatim:
-`StudyCatalogError: market_data API/caller inventory mismatch: missing_api=[], extra_api=[], missing_callers=['tests/unit/trading/test_semantic_oracle_fixture_replay.py', 'tests/unit/trading/test_semantic_oracle_properties.py'], extra_callers=[]`
+## 2. Source changes in 2.0.0 (each with evidence)
 
-After the registrations, `4 passed in 8.74s` (exit 0) on the audit module alone.
-
-Development-stage replays before the final battery (same tests, earlier edit state):
-
-- Fixture replay on first run: `84 passed, 5 xfailed`. The manifest test failed only because `MANIFEST.json` did not yet exist. Created, then `85 passed, 5 xfailed`.
-- With `--runxfail`, the five defect cases fail for the stated reasons (section 3).
-- Hypothesis properties: `15 passed in 8.15s`.
-- Environment causality: `8 passed in 4.09s`, after two test-design fixes (section 5). `9 passed in 3.98s` after the no-trade test was added.
-
-## 2. Hypothesis and environment evidence
-
-Property tests (`tests/unit/trading/test_semantic_oracle_properties.py`, 15 tests, `max_examples=200`, `derandomize=True`):
-
-- Adverse slippage never improves the transacted side; undo restores the quote.
-- Market fill lies between bid and ask; stop fill never beats the stop level.
-- Sized lots fit the all-in budget (stop risk plus execution reserve) and sit on the lot grid.
-- `compute_lots` output is clipped to the broker range.
-- Cash and equity conservation over any partition of exits (ledger identity checked after every close and mark).
-- Partitioned close equals single close at one quote (partition invariance).
-- Mark-to-market never changes balance.
-- Daily breach equals strictly-below-floor (integer USD values).
-- Log-growth rewards telescope to one transition (batch vs single). Equity-delta rewards are additive.
-- FTMO day is independent of the source zone. Session mask is per-bar partition invariant and invariant to whole-day shifts.
-- Event-keyed RNG stream is independent of other keys drawn first.
-
-Environment tests (`tests/unit/simulation/test_environment/test_semantic_oracle_env_causality.py`, real `TradingEnv`, 120-bar synthetic tape):
-
-- Ordering keys: valuation index advances by one per step and is unique.
-- Reset determinism with the same seed.
-- Batch vs single: two instances stepped alternately equal the solo traces.
-- Causality: perturbing OHLC of bars at or after a cut leaves every output valued before the cut unchanged (Hypothesis over cut 62..100, four perturbation columns, four deltas).
-- Unused fields: volume, tick volume and `vol` changes leave the full trace identical.
-- Append-future: a shorter tape reproduces every output except its own data-end output (Hypothesis over lengths 70..110).
-- Data-end truncation: `truncated=True`, `terminated=False`, final valuation index equal to the tape length.
-- Characterization: the data-end observation differs from the in-episode observation at the same index (open item E1).
-- No-trade action 0 over 30 steps: no trade, no position, equity constant at 100000.0, reward 0.0.
-
-Probe outputs that established the timing contract (run before the tests were written, with features sliced consistently):
-
-```
-cut 61 first differing step index 0 (step i decision bar 60 ) n 40 40
-cut 64 first differing step index 3 (step i decision bar 63 ) n 40 40
-cut 70 first differing step index 9 (step i decision bar 69 ) n 40 40
-```
-
-Read with valuation index `v_j = 61 + j`, these say output `j` first changes when its valuation bar is perturbed, as the contract in section 3 of `semantic_contracts.md` states.
-
-Test-design hazard found during probing: `_make_features(bars)` draws from a shared RNG sized by the number of rows, so features for a shorter tape are not a prefix of the longer tape's features. Prefix comparisons must slice features (`features.iloc[:L]`), not regenerate them. Early probes that regenerated features reported a false causality failure. The final tests slice.
-
-## 3. Disagreements and reproducers (exact outputs)
-
-Reproducers were run in the worktree with the `.venv-x86` interpreter.
-
-```
-reserve lots 0.29: 0.28
-0.29/0.01 = 28.999999999999996 floor: 28.0
-zero-leg close size: 0.01 (position size 0.01)
-tp1 close of 0.125 lot leg: 0.12 round(0.125,2)= 0.12
-after open: balance 9998.0 equity 10000.0 open_pnl 0.0
-fill dir 0: 99.5
-```
-
-Defect list (strict xfail, so each stays visible and fails loudly if fixed without a version bump):
-
-| ID | Classification | Exact observed value | Fixture |
+| ID | Change | Test that pins it | Evidence changed |
 |---|---|---|---|
-| C1 | source defect (fail-open invalid side) | `CostModel().fill_price(99.5, 100.5, 0)` returns `99.5`, expected ValueError | QF-07 |
-| C2 | source defect or docstring defect (owner to choose) | `CostModel(slippage_points=0.5).fill_price(99.5, 100.5, 1)` returns `100.5`, expected `101.0` | QF-08 |
-| C3 | source defect (zero-leg full exit) | `target_close_size` returns `0.01` for a 0.01 position with fraction 0.3 | TG-05 |
-| C4 | source defect, latent at broker API; env compensates | `Broker.open_position` with commission 2.0: balance `9998.0`, equity `10000.0` | AC-A2 |
-| SZ-14 | documented alternative semantics with undocumented one-step under-size | budget 2.9 gives `0.28`, hand value `0.29` | SZ-14 |
+| C1 | `CostModel.fill_price` raises `ValueError` for a direction other than +1 or -1 | fixture QF-07 (adverse), `test_invalid_fill_direction_is_rejected_adverse` (xfail marker removed) | `trading/execution/costs.py` |
+| C3 | `target_close_size` returns 0.0 (not the whole position) for a zero leg, a runner-clamped leg, or an inactive slot. Three callers consume the slot without a broker close | fixture TG-05 (adverse); `test_zero_target_leg_consumes_slot_and_keeps_position` (env, 0.01 lots, TP1 30 %: position stays at 0.01, `tp1_price` None, `tp_hit_mask` bit 0 set, no trade) | `trading/positions/multi_tp.py`, `simulation/environment/protective_level_runtime.py` (2 sites), `simulation/backtest/protective_management.py` |
 
-Characterizations (passing, labelled in the fixture and in `semantic_contracts.md` section 5): `compute_lots` zero budget returns min lot (SZ-08); target leg 0.135 rounds to 0.14 under undeclared round-half-even (TG-06); `spread_points` is price units (QF-04); event-keyed RNG bit stream (RN-04, golden, not hand-calculated); inclusive session endpoints (SS-01); data-end observation differs (E1).
+The backtest caller (`protective_management.py`) is covered only by the shared `target_close_size` fixture; no runtime test drives it (open item O4).
 
-Source changes made: none. C1 to C4 and SZ-14 need owner decisions, and changing `fill_price`, `target_close_size` or `open_position` would alter API or trading behavior, which the plan requires to carry a new version and new evidence identity.
+Behavior changed by C1 and C3, so evaluation evidence that depends on them is not comparable with the pre-2.0.0 identity: a zero-size TP leg no longer exits the whole position, and an invalid side now raises.
 
-## 4. Mutation check (injected source faults, then restored)
+## 3. Decisions recorded without a source change
 
-Method: one text substitution at a time in a production file, the three new test modules run, then the file restored from its saved text. `git diff --stat HEAD` was empty afterwards. The run used the test set before the no-trade test was added and before ruff formatting. Raw log: `logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/mutation_check.log`.
+| ID | Decision | Evidence |
+|---|---|---|
+| C2 | **Not applied (decision conflict, open).** Applying `slippage_points` inside `fill_price` would double count it on market and protective fills | Source trace, not a numerical run: `config/base/default.yaml` `costs.slippage_points: 5.0`; `simulation/environment/trading_environment_factory.py` builds the env `CostModel` from it; `fill_quote_runtime._open_at_quote` applies `_adverse_tick_fill_quote` before `broker.open_position`; `protective_level_fill_quote` applies slippage before `broker.close_position`; both paths call `CostModel.fill_price`. QF-08 remains a strict xfail. |
+| C4 | Known broker-boundary limit, pinned | `test_known_broker_boundary_limit_open_position_equity_is_refreshed_by_mark`: after `Broker.open_position` with commission 2.0, balance 9998.0, equity 10000.0 (stale), open_pnl 0.0. After `mark_to_market` at bid 100.0 / ask 100.6, equity 9938.0 = balance + open_pnl. The env calls mark after every open (`entry_execution_runtime.py`). |
+| SZ-14 | Documented rule pinned: floor in float64, no epsilon | fixture SZ-14 `expect 0.28`; hand value 0.29 is kept in the note. Probe output: `reserve lots 0.29: 0.28` and `0.29/0.01 = 28.999999999999996 floor: 28.0` |
+| TG-06, TG-07 | Documented rule pinned: `round(x, 2)`, round-half-even on float64 | TG-06 `0.135 -> 0.14`; TG-07 `0.125 -> 0.12` (exact midpoint goes to the even neighbour) |
 
-```
-M1 trading/execution/quotes.py KILLED | 3 failed, 105 passed, 5 xfailed in 9.97s
-M2 trading/risk/sizing.py KILLED | 2 failed, 107 passed, 4 xfailed in 11.77s
-M3 trading/risk/guardrails.py KILLED | 1 failed, 107 passed, 5 xfailed in 9.75s
-M4 trading/account/limits.py KILLED | 2 failed, 106 passed, 5 xfailed in 13.38s
-M5 trading/positions/multi_tp.py KILLED | 2 failed, 106 passed, 5 xfailed in 17.50s
-M6 simulation/environment/episode_runtime.py KILLED | 1 failed, 107 passed, 5 xfailed in 24.89s
-M7 trading/execution/broker.py KILLED | 6 failed, 102 passed, 5 xfailed in 20.43s
-M8 trading/execution/costs.py SURVIVED | 108 passed, 5 xfailed in 13.52s
-restored
-```
+## 4. Mutation evidence
 
-Mutants: M1 flips the opening-long slippage sign; M2 turns the lot floor into a ceiling; M3 makes the daily breach non-strict; M4 adds instead of subtracts the daily loss from the floor; M5 rounds the TP leg to one decimal; M6 fills one bar late (at `t + 2`); M7 adds 0.5 USD per lot to every realised close; M8 maps direction 0 to ask.
+The 1.0.0 mutation run is recorded in the parity report of that version (seven of eight killed). M8 was the invalid-direction branch of `fill_price`, which is now fixed (C1). The 2.0.0 mutation re-run was **not performed** in this pass. The mutant set in version 1.0.0 remains in `logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/mutation_check.log`.
 
-M8 survives on purpose. It is equivalent on valid sides (+1 and -1) and changes behavior only for direction 0. That branch is defect C1, whose strict xfail does not count as a kill. Recorded as an unkilled equivalent on the valid domain and a known open defect on the invalid one.
+## 5. Scenario coverage added in 2.0.0
 
-## 5. Test-design corrections made during the run (not golden changes)
+Env scenarios (`tests/unit/simulation/test_environment/test_semantic_oracle_env_scenarios.py`, replayed from the `env_scenarios` section of the fixture):
 
-- The causality cut range was 61..100 in the first draft. Cut 61 is vacuous because the first output is valued at bar 61, so there was no output to check. The range is now 62..100, with that reason in the docstring.
-- The first environment tape had 48 actions, which is shorter than the valuation range. The action tape is now 80 entries and `_run` allows 200 steps.
-- Hypothesis arguments that carried the large baseline trace produced a 38 kB repr warning. Traces are now cached and not passed as arguments.
+- G1 pending limit order: cancel on session change (positive); session change beats an available fill (adverse); fill inside the bar interval at the quote ask 20000.6 (positive); no fill when the quote is after the interval end (adverse). Replace: `not_applicable`, since no replace or amend name exists on `TradingEnv`.
+- G3 ambiguous bars, long, SL 99.0, TP 101.0: both levels inside the bar gives stop at 99.0 (positive); TP-only gives target at 101.0 (positive); SL-only gives stop at 99.0 (adverse); no touch keeps the position (adverse).
+- G4 breach latch, non-episodic: control with no breach opens a position (positive); `close_trade(-11000)` then 40 entry requests gives zero opens, `breach_log == ['max_drawdown']`, `year_failed` True (adverse). Within session only.
+- G2 candidate mask, geometry disabled: only the no-trade slot is eligible (positive); setup ids present but disabled stay masked (adverse).
 
-None of these changed any expected value. One fixture expectation was corrected during authoring, before the first replay run and before `MANIFEST.json` was written: QF-17 bid was first typed as `101.4` and is `102.0` (`short gap up: ask = 102.6; bid = 102.6 - 0.6 = 102.0`). The digest in `MANIFEST.json` is of the corrected file. No expected value has changed since the digest was written.
+Open items, each shown as a skip so they are visible:
 
-## 6. Not run and not claimed
+- O2 enabled candidate-geometry mask (needs a full synthetic env).
+- O3 cross-session latch. The 1500-bar tape has its first NY window end at bar 451 and only one step in the second session, so cross-session persistence is not shown.
 
-- Native backend parity: `qrl_native` is not importable in `.venv-x86` (`ModuleNotFoundError: No module named 'qrl_native'`). `native/domain` Rust tests were not run. No backend result is claimed.
-- Captured broker events: not in the tree and not fabricated. Not required for offline acceptance.
-- Pending, cancel and replace; candidate mask and geometry; env-level ambiguous both-level bars; breach-latch persistence across sessions: not covered in this package (gaps G1 to G4 in `semantic_contracts.md` section 7).
-- Full repository gates (full-tree ruff, full-tree mypy, `./tools/check unit`) were not run. The task scope was the touched files and the scoped tests listed above.
+Probe evidence for G4 (before the test was written): control `opened_at [61]`, `breach_log []`, `year_failed False`; breached `opened_at []`, `breach_log ['max_drawdown']`, `year_failed True`. Two-session probe: breached run sessions `{20093: 390 steps, 20094: 1 step}`, `opens 0`; control `{20093: 17 opens, 20094: 0}`.
+
+Probe evidence for the causality contract (earlier pass): `cut 61 first differing step index 0`, `cut 64 ... 3`, `cut 70 ... 9`.
+
+Test-design hazard recorded earlier: `_make_features` draws depend on tape length, so prefix tests must slice features, not regenerate them.
+
+## 6. Not run, not claimed
+
+- Native backend parity: **skipped, recorded reason**: `qrl_native` is not built or importable in `.venv-x86`. Building it is out of scope for this package. Nothing about backend equivalence is claimed.
+- Captured broker events: not in the tree, not required, not used.
+- Full repository gates (full-tree ruff, full-tree mypy, `./tools/check unit`, full unit suite): not run. Scope was the touched files, the oracle modules, the trading and simulation directories, and the study audit.

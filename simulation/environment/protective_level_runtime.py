@@ -283,6 +283,11 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                     ]
                     is_final = len(remaining_slots) == 0
                     close_size = target_close_size(pos, slot_num, is_final=is_final)
+                    if close_size <= 0.0:
+                        # Leg rounds to zero: consume the slot, keep the position intact.
+                        pos.tp_hit_mask |= hit_mask_bit
+                        setattr(pos, f"tp{slot_num}_price", None)
+                        continue
 
                     quote = self._untriggered_level_quote(
                         log_time, int(pos.direction), float(slot_px)
@@ -561,6 +566,10 @@ class ProtectiveLevelRuntimeMixin(RuntimeMixinBase):
                     and not (pos.tp_hit_mask & (1 << (slot - 1)))
                 ]
                 close_size = target_close_size(pos, slot_num, is_final=not remaining_slots)
+                if close_size <= 0.0:
+                    pos.tp_hit_mask |= bit
+                    setattr(pos, f"tp{slot_num}_price", None)
+                    continue
 
                 pnl, fill_price = self._close_at_quote(
                     pos, (bid, ask), size=close_size, tick_fill=True

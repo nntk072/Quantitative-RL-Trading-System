@@ -1,0 +1,2344 @@
+{
+  "schema_version": "semantic-oracle-fixtures.v2",
+  "fixture_version": "2.0.0",
+  "contract_ref": "planning/native_modernization/semantic_oracle/semantic_contracts.md",
+  "provenance": {
+    "method": "Every expected value below was worked out by hand (the hand_calculation field states the arithmetic). No production formula was copied to produce an expected value. Values were typed in before the replay tests were run.",
+    "frozen_before_comparison": true,
+    "source_baseline": "trading/ and simulation/environment/ at feat/semantic-oracle base (origin/main-native a3b3e442)",
+    "synthetic_only": true,
+    "captured_broker_events": "not used (not present in tree; not fabricated)"
+  },
+  "tolerances": {
+    "exact": {
+      "kind": "exact",
+      "abs": 0.0,
+      "rel": 0.0,
+      "applies_to": "integers, enums, reason codes, booleans, timestamps (ISO strings), ordering keys, state counters, breach flags, RNG bit streams"
+    },
+    "price_abs": {
+      "kind": "absolute",
+      "abs": 1e-09,
+      "rel": 0.0,
+      "unit": "instrument price units (float64, price magnitude about 1e2 to 1e4, ulp about 1e-12)",
+      "applies_to": "quotes, fill prices, stop and target levels"
+    },
+    "money_usd_abs": {
+      "kind": "absolute",
+      "abs": 1e-06,
+      "rel": 0.0,
+      "unit": "account currency USD (float64; sums of about 10 operations on balances near 1e4 carry error near 1e-11)",
+      "applies_to": "balance, equity, pnl, commission, margin, reserve, floors, capacities"
+    },
+    "lots_abs": {
+      "kind": "absolute",
+      "abs": 1e-09,
+      "rel": 0.0,
+      "unit": "lots (float64)",
+      "applies_to": "unquantized lot results of compute_lots"
+    },
+    "lot_step_exact": {
+      "kind": "lot_step_count",
+      "abs": 0.0,
+      "rel": 0.0,
+      "step_unit_lots": 0.01,
+      "applies_to": "lot results after broker-step quantization: compare round(lots / step) exactly, residual must be under 1e-9 lots"
+    },
+    "ratio_abs": {
+      "kind": "absolute",
+      "abs": 1e-12,
+      "rel": 0.0,
+      "unit": "dimensionless fraction (max drawdown and balance ratios in observations)",
+      "applies_to": "observation account block"
+    },
+    "log_reward_abs": {
+      "kind": "absolute",
+      "abs": 1e-09,
+      "rel": 0.0,
+      "unit": "reward units from scale * ln(ratio)",
+      "applies_to": "EquityLogGrowthReward"
+    },
+    "reward_abs": {
+      "kind": "absolute",
+      "abs": 1e-12,
+      "rel": 0.0,
+      "unit": "reward units from pnl / fixed_risk_usd",
+      "applies_to": "EquityDeltaReward"
+    }
+  },
+  "cost_models": {
+    "default_us100_like": {
+      "spread_points": 0.6,
+      "slippage_points": 0.0,
+      "commission_per_lot": 0.0,
+      "point_value": 1.0,
+      "point_size": 0.01
+    },
+    "note": "spread_points is consumed as PRICE units by bar_quote(bar_spread=None), exit_side_bar_range(None) and protective_level_fill_quote; raw bar spreads are MT5 points converted with point_size. Verified by probe and by case quote_default_spread_is_price_units."
+  },
+  "cases": {
+    "bid_ask_spread_fees": [
+      {
+        "id": "QF-01",
+        "op": "quote_from_bar_price",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "point_size": 0.01
+          },
+          "price": 20000.0,
+          "spread_points": 60
+        },
+        "expect": [
+          20000.0,
+          20000.6
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "raw spread 60 points * point_size 0.01 = 0.60 price units; bid = close = 20000.0; ask = 20000.0 + 0.60 = 20000.60"
+      },
+      {
+        "id": "QF-02",
+        "op": "quote_from_bar_price",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "point_size": 0.01
+          },
+          "price": 20000.0,
+          "spread_points": null
+        },
+        "expect": [
+          20000.0,
+          20000.6
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "missing raw spread falls back to the configured default spread 0.6 (price units); ask = 20000.60"
+      },
+      {
+        "id": "QF-03",
+        "op": "quote_from_bar_price",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "point_size": 0.01
+          },
+          "price": 20000.0,
+          "spread_points": 0
+        },
+        "expect": [
+          20000.0,
+          20000.0
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "a recorded zero spread is honored (not replaced by the 0.6 default): ask = bid = 20000.0"
+      },
+      {
+        "id": "QF-04",
+        "op": "quote_default_spread_is_price_units",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "point_size": 0.01
+          },
+          "close": 100.0
+        },
+        "expect": [
+          100.0,
+          100.6
+        ],
+        "tol": "price_abs",
+        "polarity": "characterization",
+        "classification": "documented alternative semantics (units naming): the field spread_points is used as price units when no bar spread is supplied",
+        "hand_calculation": "bar_quote(close=100.0) with no bar spread: ask = 100.0 + 0.6 = 100.6 (0.6 price units, i.e. 60 points at point_size 0.01)"
+      },
+      {
+        "id": "QF-05",
+        "op": "fill_price",
+        "args": {
+          "cost_model": {},
+          "bid": 99.5,
+          "ask": 100.5,
+          "direction": 1
+        },
+        "expect": 100.5,
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "long market order buys at the ask: 100.5"
+      },
+      {
+        "id": "QF-06",
+        "op": "fill_price",
+        "args": {
+          "cost_model": {},
+          "bid": 99.5,
+          "ask": 100.5,
+          "direction": -1
+        },
+        "expect": 99.5,
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "short market order sells at the bid: 99.5"
+      },
+      {
+        "id": "QF-07",
+        "op": "fill_price",
+        "args": {
+          "cost_model": {},
+          "bid": 99.5,
+          "ask": 100.5,
+          "direction": 0
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "direction 0 is not a trade side: ValueError (fixed in fixture version 2.0.0; was source defect C1)."
+      },
+      {
+        "id": "QF-08",
+        "op": "fill_price",
+        "args": {
+          "cost_model": {
+            "slippage_points": 0.5
+          },
+          "bid": 99.5,
+          "ask": 100.5,
+          "direction": 1
+        },
+        "expect": 101.0,
+        "tol": "price_abs",
+        "polarity": "defect",
+        "classification": "source defect C2 (or total_cost docstring defect): slippage_points is not applied in fill_price. Owner decision pending; source NOT changed.",
+        "hand_calculation": "total_cost docstring says spread and slippage are modeled in fill_price. Documented intent: long pays ask + 0.5 = 101.0. Actual: 100.5."
+      },
+      {
+        "id": "QF-09",
+        "op": "total_cost",
+        "args": {
+          "cost_model": {
+            "commission_per_lot": 2.5
+          },
+          "lots": 4.0
+        },
+        "expect": 10.0,
+        "tol": "money_usd_abs",
+        "polarity": "positive",
+        "hand_calculation": "commission 2.5 per lot * 4.0 lots = 10.0"
+      },
+      {
+        "id": "QF-10",
+        "op": "total_cost",
+        "args": {
+          "cost_model": {
+            "commission_per_lot": 2.5
+          },
+          "lots": 0.0
+        },
+        "expect": 0.0,
+        "tol": "money_usd_abs",
+        "polarity": "adverse",
+        "hand_calculation": "no position pays no commission: 2.5 * 0.0 = 0.0"
+      },
+      {
+        "id": "QF-11",
+        "op": "cost_model_construct",
+        "args": {
+          "commission_per_lot": -2.5
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "a negative fee would be a silent rebate, so construction is rejected"
+      },
+      {
+        "id": "QF-12",
+        "op": "protective_level_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.5,
+            "point_size": 0.01
+          },
+          "direction": 1,
+          "hit_price": 99.0
+        },
+        "expect": [
+          98.5,
+          99.1
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "long stop at 99.0 with adverse slippage 0.5: bid = 99.0 - 0.5 = 98.5; ask = bid + spread 0.6 = 99.1. The sell fill is the bid, 98.5."
+      },
+      {
+        "id": "QF-13",
+        "op": "protective_level_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.5,
+            "point_size": 0.01
+          },
+          "direction": -1,
+          "hit_price": 101.0
+        },
+        "expect": [
+          100.9,
+          101.5
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "short stop at 101.0 with adverse slippage 0.5: ask = 101.0 + 0.5 = 101.5; bid = ask - 0.6 = 100.9. The buy fill is the ask, 101.5."
+      },
+      {
+        "id": "QF-14",
+        "op": "bar_stop_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.0,
+            "point_size": 0.01
+          },
+          "direction": 1,
+          "stop_price": 99.0,
+          "bar_open": 100.0,
+          "raw_spread_points": 60
+        },
+        "expect": [
+          99.0,
+          99.6
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "long, bar opens above the stop: trigger = min(99.0, 100.0) = 99.0; bid = 99.0; ask = 99.0 + 0.6 = 99.6"
+      },
+      {
+        "id": "QF-15",
+        "op": "bar_stop_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.0,
+            "point_size": 0.01
+          },
+          "direction": 1,
+          "stop_price": 99.0,
+          "bar_open": 98.0,
+          "raw_spread_points": 60
+        },
+        "expect": [
+          98.0,
+          98.6
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "long gap: bar opens through the stop at 98.0. trigger = min(99.0, 98.0) = 98.0; the fill is the worse open, not the stop: bid 98.0"
+      },
+      {
+        "id": "QF-16",
+        "op": "bar_stop_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.0,
+            "point_size": 0.01
+          },
+          "direction": -1,
+          "stop_price": 101.0,
+          "bar_open": 100.0,
+          "raw_spread_points": 60
+        },
+        "expect": [
+          100.4,
+          101.0
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "short, bar opens below the stop: opening ask = 100.0 + 0.6 = 100.6; trigger = max(101.0, 100.6) = 101.0; ask = 101.0; bid = 101.0 - 0.6 = 100.4"
+      },
+      {
+        "id": "QF-17",
+        "op": "bar_stop_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.0,
+            "point_size": 0.01
+          },
+          "direction": -1,
+          "stop_price": 101.0,
+          "bar_open": 102.0,
+          "raw_spread_points": 60
+        },
+        "expect": [
+          102.0,
+          102.6
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "short gap up: opening ask = 102.0 + 0.6 = 102.6; trigger = max(101.0, 102.6) = 102.6 (worse than the stop); ask = 102.6; bid = 102.0"
+      },
+      {
+        "id": "QF-18",
+        "op": "bar_stop_fill_quote",
+        "args": {
+          "cost_model": {
+            "spread_points": 0.6,
+            "slippage_points": 0.5,
+            "point_size": 0.01
+          },
+          "direction": 1,
+          "stop_price": 99.0,
+          "bar_open": 100.0,
+          "raw_spread_points": 60
+        },
+        "expect": [
+          98.5,
+          99.1
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "long stop with slippage 0.5 and no gap: trigger 99.0; bid = 98.5; ask = 99.1"
+      },
+      {
+        "id": "QF-19",
+        "op": "adverse_tick_fill_quote",
+        "args": {
+          "quote": [
+            99.5,
+            100.5
+          ],
+          "direction": 1,
+          "slippage_points": 0.5,
+          "opening": true
+        },
+        "expect": [
+          99.5,
+          101.0
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "opening long buys at ask: ask 100.5 + 0.5 = 101.0; bid untouched"
+      },
+      {
+        "id": "QF-20",
+        "op": "adverse_tick_fill_quote",
+        "args": {
+          "quote": [
+            99.5,
+            100.5
+          ],
+          "direction": -1,
+          "slippage_points": 0.5,
+          "opening": true
+        },
+        "expect": [
+          99.0,
+          100.5
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "opening short sells at bid: bid 99.5 - 0.5 = 99.0; ask untouched"
+      },
+      {
+        "id": "QF-21",
+        "op": "adverse_tick_fill_quote",
+        "args": {
+          "quote": [
+            99.5,
+            100.5
+          ],
+          "direction": 1,
+          "slippage_points": 0.5,
+          "opening": false
+        },
+        "expect": [
+          99.0,
+          100.5
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "closing long sells at bid: 99.5 - 0.5 = 99.0"
+      },
+      {
+        "id": "QF-22",
+        "op": "adverse_tick_fill_quote",
+        "args": {
+          "quote": [
+            99.5,
+            100.5
+          ],
+          "direction": -1,
+          "slippage_points": 0.5,
+          "opening": false
+        },
+        "expect": [
+          99.5,
+          101.0
+        ],
+        "tol": "price_abs",
+        "polarity": "adverse",
+        "hand_calculation": "closing short buys at ask: 100.5 + 0.5 = 101.0"
+      },
+      {
+        "id": "QF-23",
+        "op": "adverse_tick_fill_quote",
+        "args": {
+          "quote": [
+            99.5,
+            100.5
+          ],
+          "direction": 1,
+          "slippage_points": -0.5,
+          "opening": true
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "negative slippage would be a favorable fill and is rejected"
+      },
+      {
+        "id": "QF-24",
+        "op": "undo_adverse_tick_slippage_quote",
+        "args": {
+          "quote": [
+            99.0,
+            100.5
+          ],
+          "direction": 1,
+          "slippage_points": 0.5,
+          "opening": true
+        },
+        "expect": [
+          99.0,
+          100.0
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "inverse of QF-19 on an applied quote (ask 100.5 was 101.0 before slippage): ask 100.5 - 0.5 = 100.0"
+      },
+      {
+        "id": "QF-25",
+        "op": "exit_side_bar_range",
+        "args": {
+          "direction": 1,
+          "bid_low": 99.0,
+          "bid_high": 101.0,
+          "spread_price_units": 0.5
+        },
+        "expect": [
+          99.0,
+          101.0
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "long exits transact on bid, so the bar bid range is used as is"
+      },
+      {
+        "id": "QF-26",
+        "op": "exit_side_bar_range",
+        "args": {
+          "direction": -1,
+          "bid_low": 99.0,
+          "bid_high": 101.0,
+          "spread_price_units": 0.5
+        },
+        "expect": [
+          99.5,
+          101.5
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "short exits transact on ask: bid range shifted by recorded spread 0.5 -> [99.5, 101.5]"
+      },
+      {
+        "id": "QF-27",
+        "op": "exit_side_bar_range",
+        "args": {
+          "direction": -1,
+          "bid_low": 99.0,
+          "bid_high": 101.0,
+          "spread_price_units": null,
+          "cost_model": {
+            "spread_points": 0.6,
+            "point_size": 0.01
+          }
+        },
+        "expect": [
+          99.6,
+          101.6
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "no recorded spread: default 0.6 price units applied to the short ask range -> [99.6, 101.6]"
+      },
+      {
+        "id": "QF-28",
+        "op": "raw_spread_to_price",
+        "args": {
+          "raw_spread_points": 60,
+          "point_size": 0.01
+        },
+        "expect": 0.6,
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "60 points * 0.01 = 0.60"
+      },
+      {
+        "id": "QF-29",
+        "op": "raw_spread_to_price",
+        "args": {
+          "raw_spread_points": null,
+          "point_size": 0.01
+        },
+        "expect": null,
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "a missing spread stays missing (None), it is not converted to 0"
+      }
+    ],
+    "sizing_lot_rounding": [
+      {
+        "id": "SZ-01",
+        "op": "stop_loss_risk_usd",
+        "args": {
+          "stop_distance": -2.5,
+          "lots": 0.1,
+          "contract_size": 100.0,
+          "point_value": 1.0
+        },
+        "expect": 25.0,
+        "tol": "money_usd_abs",
+        "polarity": "positive",
+        "hand_calculation": "|-2.5| * 0.1 lots * 100 * 1.0 = 25.0 USD"
+      },
+      {
+        "id": "SZ-02",
+        "op": "compute_lots",
+        "args": {
+          "equity": 10000.0,
+          "risk_frac": 0.01,
+          "entry_price": 1.1,
+          "sl_price": 1.099,
+          "contract_size": 100000.0,
+          "point_value": 1.0
+        },
+        "expect": 1.0,
+        "tol": "lots_abs",
+        "polarity": "positive",
+        "hand_calculation": "budget 10000 * 0.01 = 100 USD; stop distance 0.001; lots = 100 / (0.001 * 100000 * 1) = 1.0"
+      },
+      {
+        "id": "SZ-03",
+        "op": "compute_lots",
+        "args": {
+          "equity": 10000.0,
+          "risk_frac": 0.005,
+          "entry_price": 1.1,
+          "sl_price": 1.099,
+          "contract_size": 100000.0,
+          "point_value": 1.0
+        },
+        "expect": 0.5,
+        "tol": "lots_abs",
+        "polarity": "positive",
+        "hand_calculation": "budget 50 USD; 50 / 100 = 0.5 lots"
+      },
+      {
+        "id": "SZ-04",
+        "op": "compute_lots",
+        "args": {
+          "equity": 10000.0,
+          "risk_frac": 0.01,
+          "entry_price": 1.1,
+          "sl_price": 1.099,
+          "contract_size": 100000.0,
+          "point_value": 1.0,
+          "max_loss_cap": 100.0,
+          "risk_usd": 500.0
+        },
+        "expect": 5.0,
+        "tol": "lots_abs",
+        "polarity": "positive",
+        "hand_calculation": "explicit risk 500 USD: 500 / 100 = 5.0; the fractional-sizing cap of 100 USD is ignored when risk_usd is given"
+      },
+      {
+        "id": "SZ-05",
+        "op": "compute_lots",
+        "args": {
+          "equity": 10000.0,
+          "risk_frac": 0.05,
+          "entry_price": 1.1,
+          "sl_price": 1.099,
+          "contract_size": 100000.0,
+          "point_value": 1.0,
+          "max_loss_cap": 100.0
+        },
+        "expect": 1.0,
+        "tol": "lots_abs",
+        "polarity": "positive",
+        "hand_calculation": "uncapped 500 / 100 = 5.0; cap 100 / 100 = 1.0; min(5.0, 1.0) = 1.0"
+      },
+      {
+        "id": "SZ-06",
+        "op": "compute_lots",
+        "args": {
+          "equity": 1000000000.0,
+          "risk_frac": 0.01,
+          "entry_price": 1.1,
+          "sl_price": 1.099,
+          "contract_size": 100000.0,
+          "point_value": 1.0
+        },
+        "expect": 100.0,
+        "tol": "lots_abs",
+        "polarity": "adverse",
+        "hand_calculation": "uncapped 1e7 / 100 = 1e5 lots; clipped to max_lot 100.0"
+      },
+      {
+        "id": "SZ-07",
+        "op": "compute_lots",
+        "args": {
+          "equity": 10000.0,
+          "risk_frac": 0.01,
+          "entry_price": 1.1,
+          "sl_price": 1.100000005,
+          "contract_size": 100000.0,
+          "point_value": 1.0
+        },
+        "expect": 0.01,
+        "tol": "lots_abs",
+        "polarity": "adverse",
+        "hand_calculation": "stop distance 5e-9 is below the 1e-8 guard: returns min_lot 0.01 instead of dividing"
+      },
+      {
+        "id": "SZ-08",
+        "op": "compute_lots",
+        "args": {
+          "equity": 10000.0,
+          "risk_frac": 0.0,
+          "entry_price": 1.1,
+          "sl_price": 1.099,
+          "contract_size": 100000.0,
+          "point_value": 1.0
+        },
+        "expect": 0.01,
+        "tol": "lots_abs",
+        "polarity": "characterization",
+        "classification": "documented alternative semantics: compute_lots clips to [min_lot, max_lot] as its docstring states, so a zero risk budget still returns min_lot. Risk concern for owner review; the execution-reserve sizer returns 0 for the same case (SZ-16).",
+        "hand_calculation": "budget 0 -> lots 0 -> clipped up to min_lot 0.01"
+      },
+      {
+        "id": "SZ-09",
+        "op": "compute_lots_with_execution_reserve",
+        "args": {
+          "total_risk_budget_usd": 100.0,
+          "equity": 1000000.0,
+          "risk_frac": 0.5,
+          "entry_price": 100.0,
+          "sl_price": 99.0,
+          "contract_size": 1.0,
+          "execution_reserve_per_lot": 1.0,
+          "lot_step": 0.01
+        },
+        "expect": 50.0,
+        "tol": "lot_step_exact",
+        "polarity": "positive",
+        "hand_calculation": "stop risk per lot 1.0 USD, reserve per lot 1.0 USD, all-in 2.0; stop budget 100 * 1.0 / 2.0 = 50 USD; lots_at_budget = 100 / 2.0 = 50; affordable 50; step 0.01 -> 5000 steps = 50.00 lots. Check: 50 * 2.0 = 100 <= 100."
+      },
+      {
+        "id": "SZ-10",
+        "op": "compute_lots_with_execution_reserve",
+        "args": {
+          "total_risk_budget_usd": 100.0,
+          "equity": 1000000.0,
+          "risk_frac": 0.5,
+          "entry_price": 100.0,
+          "sl_price": 99.0,
+          "contract_size": 1.0,
+          "execution_reserve_per_lot": 1.0,
+          "lot_step": 0.1
+        },
+        "expect": 50.0,
+        "tol": "lot_step_exact",
+        "polarity": "positive",
+        "hand_calculation": "same as SZ-09 on a 0.1 lot grid: 50.0 is 500 steps"
+      },
+      {
+        "id": "SZ-11",
+        "op": "compute_lots_with_execution_reserve",
+        "args": {
+          "total_risk_budget_usd": 0.005,
+          "equity": 1000000.0,
+          "risk_frac": 0.5,
+          "entry_price": 100.0,
+          "sl_price": 99.0,
+          "contract_size": 1.0,
+          "execution_reserve_per_lot": 1.0,
+          "lot_step": 0.01
+        },
+        "expect": 0.0,
+        "tol": "lot_step_exact",
+        "polarity": "adverse",
+        "hand_calculation": "lots_at_budget = 0.005 / 2.0 = 0.0025 < min_lot 0.01 -> no trade (0.0)"
+      },
+      {
+        "id": "SZ-12",
+        "op": "compute_lots_with_execution_reserve",
+        "args": {
+          "total_risk_budget_usd": 100.0,
+          "equity": 1000000.0,
+          "risk_frac": 0.5,
+          "entry_price": 100.0,
+          "sl_price": 100.0,
+          "contract_size": 1.0,
+          "execution_reserve_per_lot": 1.0,
+          "lot_step": 0.01
+        },
+        "expect": 0.0,
+        "tol": "lot_step_exact",
+        "polarity": "adverse",
+        "hand_calculation": "zero stop distance -> stop risk per lot 0 -> no trade (0.0)"
+      },
+      {
+        "id": "SZ-13",
+        "op": "compute_lots_with_execution_reserve",
+        "args": {
+          "total_risk_budget_usd": 100.0,
+          "equity": 1000000.0,
+          "risk_frac": 0.5,
+          "entry_price": 100.0,
+          "sl_price": 99.0,
+          "contract_size": 1.0,
+          "execution_reserve_per_lot": 1.0,
+          "lot_step": 0.0
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "a non-positive lot step is rejected before sizing"
+      },
+      {
+        "id": "SZ-14",
+        "op": "compute_lots_with_execution_reserve",
+        "args": {
+          "total_risk_budget_usd": 2.9,
+          "equity": 1000000.0,
+          "risk_frac": 0.5,
+          "entry_price": 100.0,
+          "sl_price": 90.0,
+          "contract_size": 1.0,
+          "execution_reserve_per_lot": 0.0,
+          "lot_step": 0.01
+        },
+        "expect": 0.28,
+        "tol": "lot_step_exact",
+        "polarity": "documented_rule",
+        "classification": "documented rule, pinned (not changed): floor(affordable/lot_step) on the float64 quotient. Hand value 0.29 is the exact decimal answer; the rule returns 0.28 because 0.29/0.01 = 28.999999999999996.",
+        "hand_calculation": "stop distance 10 -> stop risk 10 USD per lot; reserve 0; stop budget 2.9; lots = 2.9 / 10 = 0.29 exactly in decimal; floor(0.29 / 0.01) = 29 steps -> 0.29. Actual: 0.28 because 0.29 / 0.01 = 28.999999999999996 in float64."
+      },
+      {
+        "id": "SZ-15",
+        "op": "modeled_execution_reserve_usd",
+        "args": {
+          "lots": 3.0,
+          "slippage_points": 2.0,
+          "commission_per_lot": 1.5,
+          "contract_size": 100.0,
+          "point_value": 1.0
+        },
+        "expect": 609.0,
+        "tol": "money_usd_abs",
+        "polarity": "positive",
+        "hand_calculation": "adverse stop slippage 2 * 3 lots * 100 * 1.0 = 600; round-trip commission 2 * 1.5 * 3 = 9; total 609"
+      },
+      {
+        "id": "SZ-16",
+        "op": "modeled_execution_reserve_usd",
+        "args": {
+          "lots": -1.0,
+          "slippage_points": 2.0,
+          "commission_per_lot": 1.5,
+          "contract_size": 100.0,
+          "point_value": 1.0
+        },
+        "expect": 0.0,
+        "tol": "money_usd_abs",
+        "polarity": "adverse",
+        "hand_calculation": "negative lots are clamped to 0 before costing: reserve 0"
+      },
+      {
+        "id": "SZ-17",
+        "op": "compute_sl_tp_long",
+        "args": {
+          "entry_price": 100.0,
+          "last_swing_low": 98.0,
+          "buffer_pts": 0.5,
+          "rr_ratio": 2.0
+        },
+        "expect": [
+          97.5,
+          105.0
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "SL = 98 - 0.5 = 97.5; risk r = 100 - 97.5 = 2.5; TP = 100 + 2 * 2.5 = 105.0"
+      },
+      {
+        "id": "SZ-18",
+        "op": "compute_sl_tp_short",
+        "args": {
+          "entry_price": 100.0,
+          "last_swing_high": 102.0,
+          "buffer_pts": 0.5,
+          "rr_ratio": 2.0
+        },
+        "expect": [
+          102.5,
+          95.0
+        ],
+        "tol": "price_abs",
+        "polarity": "positive",
+        "hand_calculation": "SL = 102 + 0.5 = 102.5; r = 102.5 - 100 = 2.5; TP = 100 - 2 * 2.5 = 95.0"
+      },
+      {
+        "id": "SZ-19",
+        "op": "compute_sl_tp_long",
+        "args": {
+          "entry_price": 100.0,
+          "last_swing_low": 100.0,
+          "buffer_pts": 0.5,
+          "rr_ratio": 2.0
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "swing low equal to entry is not strictly below it: invalid long structure"
+      },
+      {
+        "id": "SZ-20",
+        "op": "compute_sl_tp_from_structure",
+        "args": {
+          "direction": 0,
+          "entry_price": 100.0,
+          "structure_level": 98.0,
+          "rr_ratio": 2.0,
+          "buffer_pts": 0.0
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "direction 0 is not a side: rejected before any stop is created"
+      }
+    ],
+    "partial_targets": [
+      {
+        "id": "TG-01",
+        "op": "target_close_size",
+        "args": {
+          "size": 0.3,
+          "initial_size": 0.3,
+          "fractions": [
+            0.5,
+            0.5
+          ],
+          "active_tp": [
+            1,
+            2
+          ],
+          "slot": 1,
+          "is_final": false,
+          "runner_fraction": 0.0
+        },
+        "expect": 0.15,
+        "tol": "lot_step_exact",
+        "polarity": "positive",
+        "hand_calculation": "leg share = 0.5 * 0.30 = 0.15; rounded to 2 decimals = 0.15"
+      },
+      {
+        "id": "TG-02",
+        "op": "target_close_size",
+        "args": {
+          "size": 1.0,
+          "initial_size": 1.0,
+          "fractions": [
+            0.5
+          ],
+          "active_tp": [
+            1
+          ],
+          "slot": 1,
+          "is_final": true,
+          "runner_fraction": 0.2
+        },
+        "expect": 0.5,
+        "tol": "lot_step_exact",
+        "polarity": "positive",
+        "hand_calculation": "final slot with a 0.2 runner: leg 0.5; runner keeps 0.2, so the 0.5 leg leaves 0.5 open (1.0 - 0.5 >= 0.2)"
+      },
+      {
+        "id": "TG-03",
+        "op": "target_close_size",
+        "args": {
+          "size": 0.6,
+          "initial_size": 1.0,
+          "fractions": [
+            0.5
+          ],
+          "active_tp": [
+            1
+          ],
+          "slot": 1,
+          "is_final": true,
+          "runner_fraction": 0.2
+        },
+        "expect": 0.4,
+        "tol": "lot_step_exact",
+        "polarity": "adverse",
+        "hand_calculation": "leg 0.5 would leave 0.1 < runner 0.2; clamp to 0.6 - 0.2 = 0.4 so the runner is kept"
+      },
+      {
+        "id": "TG-04",
+        "op": "target_close_size",
+        "args": {
+          "size": 0.15,
+          "initial_size": 0.15,
+          "fractions": [
+            0.5
+          ],
+          "active_tp": [
+            1
+          ],
+          "slot": 1,
+          "is_final": true,
+          "runner_fraction": 0.0
+        },
+        "expect": 0.15,
+        "tol": "lot_step_exact",
+        "polarity": "positive",
+        "hand_calculation": "final slot without runner closes the whole remaining 0.15"
+      },
+      {
+        "id": "TG-05",
+        "op": "target_close_size",
+        "args": {
+          "size": 0.01,
+          "initial_size": 0.01,
+          "fractions": [
+            0.3,
+            0.7
+          ],
+          "active_tp": [
+            1,
+            2
+          ],
+          "slot": 1,
+          "is_final": false,
+          "runner_fraction": 0.0
+        },
+        "expect": {
+          "lt_size": 0.01
+        },
+        "tol": "lot_step_exact",
+        "polarity": "adverse",
+        "hand_calculation": "leg share 0.3*0.01=0.003 rounds to 0.0: the leg must not close the whole 0.01 position. Fixed in version 2.0.0 (was source defect C3): returns 0.0."
+      },
+      {
+        "id": "TG-06",
+        "op": "target_close_size",
+        "args": {
+          "size": 0.27,
+          "initial_size": 0.27,
+          "fractions": [
+            0.5,
+            0.5
+          ],
+          "active_tp": [
+            1,
+            2
+          ],
+          "slot": 1,
+          "is_final": false,
+          "runner_fraction": 0.0
+        },
+        "expect": 0.14,
+        "tol": "lot_step_exact",
+        "polarity": "documented_rule",
+        "classification": "documented rule, pinned (not changed): Python round(x, 2) (round-half-even on the float64 value). 0.135 is stored as slightly above the midpoint, so it rounds to 0.14.",
+        "hand_calculation": "leg share 0.5*0.27 = 0.135 (float64 value slightly above the midpoint); round(0.135, 2) = 0.14 under the pinned rule."
+      },
+      {
+        "id": "TG-07",
+        "op": "target_close_size",
+        "args": {
+          "size": 0.25,
+          "initial_size": 0.25,
+          "fractions": [
+            0.5,
+            0.5
+          ],
+          "active_tp": [
+            1,
+            2
+          ],
+          "slot": 1,
+          "is_final": false,
+          "runner_fraction": 0.0
+        },
+        "expect": 0.12,
+        "tol": "lot_step_exact",
+        "polarity": "documented_rule",
+        "classification": "documented rule, pinned: exact midpoint 0.125 rounds to 0.12 (round-half-even, not up).",
+        "hand_calculation": "leg share 0.5*0.25 = 0.125 exactly representable; round-half-even to 2 decimals gives 0.12 (round-half-up would give 0.13)."
+      }
+    ],
+    "rng_event_keys": [
+      {
+        "id": "RN-01",
+        "op": "event_keyed_draws",
+        "args": {
+          "seed": 42,
+          "key": "bar_fill:1",
+          "n": 3
+        },
+        "expect": "same_as_repeat",
+        "tol": "exact",
+        "polarity": "positive",
+        "hand_calculation": "determinism: two generators built from the same (seed, key) produce identical bit streams"
+      },
+      {
+        "id": "RN-02",
+        "op": "event_keyed_first_draw_distinct",
+        "args": {
+          "seed": 42,
+          "keys": [
+            "bar_fill:1",
+            "bar_fill:2"
+          ]
+        },
+        "expect": "different",
+        "tol": "exact",
+        "polarity": "positive",
+        "hand_calculation": "distinct event keys give distinct streams (the key is part of the SHA-256 derivation input)"
+      },
+      {
+        "id": "RN-03",
+        "op": "event_keyed_first_draw_distinct",
+        "args": {
+          "seeds": [
+            42,
+            43
+          ],
+          "key": "bar_fill:1"
+        },
+        "expect": "different",
+        "tol": "exact",
+        "polarity": "positive",
+        "hand_calculation": "distinct execution seeds give distinct streams for the same event key"
+      },
+      {
+        "id": "RN-04",
+        "op": "event_keyed_draws",
+        "args": {
+          "seed": 42,
+          "key": "bar_fill:1",
+          "n": 3
+        },
+        "expect": [
+          "0.14743532534977855",
+          "0.33969592937479487",
+          "0.009787991434145438"
+        ],
+        "tol": "exact",
+        "polarity": "characterization",
+        "classification": "characterization (not hand-calculated): SHA-256 derivation cannot be done by hand. Value frozen from the implementation at fixture version 1.0.0; a change requires a new fixture version.",
+        "hand_calculation": "not applicable; bit-exact characterization of market_data.loading.ticks.event_keyed_execution_rng"
+      }
+    ],
+    "timing_and_sessions": [
+      {
+        "id": "TM-01",
+        "op": "ftmo_trading_day",
+        "args": {
+          "timestamp": "2026-03-28T22:59:59+00:00"
+        },
+        "expect": "2026-03-28",
+        "tol": "exact",
+        "polarity": "boundary",
+        "hand_calculation": "2026-03-29 is the Sunday of the CET->CEST switch. Prague is UTC+1 until 01:00 UTC on 29 March. At 22:59:59 UTC on 28 March Prague time is 23:59:59 on 28 March."
+      },
+      {
+        "id": "TM-02",
+        "op": "ftmo_trading_day",
+        "args": {
+          "timestamp": "2026-03-28T23:00:00+00:00"
+        },
+        "expect": "2026-03-29",
+        "tol": "exact",
+        "polarity": "boundary",
+        "hand_calculation": "Prague midnight of 29 March in CET (UTC+1) is 23:00 UTC on 28 March: the new day starts exactly here"
+      },
+      {
+        "id": "TM-03",
+        "op": "ftmo_trading_day",
+        "args": {
+          "timestamp": "2026-06-30T21:59:59+00:00"
+        },
+        "expect": "2026-06-30",
+        "tol": "exact",
+        "polarity": "boundary",
+        "hand_calculation": "summer time: Prague is UTC+2, so 21:59:59 UTC is 23:59:59 on 30 June"
+      },
+      {
+        "id": "TM-04",
+        "op": "ftmo_trading_day",
+        "args": {
+          "timestamp": "2026-06-30T22:00:00+00:00"
+        },
+        "expect": "2026-07-01",
+        "tol": "exact",
+        "polarity": "boundary",
+        "hand_calculation": "22:00 UTC in summer time is 00:00 CEST on 1 July"
+      },
+      {
+        "id": "TM-05",
+        "op": "ftmo_trading_day",
+        "args": {
+          "timestamp": "2026-06-30T22:00:00"
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "a naive timestamp has no known zone and is rejected (never read as broker time)"
+      },
+      {
+        "id": "SS-01",
+        "op": "ny_session_mask_default",
+        "args": {
+          "index": [
+            "2025-01-06T16:29",
+            "2025-01-06T16:30",
+            "2025-01-06T23:00",
+            "2025-01-06T23:01"
+          ]
+        },
+        "expect": [
+          false,
+          true,
+          true,
+          false
+        ],
+        "tol": "exact",
+        "polarity": "boundary",
+        "classification": "characterization of inclusive endpoints (both 16:30 and 23:00 are tradable); owner to confirm the window convention",
+        "hand_calculation": "default window 16:30 to 23:00 inclusive on clock time"
+      },
+      {
+        "id": "SS-02",
+        "op": "ny_session_mask",
+        "args": {
+          "index": [
+            "2025-01-06T21:59",
+            "2025-01-06T22:00",
+            "2025-01-07T01:59",
+            "2025-01-07T02:00",
+            "2025-01-07T02:01"
+          ],
+          "start": "22:00",
+          "end": "02:00"
+        },
+        "expect": [
+          false,
+          true,
+          true,
+          true,
+          false
+        ],
+        "tol": "exact",
+        "polarity": "boundary",
+        "hand_calculation": "window wraps midnight (start 22:00 > end 02:00): clock times 22:00 through 02:00 inclusive are in"
+      }
+    ],
+    "rewards": [
+      {
+        "id": "RW-01",
+        "op": "equity_delta_reward",
+        "args": {
+          "fixed_risk_usd": 50.0,
+          "step_pnl": 100.0
+        },
+        "expect": 2.0,
+        "tol": "reward_abs",
+        "polarity": "positive",
+        "hand_calculation": "100 / 50 = 2.0 R"
+      },
+      {
+        "id": "RW-02",
+        "op": "equity_delta_reward",
+        "args": {
+          "fixed_risk_usd": 50.0,
+          "step_pnl": -25.0
+        },
+        "expect": -0.5,
+        "tol": "reward_abs",
+        "polarity": "positive",
+        "hand_calculation": "-25 / 50 = -0.5 R"
+      },
+      {
+        "id": "RW-03",
+        "op": "equity_delta_reward",
+        "args": {
+          "fixed_risk_usd": 50.0,
+          "step_pnl": 100.0,
+          "breach": true
+        },
+        "expect": -10.0,
+        "tol": "reward_abs",
+        "polarity": "adverse",
+        "hand_calculation": "on breach the penalty -10 replaces the pnl term, even for a gain"
+      },
+      {
+        "id": "RW-04",
+        "op": "equity_delta_reward_construct",
+        "args": {
+          "fixed_risk_usd": 0.0
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "fixed_risk_usd must be > 0 (division by zero otherwise)"
+      },
+      {
+        "id": "RW-05",
+        "op": "equity_log_growth_reward",
+        "args": {
+          "scale": 100.0,
+          "previous_equity": 10000.0,
+          "equity": 10100.0
+        },
+        "expect": 0.995033085316808,
+        "tol": "log_reward_abs",
+        "polarity": "positive",
+        "hand_calculation": "100 * ln(10100 / 10000) = 100 * ln(1.01) = 100 * 0.00995033085 = 0.995033085"
+      },
+      {
+        "id": "RW-06",
+        "op": "equity_log_growth_reward",
+        "args": {
+          "scale": 100.0,
+          "previous_equity": 10000.0,
+          "equity": -5.0
+        },
+        "expect": -10.0,
+        "tol": "log_reward_abs",
+        "polarity": "adverse",
+        "hand_calculation": "equity at or below zero is a ruin breach: penalty -10.0 (log of a non-positive value is undefined)"
+      },
+      {
+        "id": "RW-07",
+        "op": "equity_log_growth_reward",
+        "args": {
+          "scale": 100.0,
+          "previous_equity": 0.0,
+          "equity": 10.0
+        },
+        "expect": {
+          "raises": "ValueError"
+        },
+        "tol": "exact",
+        "polarity": "adverse",
+        "hand_calculation": "a non-positive start equity has no log return and is rejected"
+      }
+    ]
+  },
+  "account_scenarios": [
+    {
+      "id": "AC-A-gap_stop_then_session_reset",
+      "domain": "equity_margin_daily_reset",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 2.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]; phases 0 open, 1 protective, 2 mark-to-market, 3 session",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "entry_price": 100.6,
+            "margin_used": 201.2,
+            "balance": 9998.0,
+            "position_size": 1.0
+          },
+          "hand_calculation": "ask 100.6 (bid 100.0 + raw spread 0.6); commission 2.0 deducted from balance: 10000 - 2 = 9998; margin 100.6 * 1 * 100 * 0.02 = 201.2"
+        },
+        {
+          "key": [
+            0,
+            2,
+            0
+          ],
+          "op": "mtm",
+          "args": {
+            "quote": [
+              100.2,
+              100.8
+            ]
+          },
+          "expect": {
+            "open_pnl": -40.0,
+            "equity": 9958.0,
+            "max_drawdown": 42.0
+          },
+          "hand_calculation": "long marks at bid 100.2: (100.2 - 100.6) * 1 * 100 = -40.0; equity 9998 - 40 = 9958; loss from initial 10000 - 9958 = 42"
+        },
+        {
+          "key": [
+            1,
+            1,
+            0
+          ],
+          "op": "stop_close",
+          "args": {
+            "stop_price": 99.0,
+            "bar_open": 98.0,
+            "raw_spread_points": 60,
+            "direction": 1
+          },
+          "expect": {
+            "fill_price": 98.0,
+            "pnl": -262.0,
+            "balance": 9736.0,
+            "equity": 9736.0,
+            "open_pnl": 0.0,
+            "daily_loss": 262.0,
+            "max_drawdown": 264.0,
+            "position_size": 0.0
+          },
+          "hand_calculation": "bar opens at 98.0 through the 99.0 stop: fill at the open 98.0 (not 99.0). pnl = (98.0 - 100.6) * 100 - commission 2.0 = -262.0; balance 9998 - 262 = 9736; loss from initial 264"
+        },
+        {
+          "key": [
+            2,
+            3,
+            0
+          ],
+          "op": "reset_daily",
+          "args": {},
+          "expect": {
+            "session_start_equity": 9736.0,
+            "daily_loss": 0.0
+          },
+          "hand_calculation": "new session anchors equity 9736 and clears the loss counter"
+        },
+        {
+          "key": [
+            2,
+            3,
+            1
+          ],
+          "op": "daily_capacity",
+          "args": {
+            "daily_loss_limit": 500.0
+          },
+          "expect": {
+            "floor": 9236.0,
+            "remaining": 500.0
+          },
+          "hand_calculation": "floor 9736 - 500 = 9236; remaining 9736 - 9236 = 500"
+        },
+        {
+          "key": [
+            2,
+            3,
+            2
+          ],
+          "op": "guardrail",
+          "args": {
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": null
+          },
+          "hand_calculation": "daily limit 5% of 10000 = 500, daily pnl 0; max-loss floor 9000 < equity 9736: no breach"
+        }
+      ]
+    },
+    {
+      "id": "AC-B-partial_close_partition",
+      "domain": "partial_fill_conservation",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 0.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "entry_price": 100.6,
+            "balance": 10000.0
+          },
+          "hand_calculation": "no commission: balance unchanged"
+        },
+        {
+          "key": [
+            1,
+            0,
+            0
+          ],
+          "op": "partial_close",
+          "args": {
+            "quote": [
+              101.0,
+              101.6
+            ],
+            "size": 0.4
+          },
+          "expect": {
+            "fill_price": 101.0,
+            "pnl": 16.0,
+            "balance": 10016.0,
+            "position_size": 0.6,
+            "open_pnl": 24.0,
+            "equity": 10040.0
+          },
+          "hand_calculation": "(101.0 - 100.6) * 0.4 * 100 = 16.0; remaining 0.6 marked at bid 101.0: (0.4) * 0.6 * 100 = 24.0; equity 10016 + 24 = 10040"
+        },
+        {
+          "key": [
+            2,
+            0,
+            0
+          ],
+          "op": "partial_close",
+          "args": {
+            "quote": [
+              101.0,
+              101.6
+            ],
+            "size": 0.6
+          },
+          "expect": {
+            "fill_price": 101.0,
+            "pnl": 24.0,
+            "balance": 10040.0,
+            "position_size": 0.0,
+            "open_pnl": 0.0,
+            "equity": 10040.0
+          },
+          "hand_calculation": "0.4 * 0.6 * 100 = 24.0; final balance 10016 + 24 = 10040"
+        }
+      ]
+    },
+    {
+      "id": "AC-B2-single_close_same_total",
+      "domain": "partial_fill_conservation",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 0.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "entry_price": 100.6
+          },
+          "hand_calculation": "as AC-B"
+        },
+        {
+          "key": [
+            1,
+            0,
+            0
+          ],
+          "op": "partial_close",
+          "args": {
+            "quote": [
+              101.0,
+              101.6
+            ],
+            "size": 1.0
+          },
+          "expect": {
+            "pnl": 40.0,
+            "balance": 10040.0,
+            "position_size": 0.0,
+            "equity": 10040.0
+          },
+          "hand_calculation": "(101.0 - 100.6) * 1.0 * 100 = 40.0; partition invariance: same final balance as AC-B"
+        }
+      ]
+    },
+    {
+      "id": "AC-C-commission_partition",
+      "domain": "fees_partial_fill_conservation",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 1.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "balance": 9999.0
+          },
+          "hand_calculation": "commission 1.0 per lot on the 1.0 lot open: 10000 - 1 = 9999"
+        },
+        {
+          "key": [
+            1,
+            0,
+            0
+          ],
+          "op": "partial_close",
+          "args": {
+            "quote": [
+              101.0,
+              101.6
+            ],
+            "size": 0.4
+          },
+          "expect": {
+            "pnl": 15.6,
+            "balance": 10014.6,
+            "position_size": 0.6
+          },
+          "hand_calculation": "gross 16.0 less commission 0.4 = 15.6; balance 9999 + 15.6 = 10014.6"
+        },
+        {
+          "key": [
+            2,
+            0,
+            0
+          ],
+          "op": "partial_close",
+          "args": {
+            "quote": [
+              101.0,
+              101.6
+            ],
+            "size": 0.6
+          },
+          "expect": {
+            "pnl": 23.4,
+            "balance": 10038.0,
+            "position_size": 0.0
+          },
+          "hand_calculation": "gross 24.0 less commission 0.6 = 23.4; balance 10014.6 + 23.4 = 10038.0"
+        }
+      ]
+    },
+    {
+      "id": "AC-C2-single_close_commission_same_total",
+      "domain": "fees_partial_fill_conservation",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 1.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "balance": 9999.0
+          },
+          "hand_calculation": "as AC-C"
+        },
+        {
+          "key": [
+            1,
+            0,
+            0
+          ],
+          "op": "partial_close",
+          "args": {
+            "quote": [
+              101.0,
+              101.6
+            ],
+            "size": 1.0
+          },
+          "expect": {
+            "pnl": 39.0,
+            "balance": 10038.0
+          },
+          "hand_calculation": "gross 40.0 less commission 1.0 = 39.0; balance 9999 + 39 = 10038: same total as AC-C"
+        }
+      ]
+    },
+    {
+      "id": "AC-D-margin_gate",
+      "domain": "equity_margin",
+      "setup": {
+        "initial_balance": 150.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 0.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "opened": false,
+            "balance": 150.0
+          },
+          "hand_calculation": "required margin 100.6 * 1 * 100 * 0.02 = 201.2 > equity 150: order refused, account unchanged"
+        }
+      ]
+    },
+    {
+      "id": "AC-D2-margin_gate_pass",
+      "domain": "equity_margin",
+      "setup": {
+        "initial_balance": 300.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 0.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "open",
+          "args": {
+            "quote": [
+              100.0,
+              100.6
+            ],
+            "lots": 1.0,
+            "direction": 1
+          },
+          "expect": {
+            "opened": true,
+            "margin_used": 201.2,
+            "balance": 300.0
+          },
+          "hand_calculation": "margin 201.2 <= equity 300: opened"
+        }
+      ]
+    },
+    {
+      "id": "AC-E-daily_breach_inputs",
+      "domain": "daily_reset_breach_latch",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 0.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "sorted by key [bar, phase, seq]; the stateless guard result is recorded per event. The latch itself lives in the environment (breach_log / session_blocked) and is not represented here.",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "close_trade",
+          "args": {
+            "pnl": -600.0
+          },
+          "expect": {
+            "balance": 9400.0,
+            "equity": 9400.0,
+            "daily_loss": 600.0,
+            "max_drawdown": 600.0
+          },
+          "hand_calculation": "realised loss 600; balance and equity 9400; daily loss counter 600; loss from initial 600"
+        },
+        {
+          "key": [
+            0,
+            0,
+            1
+          ],
+          "op": "guardrail",
+          "args": {
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": "daily_loss",
+            "guardrail_scope": "rollout",
+            "remaining_daily": 0.0
+          },
+          "hand_calculation": "daily pnl -600 < -500 (5% of 10000): breach; rollout scope; floor 10000 - 500 = 9500; remaining max(0, 9400 - 9500) = 0"
+        },
+        {
+          "key": [
+            1,
+            0,
+            0
+          ],
+          "op": "close_trade",
+          "args": {
+            "pnl": 700.0
+          },
+          "expect": {
+            "balance": 10100.0,
+            "equity": 10100.0,
+            "daily_loss": 600.0
+          },
+          "hand_calculation": "recovery gain 700: balance 10100; daily loss counter does not decrease (it accumulates losses only)"
+        },
+        {
+          "key": [
+            1,
+            0,
+            1
+          ],
+          "op": "guardrail",
+          "args": {
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": null
+          },
+          "hand_calculation": "session pnl is +100 (equity 10100 vs session start 10000): the stateless check clears. Latching must be enforced by the environment, not this guard."
+        }
+      ]
+    },
+    {
+      "id": "AC-F-guard_boundaries",
+      "domain": "daily_reset_breach_latch",
+      "setup": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 0.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        }
+      },
+      "ordering": "boundary states; each event sets equity directly",
+      "events": [
+        {
+          "key": [
+            0,
+            0,
+            0
+          ],
+          "op": "set_state_guardrail",
+          "args": {
+            "equity": 9500.0,
+            "session_start_equity": 10000.0,
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": null
+          },
+          "hand_calculation": "equity exactly at the daily floor 9500: strict-below rule, no breach"
+        },
+        {
+          "key": [
+            0,
+            0,
+            1
+          ],
+          "op": "set_state_guardrail",
+          "args": {
+            "equity": 9499.99,
+            "session_start_equity": 10000.0,
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": "daily_loss"
+          },
+          "hand_calculation": "9499.99 < 9500: daily loss 500.01 exceeds 500"
+        },
+        {
+          "key": [
+            0,
+            0,
+            2
+          ],
+          "op": "set_state_guardrail",
+          "args": {
+            "equity": 9000.0,
+            "session_start_equity": 9000.0,
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": null
+          },
+          "hand_calculation": "equity exactly at the max-loss floor 9000 (static, initial 10000 x 10%): touching the floor is not a breach"
+        },
+        {
+          "key": [
+            0,
+            0,
+            3
+          ],
+          "op": "set_state_guardrail",
+          "args": {
+            "equity": 8999.99,
+            "session_start_equity": 8999.99,
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.1
+          },
+          "expect": {
+            "breach_reason": "max_drawdown"
+          },
+          "hand_calculation": "below the 9000 floor: max-loss breach; priority order is trailing_dd, then max_drawdown, then daily_loss"
+        }
+      ]
+    }
+  ],
+  "defect_cases": [
+    {
+      "id": "AC-A2-known_limit_open_position_equity_stale",
+      "classification": "known broker-boundary limit (not a defect in the env path): Broker.open_position does not refresh equity. The env calls mark_to_market right after every open (entry_execution_runtime.py), which restores the identity. Pinned by test.",
+      "op": "open_equity_identity",
+      "args": {
+        "initial_balance": 10000.0,
+        "cost_model": {
+          "spread_points": 0.6,
+          "slippage_points": 0.0,
+          "commission_per_lot": 2.0,
+          "point_size": 0.01,
+          "point_value": 1.0
+        },
+        "broker": {
+          "contract_size": 100.0,
+          "margin_pct": 0.02
+        },
+        "quote": [
+          100.0,
+          100.6
+        ],
+        "lots": 1.0,
+        "direction": 1
+      },
+      "expect": {
+        "balance": 9998.0,
+        "equity_after_open": 10000.0,
+        "open_pnl_after_open": 0.0,
+        "mark_quote": [
+          100.0,
+          100.6
+        ],
+        "equity_after_mark": 9938.0
+      },
+      "tol": "money_usd_abs",
+      "hand_calculation": "commission 2.0 deducted: balance 9998. Equity is not refreshed by open, so it stays 10000. Mark at bid 100.0 with entry 100.6: (100.0-100.6)*1*100 = -60, so balance + open_pnl = 9998 - 60 = 9938.",
+      "polarity": "known_limit"
+    }
+  ],
+  "changes_from_1_0_0": [
+    {
+      "id": "C1",
+      "change": "fill_price rejects direction outside +1/-1 (source fixed). QF-07 moved from defect to adverse positive.",
+      "evidence_changed": [
+        "trading/execution/costs.py",
+        "fixture QF-07",
+        "fixture digest"
+      ]
+    },
+    {
+      "id": "C3",
+      "change": "target_close_size returns 0 instead of the whole position for a zero leg or an invalid slot; callers consume the slot without a broker close. TG-05 moved from defect to adverse positive.",
+      "evidence_changed": [
+        "trading/positions/multi_tp.py",
+        "simulation/environment/protective_level_runtime.py (2 sites)",
+        "simulation/backtest/protective_management.py",
+        "fixture TG-05",
+        "fixture digest"
+      ]
+    },
+    {
+      "id": "C2",
+      "change": "NOT applied: applying slippage inside fill_price would double count configured slippage (config/base/default.yaml costs.slippage_points=5.0) on env market and protective fills. Decision pending. QF-08 stays a strict defect.",
+      "evidence_changed": []
+    },
+    {
+      "id": "rounding",
+      "change": "Documented rules pinned, not changed: SZ-14 floor on float quotient; target legs use Python round-half-even to 2 decimals (TG-06, TG-07).",
+      "evidence_changed": [
+        "fixture SZ-14, TG-06, TG-07 polarity"
+      ]
+    },
+    {
+      "id": "C4",
+      "change": "Converted to a known broker-boundary limit test (no longer a defect).",
+      "evidence_changed": [
+        "fixture AC-A2 polarity"
+      ]
+    },
+    {
+      "id": "G1-G4",
+      "change": "Added env_scenarios for pending limit cancel/fill, ambiguous both-level bars, breach latch and candidate-mask disabled behaviour.",
+      "evidence_changed": [
+        "fixture env_scenarios"
+      ]
+    }
+  ],
+  "env_scenarios": [
+    {
+      "id": "G1-cancel-session-change",
+      "group": "G1",
+      "polarity": "positive",
+      "setup": "injected pending limit order, block_overnight=True, session id differs from the bar, no fill quote",
+      "expect": {
+        "trade_types": [
+          "order_cancel"
+        ],
+        "cancel_reason": "session_changed_before_limit_fill",
+        "pending_after": false,
+        "position_open": false
+      },
+      "hand_calculation": "the order belongs to another session, so it is cancelled before any fill is considered"
+    },
+    {
+      "id": "G1-session-change-beats-available-fill",
+      "group": "G1",
+      "polarity": "adverse",
+      "setup": "as above, plus a limit fill quote at bar time +0 that would otherwise fill",
+      "expect": {
+        "trade_types": [
+          "order_cancel"
+        ],
+        "cancel_reason": "session_changed_before_limit_fill",
+        "pending_after": false,
+        "position_open": false
+      },
+      "hand_calculation": "cancellation runs before the fill check, so an available quote in another session never fills"
+    },
+    {
+      "id": "G1-fill-within-interval",
+      "group": "G1",
+      "polarity": "positive",
+      "setup": "same session, limit quote with tick_time at bar time +0 (inside the bar interval), bid 20000.0 ask 20000.6",
+      "expect": {
+        "trade_types": [
+          "order_fill",
+          "open"
+        ],
+        "entry_price": 20000.6,
+        "direction": 1,
+        "pending_after": false
+      },
+      "hand_calculation": "a long limit fill executes at the quote ask 20000.6 inside the interval"
+    },
+    {
+      "id": "G1-no-fill-after-interval",
+      "group": "G1",
+      "polarity": "adverse",
+      "setup": "same session, limit quote at bar time +5 minutes (after the 1-minute interval end)",
+      "expect": {
+        "trade_types": [],
+        "pending_after": true,
+        "position_open": false
+      },
+      "hand_calculation": "a quote after the interval end cannot fill the order in this step; the order remains pending"
+    },
+    {
+      "id": "G1-replace",
+      "group": "G1",
+      "polarity": "not_applicable",
+      "expect": {},
+      "classification": "not_applicable_with_evidence: the source has no replace or amend operation for pending entries (grep of simulation/environment for replace or amend finds only unrelated text). Cancel, fill and expiry-by-session are covered above."
+    },
+    {
+      "id": "G3-both-levels-stop-wins",
+      "group": "G3",
+      "polarity": "positive",
+      "setup": "long, entry 100.0, SL 99.0, TP 101.0, no tick book, bar high 101.5 low 98.5",
+      "expect": {
+        "close_type": "stop_close",
+        "reason": "structure_sl",
+        "price": 99.0,
+        "position_open": false
+      },
+      "hand_calculation": "both levels inside one bar: the stop wins (protective_level_runtime docstring; sl is checked before tp)"
+    },
+    {
+      "id": "G3-tp-only",
+      "group": "G3",
+      "polarity": "positive",
+      "setup": "long, entry 100.0, SL 99.0, TP 101.0, bar high 101.5 low 99.5",
+      "expect": {
+        "close_type": "tp_close",
+        "reason": "structure_tp1",
+        "price": 101.0,
+        "position_open": false
+      },
+      "hand_calculation": "only the target is inside the bar; it fills at the level 101.0"
+    },
+    {
+      "id": "G3-sl-only-gap-free",
+      "group": "G3",
+      "polarity": "adverse",
+      "setup": "long, entry 100.0, SL 99.0, TP 101.0, bar high 100.2 low 98.5",
+      "expect": {
+        "close_type": "stop_close",
+        "reason": "structure_sl",
+        "price": 99.0,
+        "position_open": false
+      },
+      "hand_calculation": "only the stop is touched; it fills at the level 99.0 (bar opens above the stop, so no gap fill)"
+    },
+    {
+      "id": "G3-no-touch",
+      "group": "G3",
+      "polarity": "adverse",
+      "setup": "long, entry 100.0, SL 99.0, TP 101.0, bar high 100.5 low 99.5",
+      "expect": {
+        "close_type": null,
+        "position_open": true
+      },
+      "hand_calculation": "neither level is inside the bar range: no exit"
+    },
+    {
+      "id": "G4-control-opens",
+      "group": "G4",
+      "polarity": "positive",
+      "setup": "non-episodic env, no breach, action 1 each step, 40 steps, first bar 61",
+      "expect": {
+        "opens_at_least": 1,
+        "breach_log": [],
+        "year_failed": false
+      },
+      "hand_calculation": "without a breach the entry request opens a position at the first eligible decision"
+    },
+    {
+      "id": "G4-breach-latch-blocks-entries",
+      "group": "G4",
+      "polarity": "adverse",
+      "setup": "non-episodic env, close_trade(-11000) before the first step (equity 89000 below the 90000 max-loss floor), action 1 each step, 40 steps",
+      "expect": {
+        "opens": 0,
+        "breach_log": [
+          "max_drawdown"
+        ],
+        "year_failed": true
+      },
+      "hand_calculation": "max-loss floor 100000*(1-0.10)=90000 is breached; the rollout-scope breach latches year_failed; no later entry opens"
+    },
+    {
+      "id": "G4-cross-session-latch",
+      "group": "G4",
+      "polarity": "open",
+      "expect": {},
+      "classification": "open: the 1500-bar synthetic tape stops at the end of the first NY window (only one step falls in the second session), so cross-session persistence is not demonstrated. Needs a tape that reaches a second NY window."
+    },
+    {
+      "id": "G2-disabled-candidate-mask",
+      "group": "G2",
+      "polarity": "positive",
+      "setup": "candidate_geometry_actions=False",
+      "expect": {
+        "mask_true_indices": [
+          0
+        ],
+        "width": "candidate_geometry_slot_count()"
+      },
+      "hand_calculation": "disabled: only the no-trade slot 0 is eligible"
+    },
+    {
+      "id": "G2-disabled-ignores-setup-ids",
+      "group": "G2",
+      "polarity": "adverse",
+      "setup": "candidate_geometry_actions=False with setup ids [1,2] present",
+      "expect": {
+        "mask_true_indices": [
+          0
+        ]
+      },
+      "hand_calculation": "setup ids present but geometry disabled: candidates stay masked"
+    },
+    {
+      "id": "G2-enabled-candidate-mask",
+      "group": "G2",
+      "polarity": "open",
+      "expect": {},
+      "classification": "open: enabled-geometry mask polarity is covered only by the existing causal geometry test; a standalone fixture needs a full synthetic env."
+    }
+  ]
+}
