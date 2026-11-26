@@ -8,7 +8,8 @@ Scope: every Rust source file in this repository's own crates (`native/domain`, 
 - Other unsafe-like constructs (`transmute`, `from_raw`, raw pointer casts, `extern "C"`,
   `static mut`, `#[no_mangle]`): **0**.
 - Files audited: `native/domain/src/{lib,units,order,position,account,risk,wire}.rs`,
-  `native/domain/tests/properties.rs`, `native/python/src/lib.rs`.
+  `native/domain/tests/properties.rs`, `native/domain/tests/invariants.rs`,
+  `native/python/src/lib.rs`.
 
 Verification command (run from the repository root; `target/` and `.venv/` excluded):
 
