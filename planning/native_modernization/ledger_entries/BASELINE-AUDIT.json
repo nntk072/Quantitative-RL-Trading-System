@@ -12,15 +12,69 @@
     "planning/native_modernization/ledger_entries/BASELINE-AUDIT.json"
   ],
   "tests_executed": [
-    {"command": "ruff format --check . (full tree)", "exit_code": 0, "result": "1491 files already formatted"},
-    {"command": "ruff check . (full tree)", "exit_code": 0, "result": "All checks passed"},
-    {"command": "python -m mypy . (full tree; launcher .venv-x86/bin/mypy exits 127 with a missing shebang interpreter)", "exit_code": 0, "result": "no issues in 1444 source files"},
-    {"command": "python -m tools.quality.module_size", "exit_code": 0, "result": "all product modules within limit"},
-    {"command": "python -m pytest -q -p no:cacheprovider tests/architecture", "exit_code": 0, "result": "69 passed"},
-    {"command": "python -m pytest -q -p no:cacheprovider <8 scoped oracle/session/walk-forward/alignment/cost test files>", "exit_code": 0, "result": "114 passed, 2 xfailed (strict C1/C2 candidate defects)"},
-    {"command": "python -m pytest -q -p no:cacheprovider tests/unit/trading/test_risk.py tests/unit/trading/test_risk_policy_contract.py tests/unit/trading/test_risk_properties.py", "exit_code": 0, "result": "33 passed"},
-    {"command": "python planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py", "exit_code": 0, "result": "8 of 8 defects reproduced"},
-    {"command": "historical 8-CPU run (not rerun; prior evidence, no commit SHA recorded)", "exit_code": 0, "result": "1089 passed, 4 skipped; not bound to a3b3e442"}
+    {
+      "command": "ruff format --check . (full tree)",
+      "exit_code": 0,
+      "result": "1491 files already formatted"
+    },
+    {
+      "command": "ruff check . (full tree)",
+      "exit_code": 0,
+      "result": "All checks passed"
+    },
+    {
+      "command": "python -m mypy . (full tree; the .venv-x86/bin/mypy launcher exits 127 on a missing shebang interpreter)",
+      "exit_code": 0,
+      "result": "no issues in 1444 source files"
+    },
+    {
+      "command": "python -m tools.quality.module_size",
+      "exit_code": 0,
+      "result": "all product modules within limit"
+    },
+    {
+      "command": "python -m pytest -q -p no:cacheprovider tests/architecture",
+      "exit_code": 0,
+      "result": "69 passed"
+    },
+    {
+      "command": "python -m pytest -q -p no:cacheprovider <8 scoped oracle/session/walk-forward/alignment/cost test files>",
+      "exit_code": 0,
+      "result": "114 passed, 2 xfailed (strict C1/C2 candidate defects)"
+    },
+    {
+      "command": "python -m pytest -q -p no:cacheprovider tests/unit/trading/test_risk.py tests/unit/trading/test_risk_policy_contract.py tests/unit/trading/test_risk_properties.py",
+      "exit_code": 0,
+      "result": "33 passed"
+    },
+    {
+      "command": "python planning/native_modernization/baseline/reproducers/baseline_defect_reproducers.py",
+      "exit_code": 0,
+      "result": "8 of 8 defects reproduced"
+    },
+    {
+      "command": "srun allocation 21877444: pytest -q -n 8 -m \"unit and not slow and not integration and not architecture and not gpu and not triton and not research\" tests",
+      "exit_code": 0,
+      "result": "3810 passed, 2 skipped, 3 xfailed",
+      "output": "logs/agents/qa_engineer/2026-11-26_baseline_audit/unit.log"
+    },
+    {
+      "command": "srun allocation 21877444: pytest -q -n 8 -m \"integration and not slow\" tests",
+      "exit_code": 0,
+      "result": "492 passed, 2 skipped",
+      "output": "logs/agents/qa_engineer/2026-11-26_baseline_audit/integration.log"
+    },
+    {
+      "command": "srun allocation 21877444: pytest -q -n 8 -m \"research and not slow\" tests",
+      "exit_code": 1,
+      "result": "7 failed, 490 passed, 2 skipped (RESEARCH-GATE-RED in defects.md)",
+      "output": "logs/agents/qa_engineer/2026-11-26_baseline_audit/research.log"
+    },
+    {
+      "command": "historical 8-CPU run (prior, not rerun; no commit SHA recorded)",
+      "exit_code": 0,
+      "result": "1089 passed, 4 skipped; not bound to a3b3e442"
+    }
   ],
   "evidence_refs": [
     "planning/native_modernization/baseline/baseline_inventory.json",
@@ -28,15 +82,34 @@
     "planning/native_modernization/baseline/defects.md",
     "planning/native_modernization/baseline/dependency_graph.json",
     "planning/native_modernization/baseline/workload_manifests.json",
-    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)",
-    "logs/agents/qa_engineer/2026-11-26_baseline_audit/ (run script run_gates_in_allocation.sh; ignored)"
+    "logs/agents/qa_engineer/2026-11-26_baseline_audit/exit_summary.txt",
+    "logs/agents/qa_engineer/2026-11-26_baseline_audit/srun.txt",
+    "logs/agents/architect/2026-11-26_goal/baseline_audit/pytest.log (read only, prior 8-CPU run)"
   ],
   "allocation": {
-    "status": "not run",
-    "planned": "one srun --immediate=60 --partition=batch-skl --cpus-per-task=8 from named tmux session qrl-baseline-audit-r2-8cpu, running logs/agents/qa_engineer/2026-11-26_baseline_audit/run_gates_in_allocation.sh (unit, integration, research gate selections with -n 8)",
-    "blocker_detail": "CPU allocation 21873237 (interactive partition, 16 CPUs, 64G, owner not this session, qrl-fullcov-final) holds the one-CPU-allocation cap; at last check 25 minutes remained. Not scancel-able by this session."
+    "status": "run",
+    "job_id": "21877444",
+    "job_name": "qrl-baseline-audit-r2",
+    "partition": "batch-skl",
+    "node": "pht54",
+    "cpus": 8,
+    "memory": "32G",
+    "time_limit": "02:00:00",
+    "elapsed_at_end": "about 4 min",
+    "started": "2026-11-26T13:48:49+02:00",
+    "ended": "2026-11-26T13:52:07+02:00",
+    "tmux_session": "qrl-baseline-audit-r2-8cpu",
+    "command": "srun --immediate=60 --partition=batch-skl --cpus-per-task=8 --mem=32G --time=02:00:00 bash logs/agents/qa_engineer/2026-11-26_baseline_audit/run_gates_in_allocation.sh",
+    "srun_exit": 0,
+    "gate_exit_codes": {
+      "unit": 0,
+      "integration": 0,
+      "research": 1
+    },
+    "output_path": "logs/agents/qa_engineer/2026-11-26_baseline_audit/",
+    "note": "Job started before the owner rule that reserves srun and scancel for the resource operator. Not cancelled by this session. Job cap note: the one-CPU-allocation cap was held by job 21873237 until it completed (cancelled by owner rule)."
   },
-  "blocker": "(1) Real-usage srun run of the workload manifest selections (T-UNIT 3815, T-INTEGRATION 494, T-RESEARCH 499) is pending the one-CPU-allocation cap, currently held by job 21873237. (2) The mutation check (tools/check mutation-critical, mutmut 3.8.1 per uv.lock) cannot run: mutmut is not installed in .venv-x86, its wheel is not in the local uv cache, and network is disabled. Needs an install of mutmut==3.8.1 with network, or a pre-provisioned wheel, then one srun for the run.",
-  "decision": "Recorded as partial. Accepted is not claimed: the real-usage srun run and the mutation check were not run, and the prior 8-CPU evidence is not bound to a commit. No defect was fixed; the C1, C2, PREV-DAY-LEVELS, WF-SILENT-EMPTY, ARTIFACT-ID-COERCION, ATOMIC-NEW-FILE-MODE and JOIN-SAME-STAMP-REVIEW findings are recorded in defects.md. Source is unchanged.",
+  "blocker": "(1) mutation-critical check (tools/check mutation-critical; mutmut 3.8.1 locked in uv.lock) is NOT RUN: mutmut is not installed in .venv-x86, its wheel is not in the local uv cache, and the node has no network. External need: install mutmut==3.8.1 into .venv-x86 (network or a pre-provisioned wheel), then one srun for the run. (2) research gate is red on the base: 7 failures, recorded in defects.md as RESEARCH-GATE-RED; repair is not in scope of this audit.",
+  "decision": "Recorded as partial. Accepted is not claimed: the mutation-critical check was not run, the research gate is red on the base, and the prior 8-CPU evidence is not bound to a commit. Unit (3810 passed) and integration (492 passed) gates ran on the current base in allocation 21877444 and exited 0. No defect was fixed; source is unchanged.",
   "reviewer": null
 }
