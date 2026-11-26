@@ -7,7 +7,8 @@ Undeclared: HTF structure/BOS and opt-in blocks (PO3, FVG/IFVG, SMT, order block
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from pathlib import Path
 from typing import Any
 
 from omegaconf import DictConfig, OmegaConf
@@ -69,16 +70,56 @@ IMPLEMENTATIONS: dict[str, tuple[Callable[..., Any], ...]] = {
 # date-keyed previous-day highs/lows against a DatetimeIndex, so prev_day_high/low are all null.
 
 
-def code_identity() -> str:
-    """Return sha256 over every family's implementation hash (configuration independent).
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+# Source trees whose bytes are part of the feature-cache identity. They cover the undeclared blocks
+# (HTF structure, PO3, FVG, SMT, order blocks, liquidity) and the transforms on the build path, so an
+# edit to any of them rebuilds the cache instead of reusing a stale matrix.
+SOURCE_ROOTS: tuple[Path, ...] = (
+    _REPO_ROOT / "features",
+    _REPO_ROOT / "market_data" / "transforms",
+)
+
+
+def _source_entries() -> Iterator[tuple[str, Path]]:
+    """Yield (identity path, file) for each Python source under SOURCE_ROOTS, in sorted order.
+
+    The identity path is relative to each root's parent, so the digest does not depend on where
+    the checkout lives.
+
+    Yields:
+        Pairs of identity path and source file.
+    """
+    for root in SOURCE_ROOTS:
+        for path in sorted(root.rglob("*.py")):
+            if "__pycache__" not in path.parts:
+                yield path.relative_to(root.parent).as_posix(), path
+
+
+def source_files() -> list[Path]:
+    """Return the Python sources covered by the cache identity.
 
     Returns:
-        Hex digest covering every declared family's implementation source.
+        Sorted source files under SOURCE_ROOTS.
+    """
+    return [path for _, path in _source_entries()]
+
+
+def code_identity() -> str:
+    """Return sha256 over every family's implementation hash and every covered source file.
+
+    Configuration independent. The family hashes keep node identities precise; the file digest
+    makes any edit to the feature build path, declared or not, invalidate the cache.
+
+    Returns:
+        Hex digest covering the declared families' source and the covered source files.
     """
     digest = hashlib.sha256()
     for family in sorted(IMPLEMENTATIONS):
         digest.update(family.encode())
         digest.update(implementation_hash(IMPLEMENTATIONS[family]).encode())
+    for identity_path, path in _source_entries():
+        digest.update(identity_path.encode())
+        digest.update(path.read_bytes())
     return digest.hexdigest()
 
 
