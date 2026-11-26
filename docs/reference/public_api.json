@@ -13306,13 +13306,37 @@
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "features.registry",
+      "kind": "value",
+      "name": "_REPO_ROOT",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 73,
+      "source_module": "features.registry",
+      "source_path": "features/registry.py"
+    },
+    {
+      "classification": "private implementation",
       "documented": true,
       "exported_from": "features.registry",
       "kind": "function",
       "name": "_node",
       "numpy_style": false,
       "package": "features",
-      "source_line": 89,
+      "source_line": 130,
+      "source_module": "features.registry",
+      "source_path": "features/registry.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.registry",
+      "kind": "function",
+      "name": "_source_entries",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 83,
       "source_module": "features.registry",
       "source_path": "features/registry.py"
     },
@@ -13324,7 +13348,7 @@
       "name": "_technical",
       "numpy_style": false,
       "package": "features",
-      "source_line": 112,
+      "source_line": 153,
       "source_module": "features.registry",
       "source_path": "features/registry.py"
     },
