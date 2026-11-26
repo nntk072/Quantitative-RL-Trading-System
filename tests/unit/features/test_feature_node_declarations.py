@@ -5,6 +5,8 @@ Uses the configured ``features`` node only; no bars are read.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from omegaconf import DictConfig
 
@@ -14,7 +16,7 @@ from features.registry import registry_nodes
 
 
 @pytest.fixture(scope="module")
-def nodes() -> list:
+def nodes() -> list[Any]:
     cfg: DictConfig = load_config()
     return registry_nodes(cfg.features)
 

@@ -6,6 +6,8 @@ a DatetimeIndex, which never matches for tz-aware indexes, so prev_day_high/low 
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -31,11 +33,11 @@ def _bars(tz: str | None, days: int = 3, seed: int = 3) -> pd.DataFrame:
     )
 
 
-def _expected(bars: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+def _expected(bars: pd.DataFrame) -> tuple[Any, Any]:
     dates = np.asarray(pd.DatetimeIndex(bars.index).date)
-    days = sorted(set(dates))
-    high = pd.Series(bars["high"].to_numpy()).groupby(dates).max()
-    low = pd.Series(bars["low"].to_numpy()).groupby(dates).min()
+    days: list[Any] = sorted(set(dates))
+    high: Any = pd.Series(bars["high"].to_numpy()).groupby(dates).max()
+    low: Any = pd.Series(bars["low"].to_numpy()).groupby(dates).min()
     previous = {day: days[i - 1] for i, day in enumerate(days) if i > 0}
     exp_high = np.array([high[previous[d]] if d in previous else np.nan for d in dates])
     exp_low = np.array([low[previous[d]] if d in previous else np.nan for d in dates])
