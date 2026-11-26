@@ -82,7 +82,8 @@ Do not reset, clean, stash, move, or overwrite unrelated changes. Workers do
 not rebase, merge, push, or alter refs on shared branches. A worker may commit
 only on its own feature branch in its own isolated worktree, and only when the
 coordinator has authorized commits for that task. Preserve user authorization
-gates in `git-commit-rules.md` and `ci-verification.md`.
+gates in `git-commit-rules.md` and `ci-verification.md`. Branch names follow
+[`branch-naming.md`](branch-naming.md).
 
 ## Plan workflow (native modernization)
 
