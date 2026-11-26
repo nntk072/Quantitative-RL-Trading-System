@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 486 |
-| private implementation | 1087 |
+| private implementation | 1089 |
 
 ## Public package exports
 
@@ -290,7 +290,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
 | `feature_cache_content_hash` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L20) | stable |
-| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L153) | stable |
+| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L157) | stable |
 | `input_view_from_frame` | function | [features.input_view](../../features/input_view.py#L10) | stable |
 | `select_legacy_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L125) | compatibility-only |
 | `select_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L152) | stable |
@@ -307,7 +307,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `build_walkforward_fold_features` | function | [features.pipeline.walkforward_feature_fitting](../../features/pipeline/walkforward_feature_fitting.py#L13) | stable |
 | `ensure_london_atr_distances` | function | [features.pipeline.session_context_features](../../features/pipeline/session_context_features.py#L8) | stable |
 | `feature_cache_content_hash` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L20) | stable |
-| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L153) | stable |
+| `feature_cache_path` | function | [features.pipeline.feature_cache_identity](../../features/pipeline/feature_cache_identity.py#L157) | stable |
 | `fit_rolling_zscore_state` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L40) | stable |
 | `rolling_zscore` | function | [features.pipeline.normalization](../../features/pipeline/normalization.py#L158) | stable |
 | `select_legacy_obs_columns` | function | [features.pipeline.schema](../../features/pipeline/schema.py#L125) | compatibility-only |

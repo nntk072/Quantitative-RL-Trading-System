@@ -83,6 +83,12 @@ def implementation_hash(functions: Sequence[Callable[..., Any]]) -> str:
     """Return sha256 over the qualified name and source text of each function, in order.
 
     The source is read at hash time, so an edit to a function body changes the hash.
+
+    Args:
+        functions: Implementation callables to hash, in order.
+
+    Returns:
+        Hex sha256 digest of the qualified names and source text.
     """
     digest = hashlib.sha256()
     for function in functions:
