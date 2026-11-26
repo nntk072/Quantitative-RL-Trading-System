@@ -26,6 +26,12 @@ workflow runs it from `main`; results are a focused test-quality signal, not a
 repository-wide mutation score. It uses four workers by default; set
 `QRL_MUTATION_MAX_CHILDREN` to a positive integer to change the cap.
 
+`./tools/check_fast` is the agent pre-push check for files changed against
+`origin/main-native` (`--base` overrides it). It runs ruff format and check,
+the unit tests that import or change those files, the generated-docs checks,
+a product-profile registration check, and local-only mypy. The interpreter
+comes from `QRL_PYTHON`.
+
 See [test organization](../tests/README.md),
 [documentation maintenance](../docs/MAINTAINING.md), and the
 [agent verification rules](../.agents/rules/ci-verification.md).
