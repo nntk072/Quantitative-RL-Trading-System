@@ -7,15 +7,21 @@ from pathlib import Path
 
 import pyarrow as pa  # type: ignore[import-untyped]
 import pyarrow.parquet as pq  # type: ignore[import-untyped]
+import pytest
 
 from market_data.arrow_schemas import (
     BAR_SCHEMA,
+    CALENDAR_SCHEMA,
     INSTRUMENT_SCHEMA,
     QUOTE_SCHEMA,
     SCHEMA_VERSION,
+    TRADE_SCHEMA,
     quarantine_mask,
+    require_schema_id,
     validate_bars,
+    validate_calendar,
     validate_quotes,
+    validate_trades,
 )
 
 T0 = datetime(2026, 1, 2, 9, 30, tzinfo=UTC)
@@ -146,3 +152,115 @@ def test_duplicate_bar_open_time_is_flagged_on_every_occurrence() -> None:
     rows = [_bar(source_sequence=1), _bar(source_sequence=2)]
     problems = validate_bars(_table(BAR_SCHEMA, rows))
     assert sorted(p.row for p in problems if p.reason.startswith("duplicate bar")) == [0, 1]
+
+
+def _trade(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "event_time": T0,
+        "available_at": T0,
+        "source_sequence": 1,
+        "instrument_id": "US100",
+        "source_id": "mt5",
+        "schema_id": SCHEMA_VERSION,
+        "price": 100.1,
+        "size": None,
+        "source_flags": 0,
+    }
+    row.update(overrides)
+    return row
+
+
+def _session(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "instrument_id": "US100",
+        "session_open": T0,
+        "session_close": T1,
+        "session_kind": "trading",
+        "source_id": "calendar",
+        "schema_id": SCHEMA_VERSION,
+    }
+    row.update(overrides)
+    return row
+
+
+def test_valid_trades_have_no_problems_and_null_size_is_allowed() -> None:
+    table = _table(TRADE_SCHEMA, [_trade(), _trade(source_sequence=2, size=3.0)])
+    assert validate_trades(table) == []
+    assert table.column("size").null_count == 1
+
+
+def test_trade_price_and_size_violations_are_flagged() -> None:
+    table = _table(
+        TRADE_SCHEMA,
+        [
+            _trade(price=0.0),
+            _trade(source_sequence=2, size=-1.0),
+            _trade(source_sequence=3, event_time=T1),
+        ],
+    )
+    reasons = [(p.row, p.reason) for p in validate_trades(table)]
+    assert (0, "price must be finite and positive") in reasons
+    assert (1, "size must be finite and non-negative") in reasons
+    assert (2, "available_at precedes event_time") in reasons
+
+
+def test_duplicate_trade_sequence_flags_every_occurrence() -> None:
+    table = _table(TRADE_SCHEMA, [_trade(source_sequence=5), _trade(source_sequence=5)])
+    assert sorted(p.row for p in validate_trades(table) if p.reason.startswith("duplicate")) == [
+        0,
+        1,
+    ]
+
+
+def test_valid_calendar_sessions_have_no_problems() -> None:
+    later = datetime(2026, 1, 2, 10, 0, tzinfo=UTC)
+    table = _table(CALENDAR_SCHEMA, [_session(), _session(session_open=T1, session_close=later)])
+    assert validate_calendar(table) == []
+
+
+def test_calendar_reversed_and_unknown_kind_are_flagged() -> None:
+    table = _table(
+        CALENDAR_SCHEMA,
+        [
+            _session(session_open=T1, session_close=T0),
+            _session(
+                session_kind="halfday",
+                session_open=T1,
+                session_close=datetime(2026, 1, 2, 10, 0, tzinfo=UTC),
+            ),
+        ],
+    )
+    reasons = [(p.row, p.reason) for p in validate_calendar(table)]
+    assert (0, "session_close must follow session_open") in reasons
+    assert (1, "unknown session_kind 'halfday'") in reasons
+    assert not any("overlaps" in reason for _, reason in reasons)
+
+
+def test_calendar_overlapping_sessions_are_flagged_on_both_rows() -> None:
+    overlap_end = datetime(2026, 1, 2, 9, 45, tzinfo=UTC)
+    table = _table(
+        CALENDAR_SCHEMA,
+        [_session(), _session(session_open=T0, session_close=overlap_end)],
+    )
+    reasons = [(p.row, p.reason) for p in validate_calendar(table)]
+    assert sorted(r for r, reason in reasons if "overlaps" in reason) == [0, 1]
+
+
+def test_calendar_overlap_is_checked_per_instrument() -> None:
+    table = _table(
+        CALENDAR_SCHEMA,
+        [_session(), _session(instrument_id="US500")],
+    )
+    assert validate_calendar(table) == []
+
+
+def test_require_schema_id_accepts_the_supported_id_and_fails_closed() -> None:
+    assert require_schema_id(_table(BAR_SCHEMA, [_bar()])) == SCHEMA_VERSION
+    with pytest.raises(ValueError, match="unsupported schema_id"):
+        require_schema_id(_table(BAR_SCHEMA, [_bar(schema_id="market-event.v0")]))
+    with pytest.raises(ValueError, match="exactly one schema_id"):
+        require_schema_id(
+            _table(BAR_SCHEMA, [_bar(), _bar(schema_id="market-event.v0", source_sequence=2)])
+        )
+    with pytest.raises(ValueError, match="exactly one schema_id"):
+        require_schema_id(_table(BAR_SCHEMA, []))

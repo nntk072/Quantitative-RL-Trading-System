@@ -4,12 +4,19 @@
   "schema_version": "market-event.v1",
   "generator": "planning/native_modernization/data_schemas/build_quality_ledger.py",
   "source": {
-    "file": "data/examples/US100.cash_M1_202412300105_202501020334.csv",
-    "file_name": "US100.cash_M1_202412300105_202501020334.csv",
+    "file": "US100.cash_M1_202412300105_202501020334.csv",
     "sha256": "856022af89ca53330ed3525fd3dcf686553337080fdbc006e4e1d4d2415d920d",
     "bytes": 191653,
     "delimiter": "tab",
-    "source_row_count": 2880
+    "body_lines_in_file": 2880
+  },
+  "window": {
+    "window_before": null,
+    "rows_in_window": 2880,
+    "lines_on_or_after_cutoff": 0,
+    "rule": "lines whose DATE label is on or after the cutoff are never parsed",
+    "first_source_label": "2024.12.30 01:05:00",
+    "last_source_label": "2025.01.02 03:34:00"
   },
   "conversion": {
     "instrument_id": "US100.cash",
@@ -20,18 +27,44 @@
     "close_time": "event_time + 1 minute",
     "available_at": "close_time",
     "volume_column": "TICKVOL",
-    "converted_row_count": 2880
+    "schema_id": "market-event.v1",
+    "converted_row_count": 2880,
+    "bar_schema_fields": [
+      "event_time",
+      "close_time",
+      "available_at",
+      "source_sequence",
+      "instrument_id",
+      "source_id",
+      "schema_id",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ]
   },
   "reconciliation": {
     "source_rows": 2880,
     "converted_rows": 2880,
+    "quarantined_rows": 0,
     "excluded_from_table": 0,
-    "flagged_in_table": 0,
-    "reconciles": true
+    "unexplained_rows": 0,
+    "event_time_mismatches_vs_independent_oracle": 0,
+    "value_mismatches": 0,
+    "dst_class_mismatches_vs_independent_oracle": 0,
+    "reconciles": true,
+    "oracle": "zoneinfo fold semantics, independent of pandas tz_localize"
+  },
+  "parquet_round_trip": {
+    "rows": 2880,
+    "schema_equal": true,
+    "values_equal": true,
+    "pyarrow_version": "25.0.0"
   },
   "quarantine": {
     "count": 0,
-    "rule": "rows failing validate_bars or DST local-time mapping are reported with a reason",
+    "rule": "rows failing validate_bars or the DST local-time mapping are reported with a reason",
     "rows": []
   },
   "time_coverage": {

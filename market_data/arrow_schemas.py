@@ -67,6 +67,37 @@ INSTRUMENT_SCHEMA = pa.schema(
 )
 
 
+TRADE_SCHEMA = pa.schema(
+    [
+        pa.field("event_time", _UTC_NS, nullable=False),
+        pa.field("available_at", _UTC_NS, nullable=False),
+        pa.field("source_sequence", pa.int64(), nullable=False),
+        pa.field("instrument_id", pa.string(), nullable=False),
+        pa.field("source_id", pa.string(), nullable=False),
+        pa.field("schema_id", pa.string(), nullable=False),
+        pa.field("price", pa.float64(), nullable=False),
+        pa.field("size", pa.float64(), nullable=True),
+        pa.field("source_flags", pa.int32(), nullable=False),
+    ]
+)
+
+CALENDAR_KINDS = frozenset({"trading", "early_close", "closed"})
+
+CALENDAR_SCHEMA = pa.schema(
+    [
+        pa.field("instrument_id", pa.string(), nullable=False),
+        pa.field("session_open", _UTC_NS, nullable=False),
+        pa.field("session_close", _UTC_NS, nullable=False),
+        pa.field("session_kind", pa.string(), nullable=False),
+        pa.field("source_id", pa.string(), nullable=False),
+        pa.field("schema_id", pa.string(), nullable=False),
+    ]
+)
+
+SUPPORTED_SCHEMA_IDS = frozenset({SCHEMA_VERSION})
+"""Schema identities this reader accepts. Any other id fails closed; see the README migration policy."""
+
+
 @dataclass(frozen=True, slots=True)
 class RowProblem:
     """One failing row: its index in the table and the rule it broke."""
@@ -175,6 +206,99 @@ def validate_bars(table: pa.Table) -> list[RowProblem]:
         if h[i] < max(o[i], c[i], lo[i]) or lo[i] > min(o[i], c[i], h[i]):
             problems.append(RowProblem(i, "OHLC bounds violated"))
     return problems
+
+
+def validate_trades(table: pa.Table) -> list[RowProblem]:
+    """Return rule violations for a normalized trade table.
+
+    Args:
+        table: Normalized trade table with the TRADE_SCHEMA columns.
+
+    Returns:
+        Every violation with its row index and reason; an empty list when the table is valid.
+    """
+    problems: list[RowProblem] = []
+    event_ns = _as_ns(table, "event_time")
+    avail_ns = _as_ns(table, "available_at")
+    seq = _as_ns(table, "source_sequence")
+    instr = _column(table, "instrument_id")
+    price = _column(table, "price")
+    size = table.column("size").to_numpy(zero_copy_only=False)
+    size_null = table.column("size").is_null().to_numpy(zero_copy_only=False)
+
+    seen: set[tuple[str, int]] = set()
+    dupes: set[tuple[str, int]] = set()
+    for key in zip(instr, seq.tolist(), strict=True):
+        if key in seen:
+            dupes.add(key)
+        seen.add(key)
+    for i in range(table.num_rows):
+        if avail_ns[i] < event_ns[i]:
+            problems.append(RowProblem(i, "available_at precedes event_time"))
+        if (instr[i], int(seq[i])) in dupes:
+            problems.append(RowProblem(i, "duplicate (instrument, source_sequence)"))
+        if not np.isfinite(price[i]) or price[i] <= 0:
+            problems.append(RowProblem(i, "price must be finite and positive"))
+        if not size_null[i] and (not np.isfinite(size[i]) or size[i] < 0):
+            problems.append(RowProblem(i, "size must be finite and non-negative"))
+    return problems
+
+
+def validate_calendar(table: pa.Table) -> list[RowProblem]:
+    """Return rule violations for a session calendar table.
+
+    Sessions are half-open intervals ``[session_open, session_close)``. Overlapping sessions for
+    the same instrument are reported on every involved row.
+
+    Args:
+        table: Calendar table with the CALENDAR_SCHEMA columns.
+
+    Returns:
+        Every violation with its row index and reason; an empty list when the table is valid.
+    """
+    problems: list[RowProblem] = []
+    open_ns = _as_ns(table, "session_open")
+    close_ns = _as_ns(table, "session_close")
+    instr = _column(table, "instrument_id")
+    kind = _column(table, "session_kind")
+    for i in range(table.num_rows):
+        if close_ns[i] <= open_ns[i]:
+            problems.append(RowProblem(i, "session_close must follow session_open"))
+        if kind[i] not in CALENDAR_KINDS:
+            problems.append(RowProblem(i, f"unknown session_kind {kind[i]!r}"))
+    by_instrument: dict[str, list[int]] = {}
+    for i in range(table.num_rows):
+        by_instrument.setdefault(str(instr[i]), []).append(i)
+    for rows in by_instrument.values():
+        ordered = sorted(rows, key=lambda r: (open_ns[r], close_ns[r]))
+        for a, b in zip(ordered, ordered[1:], strict=False):
+            if open_ns[b] < close_ns[a]:
+                problems.append(RowProblem(a, "session overlaps the next session"))
+                problems.append(RowProblem(b, "session overlaps the previous session"))
+    return sorted(problems, key=lambda p: p.row)
+
+
+def require_schema_id(table: pa.Table) -> str:
+    """Return the single schema id of a table, failing closed on unknown or mixed ids.
+
+    Args:
+        table: Normalized table with a ``schema_id`` column.
+
+    Returns:
+        The one schema id carried by every row.
+
+    Raises:
+        ValueError: If the table is empty, mixes ids, or carries an unsupported id.
+    """
+    ids = set(table.column("schema_id").to_pylist())
+    if len(ids) != 1:
+        raise ValueError(f"table must carry exactly one schema_id, found {sorted(ids)!r}")
+    (schema_id,) = ids
+    if schema_id not in SUPPORTED_SCHEMA_IDS:
+        raise ValueError(
+            f"unsupported schema_id {schema_id!r}; supported {sorted(SUPPORTED_SCHEMA_IDS)!r}"
+        )
+    return str(schema_id)
 
 
 def quarantine_mask(problems: list[RowProblem], num_rows: int) -> np.ndarray[Any, Any]:
