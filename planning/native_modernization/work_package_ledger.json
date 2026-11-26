@@ -112,22 +112,28 @@
       "depends_on": [
         "BASELINE-AUDIT"
       ],
-      "status": "blocked",
+      "status": "partial",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
-      "implementation_sha_or_diff_hash": null,
-      "changed_paths": [],
+      "implementation_sha_or_diff_hash": "source_tree_sha256 5279cde1b4fb75e2937fff62b6db03393c40fca12370162f54a5c4f2da28a364",
+      "changed_paths": [
+        "planning/native_modernization/native_toolchain/build_manifest.json",
+        "planning/native_modernization/work_package_ledger.json"
+      ],
       "tests_executed": [
-        "cargo fmt --check, clippy -D warnings, cargo test, release build (x86_64, exit 0)",
-        "maturin wheel + 17 Python native tests pass"
+        "cargo fmt --all -- --check exit 0; cargo clippy --workspace --all-targets -- -D warnings exit 0; cargo test --workspace exit 0; cargo build --release --workspace exit 0 (rustc/cargo 1.100.0, x86_64, 2026-11-26 rerun on feat/native-toolchain-acceptance)",
+        "build_manifest.py rerun: wheel sha256 7281b84d38bebf02c4d6e490904bbf62d52ba1ad5be9d09d9652bd51ae493160 reproduced, repository_dirty_at_build false",
+        "Python native tests 17 passed, 0 skipped (wheel extracted to PYTHONPATH, not installed into the shared venv); ruff format --check and ruff check exit 0 full tree",
+        "unsafe keyword grep over native/ exit 1 (no matches)"
       ],
       "evidence_refs": [
         "planning/native_modernization/native_toolchain/build_manifest.json",
-        "native/UNSAFE_AUDIT.md"
+        "native/UNSAFE_AUDIT.md",
+        "logs/agents/architect/20261126_native_toolchain_acceptance/ (transient, git-ignored gate logs of the 2026-11-26 rerun)"
       ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": "aarch64/GH200 wheel needs a Slurm allocation on a GH200 node (not run). Portable manylinux baseline not yet chosen. Windows/WSL not built.",
-      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
+      "blocker": "OPEN: aarch64/GH200 wheel needs a Slurm allocation on a GH200 node (not run; the only allocation step). Also open per prior ledger text: portable manylinux baseline not yet chosen (owner decision); Windows/WSL not built.",
+      "decision": "Offline acceptance rerun locally on feat/native-toolchain-acceptance: partial, aarch64 wheel and platform builds open.",
       "reviewer": null,
       "authorization_or_resource": "Needs a Slurm CPU allocation on a GH200 node for the aarch64 wheel (one srun, lead request); owner decision on the portable manylinux baseline."
     },

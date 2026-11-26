@@ -17,8 +17,8 @@
     "cargo_lock_sha256": "f12ec2f47a4d717604b6f4d6f29154fa5d1e74dbc34a4482672e9050320d0c36",
     "source_tree_sha256": "5279cde1b4fb75e2937fff62b6db03393c40fca12370162f54a5c4f2da28a364"
   },
-  "repository_dirty_at_build": true,
-  "repository_head": "463d784df021ae1b0a8c89692f3ad869bc5ff160",
+  "repository_dirty_at_build": false,
+  "repository_head": "f497a8104707903d30908dbc50e07688406401f0",
   "schema": "qrl.native.build_manifest.v1",
   "target_triple": "x86_64-unknown-linux-gnu",
   "toolchain": {
@@ -28,7 +28,7 @@
   },
   "tools": {
     "maturin": "maturin 1.9.4",
-    "maturin_path": "/scratch/work/nguyenl37/worktrees/stream-native/.venv/bin/maturin",
+    "maturin_path": "/tmp/claude-3249541/-scratch-work-nguyenl37-Quantitative-RL-Trading-System/8b512075-479e-4ffc-bc0f-2f3091d855d4/scratchpad/bin/maturin",
     "python": "3.12.14",
     "python_tag": "cp312"
   },
