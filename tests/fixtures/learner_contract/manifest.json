@@ -7,6 +7,10 @@
   "ppo_gae_tape.json": {
    "bytes": 3814,
    "sha256": "4028951446fcb8d6fd12af11e33da69e69244dce87ee44ad8bbe66f5f517bedb"
+  },
+  "ppo_loss_tape.json": {
+   "bytes": 6648,
+   "sha256": "d28b6426f506f8a70d0153da8c599816f8180fe476b83829f53b552ffdb930a6"
   }
  },
  "generator": "learner-contract-tapes-v1",
