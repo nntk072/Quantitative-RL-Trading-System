@@ -132,18 +132,34 @@ on top of the rules above, not a new roster.
   CI. Use Slurm for the smallest necessary check, never for the full suite.
 - **Mypy.** Mypy is not in CI yet, so run it locally on the touched files
   until a CI job exists.
-- **CI watcher.** One subagent watches every open PR. On a failing job it
-  messages the PR's named owner and nobody else. That owner fixes it and pushes
-  again. The watcher never pushes, edits code or merges, unless the coordinator
-  names the PR to merge.
+- **Split roles.** A CI watcher agent watches each open PR. It is never the
+  implementer that pushed the PR. The implementer keeps working on its next
+  ready task while the watcher waits.
+- **CI watcher.** On a failing job the watcher reports to the owning implementer
+  with the run URL, the failing job, and a log excerpt. It does not fix the
+  failure, edit code, push, or merge, unless the coordinator names the PR to
+  merge.
 - **Resource operator.** The coordinator alone requests Slurm allocations (one
   `srun` at a time) and owns the file-quota budget. Streams never run Slurm.
 - **One owner per PR.** Every PR body names its owner agent and its flow. The
   CI watcher messages that owner on failure and nobody else. A PR without an
   owner is not opened.
-- **Owner on call.** An owner stays on call until its PR merges. An agent does
-  not finish its turn while its own PR is open and red. If it cannot wait, it
-  hands the PR to a named successor in writing before it stops.
+- **Owner on call.** An owner stays responsible for its PR until it merges. It
+  handles the failures the watcher routes to it. It does not wait for checks. If
+  it stops, it hands the PR to a named successor in writing first.
+- **Rebase before push.** Before every PR push, rebase the feature branch onto
+  the latest base: `main-native` for native PRs, `main` for Python-only PRs.
+  Resolve conflicts on the feature branch, never on `main-native` or `main`.
+- **Failure procedure.** The implementer stashes its in-progress work, checks
+  out the PR branch, fixes the failure, adds or amends a commit, and pushes with
+  `--force-with-lease` to that feature branch only. It reports the new SHA to the
+  watcher to re-check. Then it pops the stash, rebases onto the latest base, and
+  resolves any conflicts before it continues.
+- **Never block.** Waiting for a check is not a reason to stop. If no other ready
+  task exists, the implementer reports that and stops.
+- **Denied pushes.** If a push is denied by a permission check, the agent reports
+  the denial text to the coordinator. It does not retry a different command form
+  or route around the denial.
 - **Green base.** A branch is cut only from a green integration head. If the
   head is red, the work waits, or it targets the fix.
 - **One PR per file-set.** PRs that touch the same file merge in sequence, not
