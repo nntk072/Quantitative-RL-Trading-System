@@ -672,21 +672,27 @@
       "depends_on": [
         "NATIVE-TOOLCHAIN"
       ],
-      "status": "blocked",
+      "status": "partial",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
-      "implementation_sha_or_diff_hash": null,
-      "changed_paths": [],
+      "implementation_sha_or_diff_hash": "Cargo.lock sha256 f12ec2f47a4d717604b6f4d6f29154fa5d1e74dbc34a4482672e9050320d0c36",
+      "changed_paths": [
+        "planning/native_modernization/native_toolchain/cargo_audit_record.json",
+        "planning/native_modernization/work_package_ledger.json"
+      ],
       "tests_executed": [
         "ruff format and check clean",
-        "tests/architecture: 69 pass"
+        "tests/architecture: 69 pass",
+        "cargo audit --deny warnings against Cargo.lock (16 crate dependencies, 1568 advisories) exit 0, 2026-11-26"
       ],
       "evidence_refs": [
-        "tests/architecture"
+        "tests/architecture",
+        "planning/native_modernization/native_toolchain/cargo_audit_record.json",
+        "logs/agents/architect/20261126_native_toolchain_acceptance/14_cargo_audit_lockfile.txt (transient, git-ignored)"
       ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": "Proptest and fuzz targets, the native CI matrix, and the cargo-audit record on the final lockfile are not done. NATIVE-TOOLCHAIN is blocked.",
-      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
+      "blocker": "OPEN: proptest and fuzz targets (parser, schema, order, FFI boundary), and the native CI matrix. The cargo-audit record on the final lockfile is done, but the lockfile must be re-audited after any dependency change.",
+      "decision": "Partial 2026-11-26: cargo-audit record done on the feat/native-quality-cargo-audit stack. Proptest, fuzz and CI matrix remain open.",
       "reviewer": null,
       "authorization_or_resource": "Offline engineering stream: proptest and fuzz targets, native CI matrix, cargo-audit record on the final lockfile; needs NATIVE-TOOLCHAIN first."
     },
