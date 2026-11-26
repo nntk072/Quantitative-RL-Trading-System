@@ -37,6 +37,7 @@ api_paths:
 - market_data/tick_reconciliation.py
 - market_data/timeframe_reconciliation.py
 - market_data/schema_migration.py
+- market_data/native_abi.py
 caller_paths:
 - tests/unit/market_data/test_partitioned_bars.py
 - tests/unit/market_data/test_discover.py
@@ -183,6 +184,7 @@ caller_paths:
 - tests/unit/market_data/test_tick_reconciliation.py
 - tests/unit/market_data/test_timeframe_reconciliation.py
 - tests/unit/market_data/test_schema_migration.py
+- tests/unit/market_data/test_native_abi.py
 source_scopes:
 - path: market_data/partitioned_bars.py
   study_ids:
@@ -242,6 +244,9 @@ source_scopes:
   study_ids:
   - market_data.raw_data_quality_and_coverage
 - path: market_data/event_schemas.py
+  study_ids:
+  - market_data.source_parsing_and_quality
+- path: market_data/native_abi.py
   study_ids:
   - market_data.source_parsing_and_quality
 - path: market_data/export_window.py
