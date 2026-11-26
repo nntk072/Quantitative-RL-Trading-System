@@ -20,6 +20,7 @@ Severity scale: **High** = changes a feature, cost or evidence value that resear
 | ARTIFACT-ID-COERCION | Low | `artifacts/identity.py:artifact_id` | Recorded |
 | ATOMIC-NEW-FILE-MODE | Low | `artifacts/atomic.py:_atomic_replace` | Recorded |
 | JOIN-SAME-STAMP-REVIEW | Review | `market_data/transforms/align.py:join_symbols` | Needs consumer decision-time contract |
+| RESEARCH-GATE-RED | Medium | `tests/research/` (7 tests, see section below) | Measured in allocation 21877444; recorded, not fixed |
 
 ## C1: invalid fill direction is priced at the bid
 
@@ -80,3 +81,17 @@ Severity scale: **High** = changes a feature, cost or evidence value that resear
 - `tools/check` resolves its interpreter from the checkout that contains it. In a worktree without `.venv-x86`, set `QRL_PYTHON` explicitly.
 - Prior evidence is not bound to a commit: the 8-CPU run (job 21870262) recorded no source SHA. Its `rootdir` was the `main-native` checkout, whose HEAD at run time is not recorded. It was therefore not reused as a result for `a3b3e442`.
 - The prior attempt `planning/native_modernization/baseline_audit/` (base `6755417e`, mutation base `f96ffcfd`) is superseded for baseline purposes by `planning/native_modernization/baseline/`. Its mutation results were produced by an ad hoc driver that is not in the repository and are not reproduced here.
+
+## RESEARCH-GATE-RED: 7 research-gate tests fail on the current base
+
+Measured in allocation 21877444 (pht54, batch-skl, 8 CPUs) with `pytest -q -n 8 -m "research and not slow" tests`, exit 1: 7 failed, 490 passed, 2 skipped. Log: `logs/agents/qa_engineer/2026-11-26_baseline_audit/research.log` (ignored by git). The audit changed no source, so these failures exist on `a3b3e442`.
+
+| Test(s) | Observed cause (from the log) | Class |
+|---|---|---|
+| `tests/research/test_observation_warmup_validity_profiles.py::test_source_hash_snapshot_uses_relative_paths_and_content_hashes` | Source-hash snapshot is missing four files now in the tree (`research_tools/features/features/audit_observation_warmup_validity_profiles.py`, `scripts/research/analysis/features/audit_observation_warmup_validity.py`, and two more). The snapshot is stale. | Stale expected snapshot |
+| `...::test_observation_group_key_tracks_arch_raw_columns_and_validity_mask`, `...::test_group_profiles_collapses_only_equivalent_observation_contracts`, `...::test_run_group_uses_resolved_config_without_yaml_round_trip` | `omegaconf.errors.ConfigAttributeError: Missing key features` on a dict config. The fixture config no longer has the `features` key the test reads. | Config/fixture drift |
+| `...::test_regeneration_command_quotes_external_cache_path` | Expects the relative token `packet`; the command prints the absolute pytest tmp path. | Environment-dependent assertion |
+| `tests/research/test_real_market_bundle_audit.py::test_raw_input_hashes_use_configured_files_without_experiment_run_outputs` | `FileNotFoundError: data/US100.cash_M1_202412300105_202610162349.csv`. The file is not tracked; its name spans to 2026. The audit did not open it (2026 reporting interval is excluded from all workloads). | Missing untracked data input |
+| `tests/research/test_feature_causality_matrix.py::test_generated_matrix_lists_public_functions_and_all_setup_flags` | `assert 103 == 99`: the generated feature-causality matrix has 103 entries where the test expects 99. The generated output is stale. | Stale generated output |
+
+Severity: **Medium**. The research gate is red on the base, so no research gate can be treated as green from this baseline. Repair is not part of this audit; DECISIONS (2026-11-26) keeps defects recorded, not fixed.

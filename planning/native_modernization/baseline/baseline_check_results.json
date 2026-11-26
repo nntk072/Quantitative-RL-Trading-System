@@ -3,11 +3,15 @@
   "source_revision": "a3b3e4422fe7a2c694cf71d837fbb205fbee6f2a",
   "base_branch": "origin/main-native",
   "interpreter": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python (Python 3.12.14, x86_64)",
-  "env": {"PYTHONPATH": "<worktree>", "OMP_NUM_THREADS": "2"},
+  "env": {
+    "PYTHONPATH": "<worktree>",
+    "OMP_NUM_THREADS": "2"
+  },
   "notes": [
     "Exit codes are the process exit codes of the commands shown. A check is recorded as passed only when its command ran and exited 0.",
     "Checks run on the login node (login5.triton.aalto.fi) only where they are light, per the repository gate rules. Heavy suites are run in the 8-CPU allocation described under T-UNIT, T-INTEGRATION and T-RESEARCH.",
-    "The .venv-x86/bin/mypy launcher has a shebang to a missing interpreter (/scratch/work/nguyenl37/Aalto_MS_Thesis/.venv-x86/bin/python) and exits 127. mypy was therefore run as a module with the same interpreter."
+    "The .venv-x86/bin/mypy launcher has a shebang to a missing interpreter (/scratch/work/nguyenl37/Aalto_MS_Thesis/.venv-x86/bin/python) and exits 127. mypy was therefore run as a module with the same interpreter.",
+    "Real-usage run: the three repository gate selections ran inside allocation 21877444 (see the allocation block). unit and integration exit 0; research exit 1 (7 failures). The earlier login-node results are unchanged."
   ],
   "checks": [
     {
@@ -104,20 +108,55 @@
       "reuse_status": "NOT bound to a commit. The log records rootdir /scratch/work/nguyenl37/worktrees/main-native but no HEAD SHA, and the checkout HEAD at run time is unknown. Reported as evidence of a prior run only, not as a result for a3b3e442. Superseded by CHK-ALLOC-T-UNIT-T-INTEGRATION-T-RESEARCH if that run completes."
     },
     {
-      "id": "CHK-ALLOC-T-UNIT-T-INTEGRATION-T-RESEARCH",
-      "description": "Repository gate selections on the current base in one 8-CPU allocation (tools/check unit, integration, research selections)",
-      "command": "bash logs/agents/qa_engineer/2026-11-26_baseline_audit/run_gates_in_allocation.sh (inside srun --immediate=60 --cpus-per-task=8, tmux session qrl-baseline-audit-r2-8cpu)",
-      "exit_code": null,
-      "result": "PENDING. Not run: allocation 21873237 (one CPU allocation, owner not this session) is holding the one-CPU-allocation cap. Waiting for release.",
-      "evidence_source": "pending"
+      "id": "CHK-ALLOC-UNIT",
+      "description": "Repository gate unit selection on current base, inside allocation 21877444",
+      "command": "pytest -q -n 8 -m \"unit and not slow and not integration and not architecture and not gpu and not triton and not research\" tests",
+      "exit_code": 0,
+      "result": "3810 passed, 2 skipped, 3 xfailed, 56 warnings in 119.56s",
+      "log": "logs/agents/qa_engineer/2026-11-26_baseline_audit/unit.log",
+      "evidence_source": "ran in allocation 21877444"
+    },
+    {
+      "id": "CHK-ALLOC-INTEGRATION",
+      "description": "Repository gate integration selection on current base, inside allocation 21877444",
+      "command": "pytest -q -n 8 -m \"integration and not slow\" tests",
+      "exit_code": 0,
+      "result": "492 passed, 2 skipped, 1 warning in 40.56s",
+      "log": "logs/agents/qa_engineer/2026-11-26_baseline_audit/integration.log",
+      "evidence_source": "ran in allocation 21877444"
+    },
+    {
+      "id": "CHK-ALLOC-RESEARCH",
+      "description": "Repository gate research selection on current base, inside allocation 21877444",
+      "command": "pytest -q -n 8 -m \"research and not slow\" tests",
+      "exit_code": 1,
+      "result": "7 failed, 490 passed, 2 skipped in 30.41s. Failures recorded as RESEARCH-GATE-RED in defects.md.",
+      "log": "logs/agents/qa_engineer/2026-11-26_baseline_audit/research.log",
+      "evidence_source": "ran in allocation 21877444"
     },
     {
       "id": "CHK-MUTATION-CRITICAL",
       "description": "Scoped risk / feature / learning mutation checks (tools/check mutation-critical, mutmut 3.8.1 with curated only_mutate set)",
       "command": "./tools/check mutation-critical (QRL_CHECK_NO_SYNC=1 QRL_PYTHON=.venv-x86/bin/python)",
       "exit_code": null,
-      "result": "NOT RUN. mutmut is not installed in .venv-x86 and no mutmut wheel is in the local uv cache (only its metadata). Network is disabled, so it cannot be installed. No substitute harness was written.",
-      "blocker": "Install mutmut==3.8.1 (uv.lock) into .venv-x86 from the package index or a pre-provisioned wheel, with network enabled for that install."
+      "result": "NOT RUN. mutmut 3.8.1 (locked in uv.lock) is not installed in .venv-x86; its wheel is absent from the local uv cache and the node has no network. No substitute harness was written. Blocker: install mutmut==3.8.1 into .venv-x86 (needs network or a pre-provisioned wheel), then run one srun.",
+      "blocker": "NOT RUN. mutmut 3.8.1 (locked in uv.lock) is not installed in .venv-x86; its wheel is absent from the local uv cache and the node has no network. No substitute harness was written. Blocker: install mutmut==3.8.1 into .venv-x86 (needs network or a pre-provisioned wheel), then run one srun."
     }
-  ]
+  ],
+  "allocation": {
+    "job_id": "21877444",
+    "job_name": "qrl-baseline-audit-r2",
+    "partition": "batch-skl",
+    "node": "pht54",
+    "cpus": 8,
+    "memory": "32G",
+    "time_limit": "02:00:00",
+    "srun_flags": "--immediate=60 --partition=batch-skl --cpus-per-task=8 --mem=32G --time=02:00:00",
+    "tmux_session": "qrl-baseline-audit-r2-8cpu",
+    "started": "2026-11-26T13:48:49+02:00",
+    "ended": "2026-11-26T13:52:07+02:00",
+    "command": "bash logs/agents/qa_engineer/2026-11-26_baseline_audit/run_gates_in_allocation.sh",
+    "output_path": "logs/agents/qa_engineer/2026-11-26_baseline_audit/",
+    "srun_exit": 0
+  }
 }
