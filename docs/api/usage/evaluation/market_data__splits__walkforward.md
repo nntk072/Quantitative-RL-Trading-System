@@ -76,7 +76,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_purge_and_embargo_guarantees_of_the_existing_splitter`](../../../../tests/unit/features/test_feature_registry_values.py#L181)
+1. [test fixture: `test_purge_and_embargo_guarantees_of_the_existing_splitter`](../../../../tests/unit/features/test_feature_registry_values.py#L183)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

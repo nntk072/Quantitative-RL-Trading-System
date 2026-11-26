@@ -52,33 +52,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [tutorial example: `cache-identity · code cell 2`](../../../../docs/subjects/A_data_features/examples/cache-identity.ipynb)
+2. [test fixture: `test_feature_cache_key_changes_when_an_undeclared_build_source_changes`](../../../../tests/unit/features/test_feature_source_identity.py#L122)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-import pandas as pd
-
-from features.pipeline.feature_cache_identity import feature_cache_content_hash
-
-idx = pd.date_range("2026-01-05", periods=3, freq="1min", tz="Etc/GMT-3")
-bars = pd.DataFrame(
-    {
-        "open": [1.0, 2.0, 3.0],
-        "high": [2.0, 3.0, 4.0],
-        "low": [0.0, 1.0, 2.0],
-        "close": [1.5, 2.5, 3.5],
-    },
-    index=idx,
-)
-h1 = feature_cache_content_hash(None, bars)
-h2 = feature_cache_content_hash(None, bars.copy())
-changed = bars.copy()
-changed.loc[idx[1], "close"] += 0.25
-h3 = feature_cache_content_hash(None, changed)
-assert h1 == h2
-assert h1 != h3
-(h1, h3)
+def test_feature_cache_key_changes_when_an_undeclared_build_source_changes(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(registry, "SOURCE_ROOTS", _seeds(project))
+    monkeypatch.setattr(registry, "_REPO_ROOT", project)
+    frame = pd.DataFrame(
+        {"open": [1.0], "high": [1.0], "low": [1.0], "close": [1.0], "volume": [1.0]},
+        index=pd.DatetimeIndex(["2025-01-06 00:00"], tz="UTC"),
+    )
+    before = feature_cache_content_hash(None, frame)
+    assert feature_cache_content_hash(None, frame) == before
+    (project / "helper_pkg" / "inner.py").write_text("VALUE = 3\n", encoding="utf-8")
+    assert feature_cache_content_hash(None, frame) != before
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -94,7 +85,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
 
-**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:157](../../../../features/pipeline/feature_cache_identity.py#L157)
+**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:158](../../../../features/pipeline/feature_cache_identity.py#L158)
 
 **Inputs and outputs:**
 
@@ -203,33 +194,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [tutorial example: `cache-identity · code cell 2`](../../../../docs/subjects/A_data_features/examples/cache-identity.ipynb)
+2. [test fixture: `test_feature_cache_key_changes_when_an_undeclared_build_source_changes`](../../../../tests/unit/features/test_feature_source_identity.py#L122)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-import pandas as pd
-
-from features.pipeline.feature_cache_identity import feature_cache_content_hash
-
-idx = pd.date_range("2026-01-05", periods=3, freq="1min", tz="Etc/GMT-3")
-bars = pd.DataFrame(
-    {
-        "open": [1.0, 2.0, 3.0],
-        "high": [2.0, 3.0, 4.0],
-        "low": [0.0, 1.0, 2.0],
-        "close": [1.5, 2.5, 3.5],
-    },
-    index=idx,
-)
-h1 = feature_cache_content_hash(None, bars)
-h2 = feature_cache_content_hash(None, bars.copy())
-changed = bars.copy()
-changed.loc[idx[1], "close"] += 0.25
-h3 = feature_cache_content_hash(None, changed)
-assert h1 == h2
-assert h1 != h3
-(h1, h3)
+def test_feature_cache_key_changes_when_an_undeclared_build_source_changes(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(registry, "SOURCE_ROOTS", _seeds(project))
+    monkeypatch.setattr(registry, "_REPO_ROOT", project)
+    frame = pd.DataFrame(
+        {"open": [1.0], "high": [1.0], "low": [1.0], "close": [1.0], "volume": [1.0]},
+        index=pd.DatetimeIndex(["2025-01-06 00:00"], tz="UTC"),
+    )
+    before = feature_cache_content_hash(None, frame)
+    assert feature_cache_content_hash(None, frame) == before
+    (project / "helper_pkg" / "inner.py").write_text("VALUE = 3\n", encoding="utf-8")
+    assert feature_cache_content_hash(None, frame) != before
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -245,7 +227,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build ``{symbol}_features_{version}_{hash}.parquet`` under ``cache_dir``.
 
-**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:157](../../../../features/pipeline/feature_cache_identity.py#L157)
+**Exact API:** {py:obj}`features.pipeline.feature_cache_identity.feature_cache_path` · **Source:** [features/pipeline/feature_cache_identity.py:158](../../../../features/pipeline/feature_cache_identity.py#L158)
 
 **Inputs and outputs:**
 
