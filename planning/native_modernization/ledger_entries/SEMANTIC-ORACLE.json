@@ -3,7 +3,7 @@
   "status": "partial",
   "base_sha": "a3b3e442",
   "branch": "feat/semantic-oracle",
-  "fixture_version": "2.1.0",
+  "fixture_version": "2.2.0",
   "changed_paths": [
     "planning/native_modernization/semantic_oracle/semantic_contracts.md",
     "planning/native_modernization/semantic_oracle/parity_report.md",
@@ -23,43 +23,44 @@
     "config/studies/profiles/trading.yaml",
     "config/studies/profiles/simulation.yaml",
     "config/studies/profiles/decisioning.yaml",
-    "trading/execution/costs.py (docstring only for C2 in 2.1.0)"
+    "trading/execution/costs.py (docstring only for C2 in 2.1.0)",
+    "tests/unit/simulation/test_semantic_oracle_backtest_target_legs.py"
   ],
   "tests_executed": [
     {
-      "command": "ruff format --check <4 touched source files and 5 oracle test modules>",
+      "command": "ruff format --check <4 touched source files and 6 oracle test modules>",
       "exit_code": 0,
-      "result": "9 files already formatted"
+      "result": "10 files already formatted"
     },
     {
-      "command": "ruff check <same 9 files>",
+      "command": "ruff check <same 10 files>",
       "exit_code": 0,
       "result": "All checks passed!"
     },
     {
-      "command": "python -m mypy <same 9 files>",
+      "command": "python -m mypy <same 10 files>",
       "exit_code": 0,
-      "result": "Success: no issues found in 9 source files"
+      "result": "Success: no issues found in 10 source files"
     },
     {
-      "command": "python -m pytest -q -p no:cacheprovider -o addopts= -rxs <5 oracle modules> tests/unit/trading/test_semantic_oracle_limits_sizing.py tests/unit/research_tools/test_study_audits.py",
+      "command": "python -m pytest -q -p no:cacheprovider -o addopts= -rxs <oracle modules> tests/unit/trading/test_semantic_oracle_limits_sizing.py tests/unit/research_tools/test_study_audits.py",
       "exit_code": 0,
-      "result": "160 passed, 2 skipped (open items O2, O3), 0 xfailed"
+      "result": "168 passed"
     },
     {
       "command": "python -m pytest -q -p no:cacheprovider -o addopts= tests/unit/trading tests/unit/simulation",
       "exit_code": 0,
-      "result": "950 passed, 2 skipped"
+      "result": "958 passed"
     },
     {
-      "command": "sha256sum fixtures/semantic_oracle_fixtures.v2.json",
+      "command": "srun --immediate=60 ... realuse_backtest.py 600 (job 21877443)",
       "exit_code": 0,
-      "result": "0e4528dcc87905c40e53342e791a464f05ce18450f79ad2982d2c4b6c7a8c977"
+      "result": "failures []"
     },
     {
-      "command": "scripted mutation check on 2.1.0",
+      "command": "scripted mutation check on 2.2.0",
       "exit_code": null,
-      "result": "not performed in this pass; 1.0.0 result: 7 of 8 killed"
+      "result": "not performed"
     }
   ],
   "evidence_refs": [
@@ -72,7 +73,29 @@
     "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/regress.log (git-ignored)",
     "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/mutation_check.log (git-ignored, 1.0.0 run)"
   ],
-  "blocker": "Open item O2: enabled candidate-geometry mask polarity is not covered; it needs a full synthetic TradingEnv with candidate_geometry_actions=True and a signal row (existing test_candidate_geometry_observation.py covers part). Open item O3: cross-session breach latch is not demonstrated; the 1500-bar synthetic tape reaches only one step of the second NY window (bar 451), so it needs a tape that reaches a second NY window. Open item O4: the backtest zero-leg caller simulation/backtest/protective_management.py consumes zero legs without a close, but no runtime test drives it (covered only by the shared target_close_size fixtures). Open item O5: learner truncation masking for E1 (observation at data end differs from in-episode observation) needs a LEARNER-CONTRACT decision. Open item O6: rounding unification. The sizer floors and target legs round half-even; both are pinned, not unified. Owner decision. Native backend parity: skipped with recorded reason (qrl_native not built or installed in .venv-x86; building it is out of scope for this package).",
-  "decision": "Partial. Fixed with tests in 2.x: C1 (fill_price rejects invalid side) and C3 (zero target leg no longer exits the whole position; callers consume the slot). Resolved as documented semantics (owner decision on coordinator instruction): C2 (fill_price does not apply slippage_points; total_cost docstring corrected, no behaviour change; QF-08 pinned at 100.5 with a double-count guard test). Pinned as documented: C4 known broker-boundary limit; SZ-14 floor rule; round-half-even target legs (TG-06, TG-07). Env scenarios: G1 pending cancel and fill covered (replace not_applicable: no replace operation in source); G3 ambiguous both-level bars covered; G4 within-session breach latch covered, cross-session open (O3); G2 disabled candidate mask covered, enabled open (O2). Acceptance item 'every domain-critical invariant has positive and adverse cases' is not met for O2 and O3, and O4 to O6 are open, so status is partial, not accepted.",
-  "reviewer": null
+  "blocker": "Acceptance not fully met, so status stays partial. (1) The plan asks for 'Hypothesis and proptest' with a common fixture format. Hypothesis is done. No proptest (Rust) oracle exists on this branch, and proptest was not run. (2) Native backend parity is skipped with recorded reason: qrl_native is not built or installed in .venv-x86, and building it is out of scope for this package. (3) Full env event-trace freeze with ordering keys: account traces are frozen with ordering keys and env valuation indices are asserted, but no full env step trace is frozen as a golden. Closed for SEMANTIC-ORACLE in 2.2.0: O2, O3, O4, O5 (handed to LEARNER-CONTRACT: truncated-transition bootstrap rule), O6 (two declared rules, no change). Mutation re-run on 2.2.0 not performed.",
+  "decision": "Partial. Closed in 2.2.0: O2 enabled candidate-geometry mask (real env with seams; positive and two adverse cases); O3 cross-session breach latch (two-day tape with session window set to the tape clock; positive control submits in session 2; adverse breach blocks all submits); O4 backtest zero-leg caller (runtime test of _record_target_slot; positive 0.5-lot close; adverse zero leg and clamped runner leg). O5 pinned as declared semantics; decision on truncated-transition bootstrapping handed to LEARNER-CONTRACT. O6 two declared rules pinned (sizer floor; target-leg round-half-even), no change. Not accepted because of the proptest and native backend items and the full env trace freeze listed in the blocker.",
+  "reviewer": null,
+  "realuse_run": {
+    "job_id": "21877443",
+    "partition": "batch-skl",
+    "cpus": 8,
+    "memory": "32G (SLURM_MEM_PER_NODE 32768 MB)",
+    "time_limit": "00:30:00",
+    "node": "pht18.int.triton.aalto.fi",
+    "tmux_session": "qrl-semantic-oracle-cpu",
+    "srun_flags": "--immediate=60 --partition=batch-skl --nodes=1 --ntasks=1 --cpus-per-task=8 --mem=32G --time=00:30:00",
+    "exact_command": "bash logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/run_realuse_srun.sh (inside srun: OMP_NUM_THREADS=8 python realuse_backtest.py 600 realuse_output.json)",
+    "data": "synthetic 2025 tape, 600 bars (pre-2026; no exposed 2026 data)",
+    "exit_code": {
+      "pyexit": 0,
+      "srun": 0
+    },
+    "output_paths": [
+      "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/realuse_output.json",
+      "logs/agents/quantitative_trading_engineer/2026-11-26_semantic_oracle/realuse_srun.log"
+    ],
+    "result": "equity_points 590, all finite, never below zero, 589 policy decisions, ledgers complete, failures []",
+    "note": "logs/ is git-ignored; the outputs are summarized here"
+  }
 }

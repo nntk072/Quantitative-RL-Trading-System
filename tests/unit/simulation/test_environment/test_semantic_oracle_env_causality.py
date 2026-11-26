@@ -228,12 +228,15 @@ def test_data_end_truncates_without_terminating(tape: tuple[pd.DataFrame, pd.Dat
     assert final["valuation_index"] == 80
 
 
-def test_data_end_observation_differs_from_in_episode_observation(
+def test_declared_semantics_data_end_observation_is_not_the_in_episode_observation(
     tape: tuple[pd.DataFrame, pd.DataFrame], baseline: list[dict[str, Any]]
 ) -> None:
-    """Characterization (fixture AC-level note): the observation returned at data end is not the
-    in-episode observation for the same valuation index. A learner must not treat it as a
-    normal next state. Owner decision: LEARNER-CONTRACT bootstrap masking for truncation.
+    """Declared semantics (open item O5, decision handed to LEARNER-CONTRACT).
+
+    The observation returned when the tape ends (truncation) is not the in-episode
+    observation for the same valuation index. The learner must therefore not use it as an
+    ordinary next state without masking. SEMANTIC-ORACLE pins the current behaviour; it
+    does not decide the bootstrap rule for truncated transitions.
     """
     bars, features = tape
     short = _run(bars.iloc[:80], features.iloc[:80], max_steps=200)
