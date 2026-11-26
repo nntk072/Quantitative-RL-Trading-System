@@ -166,19 +166,39 @@
       "status": "blocked",
       "base_sha": "6755417ee789fd82aa2c536d71dce2e3ff07c481",
       "implementation_sha_or_diff_hash": null,
-      "changed_paths": [],
+      "changed_paths": [
+        "market_data/arrow_schemas.py",
+        "market_data/reconciliation.py",
+        "planning/native_modernization/data_schemas/build_quality_ledger.py",
+        "planning/native_modernization/data_schemas/quality_ledger.json",
+        "planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json",
+        "planning/native_modernization/data_schemas/README.md",
+        "docs/reference/public_api.json",
+        "docs/reference/public_api.md",
+        "tests/unit/market_data/test_arrow_schemas.py",
+        "tests/unit/market_data/test_reconciliation.py",
+        "tests/unit/market_data/test_data_schema_ledger.py"
+      ],
       "tests_executed": [
         "tests/unit/market_data/test_arrow_schemas.py",
-        "tests/unit/market_data/test_mt5_export_to_bars.py"
+        "tests/unit/market_data/test_reconciliation.py",
+        "tests/unit/market_data/test_data_schema_ledger.py",
+        "tests/unit/market_data/test_mt5_export_to_bars.py",
+        "tests/architecture/test_dependency_rules.py",
+        "tests/architecture/test_module_size_gate.py",
+        "tests/architecture/test_documentation_contracts.py"
       ],
       "evidence_refs": [
         "planning/native_modernization/data_schemas/quality_ledger.json",
-        "market_data/arrow_schemas.py"
+        "planning/native_modernization/data_schemas/quality_ledger_pre2026_m1.json",
+        "planning/native_modernization/data_schemas/README.md",
+        "market_data/arrow_schemas.py",
+        "market_data/reconciliation.py"
       ],
       "benchmark_ids": [],
       "compatibility": null,
-      "blocker": "Not yet: Parquet round trip and row-wise reconciliation over all source CSVs (the full files cover 2026 and were excluded by decision), a persisted quarantine output, a data manifest, and a schema migration policy.",
-      "decision": "Recorded as blocked with cause per the goal's minimal path (DECISIONS.md, 2026-11-26).",
+      "blocker": "Offline acceptance not met. Done: example and pre-2026 M1 window reconcile row-wise with an independent zoneinfo oracle; Parquet round trip; quarantine record; trade and calendar schemas; fail-closed schema-id policy. Open: tick/quote source (about 6 GB) not reconciled (needs an allocation or lead decision); higher-timeframe MT5 exports not reconciled; Polars round trip not run (not installed); normalized event and feature-row schemas not defined; migration policy documented but not exercised by a second schema id.",
+      "decision": "Not accepted. Recorded as blocked, not rejected_with_evidence: the plan limits rejected status to optional technologies, and DATA-SCHEMAS is a required invariant package.",
       "reviewer": null,
       "authorization_or_resource": "Offline engineering stream: Parquet round trip and reconciliation over pre-2026 source windows (owner decision on the window); no allocation."
     },
