@@ -14,7 +14,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 486 |
-| private implementation | 1077 |
+| private implementation | 1087 |
 
 ## Public package exports
 
@@ -25,12 +25,12 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `ArtifactId` | class | [artifacts.identity](../../artifacts/identity.py#L11) | stable |
 | `ArtifactLayout` | class | [artifacts.layout](../../artifacts/layout.py#L27) | stable |
 | `ArtifactManifest` | class | [artifacts.manifest](../../artifacts/manifest.py#L14) | stable |
-| `BaselineValidation` | class | [artifacts.promotion](../../artifacts/promotion.py#L18) | stable |
+| `BaselineValidation` | class | [artifacts.promotion](../../artifacts/promotion.py#L19) | stable |
 | `ExperimentRunArtifactLayout` | class | [artifacts.layout](../../artifacts/layout.py#L129) | stable |
 | `RetentionClass` | class | [artifacts.retention](../../artifacts/retention.py#L6) | stable |
 | `artifact_id` | function | [artifacts.identity](../../artifacts/identity.py#L31) | stable |
 | `file_sha256` | function | [artifacts.identity](../../artifacts/identity.py#L47) | stable |
-| `promote_to_baseline` | function | [artifacts.promotion](../../artifacts/promotion.py#L99) | stable |
+| `promote_to_baseline` | function | [artifacts.promotion](../../artifacts/promotion.py#L100) | stable |
 | `write_config_snapshot` | function | [artifacts.config_snapshot](../../artifacts/config_snapshot.py#L13) | stable |
 | `write_json_atomic` | function | [artifacts.atomic](../../artifacts/atomic.py#L75) | stable |
 | `write_text_atomic` | function | [artifacts.atomic](../../artifacts/atomic.py#L41) | stable |
@@ -66,7 +66,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `ExperimentRunArtifactLayout.worker_logs` | method | [artifacts.layout](../../artifacts/layout.py#L162) | stable |
 | `ArtifactManifest.read` | method | [artifacts.manifest](../../artifacts/manifest.py#L61) | stable |
 | `ArtifactManifest.to_dict` | method | [artifacts.manifest](../../artifacts/manifest.py#L50) | stable |
-| `BaselineValidation.to_dict` | method | [artifacts.promotion](../../artifacts/promotion.py#L31) | stable |
+| `BaselineValidation.to_dict` | method | [artifacts.promotion](../../artifacts/promotion.py#L32) | stable |
 
 ### `compute`
 

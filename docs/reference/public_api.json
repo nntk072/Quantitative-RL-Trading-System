@@ -88,7 +88,7 @@
       "name": "BaselineValidation",
       "numpy_style": false,
       "package": "artifacts",
-      "source_line": 18,
+      "source_line": 19,
       "source_module": "artifacts.promotion",
       "source_path": "artifacts/promotion.py"
     },
@@ -160,7 +160,7 @@
       "name": "promote_to_baseline",
       "numpy_style": false,
       "package": "artifacts",
-      "source_line": 99,
+      "source_line": 100,
       "source_module": "artifacts.promotion",
       "source_path": "artifacts/promotion.py"
     },
@@ -259,6 +259,42 @@
       "source_line": 17,
       "source_module": "artifacts.contracts",
       "source_path": "artifacts/contracts.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "artifacts.integrity",
+      "kind": "value",
+      "name": "_SCHEMA_VERSION",
+      "numpy_style": false,
+      "package": "artifacts",
+      "source_line": 20,
+      "source_module": "artifacts.integrity",
+      "source_path": "artifacts/integrity.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "artifacts.integrity",
+      "kind": "function",
+      "name": "_safe_relative",
+      "numpy_style": false,
+      "package": "artifacts",
+      "source_line": 60,
+      "source_module": "artifacts.integrity",
+      "source_path": "artifacts/integrity.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "artifacts.integrity",
+      "kind": "function",
+      "name": "_tree_files",
+      "numpy_style": false,
+      "package": "artifacts",
+      "source_line": 35,
+      "source_module": "artifacts.integrity",
+      "source_path": "artifacts/integrity.py"
     },
     {
       "classification": "stable",
@@ -676,7 +712,7 @@
       "name": "BaselineValidation.to_dict",
       "numpy_style": false,
       "package": "artifacts",
-      "source_line": 31,
+      "source_line": 32,
       "source_module": "artifacts.promotion",
       "source_path": "artifacts/promotion.py"
     },
@@ -688,7 +724,7 @@
       "name": "_payload_sha256",
       "numpy_style": false,
       "package": "artifacts",
-      "source_line": 43,
+      "source_line": 44,
       "source_module": "artifacts.promotion",
       "source_path": "artifacts/promotion.py"
     },
@@ -12563,6 +12599,30 @@
     {
       "classification": "private implementation",
       "documented": false,
+      "exported_from": "features.graph",
+      "kind": "value",
+      "name": "_FIT_SCOPES",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 18,
+      "source_module": "features.graph",
+      "source_path": "features/graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "features.graph",
+      "kind": "function",
+      "name": "_topological_order",
+      "numpy_style": false,
+      "package": "features",
+      "source_line": 79,
+      "source_module": "features.graph",
+      "source_path": "features/graph.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
       "exported_from": "features.input_view",
       "kind": "value",
       "name": "__all__",
@@ -17299,6 +17359,66 @@
       "source_line": 151,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.partitioned_bars",
+      "kind": "value",
+      "name": "_NS_PER_DAY",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 30,
+      "source_module": "market_data.partitioned_bars",
+      "source_path": "market_data/partitioned_bars.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.partitioned_bars",
+      "kind": "function",
+      "name": "_canonical_manifest",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 119,
+      "source_module": "market_data.partitioned_bars",
+      "source_path": "market_data/partitioned_bars.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.partitioned_bars",
+      "kind": "function",
+      "name": "_ipc_bytes",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 77,
+      "source_module": "market_data.partitioned_bars",
+      "source_path": "market_data/partitioned_bars.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.partitioned_bars",
+      "kind": "function",
+      "name": "_partitions",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 93,
+      "source_module": "market_data.partitioned_bars",
+      "source_path": "market_data/partitioned_bars.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.partitioned_bars",
+      "kind": "function",
+      "name": "_sha256",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 65,
+      "source_module": "market_data.partitioned_bars",
+      "source_path": "market_data/partitioned_bars.py"
     },
     {
       "classification": "private implementation",

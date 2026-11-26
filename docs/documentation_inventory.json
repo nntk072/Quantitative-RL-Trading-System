@@ -343,9 +343,9 @@
     },
     {
       "links": [
-        "../../../../artifacts/promotion.py#L18",
-        "../../../../artifacts/promotion.py#L99",
-        "../../../../artifacts/promotion.py#L31"
+        "../../../../artifacts/promotion.py#L19",
+        "../../../../artifacts/promotion.py#L100",
+        "../../../../artifacts/promotion.py#L32"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/artifacts/artifacts__promotion.md",
@@ -6221,12 +6221,12 @@
         "../../artifacts/identity.py#L11",
         "../../artifacts/layout.py#L27",
         "../../artifacts/manifest.py#L14",
-        "../../artifacts/promotion.py#L18",
+        "../../artifacts/promotion.py#L19",
         "../../artifacts/layout.py#L129",
         "../../artifacts/retention.py#L6",
         "../../artifacts/identity.py#L31",
         "../../artifacts/identity.py#L47",
-        "../../artifacts/promotion.py#L99",
+        "../../artifacts/promotion.py#L100",
         "../../artifacts/config_snapshot.py#L13",
         "../../artifacts/atomic.py#L75",
         "../../artifacts/atomic.py#L41",
@@ -6262,7 +6262,7 @@
         "../../artifacts/layout.py#L162",
         "../../artifacts/manifest.py#L61",
         "../../artifacts/manifest.py#L50",
-        "../../artifacts/promotion.py#L31",
+        "../../artifacts/promotion.py#L32",
         "../../compute/environment/precision.py#L93",
         "../../compute/environment/precision.py#L123",
         "../../compute/environment/capabilities.py#L12",
