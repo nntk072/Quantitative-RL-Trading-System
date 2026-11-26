@@ -76,15 +76,6 @@ Finding: the source has no rows at all on the two Helsinki DST-switch Sundays (2
 by the synthetic fixtures in `tests/unit/market_data/test_mt5_export_to_bars.py` and
 `tests/unit/market_data/test_reconciliation.py`, not by source data.
 
-## Schema migration policy
-
-- `market_data.arrow_schemas.SUPPORTED_SCHEMA_IDS` lists the ids this reader accepts (`market-event.v1`).
-- Readers call `require_schema_id`, which fails closed on an unknown id or a table that mixes ids.
-- Any change to a field's type, nullability or meaning requires a new schema id. An additive change
-  still needs a new id if an older reader would misread the table.
-- A new id ships with its converter, a test that reads the old and new ids, and a regenerated ledger.
-  Old ledgers keep their id and are not rewritten.
-
 ## Higher-timeframe exports against resampled M1
 
 `build_timeframe_reconciliation.py` writes `timeframe_reconciliation_pre2026.json`. It resamples the
@@ -132,16 +123,22 @@ rather than failing. Polars is not in `pyproject.toml` or `uv.lock`.
 
 - Source files are immutable. A converted table records the source sha256 and row counts.
 - Duplicate quotes are not merged or removed. Exact repeats are reported, not dropped.
-- A corrected source row is a new revision: the table carries the new `source_id` or `source_sequence` and
-  the old rows stay in the ledger. No in-place overwrite.
+- A corrected bar is never overwritten. `market_data.schema_migration.append_correction` appends it as the
+  next `revision` for the same `(instrument_id, event_time)`; the earlier rows stay. `latest_revision` gives
+  the current view. Corrections are covered by `tests/unit/market_data/test_schema_migration.py`.
 - Rows that fail a rule are excluded from the table and kept in the quarantine record with a reason.
   Nothing is repaired silently.
 
 ## Schema migration policy
 
-- `market_data.arrow_schemas.SUPPORTED_SCHEMA_IDS` lists the ids this reader accepts:
-  `market-event.v1`, `normalized-event.v1` and `feature-row.v1`.
-- Readers call `require_schema_id`, which fails closed on an unknown id or a table that mixes ids.
+- `market_data.arrow_schemas.SUPPORTED_SCHEMA_IDS` lists the ids this package supports:
+  `market-event.v1`, `market-event.v2`, `normalized-event.v1` and `feature-row.v1`.
+- `require_schema_id(table, accepted=...)` fails closed on an unknown id, a table that mixes ids, or an id
+  outside `accepted`. A reader that cannot interpret a newer id passes a narrower `accepted` set and is refused.
+- `market-event.v2` adds an integer `revision` to bars. It is produced only by
+  `market_data.schema_migration.migrate_bars_v1_to_v2`, which reads only v1, writes only v2 with revision 0
+  on every row, and refuses invalid v1 bars. The migration test covers this with a second schema id on a
+  fixture: v2 is refused by v1 readers, and a v2 table is refused as migration input.
 - Any change to a field's type, nullability or meaning requires a new schema id. An additive change
   still needs a new id if an older reader would misread the table.
 - A new id ships with its converter, a test that reads the old and new ids, and a regenerated ledger.

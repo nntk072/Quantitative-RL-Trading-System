@@ -16360,7 +16360,7 @@
       "name": "_TIMEFRAME_MINUTES",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 328,
+      "source_line": 333,
       "source_module": "market_data.arrow_schemas",
       "source_path": "market_data/arrow_schemas.py"
     },
@@ -16384,7 +16384,7 @@
       "name": "_as_ns",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 127,
+      "source_line": 132,
       "source_module": "market_data.arrow_schemas",
       "source_path": "market_data/arrow_schemas.py"
     },
@@ -16396,7 +16396,7 @@
       "name": "_column",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 114,
+      "source_line": 119,
       "source_module": "market_data.arrow_schemas",
       "source_path": "market_data/arrow_schemas.py"
     },
@@ -17767,6 +17767,30 @@
       "source_line": 113,
       "source_module": "market_data.reconciliation",
       "source_path": "market_data/reconciliation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.schema_migration",
+      "kind": "function",
+      "name": "_key",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 56,
+      "source_module": "market_data.schema_migration",
+      "source_path": "market_data/schema_migration.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "market_data.schema_migration",
+      "kind": "function",
+      "name": "_rows",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 109,
+      "source_module": "market_data.schema_migration",
+      "source_path": "market_data/schema_migration.py"
     },
     {
       "classification": "private implementation",
