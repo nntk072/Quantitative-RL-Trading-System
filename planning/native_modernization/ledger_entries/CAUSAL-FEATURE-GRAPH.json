@@ -1,0 +1,114 @@
+{
+  "id": "CAUSAL-FEATURE-GRAPH",
+  "status": "partial",
+  "changed_paths": [
+    "config/studies/profiles/configuration.yaml",
+    "config/studies/profiles/features.yaml",
+    "docs/reference/public_api.json",
+    "docs/reference/public_api.md",
+    "features/graph.py",
+    "features/pipeline/feature_cache_identity.py",
+    "features/registry.py",
+    "features/source_identity.py",
+    "features/technical/structure.py",
+    "planning/native_modernization/ledger_entries/CAUSAL-FEATURE-GRAPH.json",
+    "tests/unit/features/test_alignment_properties.py",
+    "tests/unit/features/test_feature_graph.py",
+    "tests/unit/features/test_feature_node_declarations.py",
+    "tests/unit/features/test_feature_registry_values.py",
+    "tests/unit/features/test_feature_source_identity.py",
+    "tests/unit/features/test_prev_day_levels.py",
+    "tests/unit/features/test_streaming_registry_equivalence.py"
+  ],
+  "tests_executed": [
+    {
+      "command": "python -m pytest tests/unit/features -q (baseline, origin/main-native a3b3e442)",
+      "exit_code": 1,
+      "result": "1 failed (Hypothesis deadline flake), 574 passed, 1 xfailed"
+    },
+    {
+      "command": "python -m pytest tests/unit/features -q (after changes, before deadline fix)",
+      "exit_code": 1,
+      "result": "1 failed (same flake), 600 passed"
+    },
+    {
+      "command": "python -m pytest tests/unit/features -q (final)",
+      "exit_code": 0,
+      "result": "601 passed, 2 warnings"
+    },
+    {
+      "command": "python -m pytest tests/unit/research_tools/test_study_audits.py -q (final)",
+      "exit_code": 0,
+      "result": "4 passed"
+    },
+    {
+      "command": "python -m ruff format --check <touched files>",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m ruff check <touched files>",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m mypy features/graph.py features/registry.py features/source_identity.py features/technical/structure.py features/pipeline/feature_cache_identity.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m tools.documentation.public_api --write",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m tools.documentation.public_api --check",
+      "exit_code": 0
+    },
+    {
+      "command": "cross-check: unmerged feat/causal-feature-graph-acceptance HTF tests copied temporarily (HTF cases)",
+      "exit_code": 1,
+      "result": "17 passed, 3 failed (cache-identity tests call registry.SOURCE_ROOTS / source_files, not defined on this branch); exit code not captured as a separate command; temp file removed"
+    },
+    {
+      "command": "python -m pytest tests/unit/features -q (rebased onto origin/main-native 0ecf92a0, head 31f02bfa)",
+      "exit_code": 0,
+      "result": "622 passed, 2 warnings"
+    },
+    {
+      "command": "python -m pytest tests/unit/features/test_causal_feature_graph_acceptance.py + focused feature tests (rebased)",
+      "exit_code": 0,
+      "result": "82 passed, including the acceptance cache-identity tests"
+    },
+    {
+      "command": "python -m pytest tests/unit/research_tools/test_study_audits.py -q (rebased)",
+      "exit_code": 0,
+      "result": "4 passed"
+    },
+    {
+      "command": "python -m ruff format --check / ruff check (touched files, rebased)",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m mypy (5 touched source files, rebased)",
+      "exit_code": 0
+    },
+    {
+      "command": "python -m tools.documentation.public_api --write / --check (rebased)",
+      "exit_code": 0
+    }
+  ],
+  "evidence_refs": [
+    "features/source_identity.py",
+    "features/registry.py",
+    "features/graph.py",
+    "features/technical/structure.py",
+    "tests/unit/features/test_feature_source_identity.py",
+    "tests/unit/features/test_prev_day_levels.py",
+    "tests/unit/features/test_feature_node_declarations.py",
+    "tests/unit/features/test_streaming_registry_equivalence.py",
+    "logs/agents/data_scientist_engineer/2026-11-26_causal-feature-graph-verify/final_pytest_features.log (gitignored)",
+    "logs/agents/data_scientist_engineer/2026-11-26_causal-feature-graph-verify/baseline_pytest_features.log (gitignored)",
+    "logs/agents/data_scientist_engineer/2026-11-26_causal-feature-graph-verify/repro_prev_day.py (gitignored)",
+    "logs/agents/data_scientist_engineer/2026-11-26_causal-feature-graph-verify/verify_prev_day_fix.py (gitignored)"
+  ],
+  "blocker": "Open items (offline, no external resource needed): (1) Feature nodes live in features/graph.py and features/registry.py, not behind features/pipeline/; build_features does not consume FeatureGraph, only code_identity is consumed. (2) Illegal cross-split state: assert_train_only_fit is not called by the build; fit safety lives in features/pipeline/normalization.py and fold tests. (3) Content-addressed node output store is not implemented; caching is one whole-matrix key. (4) Bounded parallel branch execution: no executor. (5) Streaming state exists only for EMA and ATR; other families and window indicators are batch-only. (6) Invalidation on source corrections for streaming state is not implemented. (7) Batch-vs-streaming and incremental-vs-full equivalence cover EMA and ATR only. (8) Storage hash and logical content hash are not distinguished. (9) Opt-in blocks are not declared as nodes: PO3, FVG/IFVG, SMT, order blocks, liquidity, HTF structure/BOS, trade-setup candidate geometry. (10) Checkpoint layout compatibility of matrix column order is not tested in features. (11) Recomputation granularity: any cfg.features change rebuilds the whole matrix; any build-path code change invalidates every cache.",
+  "decision": "(a) detect_session_levels prev_day_high/prev_day_low fixed (features/technical/structure.py): they were always null on tz-aware indexes. This is a value-changing source fix. Feature values, cache keys and simulation target availability that use prev_day_* change. Any frozen evidence that uses prev_day_* columns is marked for rerun and is not reported as current evidence. Recorded for lead ratification; reversible by git revert. (b) Batch-vs-streaming equivalence is partial, not not-applicable: the earlier N/A rationale was stale after streaming EMA/ATR landed, and the plan does not allow N/A on required invariants. (c) Cache identity now covers the build-path import closure (70 modules across features, artifacts, configuration, decisioning, market_data); it previously hashed only declared family implementations. (d) Node units and validity policy added to OutputColumn and FeatureNode and included in the node hash. (e) Status is partial because items 1 to 11 are open. Rebased onto origin/main-native 0ecf92a0 (PR #31 merged). registry.SOURCE_ROOTS (features and market_data/transforms seeds) and registry.source_files are kept; the identity is the build-path closure, a superset of the merged version. The acceptance cache-identity tests pass.",
+  "reviewer": null
+}

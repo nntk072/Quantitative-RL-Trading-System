@@ -17,6 +17,26 @@ from typing import Any, Literal
 
 FitScope = Literal["none", "train_only"]
 _FIT_SCOPES: frozenset[str] = frozenset({"none", "train_only"})
+# Closed vocabularies. Every output declares one unit; every node declares one validity policy.
+UNITS: frozenset[str] = frozenset(
+    {
+        "price",  # quote-currency price level
+        "price_per_bar",  # first difference of a price series
+        "atr_multiple",  # distance divided by the ATR of the same bars
+        "ratio",  # dimensionless ratio
+        "percent",  # 0 to 100 oscillator
+        "log_return",  # natural-log return over the stated horizon
+        "log_return_stdev",  # standard deviation of per-bar log returns
+        "bars",  # count of bars
+        "flag",  # 0 or 1 indicator
+        "direction",  # +1, -1, or null
+        "unit_circle",  # sine or cosine encoding, in [-1, 1]
+        "unit_interval",  # fraction in [0, 1]
+    }
+)
+# finite_after_warmup: leading nulls are exactly warmup_bars and every later value is finite.
+# finite_after_prior_day: nulls cover only the first session day (no completed prior day).
+VALIDITY_POLICIES: frozenset[str] = frozenset({"finite_after_warmup", "finite_after_prior_day"})
 
 
 class FeatureGraphError(ValueError):
@@ -45,10 +65,18 @@ class FitScopeError(FeatureGraphError):
 
 @dataclass(frozen=True)
 class OutputColumn:
-    """One output column name with its dtype string."""
+    """One output column name with its dtype and unit."""
 
     name: str
     dtype: str
+    units: str
+
+    def __post_init__(self) -> None:
+        """Refuse an empty name or a unit outside the closed vocabulary."""
+        if not self.name:
+            raise FeatureGraphError("output name must be non-empty")
+        if self.units not in UNITS:
+            raise FeatureGraphError(f"{self.name!r}: unknown units {self.units!r}")
 
 
 @dataclass(frozen=True)
@@ -62,6 +90,7 @@ class FeatureNode:
     timeframe: str
     warmup_bars: int
     availability: str
+    validity: str
     outputs: tuple[OutputColumn, ...]
     fit_scope: FitScope
     config: Mapping[str, Any]
@@ -72,6 +101,8 @@ class FeatureNode:
         """Validate scalar fields and copy the configuration mapping."""
         if not self.node_id:
             raise FeatureGraphError("node_id must be non-empty")
+        if self.validity not in VALIDITY_POLICIES:
+            raise FeatureGraphError(f"{self.node_id!r}: unknown validity {self.validity!r}")
         if self.fit_scope not in _FIT_SCOPES:
             raise FeatureGraphError(f"{self.node_id!r}: unknown fit_scope {self.fit_scope!r}")
         if self.warmup_bars < 0:
@@ -180,7 +211,8 @@ class FeatureGraph:
                 "timeframe": node.timeframe,
                 "warmup_bars": node.warmup_bars,
                 "availability": node.availability,
-                "outputs": [[c.name, c.dtype] for c in node.outputs],
+                "validity": node.validity,
+                "outputs": [[c.name, c.dtype, c.units] for c in node.outputs],
                 "fit_scope": node.fit_scope,
                 "config": node.config,
                 "source_hash": source_hashes[node.timeframe],

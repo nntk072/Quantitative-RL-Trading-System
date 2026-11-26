@@ -29,6 +29,7 @@ api_paths:
 - features/po3/trigger_rules.py
 - features/po3/zones.py
 - features/registry.py
+- features/source_identity.py
 - features/technical/__init__.py
 - features/technical/htf_sweeps.py
 - features/technical/indicators.py
@@ -37,6 +38,10 @@ api_paths:
 - features/technical/swings.py
 caller_paths:
 - tests/unit/features/test_feature_graph.py
+- tests/unit/features/test_feature_node_declarations.py
+- tests/unit/features/test_feature_source_identity.py
+- tests/unit/features/test_prev_day_levels.py
+- tests/unit/features/test_streaming_registry_equivalence.py
 - tests/unit/features/test_causal_prefix_invariance.py
 - tests/unit/features/test_causal_feature_graph_acceptance.py
 - tests/unit/training/test_observation_memmap.py
@@ -165,6 +170,7 @@ source_scopes:
   - {path: features/contracts.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/graph.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/registry.py, study_ids: [features.family_schema_and_cache]}
+  - {path: features/source_identity.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/input_view.py, study_ids: [features.family_schema_and_cache]}
   - {path: features/__init__.py, study_ids: [features.family_schema_and_cache]}
   - {path: research_tools/studies/handlers/features.py, study_ids: [features.causal_availability, features.prefix_causality_and_fit_scope, features.candidate_geometry_and_proposal_preflight]}

@@ -13,7 +13,7 @@ from market_data.transforms.align import align_timeframes, join_symbols, timefra
     minutes_per_bar=st.sampled_from((3, 5, 10)),
     source_count=st.integers(min_value=2, max_value=20),
 )
-@settings(max_examples=60, derandomize=True, database=None)
+@settings(max_examples=60, derandomize=True, database=None, deadline=None)
 def test_higher_timeframe_value_appears_only_at_its_close(
     minutes_per_bar: int, source_count: int
 ) -> None:

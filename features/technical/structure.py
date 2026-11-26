@@ -186,14 +186,15 @@ def detect_session_levels(
     prev_close = df["close"].shift(1)
     result["prev_day_close"] = prev_close
 
-    # Previous day's high/low (causal: only uses completed prior calendar days).
+    # Previous day's high/low (causal: only uses completed prior calendar days). The daily
+    # series is keyed by date, so each row looks up its own date. Reindexing the date keys
+    # against a DatetimeIndex never matches for tz-aware indexes, which left these null.
     idx_dt = pd.DatetimeIndex(df.index)
+    row_dates = pd.Series(idx_dt.date, index=idx)
     daily_high = df["high"].groupby(idx_dt.date).max()
     daily_low = df["low"].groupby(idx_dt.date).min()
-    prev_day_high = daily_high.shift(1).reindex(idx).ffill()
-    prev_day_low = daily_low.shift(1).reindex(idx).ffill()
-    result["prev_day_high"] = prev_day_high
-    result["prev_day_low"] = prev_day_low
+    result["prev_day_high"] = row_dates.map(daily_high.shift(1))
+    result["prev_day_low"] = row_dates.map(daily_low.shift(1))
 
     result = result.ffill()
 

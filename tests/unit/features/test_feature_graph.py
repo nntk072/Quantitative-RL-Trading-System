@@ -41,7 +41,8 @@ def node(
         timeframe=timeframe,
         warmup_bars=14,
         availability="bar_close",
-        outputs=tuple(OutputColumn(name, "float64") for name in names),
+        validity="finite_after_warmup",
+        outputs=tuple(OutputColumn(name, "float64", "ratio") for name in names),
         fit_scope=fit_scope,  # type: ignore[arg-type]
         config=config if config is not None else {"period": 14},
     )
@@ -107,10 +108,70 @@ def test_unknown_fit_scope_and_negative_warmup_are_refused() -> None:
             timeframe="M1",
             warmup_bars=-1,
             availability="bar_close",
+            validity="finite_after_warmup",
             outputs=(),
             fit_scope="none",
             config={},
         )
+
+
+def test_unknown_units_and_validity_policy_are_refused() -> None:
+    with pytest.raises(FeatureGraphError, match="units"):
+        OutputColumn("x", "float64", "furlongs")
+    with pytest.raises(FeatureGraphError, match="validity"):
+        FeatureNode(
+            node_id="a",
+            version="1",
+            dependencies=(),
+            required_columns=(),
+            timeframe="M1",
+            warmup_bars=0,
+            availability="bar_close",
+            validity="fill_forward",
+            outputs=(),
+            fit_scope="none",
+            config={},
+        )
+
+
+def test_units_and_validity_are_part_of_the_node_hash() -> None:
+    base = FeatureGraph([node("a")]).content_hashes(SOURCES)
+    other_units = FeatureGraph(
+        [
+            FeatureNode(
+                node_id="a",
+                version="1",
+                dependencies=(),
+                required_columns=("close",),
+                timeframe="M1",
+                warmup_bars=14,
+                availability="bar_close",
+                validity="finite_after_warmup",
+                outputs=(OutputColumn("a_out", "float64", "price"),),
+                fit_scope="none",
+                config={"period": 14},
+            )
+        ]
+    ).content_hashes(SOURCES)
+    assert other_units["a"] != base["a"]
+    other_validity = FeatureGraph(
+        [
+            FeatureNode(
+                node_id="a",
+                version="1",
+                dependencies=(),
+                required_columns=("close",),
+                timeframe="M1",
+                warmup_bars=14,
+                availability="bar_close",
+                validity="finite_after_prior_day",
+                outputs=(OutputColumn("a_out", "float64", "ratio"),),
+                fit_scope="none",
+                config={"period": 14},
+            )
+        ]
+    ).content_hashes(SOURCES)
+    assert other_validity["a"] != base["a"]
 
 
 def test_hash_is_stable_across_rebuilds() -> None:
