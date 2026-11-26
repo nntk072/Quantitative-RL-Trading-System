@@ -19,6 +19,7 @@ api_paths:
 - learning/rl/rollout_buffer.py
 - learning/rl/semantic.py
 - learning/rl/stopping.py
+- learning/rl/transition_contract.py
 - learning/rl/update_graph.py
 - learning/rl/vae_extractor.py
 - learning/self_supervised/vae_pre_ny.py
@@ -27,6 +28,7 @@ caller_paths:
 - evaluation/reanalysis/sb3_checkpoint_backend.py
 - experiments/runs/checkpoint_lineage.py
 - tests/architecture/test_public_imports.py
+- tests/fixtures/learner_contract/generate_tapes.py
 - tests/integration/backtest/test_agent_selected_entry_execution.py
 - tests/integration/test_sac_agent_integration.py
 - tests/unit/experiments/test_experiment_run_checkpoint_migration.py
@@ -36,10 +38,12 @@ caller_paths:
 - tests/unit/learning/test_checkpoint_resume.py
 - tests/unit/learning/test_feature_graph.py
 - tests/unit/learning/test_host_mask_check.py
+- tests/unit/learning/test_learner_contract_tapes.py
 - tests/unit/learning/test_learning_contracts.py
 - tests/unit/learning/test_learning_supervised_reference.py
 - tests/unit/learning/test_overlap_collect.py
 - tests/unit/learning/test_survival_objective_config.py
+- tests/unit/learning/test_transition_contract.py
 - tests/unit/learning/test_update_graph.py
 - tests/unit/models/test_action_schema_checkpoint.py
 - tests/unit/models/test_action_schema_sb3_roundtrip.py
