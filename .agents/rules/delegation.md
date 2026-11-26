@@ -114,11 +114,14 @@ on top of the rules above, not a new roster.
 - **Gate.** CI on each pull request is the full check and the gate. Merge only
   when every required check is green, using rebase or squash. No merge commits.
   Force-push only on feature branches, never on `main`.
-- **Fast check before push.** Before every push, run format, lint, the touched
-  test files and the generated-docs check. The brief names the exact command:
-  `tools/check_fast` when it exists, and until then the commands listed in the
-  brief. Full-suite runs belong to CI. Use Slurm for the smallest necessary
-  check, never for the full suite.
+- **Fast check before commit and push.** Before every commit and every push,
+  run `ruff format --check` and `ruff check` on the changed files, and `mypy` on
+  the changed Python files. Also run the touched test files and the
+  generated-docs check. Run `tools/check quality` only when it finishes in under
+  a few minutes locally; otherwise the scoped commands above are the check. The
+  brief names the exact command: `tools/check_fast` when it exists, and until
+  then the commands listed in the brief. Full-suite and CI-only checks stay with
+  CI. Use Slurm for the smallest necessary check, never for the full suite.
 - **Mypy.** Mypy is not in CI yet, so run it locally on the touched files
   until a CI job exists.
 - **CI watcher.** One subagent watches every open PR. On a failing job it
