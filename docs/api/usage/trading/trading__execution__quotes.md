@@ -27,19 +27,53 @@ This page contains 9 public callable records owned by `trading.execution.quotes`
   Adjusted bid/ask pair with the untouched side preserved.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L114)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = adverse_tick_fill_quote(quote=..., direction=..., slippage_points=..., opening=...)
+# … caller setup omitted …
+                _cost_model(args["cost_model"]),
+            )
+        )
+    if op == "adverse_tick_fill_quote":
+        return _tuple(
+            adverse_tick_fill_quote(
+                _tuple(args["quote"]),
+                args["direction"],
+                args["slippage_points"],
+                opening=args["opening"],
+            )
+        )
+    if op == "undo_adverse_tick_slippage_quote":
+        return _tuple(
+            undo_adverse_tick_slippage_quote(
+                _tuple(args["quote"]),
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+2. [test fixture: `test_adverse_slippage_never_improves_the_transacted_side`](../../../../tests/unit/trading/test_semantic_oracle_properties.py#L60)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_adverse_slippage_never_improves_the_transacted_side(
+    quote: tuple[float, float], direction: int, slippage: float, opening: bool
+) -> None:
+    bid, ask = quote
+    worse_bid, worse_ask = adverse_tick_fill_quote(quote, direction, slippage, opening=opening)
+    transacted_long_buy = (direction == 1) == opening
+    if transacted_long_buy:
+        assert worse_ask >= ask - 1e-12
+        assert worse_bid == bid
+    else:
+        assert worse_bid <= bid + 1e-12
+        assert worse_ask == ask
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -86,6 +120,32 @@ def test_trading_quote_contract_owns_protective_and_bar_stop_fills() -> None:
     assert protective_level_fill_quote(-1, 100.0, model) == (104.4, 105.0)
     assert bar_stop_fill_quote(1, 100.0, 98.0, 80.0, model) == (93.0, 93.6)
     assert bar_stop_fill_quote(-1, 100.0, 102.0, 80.0, model) == (107.2, 107.8)
+```
+
+2. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L104)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+                args["direction"], args["hit_price"], _cost_model(args["cost_model"])
+            )
+        )
+    if op == "bar_stop_fill_quote":
+        return _tuple(
+            bar_stop_fill_quote(
+                args["direction"],
+                args["stop_price"],
+                args["bar_open"],
+                args["raw_spread_points"],
+                _cost_model(args["cost_model"]),
+            )
+        )
+    if op == "adverse_tick_fill_quote":
+        return _tuple(
+            adverse_tick_fill_quote(
+                _tuple(args["quote"]),
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -173,19 +233,33 @@ def bar_stop_fill_quote(
   The low and high prices for the position's executable exit side.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L132)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = exit_side_bar_range(direction=..., bid_low=..., bid_high=..., spread_price_units=..., cost_model=...)
+# … caller setup omitted …
+                opening=args["opening"],
+            )
+        )
+    if op == "exit_side_bar_range":
+        return _tuple(
+            exit_side_bar_range(
+                args["direction"],
+                args["bid_low"],
+                args["bid_high"],
+                args["spread_price_units"],
+                _cost_model(args.get("cost_model")),
+            )
+        )
+    if op == "raw_spread_to_price":
+        return raw_spread_to_price(args["raw_spread_points"], args["point_size"])
+    raise UnknownOperationError(op)
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -232,23 +306,26 @@ def test_trading_quote_contract_owns_protective_and_bar_stop_fills() -> None:
     assert bar_stop_fill_quote(-1, 100.0, 102.0, 80.0, model) == (107.2, 107.8)
 ```
 
-2. [production caller: `bar_stop_fill_quote`](../../../../trading/execution/quotes.py#L235)
+2. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L98)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def bar_stop_fill_quote(
-    direction: int,
-    stop_price: float,
-    bar_open: float,
-    raw_spread_points: float | None,
-    cost_model: CostModel,
-) -> tuple[float, float]:
-    spread = raw_spread_to_price(raw_spread_points, cost_model.point_size)
-    if spread is None:
-        spread = float(cost_model.spread_points)
-    trigger = bar_stop_trigger_price(direction, stop_price, bar_open, spread)
-    return protective_level_fill_quote(direction, trigger, cost_model)
+# … caller setup omitted …
+        return _cost_model(args["cost_model"]).total_cost(args["lots"])
+    if op == "cost_model_construct":
+        return CostModel(**args)
+    if op == "protective_level_fill_quote":
+        return _tuple(
+            protective_level_fill_quote(
+                args["direction"], args["hit_price"], _cost_model(args["cost_model"])
+            )
+        )
+    if op == "bar_stop_fill_quote":
+        return _tuple(
+            bar_stop_fill_quote(
+                args["direction"],
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -298,6 +375,24 @@ def test_bar_quote_contract_converts_raw_spread_and_uses_default_when_missing() 
     assert quote_from_bar_price(model, 100.0, None) == (100.0, 100.6)
 ```
 
+2. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L82)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+    if op == "quote_from_bar_price":
+        return _tuple(
+            quote_from_bar_price(
+                _cost_model(args["cost_model"]), args["price"], args["spread_points"]
+            )
+        )
+    if op == "quote_default_spread_is_price_units":
+        return _tuple(_cost_model(args["cost_model"]).bar_quote(close=args["close"]))
+    if op == "fill_price":
+        return _cost_model(args["cost_model"]).fill_price(
+# … caller assertions omitted …
+```
+
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
@@ -344,16 +439,19 @@ def test_bar_quote_contract_converts_raw_spread_and_uses_default_when_missing() 
     assert quote_from_bar_price(model, 100.0, None) == (100.0, 100.6)
 ```
 
-2. [production caller: `quote_from_bar_price`](../../../../trading/execution/quotes.py#L131)
+2. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L141)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def quote_from_bar_price(
-    cost_model: CostModel, price: float, spread_points: float | None
-) -> tuple[float, float]:
-    spread = raw_spread_to_price(spread_points, cost_model.point_size)
-    return cost_model.bar_quote(float(price), bar_spread=spread)
+# … caller setup omitted …
+                args["spread_price_units"],
+                _cost_model(args.get("cost_model")),
+            )
+        )
+    if op == "raw_spread_to_price":
+        return raw_spread_to_price(args["raw_spread_points"], args["point_size"])
+    raise UnknownOperationError(op)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -432,19 +530,48 @@ The input, output, and error contract above is the safe boundary for a caller. F
   Bid and ask before the modeled slippage adjustment.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `_run_quote_case`](../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L123)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = undo_adverse_tick_slippage_quote(quote=..., direction=..., slippage_points=..., opening=...)
+# … caller setup omitted …
+                opening=args["opening"],
+            )
+        )
+    if op == "undo_adverse_tick_slippage_quote":
+        return _tuple(
+            undo_adverse_tick_slippage_quote(
+                _tuple(args["quote"]),
+                args["direction"],
+                args["slippage_points"],
+                opening=args["opening"],
+            )
+        )
+    if op == "exit_side_bar_range":
+        return _tuple(
+            exit_side_bar_range(
+                args["direction"],
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+2. [test fixture: `test_undo_recovers_the_quote_before_adverse_slippage`](../../../../tests/unit/trading/test_semantic_oracle_properties.py#L76)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_undo_recovers_the_quote_before_adverse_slippage(
+    quote: tuple[float, float], direction: int, slippage: float, opening: bool
+) -> None:
+    applied = adverse_tick_fill_quote(quote, direction, slippage, opening=opening)
+    restored = undo_adverse_tick_slippage_quote(applied, direction, slippage, opening=opening)
+    assert restored[0] == pytest.approx(quote[0], abs=1e-9)
+    assert restored[1] == pytest.approx(quote[1], abs=1e-9)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

@@ -3233,10 +3233,10 @@
         "../../../../trading/execution/costs.py#L13",
         "../../../../tests/integration/backtest/test_broker_fill_accounting.py#L14",
         "../../../../tests/integration/backtest/test_broker_quote_parity.py#L16",
-        "../../../../trading/execution/costs.py#L78",
+        "../../../../trading/execution/costs.py#L82",
         "../../../../tests/unit/trading/test_cost_model.py#L62",
         "../../../../tests/unit/trading/test_semantic_oracle_costs.py#L47",
-        "../../../../trading/execution/costs.py#L58",
+        "../../../../trading/execution/costs.py#L60",
         "../../../../tests/unit/trading/test_cost_model.py#L45",
         "../../../../tests/unit/trading/test_cost_model.py#L51",
         "../../../../trading/execution/costs.py#L43",
@@ -3256,21 +3256,28 @@
     {
       "links": [
         "../../../../trading/execution/quotes.py#L10",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L114",
+        "../../../../tests/unit/trading/test_semantic_oracle_properties.py#L60",
         "../../../../trading/execution/quotes.py#L212",
         "../../../../tests/integration/backtest/test_engine_execution_contract.py#L70",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L104",
         "../../../../trading/execution/quotes.py#L189",
         "../../../../trading/execution/quotes.py#L234",
         "../../../../trading/execution/quotes.py#L135",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L132",
         "../../../../trading/execution/quotes.py#L167",
         "../../../../tests/integration/backtest/test_engine_execution_contract.py#L68",
-        "../../../../trading/execution/quotes.py#L235",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L98",
         "../../../../trading/execution/quotes.py#L118",
         "../../../../tests/integration/backtest/test_engine_execution_contract.py#L79",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L82",
         "../../../../trading/execution/quotes.py#L102",
         "../../../../tests/integration/backtest/test_engine_execution_contract.py#L77",
-        "../../../../trading/execution/quotes.py#L131",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L141",
         "../../../../trading/execution/quotes.py#L78",
-        "../../../../trading/execution/quotes.py#L46"
+        "../../../../trading/execution/quotes.py#L46",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L123",
+        "../../../../tests/unit/trading/test_semantic_oracle_properties.py#L76"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__execution__quotes.md",
@@ -3505,8 +3512,9 @@
     },
     {
       "links": [
-        "../../../../trading/positions/multi_tp.py#L47",
-        "../../../../trading/positions/multi_tp.py#L10"
+        "../../../../trading/positions/multi_tp.py#L50",
+        "../../../../trading/positions/multi_tp.py#L10",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L176"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__positions__multi_tp.md",
@@ -3561,7 +3569,8 @@
     },
     {
       "links": [
-        "../../../../trading/risk/execution_reserve.py#L6"
+        "../../../../trading/risk/execution_reserve.py#L6",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L154"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__risk__execution_reserve.md",
@@ -3662,13 +3671,13 @@
         "../../../../tests/unit/trading/test_risk.py#L37",
         "../../../../trading/risk/sizing.py#L33",
         "../../../../tests/unit/trading/test_risk.py#L83",
-        "../../../../docs/learn/tutorials/03_trading_and_risk.ipynb",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L156",
         "../../../../trading/risk/sizing.py#L63",
         "../../../../tests/unit/trading/test_risk.py#L97",
-        "../../../../docs/subjects/C_trading_risk_execution/examples/stops-targets-multi-tp-exits.ipynb",
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L158",
         "../../../../trading/risk/sizing.py#L13",
         "../../../../tests/unit/trading/test_risk.py#L20",
-        "../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L59"
+        "../../../../tests/unit/trading/test_semantic_oracle_fixture_replay.py#L148"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__risk__sizing.md",
@@ -6792,7 +6801,7 @@
         "../../trading/baselines/step_indexed_strategy.py#L38",
         "../../trading/baselines/step_indexed_strategy.py#L34",
         "../../trading/execution/broker.py#L129",
-        "../../trading/execution/costs.py#L97",
+        "../../trading/execution/costs.py#L101",
         "../../trading/execution/costs.py#L13",
         "../../trading/execution/costs.py#L9",
         "../../trading/execution/broker.py#L46",
@@ -6810,8 +6819,8 @@
         "../../trading/execution/broker.py#L257",
         "../../trading/execution/broker.py#L166",
         "../../trading/execution/broker.py#L154",
-        "../../trading/execution/costs.py#L78",
-        "../../trading/execution/costs.py#L58",
+        "../../trading/execution/costs.py#L82",
+        "../../trading/execution/costs.py#L60",
         "../../trading/execution/costs.py#L43",
         "../../trading/orders/levels.py#L5",
         "../../trading/orders/entries.py#L45",
@@ -6852,7 +6861,7 @@
         "../../trading/policy/config.py#L63",
         "../../trading/policy/config.py#L191",
         "../../trading/policy/config.py#L134",
-        "../../trading/positions/multi_tp.py#L47",
+        "../../trading/positions/multi_tp.py#L50",
         "../../trading/positions/multi_tp.py#L10",
         "../../trading/risk/guardrails.py#L83",
         "../../trading/risk/ftmo_clock.py#L16",

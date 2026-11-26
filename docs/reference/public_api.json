@@ -20788,7 +20788,7 @@
       "name": "_tick_touch_quote",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 332,
+      "source_line": 337,
       "source_module": "simulation.backtest.protective_management",
       "source_path": "simulation/backtest/protective_management.py"
     },
@@ -21964,7 +21964,7 @@
       "name": "_level_reached",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 665,
+      "source_line": 674,
       "source_module": "simulation.environment.protective_level_runtime",
       "source_path": "simulation/environment/protective_level_runtime.py"
     },
@@ -21976,7 +21976,7 @@
       "name": "_pending_tp_sl_quotes",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 625,
+      "source_line": 634,
       "source_module": "simulation.environment.protective_level_runtime",
       "source_path": "simulation/environment/protective_level_runtime.py"
     },
@@ -23200,7 +23200,7 @@
       "name": "COST_US100",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 97,
+      "source_line": 101,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },
@@ -23440,7 +23440,7 @@
       "name": "CostModel.bar_quote",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 78,
+      "source_line": 82,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },
@@ -23452,7 +23452,7 @@
       "name": "CostModel.fill_price",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 58,
+      "source_line": 60,
       "source_module": "trading.execution.costs",
       "source_path": "trading/execution/costs.py"
     },
@@ -24412,7 +24412,7 @@
       "name": "reorder_remaining_targets",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 47,
+      "source_line": 50,
       "source_module": "trading.positions.multi_tp",
       "source_path": "trading/positions/multi_tp.py"
     },

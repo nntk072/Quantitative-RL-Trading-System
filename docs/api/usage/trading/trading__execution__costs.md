@@ -54,7 +54,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Derive bid/ask from close price using spread.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.bar_quote` · **Source:** [trading/execution/costs.py:78](../../../../trading/execution/costs.py#L78)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.bar_quote` · **Source:** [trading/execution/costs.py:82](../../../../trading/execution/costs.py#L82)
 
 **Inputs and outputs:**
 
@@ -114,7 +114,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the fill price for a market order.
 
-**Exact API:** {py:obj}`trading.execution.costs.CostModel.fill_price` · **Source:** [trading/execution/costs.py:58](../../../../trading/execution/costs.py#L58)
+**Exact API:** {py:obj}`trading.execution.costs.CostModel.fill_price` · **Source:** [trading/execution/costs.py:60](../../../../trading/execution/costs.py#L60)
 
 **Inputs and outputs:**
 
