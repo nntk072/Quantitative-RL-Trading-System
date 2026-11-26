@@ -3,6 +3,7 @@
 //! This crate has no Python, I/O or broker dependencies. Discrete quantities use
 //! checked integer arithmetic; overflow is reported as an error rather than wrapped.
 
+pub mod abi;
 pub mod account;
 pub mod order;
 pub mod position;

@@ -6,6 +6,8 @@ use pyo3::exceptions::{PyOverflowError, PyValueError};
 use pyo3::prelude::*;
 use qrl_domain::{DomainError, Fill, Price, Quantity, Side};
 
+mod abi;
+
 /// Maps a domain refusal to Python: overflow to `OverflowError`, invalid input to `ValueError`.
 fn to_py_err(err: DomainError) -> PyErr {
     match err {
@@ -128,5 +130,19 @@ fn qrl_native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(remaining_daily_capacity_cents, module)?)?;
     module.add_function(wrap_pyfunction!(notional_cents, module)?)?;
     module.add_class::<PyPosition>()?;
+    module.add_function(wrap_pyfunction!(abi::shared_data_abi_version, module)?)?;
+    module.add_function(wrap_pyfunction!(abi::require_abi_version, module)?)?;
+    module.add_function(wrap_pyfunction!(abi::abi_layout, module)?)?;
+    module.add_function(wrap_pyfunction!(abi::observation_width, module)?)?;
+    module.add_function(wrap_pyfunction!(abi::schema_ids, module)?)?;
+    module.add_class::<abi::PyQuoteBatch>()?;
+    module.add_class::<abi::PyBarBatch>()?;
+    module.add_class::<abi::PyFeatureRowBlock>()?;
+    module.add_class::<abi::PyObservationWindow>()?;
+    module.add("AbiError", module.py().get_type::<abi::AbiError>())?;
+    module.add(
+        "AbiVersionError",
+        module.py().get_type::<abi::AbiVersionError>(),
+    )?;
     Ok(())
 }
