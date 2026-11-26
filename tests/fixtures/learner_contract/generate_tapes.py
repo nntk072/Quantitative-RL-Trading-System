@@ -25,6 +25,7 @@ SEED = 20261126
 
 PPO_GAE_TAPE = "ppo_gae_tape.json"
 HYBRID_TAPE = "hybrid_distribution_tape.json"
+PPO_LOSS_TAPE = "ppo_loss_tape.json"
 MANIFEST = "manifest.json"
 
 # Hybrid coordinate layout. ``trade_setup`` is the masked categorical head;
@@ -223,6 +224,110 @@ def build_hybrid_tape() -> dict[str, Any]:
     }
 
 
+# Single-hidden-layer diagonal-Gaussian PPO used by the loss tape. Shapes follow
+# SB3 MlpPolicy with net_arch pi=[8], vf=[8] on a 3-D observation and 2-D action.
+PPO_LOSS_SHAPES = {
+    "log_std": (2,),
+    "mlp_extractor.policy_net.0.weight": (8, 3),
+    "mlp_extractor.policy_net.0.bias": (8,),
+    "mlp_extractor.value_net.0.weight": (8, 3),
+    "mlp_extractor.value_net.0.bias": (8,),
+    "action_net.weight": (2, 8),
+    "action_net.bias": (2,),
+    "value_net.weight": (1, 8),
+    "value_net.bias": (1,),
+}
+PPO_LOSS_CLIP = 0.2
+PPO_LOSS_ENT_COEF = 0.01
+PPO_LOSS_VF_COEF = 0.5
+PPO_LOSS_BATCH = 8
+
+
+def _ppo_forward(
+    weights: dict[str, np.ndarray[Any, Any]], obs: np.ndarray[Any, Any]
+) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any], np.ndarray[Any, Any]]:
+    """Float64 forward pass of the frozen PPO network, written without torch.
+
+    Returns:
+        Gaussian mean, log standard deviation and value estimate per row.
+    """
+    hidden = np.tanh(
+        obs @ weights["mlp_extractor.policy_net.0.weight"].T
+        + weights["mlp_extractor.policy_net.0.bias"]
+    )
+    mean = hidden @ weights["action_net.weight"].T + weights["action_net.bias"]
+    value_hidden = np.tanh(
+        obs @ weights["mlp_extractor.value_net.0.weight"].T
+        + weights["mlp_extractor.value_net.0.bias"]
+    )
+    value = (value_hidden @ weights["value_net.weight"].T + weights["value_net.bias"])[:, 0]
+    return mean, weights["log_std"], value
+
+
+def build_ppo_loss_tape() -> dict[str, Any]:
+    """Build a fixed PPO minibatch with frozen weights and float64 loss expectations.
+
+    Returns:
+        JSON-serializable tape with weights, batch, and expected log-probs,
+        entropy, values, clipped policy loss, value loss, total loss, clip
+        fraction, and deterministic actions.
+    """
+    rng = np.random.default_rng(SEED + 2)
+    weights: dict[str, np.ndarray[Any, Any]] = {}
+    for name, shape in PPO_LOSS_SHAPES.items():
+        scale = 0.5 if "log_std" not in name else 0.2
+        base = rng.normal(0.0, scale, size=shape)
+        weights[name] = base + (-0.3 if name == "log_std" else 0.0)
+
+    obs = rng.uniform(-1.0, 1.0, size=(PPO_LOSS_BATCH, 3))
+    mean, log_std, value = _ppo_forward(weights, obs)
+    std = np.exp(log_std)
+    actions = mean + rng.normal(0.0, 0.7, size=mean.shape)
+    log_prob = np.sum(
+        -0.5 * ((actions - mean) / std) ** 2 - log_std - 0.5 * math.log(2.0 * math.pi), axis=1
+    )
+    entropy = np.sum(0.5 + 0.5 * math.log(2.0 * math.pi) + log_std) * np.ones(PPO_LOSS_BATCH)
+    # Old policy log-probs are the current ones perturbed, so the ratio leaves the clip band.
+    old_log_prob = log_prob + rng.normal(0.0, 0.4, size=PPO_LOSS_BATCH)
+    advantages = rng.normal(0.0, 1.0, size=PPO_LOSS_BATCH)
+    returns = value + rng.normal(0.0, 0.5, size=PPO_LOSS_BATCH)
+
+    ratio = np.exp(log_prob - old_log_prob)
+    surrogate = np.minimum(
+        ratio * advantages, np.clip(ratio, 1 - PPO_LOSS_CLIP, 1 + PPO_LOSS_CLIP) * advantages
+    )
+    policy_loss = float(-np.mean(surrogate))
+    value_loss = float(np.mean((returns - value) ** 2))
+    entropy_loss = float(-np.mean(entropy))
+    total_loss = policy_loss + PPO_LOSS_ENT_COEF * entropy_loss + PPO_LOSS_VF_COEF * value_loss
+    clip_fraction = float(np.mean(np.abs(ratio - 1.0) > PPO_LOSS_CLIP))
+
+    return {
+        "schema": "qrl.learner-contract.ppo-loss-tape.v1",
+        "generator": GENERATOR_VERSION,
+        "clip_range": PPO_LOSS_CLIP,
+        "ent_coef": PPO_LOSS_ENT_COEF,
+        "vf_coef": PPO_LOSS_VF_COEF,
+        "weights": {name: _as_list(values) for name, values in weights.items()},
+        "obs": _as_list(obs),
+        "actions": _as_list(actions),
+        "old_log_prob": _as_list(old_log_prob),
+        "advantages": _as_list(advantages),
+        "returns": _as_list(returns),
+        "expected_mean": _as_list(mean),
+        "expected_value": _as_list(value),
+        "expected_log_prob": _as_list(log_prob),
+        "expected_entropy": _as_list(entropy),
+        "expected_ratio": _as_list(ratio),
+        "expected_policy_loss": policy_loss,
+        "expected_value_loss": value_loss,
+        "expected_entropy_loss": entropy_loss,
+        "expected_total_loss": total_loss,
+        "expected_clip_fraction": clip_fraction,
+        "expected_deterministic_actions": _as_list(np.clip(mean, -1.0, 1.0)),
+    }
+
+
 def _dump(payload: dict[str, Any]) -> bytes:
     return (json.dumps(payload, sort_keys=True, indent=1) + "\n").encode("utf-8")
 
@@ -236,6 +341,7 @@ def build_all() -> dict[str, bytes]:
     return {
         PPO_GAE_TAPE: _dump(build_ppo_gae_tape()),
         HYBRID_TAPE: _dump(build_hybrid_tape()),
+        PPO_LOSS_TAPE: _dump(build_ppo_loss_tape()),
     }
 
 

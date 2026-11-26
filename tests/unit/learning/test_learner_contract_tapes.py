@@ -6,6 +6,15 @@ expected values come from float64 closed-form NumPy formulas in
 pin the committed bytes to the generator, pin the action-schema centers, and
 compare SB3's rollout GAE and the hybrid Box distribution against the tapes.
 CPU only; float64 comparisons use 1e-9 and float32 production paths use 1e-5.
+
+Tolerance rationale. The float32 CPU path rounds each operation to about 6e-8
+relative error. The tapes have at most a few dozen operations per output, so the
+accumulated error stays near 1e-6; 1e-5 leaves margin without hiding a real
+change, because a logic defect moves values by orders of magnitude more. The
+tolerances cover CPU float32 only. CUDA, TF32 and BF16 paths differ by more
+than this and need their own measured tolerance (GPU timing is not run here).
+Sampling streams are device-specific, so stochastic-sample equality is claimed
+only for CPU seeds.
 """
 
 from __future__ import annotations

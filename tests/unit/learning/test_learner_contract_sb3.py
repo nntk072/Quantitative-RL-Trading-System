@@ -9,9 +9,7 @@ from __future__ import annotations
 
 import zipfile
 from pathlib import Path
-from typing import Any
 
-import gymnasium as gym
 import numpy as np
 import pytest
 import torch
@@ -19,70 +17,17 @@ from gymnasium import spaces
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.buffers import ReplayBuffer
 
+from tests.unit.learning.learner_contract_support import (
+    ContractEnv,
+    ppo_model,
+    sac_model,
+    state_dict_equal,
+)
 
-class _ContractEnv(gym.Env[Any, Any]):
-    """Deterministic 2-D continuous task: reward favours actions near the state."""
-
-    observation_space = spaces.Box(-1.0, 1.0, (3,), dtype=np.float32)
-    action_space = spaces.Box(-1.0, 1.0, (2,), dtype=np.float32)
-
-    def __init__(self, horizon: int = 8) -> None:
-        self._horizon = horizon
-        self._t = 0
-        self._state: np.ndarray[Any, Any] = np.zeros(3, dtype=np.float32)
-
-    def reset(
-        self, *, seed: int | None = None, options: Any = None
-    ) -> tuple[np.ndarray[Any, Any], dict[str, Any]]:
-        super().reset(seed=seed)
-        self._t = 0
-        self._state = self.np_random.uniform(-1, 1, size=3).astype(np.float32)
-        return self._state.copy(), {}
-
-    def step(
-        self, action: np.ndarray[Any, Any]
-    ) -> tuple[np.ndarray[Any, Any], float, bool, bool, dict[str, Any]]:
-        self._t += 1
-        reward = -float(np.sum((action - self._state[:2]) ** 2))
-        self._state = np.clip(0.9 * self._state + 0.1 * np.r_[action, 0.0], -1, 1).astype(
-            np.float32
-        )
-        truncated = self._t >= self._horizon
-        return self._state.copy(), reward, False, truncated, {}
-
-
-def _state_dict_equal(left: dict[str, torch.Tensor], right: dict[str, torch.Tensor]) -> bool:
-    if left.keys() != right.keys():
-        return False
-    return all(torch.equal(left[key], right[key]) for key in left)
-
-
-def _ppo(seed: int) -> PPO:
-    return PPO(
-        "MlpPolicy",
-        _ContractEnv(),
-        n_steps=16,
-        batch_size=16,
-        n_epochs=2,
-        seed=seed,
-        device="cpu",
-        verbose=0,
-    )
-
-
-def _sac(seed: int, env: gym.Env[Any, Any] | None = None) -> SAC:
-    return SAC(
-        "MlpPolicy",
-        _ContractEnv() if env is None else env,
-        buffer_size=200,
-        learning_starts=10,
-        batch_size=16,
-        train_freq=1,
-        gradient_steps=1,
-        seed=seed,
-        device="cpu",
-        verbose=0,
-    )
+_ContractEnv = ContractEnv
+_ppo = ppo_model
+_sac = sac_model
+_state_dict_equal = state_dict_equal
 
 
 def test_seeded_ppo_training_is_bitwise_reproducible_on_cpu() -> None:
@@ -151,9 +96,9 @@ def test_sac_default_checkpoint_omits_the_replay_buffer(tmp_path: Path) -> None:
 @pytest.mark.xfail(
     strict=True,
     reason=(
-        "exact resume is not provided: the default SAC checkpoint omits the replay "
-        "buffer, the RNG state and the environment state, so a resumed run cannot "
-        "reproduce a continued run"
+        "the production checkpoint path (model.save/load) is not exact: it omits the "
+        "replay buffer, RNG state, collector state and environment state. Exact resume "
+        "is provided by learning.rl.resume, see test_learner_contract_resume.py"
     ),
 )
 def test_sac_exact_resume_reproduces_a_continued_run(tmp_path: Path) -> None:
