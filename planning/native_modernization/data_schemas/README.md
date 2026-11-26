@@ -85,11 +85,81 @@ by the synthetic fixtures in `tests/unit/market_data/test_mt5_export_to_bars.py`
 - A new id ships with its converter, a test that reads the old and new ids, and a regenerated ledger.
   Old ledgers keep their id and are not rewritten.
 
-## Not covered yet (DATA-SCHEMAS remains open)
+## Higher-timeframe exports against resampled M1
 
-- The tick/quote source (about 6 GB, `data/US100.cash_202412300105_202610162349.csv`) is not
-  reconciled. Parsing it is heavy compute, so it needs an allocation or a lead decision, not the login host.
-- Higher-timeframe MT5 exports (M3 to D1) are not reconciled against resampled M1 bars.
-- The Polars round trip is not run because Polars is not installed in `.venv-x86`.
-- Normalized event and feature-row schemas are not defined. Feature rows belong to CAUSAL-FEATURE-GRAPH.
+`build_timeframe_reconciliation.py` writes `timeframe_reconciliation_pre2026.json`. It resamples the
+pre-2026 M1 bars to each export's local wall-clock buckets (M3 to D1) and compares every export bar.
+Counts and labels only. The window split is `market_data/export_window.py`, shared with the M1 ledger.
+
+| Timeframe | Export bars | Matched | Export-only | Resampled-only | Any field mismatch |
+|---|---|---|---|---|---|
+| M3 | 117,424 | 117,424 | 0 | 0 | 0 |
+| M5 | 70,308 | 70,308 | 0 | 0 | 0 |
+| M10 | 35,292 | 35,292 | 0 | 0 | 0 |
+| M15 | 23,694 | 23,694 | 0 | 0 | 0 |
+| M30 | 11,852 | 11,852 | 0 | 0 | 0 |
+| H1 | 5,929 | 5,929 | 0 | 0 | 0 |
+| H4 | 1,552 | 1,552 | 0 | 0 | 0 |
+| D1 | 260 | 260 | 0 | 0 | 0 |
+
+Every bucket agrees on open, high, low, close and tick volume. The first bucket of each export opens
+before the first M1 bar in the window, so it is partial at the window edge; it is counted
+(`window_edge_partial_matched`). This is evidence that the MT5 higher-timeframe exports agree with the M1
+source over the pre-2026 window. It is not independent of the broker feed, so it does not prove the feed.
+
+## Normalized event and feature-row schemas
+
+`market_data/event_schemas.py` defines two Arrow schemas with validators and tests.
+
+- `NORMALIZED_EVENT_SCHEMA` (`normalized-event.v1`): one row per quote, trade or completed bar, with a
+  common header (`event_time`, `available_at`, `source_sequence`, identities) and a positional payload
+  (`value_a` to `value_d`, `size`). A field that does not apply is null. A one-sided quote stays in the
+  quote table, not here.
+- `FEATURE_ROW_SCHEMA` (`feature-row.v1`): one decision-clock row per feature set, with
+  `values: list<float64 nullable>` in manifest order. A null is missing (warm-up or no data); NaN and
+  infinity are refused. `available_at` must not be later than `event_time`, so a feature cannot use
+  information from after its decision time. A table whose row width differs from the manifest is a
+  schema error and is rejected outright.
+
+## Parquet round trip with Polars
+
+Every Parquet write in this package is read back with PyArrow and with Polars (Polars 2.2.0 in
+`.venv-x86`). The M1 ledgers record `polars_values_equal`. The normalized-event and feature-row tests
+round-trip through both readers. The Polars test uses `importorskip`, so a venv without Polars skips it
+rather than failing. Polars is not in `pyproject.toml` or `uv.lock`.
+
+## Correction and revision policy
+
+- Source files are immutable. A converted table records the source sha256 and row counts.
+- Duplicate quotes are not merged or removed. Exact repeats are reported, not dropped.
+- A corrected source row is a new revision: the table carries the new `source_id` or `source_sequence` and
+  the old rows stay in the ledger. No in-place overwrite.
+- Rows that fail a rule are excluded from the table and kept in the quarantine record with a reason.
+  Nothing is repaired silently.
+
+## Schema migration policy
+
+- `market_data.arrow_schemas.SUPPORTED_SCHEMA_IDS` lists the ids this reader accepts:
+  `market-event.v1`, `normalized-event.v1` and `feature-row.v1`.
+- Readers call `require_schema_id`, which fails closed on an unknown id or a table that mixes ids.
+- Any change to a field's type, nullability or meaning requires a new schema id. An additive change
+  still needs a new id if an older reader would misread the table.
+- A new id ships with its converter, a test that reads the old and new ids, and a regenerated ledger.
+  Old ledgers keep their id and are not rewritten.
+
+## Tick/quote export
+
+`market_data/tick_reconciliation.py` converts and reconciles the tick export (about 6 GB, gitignored) over
+the pre-2026 window. It runs as one bounded CPU allocation (`build_tick_reconciliation.py`). Each row
+lands once in the quote table or the quarantine record. Each kept row's UTC instant is checked against
+a zoneinfo oracle on whole seconds, plus its milliseconds. One-sided ticks keep an explicit null. Crossed
+quotes, DST labels, empty FLAGS and non-numeric fields are quarantined with a reason. Results are in
+`tick_reconciliation_pre2026.json`, and in the Slurm run notes below.
+
+## Limits (recorded, not blockers)
+
+- The source has no rows on the two DST-switch Sundays (2025-03-30 and 2025-10-26). The DST branch is
+  covered by synthetic tests only.
+- The 2026 reporting interval is never parsed or used. Lines dated 2026 are counted by label only.
+- Gaps (297 in the pre-2026 M1 window, 176,973 missing bars) are not classified against the session schedule.
 - `SOURCE_CLOCK` is still a code constant; a test keeps it equal to `config/base/default.yaml`.

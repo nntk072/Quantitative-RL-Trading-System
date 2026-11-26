@@ -40,8 +40,9 @@ def test_committed_example_ledger_regenerates_exactly() -> None:
     ledger = generator.build_ledger(EXAMPLE)
     committed = json.loads(COMMITTED.read_text(encoding="utf-8"))
     # The Parquet library version is environment provenance, not a data fact.
-    ledger["parquet_round_trip"].pop("pyarrow_version")
-    committed["parquet_round_trip"].pop("pyarrow_version")
+    for version_key in ("pyarrow_version", "polars_version"):
+        ledger["parquet_round_trip"].pop(version_key)
+        committed["parquet_round_trip"].pop(version_key)
     assert ledger == committed
     assert committed["reconciliation"]["reconciles"] is True
     assert committed["reconciliation"]["source_rows"] == 2880

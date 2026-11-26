@@ -60,7 +60,9 @@
     "rows": 2880,
     "schema_equal": true,
     "values_equal": true,
-    "pyarrow_version": "25.0.0"
+    "polars_values_equal": true,
+    "pyarrow_version": "25.0.0",
+    "polars_version": "2.2.0"
   },
   "quarantine": {
     "count": 0,
