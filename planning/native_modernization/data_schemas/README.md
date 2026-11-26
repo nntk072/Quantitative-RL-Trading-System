@@ -153,8 +153,13 @@ rather than failing. Polars is not in `pyproject.toml` or `uv.lock`.
 the pre-2026 window. It runs as one bounded CPU allocation (`build_tick_reconciliation.py`). Each row
 lands once in the quote table or the quarantine record. Each kept row's UTC instant is checked against
 a zoneinfo oracle on whole seconds, plus its milliseconds. One-sided ticks keep an explicit null. Crossed
-quotes, DST labels, empty FLAGS and non-numeric fields are quarantined with a reason. Results are in
-`tick_reconciliation_pre2026.json`, and in the Slurm run notes below.
+quotes, DST labels, empty FLAGS and non-numeric fields are quarantined with a reason.
+
+Result (`tick_reconciliation_pre2026.json`, Slurm job 21871047, batch-skl, exit 0): 56,245,046 window
+rows; 56,245,046 converted; 0 quarantined; 0 unexplained; 0 oracle event, DST and value mismatches;
+strictly ordered; 261 gaps over one hour (largest about 73 hours, weekend and holiday closures); 29 Parquet
+parts, each read back equal with PyArrow and Polars. The 78,798,505 lines dated 2026 or later were counted
+by label only. The Parquet parts and manifest are in the git-ignored logs tree.
 
 ## Limits (recorded, not blockers)
 

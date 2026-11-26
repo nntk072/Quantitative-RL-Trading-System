@@ -1,0 +1,487 @@
+{
+  "ledger": "DATA-SCHEMAS tick/quote reconciliation",
+  "scope": "rows dated before the cutoff; rows on or after it were counted by label, not parsed; counts only; not scientific evidence",
+  "schema_version": "market-event.v1",
+  "window_before": "2026.01.01",
+  "source": {
+    "file": "US100.cash_202412300105_202610162349.csv",
+    "sha256": "e70a971fb84bf1c32083886eebbaa0691c2e122d9775394b87b644905d52afcb",
+    "bytes": 6345169212,
+    "header": "<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\t<FLAGS>",
+    "body_lines_in_file": 135043551,
+    "lines_on_or_after_cutoff": 78798505,
+    "first_label": "2024.12.30",
+    "last_label": "2025.12.31"
+  },
+  "conversion": {
+    "instrument_id": "US100.cash",
+    "source_id": "mt5-tick",
+    "clock": "Europe/Helsinki",
+    "timestamp": "event_time from DATE+TIME with milliseconds; available_at equals event_time",
+    "one_sided_quote": "empty BID or ASK kept as an explicit null",
+    "chunk_rows": 2000000,
+    "parts": 29
+  },
+  "reconciliation": {
+    "window_rows": 56245046,
+    "converted_rows": 56245046,
+    "quarantined_rows": 0,
+    "unexplained_rows": 0,
+    "oracle_event_mismatches": 0,
+    "oracle_dst_mismatches": 0,
+    "value_mismatches": 0,
+    "reconciles": true
+  },
+  "quarantine_by_reason": {},
+  "chronology": {
+    "inversions": 0,
+    "strictly_ordered": true,
+    "first_event_time_utc": "2024-12-29T23:05:00.196000Z",
+    "last_event_time_utc": "2025-12-31T21:49:59.919000Z",
+    "gaps_over_one_hour": 261,
+    "max_gap_seconds": 263700.617,
+    "scope_note": "chronology and gaps are checked across chunk boundaries; duplicate rows are not counted"
+  },
+  "parquet": {
+    "round_trip_all_parts_equal": true,
+    "pyarrow_version": "25.0.0",
+    "polars_version": "2.2.0",
+    "parts": [
+      {
+        "part": 0,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "eb7b7933738dd66d0747166d4ef656b2653ac6de3add260fe33e12b487a5f65e",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 1,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "e97518cce290cde2534488965bec7970b2a8f98fe5ce5c4b69cd3a0134465cb9",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 2,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "90a3269fa15fb7c805da2657e59cbea40eb187d059472c232cae561bfda20b65",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 3,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "6653721e7b090f4a87b2f056705d65e2c8c6a166631f4f7a0cc873cb5a91eca0",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 4,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "f3abbcbe55c7a451f869fcde6410401a5e148ca3479a459e1548106489f534d6",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 5,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "47b135ae2543999193b9ccd16c179642dd00d116ac6653a1db69f68a57f29486",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 6,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "bb111a8fc796b0d7954954bb5f0bc7c5575d0b89b26ae95b4093c4acac61f0ef",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 7,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "b2ab437bb5e95e6e365e1d364b1f3d78b8033230051944599267f11d9264a601",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 8,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "af6194abcbcfc0c4ec8009a3899e69f58d2a157fed19e7790f11783587112198",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 9,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "e62821c4175c2662198eb619cc4062bac347e1280e84346da9712cfd5863fe76",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 10,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "dcb92ca479c37faaecfde6bb777f11788bd2986bcc7c2926eee13c83f8c7cce4",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 11,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "383a951b265c6f8b5f8e4f64bc2576b6dc4d7d070a501ccab934506b411b8105",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 12,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "a2a0d9011326f521df98e4bb972a482c0ecf13884b06efb05cdf485ebd769582",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 13,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "19d9fb5cf84ee007c15d8ebbf1689ced36dfb902d8e4f79303c923e5858d2e0f",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 14,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "4a8beceb3a0daa70135cddd3dac46911089d3c59d73eecc8ef3fde422ec1d68b",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 15,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "67178b9290bca2575513b535b5541170edaace02300269c73db1179e51b6193a",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 16,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "685a034c3eff2efd4850c662ed333f06f6385dcf9a0b159da71b044de6934dbc",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 17,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "8bb93a0f4b3c609a0a1029d5fa3fca56151d7893a3a2631e9c591829731d2616",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 18,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "a2f37bb818007a95b2408f47073eed84731c84ecf0909910a3606883ac6c88dd",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 19,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "1aba6ca3ca687da6955efeadc059a121a55993463828fdef7d4a71857bfae8d4",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 20,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "d147fec89b0b0f1dc3fbf64bb7da42dd034822952418281960068a692527336a",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 21,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "01e92720083a2a9e588c4d6a315f9b56e7ce69bdd2d66597afe23ee1d9e03843",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 22,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "e8a9e0b633e8254e2a6a9f2632211888dab517a2ca994f789c56afa55852acf1",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 23,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "41355ec74d465d13ccdbf6b9b15b80d41f4b4dfe6906be11123a51e2664b137a",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 24,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "71db3503ec824a9aa8409fd8a468638b4f7b45125a0451150fb9c4f79ca54d48",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 25,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "b3586ab7f4bbd43d5699ecd3e9c6bebf333fa1f3f7924fea129f89e1960e1812",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 26,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "2d67424bc70e997094d480a0b525f8e7dc9060f0093bc96189c61434edfd51e2",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 27,
+        "quotes": {
+          "rows": 2000000,
+          "sha256": "16538d581028d65a86dc689ce5c51777e8557abf37c2ec0cfa2c300067e17455",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      },
+      {
+        "part": 28,
+        "quotes": {
+          "rows": 245046,
+          "sha256": "96ae77a3d8cf886966b31d899475cc4b24bfc653ba69d0e8e87c17e0ed9b6091",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        },
+        "quarantine": {
+          "rows": 0,
+          "sha256": "0e53fc863136971da5084331a78ed9392402dee6e4292f951eb6e096cf13b8f7",
+          "pyarrow_round_trip_equal": true,
+          "polars_round_trip_equal": true
+        }
+      }
+    ]
+  }
+}
