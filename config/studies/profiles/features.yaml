@@ -38,6 +38,7 @@ api_paths:
 caller_paths:
 - tests/unit/features/test_feature_graph.py
 - tests/unit/features/test_causal_prefix_invariance.py
+- tests/unit/features/test_causal_feature_graph_acceptance.py
 - tests/unit/training/test_observation_memmap.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
 - tests/integration/backtest/test_market_entry_fill_event_parity.py
