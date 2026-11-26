@@ -198,7 +198,7 @@ run_build() {
     rm -rf -- "$build_dir"
     return "$build_status"
   fi
-  smoke='import importlib; [importlib.import_module(name) for name in ("configuration","artifacts","market_data","features","trading","simulation","models","learning","learning.supervised","decisioning","training","evaluation","experiments","live","integrations","compute","orchestra","research_tools","market_data.cli","training.cli","evaluation.cli","experiments.cli","research_tools.studies.study_cli","compute.cli")]; print("build-import-smoke-ok")'
+  smoke='import importlib; [importlib.import_module(name) for name in ("configuration","artifacts","market_data","features","trading","simulation","models","learning","learning.supervised","decisioning","training","evaluation","experiments","live","integrations","compute","research_tools","market_data.cli","training.cli","evaluation.cli","experiments.cli","research_tools.studies.study_cli","compute.cli")]; print("build-import-smoke-ok")'
   if [[ -n "$PYTHON_BIN" ]]; then
     if "$PYTHON_BIN" -c "$smoke"; then
       build_status=0

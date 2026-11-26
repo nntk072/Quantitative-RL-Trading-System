@@ -123,7 +123,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L734)
+1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L983)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -242,7 +242,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L737)
+1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L986)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -179,6 +179,44 @@ def test_checkpoint_reanalysis_inherits_sampled_mode_and_seed(tmp_path: Path) ->
     assert eval_run.resolve_reanalysis_action_mode(source, False) is False
 
 
+@pytest.mark.parametrize("metadata", ["{invalid", "[]", '{"action_rng_seed": true}'])
+def test_checkpoint_reanalysis_does_not_inherit_invalid_evaluation_metadata(
+    tmp_path: Path, metadata: str
+) -> None:
+    source = tmp_path / "source"
+    evaluation_dir = source / "evaluations"
+    evaluation_dir.mkdir(parents=True)
+    (evaluation_dir / "test_report_only.json").write_text(metadata, encoding="utf-8")
+
+    assert eval_run.resolve_reanalysis_action_mode(source, None) is False
+    assert eval_run.resolve_reanalysis_action_seed(source, None, stochastic=True) is None
+
+
+def test_train_only_stochastic_reanalysis_requires_a_seed() -> None:
+    with pytest.raises(ValueError, match="requires a recorded or explicit seed"):
+        eval_run.validate_train_only_action_mode(
+            train_only_screen=True,
+            stochastic=True,
+            action_rng_seed=None,
+        )
+
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=True,
+        stochastic=True,
+        action_rng_seed=23,
+    )
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=True,
+        stochastic=False,
+        action_rng_seed=None,
+    )
+    eval_run.validate_train_only_action_mode(
+        train_only_screen=False,
+        stochastic=True,
+        action_rng_seed=None,
+    )
+
+
 def test_checkpoint_reanalysis_parses_tick_fill_slippage_override() -> None:
     args = eval_run.build_reanalysis_parser().parse_args(
         ["--run", "source", "--output", "out", "--tick-fill-slippage-points", "10"]
@@ -248,6 +286,27 @@ def test_replay_ledger_export_requires_train_only_screen(
         eval_run.main()
 
 
+def test_train_only_feature_snapshot_cli_option_requires_train_only_screen(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "checkpoint-reanalysis",
+            "--run",
+            "missing-source-run",
+            "--output",
+            "review",
+            "--train-only-feature-snapshot",
+            "train-features.parquet",
+        ],
+    )
+
+    with pytest.raises(SystemExit, match="requires --train-only-screen"):
+        eval_run.main()
+
+
 def test_train_only_screen_requires_seed_for_stochastic_actions() -> None:
     with pytest.raises(ValueError, match="requires a recorded or explicit seed"):
         eval_run.validate_train_only_action_mode(
@@ -280,6 +339,24 @@ def test_train_only_screen_report_records_evaluation_provenance(
     report = json.loads(report_path.read_text(encoding="utf-8"))
     assert report["evaluation_provenance"] == provenance
     assert report["test_split_evaluated"] is False
+
+
+def test_train_only_screen_report_refuses_to_reuse_existing_destination(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _repo: {})
+    output_dir = tmp_path / "existing-screen"
+    output_dir.mkdir()
+    sentinel = output_dir / "keep.json"
+    sentinel.write_text("preserve prior output\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        eval_run.write_train_only_screen_report(
+            output_dir,
+            {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False},
+        )
+
+    assert sentinel.read_text(encoding="utf-8") == "preserve prior output\n"
 
 
 def test_train_only_screen_exports_complete_replay_ledgers_with_hashes(
@@ -958,6 +1035,43 @@ def test_checkpoint_split_replay_passes_selected_action_mode(
 
     assert result == {}
     assert captured["deterministic"] is expected_deterministic
+
+
+def test_checkpoint_split_replay_dispatches_decision_provider_with_selected_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = SimpleNamespace(metadata={}, predict=lambda observation: observation)
+    captured: dict[str, object] = {}
+
+    def fake_evaluate_provider(
+        received_provider: object, *, deterministic: bool, **kwargs: object
+    ) -> dict[str, object]:
+        captured["provider"] = received_provider
+        captured["deterministic"] = deterministic
+        captured.update(kwargs)
+        return {"status": "provider"}
+
+    monkeypatch.setattr(eval_run, "evaluate_provider", fake_evaluate_provider)
+    monkeypatch.setattr(
+        eval_run,
+        "evaluate_model",
+        lambda *_args, **_kwargs: pytest.fail("decision providers use evaluate_provider"),
+    )
+
+    result = eval_run.evaluate_checkpoint_split(
+        provider,
+        stochastic=True,
+        split="training",
+        seed=17,
+    )
+
+    assert result == {"status": "provider"}
+    assert captured == {
+        "provider": provider,
+        "deterministic": False,
+        "split": "training",
+        "seed": 17,
+    }
 
 
 def test_reanalysis_requires_explicit_historical_access(tmp_path: Path) -> None:

@@ -25,4 +25,3 @@ branch coverage baseline, and ratchet are described in
 
 For the current commands and gate policy, see
 [CI verification](../.agents/rules/ci-verification.md) and
-[Orchestra](../orchestra/README.md).

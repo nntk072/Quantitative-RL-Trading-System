@@ -56,7 +56,6 @@ PROJECT_SOURCE_ROOTS = frozenset(
         "live",
         "integrations",
         "compute",
-        "orchestra",
     }
 )
 VARIANTS = (

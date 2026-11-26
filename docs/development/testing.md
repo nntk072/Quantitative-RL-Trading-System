@@ -35,7 +35,7 @@ against the committed baseline. To run both scoped suites with coverage locally:
 ```
 
 The test and coverage gates do not launch model training. Full repository
-verification remains a CI or Orchestra phase 9 responsibility.
+verification remains a CI responsibility.
 
 ## Main-branch baseline
 

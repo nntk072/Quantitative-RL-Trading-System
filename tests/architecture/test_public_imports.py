@@ -21,7 +21,6 @@ PUBLIC_PACKAGES = (
     "live",
     "integrations",
     "compute",
-    "orchestra",
     "simulation.backtest.cross_validation.backtrader_runner",
     "simulation.backtest.cross_validation.main",
 )

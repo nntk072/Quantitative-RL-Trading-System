@@ -24,7 +24,7 @@ def test_distribution_and_command_names_are_project_oriented() -> None:
     }
     for command, target in expected.items():
         assert scripts[f"qrl-{command}"] == target
-    assert set(scripts) == {"orchestra", *(f"qrl-{command}" for command in expected)}
+    assert set(scripts) == {f"qrl-{command}" for command in expected}
 
 
 def test_command_reference_documents_canonical_names() -> None:

@@ -63,7 +63,6 @@ autoapi_dirs = [
         "live",
         "integrations",
         "compute",
-        "orchestra",
     )
 ]
 autoapi_root = "api/generated"

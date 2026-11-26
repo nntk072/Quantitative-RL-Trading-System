@@ -69,7 +69,7 @@ pyarrow==25.0.0
 pycparser==2.23 ; implementation_name != 'PyPy'
 pyparsing==3.2.5
 python-dateutil==2.9.0.post0
-python-dotenv==1.2.2
+python-dotenv==1.2.4
 pytz==2025.2
 pyyaml==6.0.3
 referencing==0.37.0

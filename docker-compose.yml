@@ -165,7 +165,6 @@ services:
       - live
       - integrations
       - compute
-      - orchestra
 
   typecheck:
     extends: dev

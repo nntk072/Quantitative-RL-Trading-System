@@ -23,7 +23,6 @@ ACTIVE_NAMING_ROOTS = (
     "live",
     "integrations",
     "compute",
-    "orchestra",
     "scripts",
     "tests",
     "tools",
