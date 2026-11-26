@@ -31,7 +31,8 @@ def target_close_size(pos: Position, slot_num: int, *, is_final: bool) -> float:
     try:
         fraction_index = active_slots.index(slot_num)
     except ValueError:
-        return float(pos.size)
+        # Not an active target slot: no leg exists, so nothing is closed.
+        return 0.0
     fraction = (
         fractions[fraction_index]
         if fraction_index < len(fractions)
@@ -41,7 +42,9 @@ def target_close_size(pos: Position, slot_num: int, *, is_final: bool) -> float:
     if is_final and runner_fraction > 0.0:
         minimum_runner = round(init_size * runner_fraction, 2)
         close_size = min(close_size, max(0.0, float(pos.size) - minimum_runner))
-    return close_size if close_size > 0.0 else float(pos.size)
+    # A leg that rounds to zero (or is clamped away by the runner) closes nothing.
+    # It must not fall back to the whole position: callers consume the slot instead.
+    return close_size if close_size > 0.0 else 0.0
 
 
 def reorder_remaining_targets(

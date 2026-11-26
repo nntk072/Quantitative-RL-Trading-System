@@ -1,7 +1,8 @@
 {
-  "fixture_file": "semantic_oracle_fixtures.v1.json",
-  "schema_version": "semantic-oracle-fixtures.v1",
-  "fixture_version": "1.0.0",
-  "sha256": "d0e3f9961ce6418634595f8e8a59e689ffc2189884fe274e5cc013e132736e22",
+  "fixture_file": "semantic_oracle_fixtures.v2.json",
+  "schema_version": "semantic-oracle-fixtures.v2",
+  "fixture_version": "2.0.0",
+  "sha256": "21b687717b36617f1956b6783fd300427457bf03ca1947db20262c85d3f8794c",
+  "supersedes": {"fixture_file": "semantic_oracle_fixtures.v1.json", "fixture_version": "1.0.0", "sha256": "d0e3f9961ce6418634595f8e8a59e689ffc2189884fe274e5cc013e132736e22"},
   "note": "Frozen expected values. Any edit changes this digest; the replay test fails until the digest and fixture_version are updated together with an explicit decision recorded in semantic_contracts.md."
 }

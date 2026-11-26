@@ -295,6 +295,11 @@ def _record_target_slot(
         candidate for candidate in _active_target_slots(position) if candidate > slot
     ]
     close_size = target_close_size(position, slot, is_final=not remaining_slots)
+    if close_size <= 0.0:
+        # Leg rounds to zero: consume the slot without a broker close.
+        position.tp_hit_mask |= 1 << (slot - 1)
+        setattr(position, f"tp{slot}_price", None)
+        return
     record: dict[str, Any] = {
         "type": "tp_close" if close_size >= position.size - 1e-9 else "tp_partial_close",
         "reason": f"structure_tp{slot}",

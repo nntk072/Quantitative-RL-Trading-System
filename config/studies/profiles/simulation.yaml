@@ -33,6 +33,7 @@ api_paths:
 - simulation/environment/trading_environment_factory.py
 - simulation/environment/worker.py
 caller_paths:
+- tests/unit/simulation/test_environment/test_semantic_oracle_env_scenarios.py
 - tests/unit/simulation/test_environment/test_semantic_oracle_env_causality.py
 - tests/unit/trading/test_semantic_oracle_fixture_replay.py
 - tests/unit/trading/test_semantic_oracle_properties.py

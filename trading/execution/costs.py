@@ -72,8 +72,10 @@ class CostModel:
         """
         if direction == 1:
             return ask
-        else:  # direction == -1
+        if direction == -1:
             return bid
+        # Fail closed: an invalid side must never be priced as a short fill (INV-OPS).
+        raise ValueError(f"direction must be +1 or -1, got {direction!r}")
 
     def bar_quote(self, close: float, bar_spread: float | None = None) -> tuple[float, float]:
         """Derive bid/ask from close price using spread.

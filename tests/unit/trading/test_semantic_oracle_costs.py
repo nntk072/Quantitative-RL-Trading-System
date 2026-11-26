@@ -6,9 +6,8 @@ module defines no rounding, lot or tick step, and no fill ordering, so those are
 covered here. Every expected value is worked out in the comment above its assertion and
 does not reuse the production formula.
 
-Candidate source defects are strict xfail tests that state the documented intent. They
-fail on purpose. A fix must remove the marker, and a silent change to the expected value
-is not allowed.
+Former candidate defect C1 (invalid fill side) is fixed and asserted as a positive case.
+The slippage candidate (C2) remains a strict xfail; see semantic_contracts.md section 5.
 """
 
 from __future__ import annotations
@@ -77,14 +76,6 @@ def test_fill_side_is_ask_for_long_and_bid_for_short(direction: int, expected_fi
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "CANDIDATE SOURCE DEFECT: fill_price maps any direction other than +1 to the bid. "
-        "Docstring allows only +1 (long) and -1 (short), and INV-OPS requires failing closed "
-        "on ambiguous execution. Reproducer: CostModel().fill_price(99.5, 100.5, 0) returns 99.5."
-    ),
-)
 def test_invalid_fill_direction_is_rejected_adverse() -> None:
     # Expected by the docstring contract: direction must be +1 or -1, so 0 must raise.
     with pytest.raises(ValueError):
