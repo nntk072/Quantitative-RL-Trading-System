@@ -909,3 +909,116 @@ def test_previous_labeled_session_skips_session_with_missing_interior_bar() -> N
     # Despite its final bar being present, NY has a hole and is not a complete
     # reference. London remains the latest fully observed session.
     assert result.loc[pd.Timestamp("2026-03-09 23:00", tz=DATA_TZ), "previous_session_code"] == 2
+
+
+def test_overnight_session_levels_keep_one_session_date_and_publish_at_close() -> None:
+    idx = pd.date_range("2025-01-06 21:00", periods=7, freq="h", tz="UTC")
+    bars = pd.DataFrame(
+        {
+            "open": [1.0, 10.0, 14.0, 17.0, 15.0, 8.0, 7.0],
+            "high": [2.0, 12.0, 16.0, 18.0, 17.0, 9.0, 8.0],
+            "low": [0.0, 9.0, 13.0, 14.0, 11.0, 7.0, 6.0],
+            "close": [1.5, 11.0, 15.0, 16.0, 12.0, 8.0, 7.0],
+        },
+        index=idx,
+    )
+    running = session_ohlc(bars, "22:00", "02:00", session_tz="UTC", prefix="overnight")
+    prior = previous_labeled_session_ohlc(
+        bars,
+        {"overnight": {"start": "22:00", "end": "02:00"}},
+        session_tz="UTC",
+        bar_minutes=60,
+    )
+
+    assert running.loc[idx[1:5], "overnight_open"].tolist() == [10.0] * 4
+    assert running.loc[idx[1:5], "overnight_high"].tolist() == [12.0, 16.0, 18.0, 18.0]
+    assert running.loc[idx[1:5], "overnight_low"].tolist() == [9.0, 9.0, 9.0, 9.0]
+    assert prior.loc[idx[0], "previous_session_code"] == 0.0
+    assert prior.loc[idx[5], "previous_session_high"] == 18.0
+    assert prior.loc[idx[5], "previous_session_low"] == 9.0
+    assert prior.loc[idx[5], "previous_session_completed_at_ns"] == idx[5].value
+
+
+def test_session_level_helpers_reject_naive_indexes_and_invalid_options() -> None:
+    naive_index = pd.date_range("2026-01-05", periods=2, freq="h")
+    naive_bars = pd.DataFrame(
+        {"open": 1.0, "high": 2.0, "low": 0.0, "close": 1.0}, index=naive_index
+    )
+    aware_bars = naive_bars.set_axis(naive_index.tz_localize("UTC"))
+
+    with pytest.raises(ValueError, match="timezone-aware"):
+        session_mask(naive_index, "00:00", "01:00", session_tz="UTC")
+    with pytest.raises(ValueError, match="timezone-aware"):
+        session_ohlc(naive_bars, "00:00", "01:00", session_tz="UTC")
+    with pytest.raises(ValueError, match="timezone-aware"):
+        prior_period_high_low(naive_bars, "D", tz="UTC")
+    with pytest.raises(ValueError, match="timezone-aware"):
+        previous_labeled_session_ohlc(naive_bars, {}, session_tz="UTC")
+    with pytest.raises(ValueError, match="unsupported source clock model"):
+        session_mask(
+            pd.DatetimeIndex(aware_bars.index),
+            "00:00",
+            "01:00",
+            session_tz="UTC",
+            source_clock_model="unknown",
+        )
+    with pytest.raises(ValueError, match="unsupported freq"):
+        prior_period_high_low(aware_bars, "M", tz="UTC")
+    with pytest.raises(ValueError, match="bar_minutes must be positive"):
+        previous_labeled_session_ohlc(aware_bars, {}, session_tz="UTC", bar_minutes=0)
+
+
+def test_prev_ny_high_low_is_nan_when_input_has_no_session_bars() -> None:
+    idx = pd.date_range("2026-01-05 00:00", periods=3, freq="min", tz="UTC")
+    bars = pd.DataFrame({"high": 2.0, "low": 1.0}, index=idx)
+
+    result = prev_ny_high_low(
+        bars,
+        start_ct="08:30",
+        end_ct="15:00",
+        session_tz="UTC",
+    )
+
+    assert result.isna().all().all()
+
+
+def test_prev_ny_high_low_assigns_overnight_session_at_next_day_close() -> None:
+    idx = pd.date_range("2026-01-05 21:00", periods=7, freq="h", tz="UTC")
+    bars = pd.DataFrame(
+        {
+            "high": [3.0, 12.0, 16.0, 18.0, 17.0, 4.0, 5.0],
+            "low": [2.0, 9.0, 13.0, 14.0, 11.0, 1.0, 2.0],
+        },
+        index=idx,
+    )
+
+    result = prev_ny_high_low(
+        bars,
+        start_ct="22:00",
+        end_ct="02:00",
+        session_tz="UTC",
+    )
+
+    assert result.loc[idx[4]].isna().all()
+    assert result.loc[idx[5]].to_dict() == {"prev_ny_high": 18.0, "prev_ny_low": 9.0}
+
+
+def test_previous_labeled_session_skips_complete_session_with_nonfinite_range() -> None:
+    idx = pd.date_range("2026-01-05 21:00", periods=7, freq="h", tz="UTC")
+    bars = pd.DataFrame(
+        {
+            "high": [3.0, np.inf, np.inf, np.inf, np.inf, 4.0, 5.0],
+            "low": [2.0, 9.0, 13.0, 14.0, 11.0, 1.0, 2.0],
+        },
+        index=idx,
+    )
+
+    result = previous_labeled_session_ohlc(
+        bars,
+        {"overnight": {"start": "22:00", "end": "02:00"}},
+        session_tz="UTC",
+        bar_minutes=60,
+    )
+
+    assert result["previous_session_code"].eq(0.0).all()
+    assert result["previous_session_high"].isna().all()

@@ -405,7 +405,8 @@ def previous_labeled_session_ohlc(
             start_local = pd.Timestamp.combine(session_date, start_t).tz_localize(
                 session_tz, nonexistent="shift_forward", ambiguous="raise"
             )
-            close_local = pd.Timestamp.combine(session_date, end_t).tz_localize(session_tz)
+            close_date = session_date + dt.timedelta(days=1) if start_t > end_t else session_date
+            close_local = pd.Timestamp.combine(close_date, end_t).tz_localize(session_tz)
             expected_last = close_local - pd.Timedelta(minutes=bar_minutes)
             last_bar = reference_index[rows[-1]]
             expected_count = int(

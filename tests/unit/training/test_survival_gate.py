@@ -9,7 +9,10 @@ from omegaconf import OmegaConf
 
 from configuration import load_config
 from decisioning.observations import OBSERVATION_SCHEMA_V2, build_observation_schema
-from decisioning.trade_setup import trade_setup_observation_schema
+from decisioning.trade_setup import (
+    candidate_geometry_observation_schema,
+    trade_setup_observation_schema,
+)
 from evaluation.reporting.run_manifest import build_sequence_feature_schema, file_sha256
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 from training.artifacts.manifests import build_effective_policy_input_schema
@@ -18,11 +21,19 @@ from training.artifacts.walk_forward import (
     fold_identity_sha256,
 )
 from training.configuration.survival_gate import (
+    SURVIVAL_DATA_TIMEFRAMES,
+    SURVIVAL_HIGHER_TIMEFRAMES,
     _complete_breach_free_path,
     _has_full_split_cap_conflict,
+    _has_training_abort_conflict,
+    _read_json,
+    _survival_account_contract_error,
     _survival_candidate_schema_error,
+    _survival_candidate_timeframes,
+    _survival_observation_schema_error,
     _survival_policy_sequence_schema_error,
     _survival_timeframe_contract_error,
+    _validate_qualification_manifest,
     build_survival_gate,
     survival_config_identity,
     validate_portfolio_data,
@@ -36,6 +47,244 @@ def _survival_sequence_columns() -> list[str]:
         "reachable_r_valid",
         *[column for _, column in trade_setup_candidate_feature_columns()],
     ]
+
+
+def test_survival_account_contract_accepts_exact_static_limits() -> None:
+    cfg = {
+        "account": {"initial_balance": 100_000},
+        "ftmo": {
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.10,
+            "risk_per_trade_limit_pct": 0.01,
+            "risk_sizing_limit_usd": 900,
+            "limit_value_mode": " Percent_Equity ",
+            "max_drawdown_mode": "STATIC",
+            "risk_per_trade_limit": 900,
+        },
+    }
+
+    assert _survival_account_contract_error(cfg) is None
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("limit_value_mode", "usd"),
+        ("max_drawdown_mode", "trailing"),
+        ("risk_per_trade_limit", None),
+    ],
+)
+def test_survival_account_contract_reports_each_mode_and_hard_cap_mismatch(
+    field: str, value: object
+) -> None:
+    cfg = {
+        "account": {"initial_balance": 100_000},
+        "ftmo": {
+            "daily_loss_limit_pct": 0.05,
+            "max_loss_limit_initial_pct": 0.10,
+            "risk_per_trade_limit_pct": 0.01,
+            "risk_sizing_limit_usd": 900,
+            "limit_value_mode": "percent_equity",
+            "max_drawdown_mode": "static",
+            "risk_per_trade_limit": 900,
+            field: value,
+        },
+    }
+
+    assert _survival_account_contract_error(cfg) is not None
+
+
+@pytest.mark.parametrize(
+    "cfg",
+    [
+        None,
+        {"account": [], "ftmo": {}},
+        {
+            "account": {"initial_balance": True},
+            "ftmo": {
+                "daily_loss_limit_pct": 0.05,
+                "max_loss_limit_initial_pct": 0.10,
+                "risk_per_trade_limit_pct": 0.01,
+                "risk_sizing_limit_usd": 900,
+                "limit_value_mode": "percent_equity",
+                "max_drawdown_mode": "static",
+                "risk_per_trade_limit": 899,
+            },
+        },
+    ],
+)
+def test_survival_account_contract_reports_malformed_mappings_and_limits(cfg: object) -> None:
+    error = _survival_account_contract_error(cfg)
+
+    assert error is not None
+    assert "survival qualification" in error
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (SURVIVAL_DATA_TIMEFRAMES, SURVIVAL_DATA_TIMEFRAMES),
+        (("m1",), ("M1",)),
+        ("M1", None),
+        ((), None),
+        (("M1", "M1"), None),
+        (("M1", "M5"), None),
+    ],
+)
+def test_survival_candidate_timeframes_are_canonical(raw: object, expected: object) -> None:
+    assert (
+        _survival_candidate_timeframes({"env": {"trade_setup_candidate_timeframes": raw}})
+        == expected
+    )
+
+
+def test_survival_timeframe_contract_accepts_full_aligned_ladder() -> None:
+    cfg = {
+        "data": {"timeframes": SURVIVAL_DATA_TIMEFRAMES},
+        "features": {
+            "htf_timeframes": SURVIVAL_HIGHER_TIMEFRAMES,
+            "entry_ideas": {
+                "enabled": True,
+                "timeframes": SURVIVAL_DATA_TIMEFRAMES,
+            },
+        },
+        "risk": {"target_timeframes": SURVIVAL_HIGHER_TIMEFRAMES},
+        "env": {"trade_setup_candidate_timeframes": SURVIVAL_DATA_TIMEFRAMES},
+    }
+
+    assert _survival_timeframe_contract_error(cfg) is None
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("data.timeframes", "M1", "data.timeframes"),
+        ("features.htf_timeframes", None, "features.htf_timeframes"),
+        ("risk.target_timeframes", {"M3": "M3"}, "risk.target_timeframes"),
+        ("features.entry_ideas.timeframes", None, "entry_ideas.timeframes"),
+    ],
+)
+def test_survival_timeframe_contract_rejects_non_sequence_settings(
+    field: str, value: object, message: str
+) -> None:
+    cfg = _cfg()
+    OmegaConf.update(cfg, field, value, merge=False)
+
+    error = _survival_timeframe_contract_error(cfg)
+
+    assert error is not None
+    assert message in error
+
+
+def test_survival_timeframe_contract_rejects_non_mapping_and_disabled_eligibility() -> None:
+    assert "requires data, features, and risk mappings" in str(
+        _survival_timeframe_contract_error(
+            {"data": [], "features": {"entry_ideas": []}, "risk": {}}
+        )
+    )
+    cfg = _cfg()
+    cfg.features.entry_ideas.enabled = False
+
+    error = _survival_timeframe_contract_error(cfg)
+
+    assert error is not None
+    assert "entry_ideas.enabled=true" in error
+
+
+@pytest.mark.parametrize(
+    ("setting", "value", "message"),
+    [
+        ("observation_schema_version", "account-state-v1", "observation_schema_version"),
+        ("feature_validity_channels", False, "feature_validity_channels=true"),
+        ("reachable_r_validity_mask", False, "reachable_r_validity_mask=true"),
+    ],
+)
+def test_survival_observation_contract_rejects_missing_policy_inputs(
+    setting: str, value: object, message: str
+) -> None:
+    cfg = _cfg()
+    cfg.env[setting] = value
+
+    error = _survival_observation_schema_error(cfg)
+
+    assert error is not None
+    assert message in error
+
+
+@pytest.mark.parametrize("early_abort", [None, {"enabled": False}])
+def test_training_abort_conflict_allows_absent_or_disabled_rules(early_abort: object) -> None:
+    assert not _has_training_abort_conflict({"training": {"early_abort": early_abort}})
+
+
+@pytest.mark.parametrize(
+    ("early_abort", "expected"),
+    [
+        ("invalid", True),
+        (False, True),
+        ({"enabled": True, "stop_on_no_trades": True}, True),
+        ({"enabled": True, "stop_on_equity_gate": True}, True),
+        ({"enabled": True}, False),
+    ],
+)
+def test_training_abort_conflict_detects_enabled_early_stops(
+    early_abort: object, expected: bool
+) -> None:
+    assert _has_training_abort_conflict({"training": {"early_abort": early_abort}}) is expected
+
+
+def test_qualification_manifest_rejects_seed_mismatch_before_other_metadata() -> None:
+    with pytest.raises(ValueError, match="seed does not match"):
+        _validate_qualification_manifest(manifest={"seed": 41}, cfg={}, args=Namespace(), seed=42)
+
+
+def test_qualification_manifest_rejects_non_object_training_protocol() -> None:
+    with pytest.raises(ValueError, match="training protocol must be an object"):
+        _validate_qualification_manifest(
+            manifest={"seed": 42, "training_protocol": []},
+            cfg={},
+            args=Namespace(),
+            seed=42,
+        )
+
+
+def test_read_json_rejects_non_object_provenance(tmp_path: Path) -> None:
+    path = tmp_path / "manifest.json"
+    path.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="expected JSON object"):
+        _read_json(path)
+
+
+@pytest.mark.parametrize(
+    ("gate", "datasets", "cache_hash", "message"),
+    [
+        ({"evidence": []}, {}, "abc", "no per-seed data evidence"),
+        (
+            {"evidence": [{"datasets": {"bars": "a"}, "feature_cache_hash": "abc"}]},
+            {"bars": "b"},
+            "abc",
+            "datasets differ",
+        ),
+        (
+            {"evidence": [{"datasets": {"bars": "a"}, "feature_cache_hash": "abc"}]},
+            {"bars": "a"},
+            "different",
+            "feature cache differs",
+        ),
+    ],
+)
+def test_portfolio_data_rejects_missing_or_changed_qualified_inputs(
+    tmp_path: Path,
+    gate: dict[str, object],
+    datasets: dict[str, str],
+    cache_hash: str,
+    message: str,
+) -> None:
+    cache = tmp_path / "features.parquet"
+    Path(f"{cache}.hash").write_text(cache_hash, encoding="utf-8")
+
+    with pytest.raises(SystemExit, match=message):
+        validate_portfolio_data(gate=gate, dataset_records=datasets, feat_cache=cache)
 
 
 @pytest.mark.parametrize(
@@ -231,6 +480,136 @@ def test_portfolio_training_requires_a_survival_gate() -> None:
             cfg=_cfg(reward_mode="dsr"),
             args=Namespace(algo="ppo", arch="tcn", strategy="baseline", seed=1, seeds=None),
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("schema_version", True, "not a passing six-seed gate"),
+        ("walk_forward_splits", True, "not a passing six-seed gate"),
+        ("minimum_seed_count", True, "not a passing six-seed gate"),
+        ("seeds", [42, 43, 44, 45, 46, True], "seed list must contain integer seeds"),
+        ("evidence", ["not-an-object"], "evidence entries must be objects"),
+        ("evidence", [{"seed": True}], "evidence must contain integer seeds"),
+        ("seeds", [42, 43, 44, 45, 46, 46], "seed list or evidence contains duplicates"),
+    ],
+)
+def test_portfolio_gate_rejects_malformed_seed_and_fold_metadata(
+    tmp_path: Path, field: str, value: object, message: str
+) -> None:
+    gate = {
+        "schema_version": 1,
+        "priority": "survival_before_portfolio_optimization",
+        "status": "pass",
+        "seeds": [42, 43, 44, 45, 46, 47],
+        "evidence": [{"seed": seed} for seed in (42, 43, 44, 45, 46, 47)],
+        "walk_forward_splits": 5,
+        "minimum_seed_count": 6,
+        "minimum_walk_forward_splits": 5,
+    }
+    gate[field] = value
+    gate_path = tmp_path / "survival-gate.json"
+    gate_path.write_text(json.dumps(gate), encoding="utf-8")
+    cfg = _cfg(reward_mode="dsr", gate=str(gate_path))
+    args = Namespace(
+        algo="ppo",
+        arch="tcn",
+        strategy="baseline",
+        reward="dsr",
+        resume_checkpoint=str(tmp_path / "checkpoint.zip"),
+        seed=42,
+        seeds=[42],
+        allow_locked_oos_for_selection=False,
+    )
+
+    with pytest.raises(SystemExit, match=message):
+        validate_portfolio_gate(cfg=cfg, args=args)
+
+
+@pytest.mark.parametrize(
+    ("target", "name", "value", "message"),
+    [
+        ("args", "mvp", True, "full-split training"),
+        ("args", "walk_forward", False, "full-split training"),
+        ("args", "wf_splits", 4, "at least five"),
+        ("args", "allow_locked_oos_for_selection", True, "cannot select using exposed"),
+        ("config", "constrained_rl.enabled", True, "scalarized Q5 rewards"),
+        ("config", "ppo.gamma", 0.99, "PPO gamma=1"),
+        ("config", "ppo.gae_lambda", 0.95, "PPO gamma=1"),
+        ("args", "algo", "a2c", "does not support 'a2c'"),
+        ("args", "seeds", [42, 43], "requires 6 unique seeds"),
+        ("args", "seeds", [42, 43, 44, 45, 46, 46], "requires 6 unique seeds"),
+    ],
+)
+def test_survival_qualification_rejects_incompatible_training_requests(
+    target: str, name: str, value: object, message: str
+) -> None:
+    cfg = _cfg()
+    args = Namespace(
+        algo="ppo",
+        arch="tcn",
+        strategy="baseline",
+        reward="dsr",
+        walk_forward=True,
+        wf_splits=5,
+        mvp=False,
+        allow_locked_oos_for_selection=False,
+        seed=42,
+        seeds=[42, 43, 44, 45, 46, 47],
+    )
+    if target == "args":
+        setattr(args, name, value)
+    else:
+        OmegaConf.update(cfg, name, value, force_add=True)
+
+    with pytest.raises(SystemExit, match=message):
+        validate_portfolio_gate(cfg=cfg, args=args)
+
+
+@pytest.mark.parametrize(
+    ("target", "name", "value", "message"),
+    [
+        (
+            "config",
+            "env.strict_research_eligibility",
+            False,
+            "requires env.strict_research_eligibility",
+        ),
+        (
+            "config",
+            "training.early_abort",
+            {"enabled": True, "stop_on_no_trades": True},
+            "activity or equity-gate early aborts",
+        ),
+        ("args", "algo", "a2c", "requires an SB3 resume"),
+        ("args", "resume_checkpoint", None, "requires an SB3 resume"),
+        ("args", "seeds", [42, 43], "exactly one seed"),
+        ("args", "allow_locked_oos_for_selection", True, "cannot select using exposed"),
+    ],
+)
+def test_portfolio_phase_rejects_unqualified_resume_options(
+    tmp_path: Path, target: str, name: str, value: object, message: str
+) -> None:
+    cfg = _cfg(reward_mode="dsr", gate=str(tmp_path / "not-read-until-preflight.json"))
+    args = Namespace(
+        algo="ppo",
+        arch="tcn",
+        strategy="baseline",
+        reward="dsr",
+        walk_forward=True,
+        wf_splits=5,
+        seed=42,
+        seeds=[42],
+        resume_checkpoint="checkpoint.zip",
+        allow_locked_oos_for_selection=False,
+    )
+    if target == "args":
+        setattr(args, name, value)
+    else:
+        OmegaConf.update(cfg, name, value, force_add=True)
+
+    with pytest.raises(SystemExit, match=message):
+        validate_portfolio_gate(cfg=cfg, args=args)
 
 
 @pytest.mark.parametrize(
@@ -446,6 +825,64 @@ def test_survival_candidate_mask_schema_matches_a_bc_scope_and_history(
     assert "effective policy input schema" in error
 
 
+def test_survival_candidate_schema_validates_geometry_arm_and_typed_flags() -> None:
+    cfg = _cfg()
+    cfg.env.trade_setup_actions = True
+    cfg.env.candidate_geometry_actions = True
+    cfg.env.trade_setup_candidate_timeframes = ["M1"]
+    cfg.env.completed_htf_history_enabled = False
+    cfg.features.entry_ideas.timeframes = ["M1"]
+    sequence_columns = ["close", "reachable_r", "reachable_r_valid"]
+    observation_schema = build_observation_schema(OBSERVATION_SCHEMA_V2).to_dict()
+    observation_schema["effective_policy_input_schema"] = build_effective_policy_input_schema(
+        sequence_columns,
+        trade_setup_actions=True,
+        completed_htf_history_enabled=False,
+        validity_channels=True,
+        runtime_arch="tcn",
+    )
+    observation_schema["trade_setup_observation"] = trade_setup_observation_schema(
+        ["M1"], completed_htf_history_enabled=False
+    )
+    observation_schema["candidate_geometry_observation"] = candidate_geometry_observation_schema(
+        ["M1"], completed_htf_history_enabled=False
+    )
+
+    assert (
+        _survival_candidate_schema_error(cfg, observation_schema, sequence_columns, "tcn") is None
+    )
+
+    missing_geometry = json.loads(json.dumps(observation_schema))
+    missing_geometry["candidate_geometry_observation"] = None
+    error = _survival_candidate_schema_error(cfg, missing_geometry, sequence_columns, "tcn")
+    assert error is not None
+    assert "candidate-geometry mask schema" in error
+
+    cfg.env.candidate_geometry_actions = 1
+    error = _survival_candidate_schema_error(cfg, observation_schema, sequence_columns, "tcn")
+    assert error is not None
+    assert "settings must be boolean" in error
+
+
+@pytest.mark.parametrize(
+    ("scope", "schema", "message"),
+    [
+        (["M1", "M5"], {}, "unsupported candidate timeframe scope"),
+        (["M1"], None, "lacks the configured candidate observation schema"),
+    ],
+)
+def test_survival_candidate_schema_rejects_unsupported_scope_and_missing_observation(
+    scope: list[str], schema: object, message: str
+) -> None:
+    cfg = _cfg()
+    cfg.env.trade_setup_candidate_timeframes = scope
+
+    error = _survival_candidate_schema_error(cfg, schema, ["close"], "tcn")
+
+    assert error is not None
+    assert message in error
+
+
 def test_survival_policy_sequence_schema_separates_candidate_masks() -> None:
     cfg = _cfg()
     cfg.env.trade_setup_actions = True
@@ -466,6 +903,24 @@ def test_survival_policy_sequence_schema_separates_candidate_masks() -> None:
     error = _survival_policy_sequence_schema_error(cfg, columns)
     assert error is not None
     assert "omits configured timeframe-specific setup eligibility" in error
+
+
+def test_survival_policy_sequence_schema_rejects_out_of_scope_setup_features() -> None:
+    cfg = _cfg()
+    cfg.env.trade_setup_actions = False
+    cfg.env.trade_setup_candidate_timeframes = ["M1"]
+    cfg.features.entry_ideas.timeframes = ["M1"]
+    columns = [
+        "reachable_r",
+        "reachable_r_valid",
+        *[name for _, name in trade_setup_candidate_feature_columns() if "_M1_" in name],
+        "entry_idea_po3_M3_long",
+    ]
+
+    error = _survival_policy_sequence_schema_error(cfg, columns)
+
+    assert error is not None
+    assert "outside the configured candidate timeframe scope" in error
 
 
 def test_survival_training_requires_setup_eligibility_features_enabled(tmp_path: Path) -> None:

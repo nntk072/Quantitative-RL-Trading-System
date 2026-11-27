@@ -12,7 +12,7 @@ This page contains 14 public callable records owned by `evaluation.metrics.perfo
 
 **Observed usage:**
 
-1. [production caller: `compute_metrics`](../../../../evaluation/metrics/performance.py#L722)
+1. [production caller: `compute_metrics`](../../../../evaluation/metrics/performance.py#L732)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -65,7 +65,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return only complete, typed account-path evidence for metric calculation.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.account_path_metric_inputs` · **Source:** [evaluation/metrics/performance.py:785](../../../../evaluation/metrics/performance.py#L785)
+**Exact API:** {py:obj}`evaluation.metrics.performance.account_path_metric_inputs` · **Source:** [evaluation/metrics/performance.py:795](../../../../evaluation/metrics/performance.py#L795)
 
 **Inputs and outputs:**
 
@@ -106,7 +106,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Pandas-friendly adapter matching the legacy ``eval.metrics`` signature.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.calculate_metrics` · **Source:** [evaluation/metrics/performance.py:814](../../../../evaluation/metrics/performance.py#L814)
+**Exact API:** {py:obj}`evaluation.metrics.performance.calculate_metrics` · **Source:** [evaluation/metrics/performance.py:824](../../../../evaluation/metrics/performance.py#L824)
 
 **Inputs and outputs:**
 
@@ -172,7 +172,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Compute the standard metric set for one evaluation run.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.compute_metrics` · **Source:** [evaluation/metrics/performance.py:553](../../../../evaluation/metrics/performance.py#L553)
+**Exact API:** {py:obj}`evaluation.metrics.performance.compute_metrics` · **Source:** [evaluation/metrics/performance.py:563](../../../../evaluation/metrics/performance.py#L563)
 
 **Inputs and outputs:**
 
@@ -238,7 +238,7 @@ print(
 )
 ```
 
-2. [production caller: `calculate_metrics`](../../../../evaluation/metrics/performance.py#L888)
+2. [production caller: `calculate_metrics`](../../../../evaluation/metrics/performance.py#L898)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -279,7 +279,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Resolve annualization basis, preserving legacy M1 values for old configs.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.evaluation_periods_per_year` · **Source:** [evaluation/metrics/performance.py:759](../../../../evaluation/metrics/performance.py#L759)
+**Exact API:** {py:obj}`evaluation.metrics.performance.evaluation_periods_per_year` · **Source:** [evaluation/metrics/performance.py:769](../../../../evaluation/metrics/performance.py#L769)
 
 **Inputs and outputs:**
 
@@ -328,7 +328,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return peak-to-trough decline as a positive fraction.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.max_drawdown` · **Source:** [evaluation/metrics/performance.py:450](../../../../evaluation/metrics/performance.py#L450)
+**Exact API:** {py:obj}`evaluation.metrics.performance.max_drawdown` · **Source:** [evaluation/metrics/performance.py:460](../../../../evaluation/metrics/performance.py#L460)
 
 **Inputs and outputs:**
 
@@ -465,7 +465,7 @@ def build_run_report(
 
 **Observed usage:**
 
-1. [production caller: `compute_metrics`](../../../../evaluation/metrics/performance.py#L722)
+1. [production caller: `compute_metrics`](../../../../evaluation/metrics/performance.py#L732)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -518,7 +518,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return only complete, typed account-path evidence for metric calculation.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.account_path_metric_inputs` · **Source:** [evaluation/metrics/performance.py:785](../../../../evaluation/metrics/performance.py#L785)
+**Exact API:** {py:obj}`evaluation.metrics.performance.account_path_metric_inputs` · **Source:** [evaluation/metrics/performance.py:795](../../../../evaluation/metrics/performance.py#L795)
 
 **Inputs and outputs:**
 
@@ -559,7 +559,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Pandas-friendly adapter matching the legacy ``eval.metrics`` signature.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.calculate_metrics` · **Source:** [evaluation/metrics/performance.py:814](../../../../evaluation/metrics/performance.py#L814)
+**Exact API:** {py:obj}`evaluation.metrics.performance.calculate_metrics` · **Source:** [evaluation/metrics/performance.py:824](../../../../evaluation/metrics/performance.py#L824)
 
 **Inputs and outputs:**
 
@@ -625,7 +625,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Compute the standard metric set for one evaluation run.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.compute_metrics` · **Source:** [evaluation/metrics/performance.py:553](../../../../evaluation/metrics/performance.py#L553)
+**Exact API:** {py:obj}`evaluation.metrics.performance.compute_metrics` · **Source:** [evaluation/metrics/performance.py:563](../../../../evaluation/metrics/performance.py#L563)
 
 **Inputs and outputs:**
 
@@ -691,7 +691,7 @@ print(
 )
 ```
 
-2. [production caller: `calculate_metrics`](../../../../evaluation/metrics/performance.py#L888)
+2. [production caller: `calculate_metrics`](../../../../evaluation/metrics/performance.py#L898)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -732,7 +732,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Resolve annualization basis, preserving legacy M1 values for old configs.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.evaluation_periods_per_year` · **Source:** [evaluation/metrics/performance.py:759](../../../../evaluation/metrics/performance.py#L759)
+**Exact API:** {py:obj}`evaluation.metrics.performance.evaluation_periods_per_year` · **Source:** [evaluation/metrics/performance.py:769](../../../../evaluation/metrics/performance.py#L769)
 
 **Inputs and outputs:**
 
@@ -781,7 +781,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Return peak-to-trough decline as a positive fraction.
 
-**Exact API:** {py:obj}`evaluation.metrics.performance.max_drawdown` · **Source:** [evaluation/metrics/performance.py:450](../../../../evaluation/metrics/performance.py#L450)
+**Exact API:** {py:obj}`evaluation.metrics.performance.max_drawdown` · **Source:** [evaluation/metrics/performance.py:460](../../../../evaluation/metrics/performance.py#L460)
 
 **Inputs and outputs:**
 

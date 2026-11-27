@@ -340,6 +340,16 @@ def _account_path_metrics(
     if not groups:
         return empty
 
+    if any(
+        (number(rows[0].get("session_start_equity")) or 0.0)
+        + (number(rows[0].get("cumulative_payouts")) or 0.0)
+        <= 0.0
+        or (number(rows[-1].get("equity")) or 0.0)
+        + (number(rows[-1].get("cumulative_payouts")) or 0.0)
+        <= 0.0
+        for _, rows in groups
+    ):
+        return empty
     empty["time_to_ruin_availability"] = "breach_event_history_unavailable"
 
     # A payout first observed at the next session boundary has ambiguous daily

@@ -89,12 +89,13 @@ def test_make_indexed_policy_ignores_obs_argument() -> None:
     assert policy(sentinel_obs) == 1  # still actions.iloc[4]
 
 
-def test_main_development_ema_flow_uses_training_data_and_forwards_cli_settings(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("development_only", [True, False])
+def test_main_ema_flow_uses_only_configured_splits_and_forwards_cli_settings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, development_only: bool
 ) -> None:
     cfg = OmegaConf.create(
         {
-            "evaluation": {"development_only": True},
+            "evaluation": {"development_only": development_only},
             "data": {
                 "primary": "PRIMARY",
                 "secondary": "SECONDARY",
@@ -127,6 +128,8 @@ def test_main_development_ema_flow_uses_training_data_and_forwards_cli_settings(
     )
     bars = _make_bars(6)
     features = pd.DataFrame({"close": bars["close"]}, index=bars.index)
+    report_bars = bars.iloc[-2:]
+    report_features = features.iloc[-2:]
     actions = pd.Series([0, 0, -1, 1, 0, 0], index=bars.index, dtype=int)
     captured: dict[str, Any] = {"backtests": []}
 
@@ -156,7 +159,7 @@ def test_main_development_ema_flow_uses_training_data_and_forwards_cli_settings(
         *args: object,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         captured["split_inputs"] = (bar_data, feature_data, args)
-        return bar_data, bar_data.iloc[:0], feature_data, feature_data.iloc[:0]
+        return bar_data.iloc[:-2], report_bars, feature_data.iloc[:-2], report_features
 
     def fake_run_backtest(**kwargs: Any) -> dict[str, object]:
         policy = kwargs["policy"]
@@ -216,14 +219,23 @@ def test_main_development_ema_flow_uses_training_data_and_forwards_cli_settings(
 
     assert seeded == [19]
     assert captured["overrides"] == ["sentinel.override=true"]
-    assert captured["pipeline"] == (cfg, True, "2025-01-03")
-    assert len(captured["backtests"]) == 1
+    assert captured["pipeline"] == (
+        cfg,
+        True,
+        "2025-01-03" if development_only else None,
+    )
+    assert len(captured["backtests"]) == (1 if development_only else 2)
     backtest_kwargs, first_action = captured["backtests"][0]
     assert first_action == -1  # EMA action at the configured observation window.
     assert backtest_kwargs["hold_on_zero"] is False
     assert backtest_kwargs["exit_action"] is None
     assert backtest_kwargs["daily_pnl_basis"] == "utc"
     assert backtest_kwargs["use_structure_sl_tp"] is False
+    if not development_only:
+        report_kwargs, report_action = captured["backtests"][1]
+        assert report_kwargs["bars"] is report_bars
+        assert report_kwargs["features"] is report_features
+        assert report_action == -1
 
 
 def test_main_rejects_policy_without_daily_pnl_basis_before_loading_market_data(
@@ -248,3 +260,95 @@ def test_main_rejects_policy_without_daily_pnl_basis_before_loading_market_data(
         baselines.main()
 
     assert called is False
+
+
+def test_main_uses_registered_policy_and_defaults_when_optional_inputs_are_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cfg = OmegaConf.create(
+        {
+            "evaluation": {"development_only": True},
+            "data": {
+                "primary": "PRIMARY",
+                "secondary": "SECONDARY",
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "UTC",
+                "timestamp_clock": "native",
+            },
+            "env": {"eod_risk": {}, "sl_buffer_pts": 0.0, "obs_window": 1},
+            "ppo": {"ent_coef": 0.0},
+            "account": {"initial_balance": 100_000.0, "contract_size": 1.0},
+            "risk": {
+                "max_lot": 10.0,
+                "min_lot": 0.01,
+                "lot_step": 0.01,
+                "sl_mode": "fixed",
+            },
+            "costs": {"use_tick_execution": False},
+            "execution": {},
+            "session": {"tz": "UTC"},
+            "trading_policy": {"daily_loss_reset_source": "utc_midnight"},
+        }
+    )
+    bars = _make_bars(4)
+    features = pd.DataFrame({"close": bars["close"]}, index=bars.index)
+    calls: list[dict[str, Any]] = []
+
+    def fake_backtest(**kwargs: Any) -> dict[str, object]:
+        calls.append(kwargs)
+        assert kwargs["policy"](np.zeros((1, 1), dtype=np.float32)) == 7
+        return {"equity": pd.Series([100_000.0]), "trades": pd.DataFrame()}
+
+    monkeypatch.setattr(baselines, "STRATEGIES", {"registered": lambda _obs: 7})
+    monkeypatch.setattr(baselines, "load_config", lambda _overrides: cfg)
+    monkeypatch.setattr(
+        baselines, "resolve_trading_policy", lambda _cfg: SimpleNamespace(daily_pnl_basis="utc")
+    )
+    monkeypatch.setattr(baselines, "get_split_config", lambda _cfg: ("2025-01-03", "2025-01-04"))
+    monkeypatch.setattr(baselines, "get_train_start_config", lambda _cfg: "2025-01-02")
+    monkeypatch.setattr(
+        baselines,
+        "run_pipeline",
+        lambda *_args, **_kwargs: {"PRIMARY": {"M1": bars}},
+    )
+    monkeypatch.setattr(
+        baselines, "split_bars", lambda data, *_args, **_kwargs: (data, data.iloc[:0])
+    )
+    monkeypatch.setattr(
+        baselines, "build_split_scoped_features", lambda *_args, **_kwargs: features
+    )
+    monkeypatch.setattr(
+        baselines,
+        "split_train_test",
+        lambda bar_data, feature_data, *_args: (
+            bar_data,
+            bar_data.iloc[:0],
+            feature_data,
+            feature_data.iloc[:0],
+        ),
+    )
+    monkeypatch.setattr(baselines, "build_tick_books", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr(baselines, "cost_model", lambda _cfg: "cost-model")
+    monkeypatch.setattr(baselines, "eval_guardrail_kwargs", lambda _cfg: {})
+    monkeypatch.setattr(baselines, "run_backtest", fake_backtest)
+    monkeypatch.setattr(
+        baselines,
+        "calculate_metrics",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            sharpe=0.0, max_drawdown=0.0, n_trades=0, total_return_pct=0.0
+        ),
+    )
+    monkeypatch.setattr(baselines, "account_path_metric_inputs", lambda _result: {})
+    monkeypatch.setattr(
+        baselines, "save_run", lambda **_kwargs: pytest.fail("--no-save must skip save")
+    )
+    monkeypatch.setattr(sys, "argv", ["baselines", "--strategy", "registered", "--no-save"])
+
+    baselines.main()
+
+    assert len(calls) == 1
+    assert calls[0]["tickbook"] is None
+    assert calls[0]["max_loss_per_trade_usd"] is None
+    assert calls[0]["risk_frac"] == 0.01
+    assert calls[0]["rr_ratio"] == 2.0
+    assert calls[0]["swing_buffer_pts"] == 1.0
