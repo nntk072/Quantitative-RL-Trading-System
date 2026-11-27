@@ -114,7 +114,15 @@ class FeatureBlockInputs:
 
 
 def _single(table: pa.Table, name: str) -> str:
-    """Return the one value of a per-row identity column, failing on zero or several values."""
+    """Return the one value of a per-row identity column, failing on zero or several values.
+
+    Args:
+        table: Arrow table with the identity column.
+        name: Column name.
+
+    Returns:
+        The single value of the column.
+    """
     values = set(table.column(name).to_pylist())
     if len(values) != 1:
         raise ValueError(f"table must carry exactly one {name}, found {sorted(map(str, values))!r}")
@@ -123,7 +131,15 @@ def _single(table: pa.Table, name: str) -> str:
 
 
 def _non_null(table: pa.Table, name: str) -> pa.ChunkedArray:
-    """Return a column that the schema declares non-nullable, failing on any null."""
+    """Return a column that the schema declares non-nullable, failing on any null.
+
+    Args:
+        table: Arrow table that holds the column.
+        name: Column name.
+
+    Returns:
+        The non-nullable column.
+    """
     column = table.column(name)
     if column.null_count:
         raise ValueError(f"column {name!r} is not nullable but has {column.null_count} null(s)")
@@ -131,19 +147,43 @@ def _non_null(table: pa.Table, name: str) -> pa.ChunkedArray:
 
 
 def _ns(table: pa.Table, name: str) -> np.ndarray[Any, Any]:
-    """Return a non-nullable timestamp column as contiguous int64 nanoseconds."""
+    """Return a non-nullable timestamp column as contiguous int64 nanoseconds.
+
+    Args:
+        table: Arrow table that holds the column.
+        name: Column name.
+
+    Returns:
+        Contiguous int64 nanosecond timestamps.
+    """
     return np.ascontiguousarray(_non_null(table, name).cast(pa.int64()).to_numpy(), dtype=np.int64)
 
 
 def _int64(table: pa.Table, name: str) -> np.ndarray[Any, Any]:
-    """Return a non-nullable integer column as contiguous int64."""
+    """Return a non-nullable integer column as contiguous int64.
+
+    Args:
+        table: Arrow table that holds the column.
+        name: Column name.
+
+    Returns:
+        Contiguous int64 values.
+    """
     return np.ascontiguousarray(_non_null(table, name).to_numpy(), dtype=np.int64)
 
 
 def _nullable_float(
     table: pa.Table, name: str
 ) -> tuple[np.ndarray[Any, Any], np.ndarray[Any, Any]]:
-    """Return values with NaN at nulls, and the uint8 validity array (1 = present)."""
+    """Return float64 values with NaN at nulls, and a uint8 validity array.
+
+    Args:
+        table: Arrow table that holds the column.
+        name: Column name.
+
+    Returns:
+        Values with NaN at nulls, and a validity array (1 = present).
+    """
     column = table.column(name)
     valid = ~column.is_null().to_numpy(zero_copy_only=False)
     raw = column.to_numpy(zero_copy_only=False).astype(np.float64)
@@ -152,7 +192,15 @@ def _nullable_float(
 
 
 def _float(table: pa.Table, name: str) -> np.ndarray[Any, Any]:
-    """Return a non-nullable float column as contiguous float64."""
+    """Return a non-nullable float column as contiguous float64.
+
+    Args:
+        table: Arrow table that holds the column.
+        name: Column name.
+
+    Returns:
+        Contiguous float64 values.
+    """
     return np.ascontiguousarray(_non_null(table, name).to_numpy(), dtype=np.float64)
 
 
