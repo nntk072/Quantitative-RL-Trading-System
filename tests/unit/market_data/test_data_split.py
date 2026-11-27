@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from omegaconf import OmegaConf
 
 from market_data.splits.definitions import (
     get_split_config,
+    get_train_start_config,
+    inclusive_date_exclusive_end,
     make_train_mask,
     split_bars,
     split_train_test,
@@ -118,6 +121,35 @@ def test_split_bars_matches_split_train_test() -> None:
     assert te.index.equals(te_b.index)
 
 
+def test_inclusive_date_exclusive_end_uses_local_calendar_midnight() -> None:
+    end = inclusive_date_exclusive_end("2025-03-09", "America/New_York")
+
+    assert end == pd.Timestamp("2025-03-10 00:00:00", tz="America/New_York")
+    assert end - pd.Timestamp("2025-03-09 00:00:00", tz="America/New_York") == pd.Timedelta(
+        hours=23
+    )
+
+
+def test_inclusive_date_end_interprets_ftmo_source_clock() -> None:
+    end = inclusive_date_exclusive_end(
+        "2025-07-01", "Etc/GMT-3", source_clock_model="ftmo_mt5_us_dst"
+    )
+
+    assert end == pd.Timestamp("2025-07-01 21:00:00", tz="UTC")
+
+
+def test_optional_train_start_config_treats_missing_and_blank_as_unset() -> None:
+    assert get_train_start_config(None) is None
+    assert (
+        get_train_start_config(OmegaConf.create({"data": {"split": {"train_start": "   "}}}))
+        is None
+    )
+    assert (
+        get_train_start_config(OmegaConf.create({"data": {"split": {"train_start": "2025-01-01"}}}))
+        == "2025-01-01"
+    )
+
+
 def test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight() -> None:
     index = pd.DatetimeIndex(
         [
@@ -150,3 +182,27 @@ def test_inclusive_train_end_uses_local_calendar_day_across_dst() -> None:
     assert train.index.equals(index[:1])
     assert test.index.equals(index[1:])
     assert mask.tolist() == [True, False]
+
+
+def test_split_converts_aware_boundaries_to_index_timezone() -> None:
+    index = pd.DatetimeIndex(
+        [
+            "2025-01-01 00:00:00-05:00",
+            "2025-01-01 23:59:59.999999999-05:00",
+            "2025-01-02 00:00:00-05:00",
+        ]
+    ).tz_convert("America/New_York")
+    bars = pd.DataFrame({"close": [1.0, 2.0, 3.0]}, index=index)
+
+    train, test, _, _ = split_train_test(
+        bars,
+        bars,
+        train_end="2025-01-01T19:00:00-05:00",
+        test_start="2025-01-02T00:00:00-05:00",
+    )
+
+    assert train.index.equals(index[:2])
+    assert test.index.equals(index[2:])
+    assert inclusive_date_exclusive_end("2025-01-01T23:00:00-05:00", "UTC") == pd.Timestamp(
+        "2025-01-03 00:00:00", tz="UTC"
+    )

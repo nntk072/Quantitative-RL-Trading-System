@@ -1,0 +1,299 @@
+from __future__ import annotations
+
+from typing import Any, cast
+
+import numpy as np
+import pandas as pd
+
+from decisioning.observation_state import entry_state_one_hot
+from decisioning.observations import (
+    account_state_v2,
+    normalized_account_vector,
+    pad_observation_window,
+    requires_normalized_account_observation,
+)
+from decisioning.trade_setup import NO_TRADE_ID, TRADE_SETUP_CATEGORY_COUNT
+
+from ..mixin_base import RuntimeMixinBase
+from .schema import (
+    DEFAULT_HTF_WINDOWS,
+    HTF_BRANCHES,
+    closed_window_raw,
+    prepare_observation_feature_channels,
+    prepare_observation_feature_channels_many,
+    sanitize_observation_values,
+)
+
+
+class ObservationRuntimeMixin(RuntimeMixinBase):
+    """Build policy observations and action masks from the current step state."""
+
+    def _trade_setup_mask_for_step(self, step_idx: int | None = None) -> np.ndarray[Any, Any]:
+        """Return exact cached candidate eligibility for one decision row.
+
+        Args:
+            step_idx: Step idx used by the operation described above.
+
+        Returns:
+            Array returned by ``_trade_setup_mask_for_step``.
+        """
+        index = int(self.step_idx if step_idx is None else step_idx)
+        mask = np.zeros(TRADE_SETUP_CATEGORY_COUNT, dtype=np.float32)
+        mask[NO_TRADE_ID] = 1.0
+        if not self.trade_setup_actions or not 0 <= index < self._n_bars:
+            return mask
+        raw = self._features_arr[index, self._trade_setup_feature_indices]
+        active = np.isfinite(raw) & (raw > 0.0)
+        mask[self._trade_setup_candidate_ids[active]] = 1.0
+        return mask
+
+    def _session_seq_start(self) -> int:
+        """First absolute bar index included in the session-scoped ``seq`` window.
+
+        Only bars belonging to the current ``session_id`` are kept (same-day
+        NY context). Left-pads when fewer than ``obs_window`` bars exist.
+
+        Returns:
+            Numeric result returned by ``_session_seq_start``.
+        """
+        window_start = max(0, int(self.step_idx) - int(self.obs_window))
+        if self._session_ids_arr is None or not (0 <= self.step_idx < len(self._session_ids_arr)):
+            return window_start
+        sid = int(self._session_ids_arr[self.step_idx])
+        i = int(self.step_idx)
+        while i > window_start and int(self._session_ids_arr[i - 1]) == sid:
+            i -= 1
+        return i
+
+    def _get_observation(self) -> dict[str, np.ndarray[Any, Any]]:
+        """Construct observation dict.
+
+        ``seq`` is clipped to the **current** ``session_id`` (same-day NY
+        bars only) and left-padded to ``obs_window``. Same-day pre-session
+        features live in the current feature row inside that window.
+
+        Returns:
+            Mapping from ``str`` keys to ``np.ndarray[Any, Any]`` values.
+        """
+        start_idx = self._session_seq_start()
+        seq = self._obs_features_arr[start_idx : self.step_idx]
+        if (self.mtf or self.trade_setup_actions) and self._m1_idx.size:
+            seq = seq[:, self._m1_idx]
+        elif self.mtf or self.trade_setup_actions:
+            seq = np.zeros((seq.shape[0], 1), dtype=np.float32)
+            seq.fill(np.nan)
+        elif not self._obs_columns:
+            seq = np.full_like(seq, np.nan, dtype=np.float32)
+        seq = prepare_observation_feature_channels(
+            seq, include_validity=self.feature_validity_channels
+        )
+        seq, seq_mask = pad_observation_window(seq, self.obs_window)
+
+        # Account state
+        pos_dir = float(self.position.direction) if self.position is not None else 0.0
+        open_pnl = float(self.account.open_pnl) if self.position is not None else 0.0
+        unrealised_r = (open_pnl / self.account.equity * 100) if self.account.equity > 0 else 0.0
+        dist_to_sl = 0.0
+        if self.position is not None and self.position.sl_price is not None:
+            dist_to_sl = (
+                self.position.entry_price - self.position.sl_price
+                if self.position.direction == 1
+                else self.position.sl_price - self.position.entry_price
+            )
+
+        if 0 <= self.step_idx < self._n_bars:
+            current_close = float(self._close_arr[self.step_idx])
+        else:
+            current_close = 1.0
+        trailing_dd = float(self.account.trailing_drawdown_pct())
+        exposed_entry_state = (
+            self.entry_state_machine.state
+            if self.entry_state_observation and self.entry_state_machine is not None
+            else None
+        )
+        if requires_normalized_account_observation(self.observation_schema.version):
+            if not self.normalize_account:
+                raise ValueError(
+                    "the selected account observation schema requires normalize_account=True"
+                )
+            position = self.position
+            position_age_bars = 0.0
+            if position is not None and position.entry_timestamp is not None:
+                entry_time = pd.Timestamp(cast(Any, position.entry_timestamp))
+                now = self._bar_time(self.step_idx)
+                minutes = max(float(self._minutes_per_step), 1.0)
+                position_age_bars = max((now - entry_time).total_seconds() / 60.0 / minutes, 0.0)
+            account_state = account_state_v2(
+                equity=float(self.account.equity),
+                initial_balance=float(self.initial_balance),
+                position_direction=pos_dir,
+                open_pnl=open_pnl,
+                planned_risk_usd=float(position.planned_risk_usd or 0.0)
+                if position is not None
+                else 0.0,
+                trailing_drawdown_pct=trailing_dd,
+                trailing_drawdown_limit=float(self.guardrails.trailing_dd_limit),
+                daily_loss=float(self.account.canonical_daily_loss()),
+                daily_loss_limit=float(self.guardrails.daily_limit_for(self.account)),
+                loss_from_initial=float(self.account.loss_from_initial()),
+                max_loss_limit=float(self.guardrails.max_loss_limit_for(self.account)),
+                risk_per_trade_limit=float(self.guardrails.risk_per_trade_limit_for(self.account)),
+                current_price=current_close,
+                entry_price=float(position.entry_price) if position is not None else 0.0,
+                initial_sl_price=(position.sl_initial_price or position.sl_price)
+                if position is not None
+                else None,
+                active_sl_price=position.sl_price if position is not None else None,
+                remaining_size=float(position.size) if position is not None else 0.0,
+                initial_size=float(position.initial_size or position.size)
+                if position is not None
+                else 0.0,
+                position_age_bars=position_age_bars,
+                position_age_scale_bars=self.observation_age_scale_bars,
+                tp_hit_mask=int(position.tp_hit_mask) if position is not None else 0,
+                tp_prices=(
+                    (position.tp1_price, position.tp2_price, position.tp3_price)
+                    if position is not None
+                    else (None, None, None)
+                ),
+                sl_mode=position.sl_mode if position is not None else "fixed",
+                tp_mode=(
+                    "fixed"
+                    if position is None or position.tp_mode in {"", "rr"}
+                    else position.tp_mode
+                ),
+                exit_mode=(
+                    position.exit_mode
+                    if position is not None and position.exit_mode
+                    else "structural"
+                ),
+                entry_state=exposed_entry_state,
+            )
+        elif self.normalize_account:
+            # Rescale so the account vector matches the ~O(1) magnitude of
+            # the z-scored seq features. Without this, equity (1e5) and
+            # raw open_pnl dwarf the time-series signal.
+            account_state = normalized_account_vector(
+                equity=float(self.account.equity),
+                initial_balance=float(self.initial_balance),
+                pos_dir=pos_dir,
+                open_pnl=open_pnl,
+                dist_to_sl=dist_to_sl,
+                trailing_dd=trailing_dd,
+                close=current_close,
+                entry_state=exposed_entry_state,
+            )
+        else:
+            raw_account = [
+                self.account.equity,
+                pos_dir,
+                open_pnl,
+                unrealised_r,
+                dist_to_sl,
+                float(self.account.trailing_drawdown_pct()),
+            ]
+            if exposed_entry_state is not None:
+                raw_account.extend(entry_state_one_hot(exposed_entry_state))
+            account_state = np.asarray(raw_account, dtype=np.float32)
+
+        obs: dict[str, np.ndarray[Any, Any]] = {
+            "seq": seq,
+            "seq_mask": seq_mask,
+            "account": account_state,
+        }
+        if self.regime_observation:
+            raw_regime = np.asarray(
+                self._obs_features_arr[self.step_idx, self._regime_idx], dtype=np.float32
+            )
+            obs["regime_mask"] = np.isfinite(raw_regime).astype(np.float32)
+            obs["regime"] = np.nan_to_num(raw_regime, nan=0.0, posinf=0.0, neginf=0.0)
+        if self.trade_setup_actions:
+            obs[self._trade_setup_mask_key] = self._trade_setup_mask_for_step()
+        if bool(getattr(self, "candidate_geometry_actions", False)):
+            from ..candidate_geometry_observation import build_candidate_geometry_observation
+
+            obs.update(build_candidate_geometry_observation(self))
+        if self.mtf:
+            decision = int(self.step_idx)
+            # One sanitize/mask pass for all higher-timeframe windows; per-window
+            # gather and padding are unchanged.
+            lengths = [
+                int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key]))
+                for key, _, _ in HTF_BRANCHES
+            ]
+            raw_windows = [
+                closed_window_raw(
+                    self._obs_features_arr,
+                    self._htf_starts[key],
+                    decision,
+                    length,
+                    columns=self._htf_idx[key],
+                )
+                for (key, _, _), length in zip(HTF_BRANCHES, lengths, strict=False)
+            ]
+            prepared_windows = prepare_observation_feature_channels_many(
+                raw_windows, include_validity=self.feature_validity_channels
+            )
+            for (key, _, seq_key), length, values in zip(
+                HTF_BRANCHES, lengths, prepared_windows, strict=False
+            ):
+                window, mask = pad_observation_window(values, length)
+                if not self.completed_htf_history_enabled:
+                    window.fill(0.0)
+                    mask.fill(0.0)
+                obs[seq_key] = window
+                obs[f"mask_{key}"] = mask
+
+                # Add VAE latent embedding if enabled
+        if self.use_vae and self.vae is not None:
+            import torch
+
+            latent_dim = int(self.vae.encoder.latent_dim)
+            seq_len = int(self.vae.encoder.seq_len)
+            n_feat = int(self.vae.encoder.n_features)
+            pre_ny_seq: np.ndarray[Any, Any] | None = None
+
+            if self.pre_ny_by_date:
+                if self._bundle_arrays is not None:
+                    from datetime import date
+
+                    day_key = date.fromordinal(
+                        int(self._bundle_arrays["bar_day_ord"][self.step_idx])
+                    )
+                else:
+                    assert self.bars is not None
+                    day_key = pd.Timestamp(self.bars.index[self.step_idx]).date()
+                pre_ny_seq = self.pre_ny_by_date.get(day_key)
+            elif self.pre_ny_data is not None and len(self.pre_ny_data) > 0:
+                # Legacy: each row is a flattened (seq_len * n_features) vector
+                current_idx = min(self.step_idx, len(self.pre_ny_data) - 1)
+                flat = np.asarray(self.pre_ny_data.iloc[current_idx].values, dtype=np.float32)
+                flat = sanitize_observation_values(flat)
+                if flat.size == seq_len * n_feat:
+                    pre_ny_seq = flat.reshape(seq_len, n_feat)
+                elif flat.ndim == 2:
+                    pre_ny_seq = flat.astype(np.float32, copy=False)
+
+            if pre_ny_seq is None:
+                vae_z = np.zeros(latent_dim, dtype=np.float32)
+            else:
+                pre_ny_seq = sanitize_observation_values(pre_ny_seq)
+                if pre_ny_seq.shape != (seq_len, n_feat):
+                    # Pad / truncate to the encoder contract
+                    fixed = np.zeros((seq_len, n_feat), dtype=np.float32)
+                    t = min(seq_len, pre_ny_seq.shape[0])
+                    f = min(n_feat, pre_ny_seq.shape[1] if pre_ny_seq.ndim == 2 else n_feat)
+                    if pre_ny_seq.ndim == 1:
+                        pre_ny_seq = pre_ny_seq.reshape(-1, n_feat)[:t, :f]
+                    fixed[-t:, :f] = pre_ny_seq[-t:, :f]
+                    pre_ny_seq = fixed
+                pre_ny_tensor = torch.from_numpy(pre_ny_seq).unsqueeze(0).float()
+                vae_device = next(self.vae.parameters()).device
+                pre_ny_tensor = pre_ny_tensor.to(vae_device)
+                with torch.no_grad():
+                    mu, _ = self.vae.encode(pre_ny_tensor)
+                vae_z = mu.detach().cpu().numpy().astype(np.float32).reshape(-1)
+
+            obs["vae_z"] = vae_z
+
+        return obs

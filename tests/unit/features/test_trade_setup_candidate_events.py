@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -89,6 +91,39 @@ def test_selected_candidate_lookup_avoids_unselected_active_categories() -> None
     assert len(identities) == 1
     assert identities[0].candidate_id == selected_id
     assert identities[0].status == "identified"
+
+
+def test_candidate_identity_accepts_repeated_vector_time_and_rejects_partial_time() -> None:
+    row = cast(
+        dict[str, Any],
+        _po3_candidate(1_735_000_000_000_000_000, 1_735_000_060_000_000_000),
+    )
+    sweep_time = "M5_po3_sweep_time_ns"
+    source_time = 1_735_000_000_000_000_000
+    row[sweep_time] = [source_time, source_time]
+
+    identity = trade_setup_candidate_event_identities(row)[0]
+    assert identity.status == "identified"
+    assert identity.source_event_times_ns[0] == (sweep_time, source_time)
+
+    row[sweep_time] = [source_time, None]
+    partial = trade_setup_candidate_event_identities(row)[0]
+    assert partial.status == "conflicting_source_event_times"
+
+
+def test_candidate_selection_rejects_unknown_id_and_never_resolves_no_trade() -> None:
+    row = _po3_candidate(1_735_000_000_000_000_000, 1_735_000_060_000_000_000)
+    candidate_id = trade_setup_candidate_id("po3", "M5", 1)
+
+    selected = trade_setup_candidate_event_identities(
+        row, (NO_TRADE_ID, candidate_id, candidate_id)
+    )
+    assert len(selected) == 1
+    assert trade_setup_candidate_event_identities(row, (NO_TRADE_ID,)) == ()
+    with pytest.raises(ValueError, match="ID is out of range"):
+        trade_setup_candidate_event_identities(row, (TRADE_SETUP_CATEGORY_COUNT,))
+    with pytest.raises(ValueError, match="NO_TRADE has no source-event"):
+        trade_setup_candidate_event_time_fields(NO_TRADE_ID)
 
 
 def test_candidate_event_time_fields_preserve_source_units_and_order() -> None:

@@ -773,3 +773,88 @@ def test_eval_mode_daily_breach_fails_full_evaluation():
     assert [event["session_id"] for event in result["breach_events"]] == [0]
     assert result["daily_loss_is_session_scoped"] is False
     assert result["survived_full_year"] is False
+
+
+@pytest.mark.parametrize(
+    ("compatibility", "message"),
+    [
+        (
+            {"legacy_sequence_columns": True},
+            "does not use the requested legacy sequence columns",
+        ),
+        (
+            {"sequence_columns_override": ("saved_feature",)},
+            "does not use the recorded sequence coordinates",
+        ),
+    ],
+)
+def test_evaluate_model_rejects_supplied_environment_with_different_split_coordinates(
+    compatibility: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        evaluate_model(
+            _ScriptedModel({}),
+            bars=pd.DataFrame(),
+            features=pd.DataFrame(),
+            env=_ExposureEnv(),  # type: ignore[arg-type]
+            **compatibility,
+        )
+
+
+def test_evaluate_model_rejects_checkpoint_missing_constraint_limits() -> None:
+    model = _ScriptedModel({})
+    cast(Any, model)._constrained_rl_state = {
+        "version": 3,
+        "cost_discount_gamma": 0.95,
+        "daily_loss_limit_usd": 5_000.0,
+        "max_loss_limit_usd": 10_000.0,
+    }
+
+    with pytest.raises(ValueError, match="loss-limit metadata is missing or invalid"):
+        evaluate_model(
+            model,
+            bars=pd.DataFrame(),
+            features=pd.DataFrame(),
+            env=_ExposureEnv(),  # type: ignore[arg-type]
+        )
+
+
+def test_evaluate_provider_rejects_object_without_provider_metadata() -> None:
+    with pytest.raises(TypeError, match="requires a DecisionProvider implementation"):
+        evaluate_provider(object(), pd.DataFrame(), pd.DataFrame())
+
+
+def test_candidate_geometry_rollout_requires_compatible_dict_observation() -> None:
+    with pytest.raises(RuntimeError, match="requires a trade-setup action and Dict observation"):
+        evaluate_model(
+            _ScriptedModel({}),
+            bars=pd.DataFrame(),
+            features=pd.DataFrame(),
+            env=_ExposureEnv(),  # type: ignore[arg-type]
+            candidate_geometry_actions=True,
+        )
+
+
+def test_evaluation_does_not_claim_split_completion_without_environment_metadata() -> None:
+    class _UnreportedSplitEnv(_ExposureEnv):
+        def step(
+            self, action: object
+        ) -> tuple[dict[str, object], float, bool, bool, dict[str, object]]:
+            observation, reward, done, truncated, info = super().step(action)
+            info.pop("episode_equity", None)
+            return observation, reward, done, truncated, info
+
+    result = evaluate_model(
+        _ScriptedModel({}),
+        bars=pd.DataFrame(),
+        features=pd.DataFrame(),
+        env=_UnreportedSplitEnv(),  # type: ignore[arg-type]
+    )
+
+    assert result["n_steps"] == 3
+    assert result["policy_decisions_complete"] is True
+    assert result["completed_data_split"] is False
+    assert result["episode_end_reason"] is None
+    assert result["survived_full_year"] is False
+    assert result["account_state_trace_complete"] is False
+    assert result["account_state_trace"].empty

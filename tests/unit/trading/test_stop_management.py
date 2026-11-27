@@ -139,6 +139,15 @@ def test_tightened_breakeven_stop_only_returns_a_tighter_level(
         assert result == pytest.approx(expected)
 
 
+def test_tightened_breakeven_stop_can_initialize_an_unset_stop() -> None:
+    assert tightened_breakeven_stop_price(
+        direction=-1,
+        entry_price=100.0,
+        current_stop_price=None,
+        buffer_points=0.25,
+    ) == pytest.approx(99.75)
+
+
 def test_breakeven_stop_requires_positive_initial_risk_and_reached_trigger() -> None:
     common: _BreakevenStopKwargs = {
         "direction": 1,
@@ -203,3 +212,92 @@ def test_breakeven_stop_rejects_overflowing_risk_distance() -> None:
             trigger_r=1.0,
             buffer_points=0.0,
         )
+
+
+@pytest.mark.parametrize(
+    ("direction", "swing_price", "buffer_points", "message"),
+    [
+        (True, 100.0, 0.1, "direction must be -1 or 1"),
+        (1, True, 0.1, "swing_price must be finite"),
+        (1, "invalid", 0.1, "swing_price must be finite"),
+    ],
+)
+def test_confirmed_swing_rejects_boolean_and_unusable_geometry(
+    direction: int,
+    swing_price: float,
+    buffer_points: float,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        confirmed_swing_trailing_stop_price(
+            direction=direction,
+            swing_price=swing_price,
+            current_close=101.0,
+            current_stop_price=99.0,
+            buffer_points=buffer_points,
+        )
+
+
+def test_confirmed_swing_rejects_overflowing_candidate_stop() -> None:
+    with pytest.raises(ValueError, match="trailing stop price must remain finite"):
+        confirmed_swing_trailing_stop_price(
+            direction=1,
+            swing_price=-1.7e308,
+            current_close=None,
+            current_stop_price=None,
+            buffer_points=1.7e308,
+        )
+
+
+@pytest.mark.parametrize(
+    ("entry_price", "buffer_points", "current_stop_price", "message"),
+    [
+        (True, 0.1, None, "entry_price must be finite"),
+        (100.0, "invalid", None, "buffer_points must be finite"),
+        (1.7e308, 1.7e308, None, "proposed breakeven stop must remain finite"),
+    ],
+)
+def test_tightened_breakeven_rejects_invalid_or_overflowing_inputs(
+    entry_price: float,
+    buffer_points: float,
+    current_stop_price: float | None,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        tightened_breakeven_stop_price(
+            direction=1,
+            entry_price=entry_price,
+            current_stop_price=current_stop_price,
+            buffer_points=buffer_points,
+        )
+
+
+def test_breakeven_short_rejects_initial_stop_on_the_favorable_side() -> None:
+    with pytest.raises(ValueError, match="initial_stop_price must be beyond entry"):
+        breakeven_stop_price(
+            direction=-1,
+            entry_price=100.0,
+            initial_stop_price=99.0,
+            current_stop_price=None,
+            best_favorable_points=2.0,
+            trigger_r=1.0,
+            buffer_points=0.0,
+        )
+
+
+@pytest.mark.parametrize("direction", [1, -1])
+def test_breakeven_trigger_uses_exact_initial_risk_boundary(direction: int) -> None:
+    initial_stop = 99.0 if direction == 1 else 101.0
+    args: _BreakevenStopKwargs = {
+        "direction": direction,
+        "entry_price": 100.0,
+        "initial_stop_price": initial_stop,
+        "current_stop_price": initial_stop,
+        "best_favorable_points": 0.999,
+        "trigger_r": 1.0,
+        "buffer_points": 0.0,
+    }
+
+    assert breakeven_stop_price(**args) is None
+    args["best_favorable_points"] = 1.0
+    assert breakeven_stop_price(**args) == pytest.approx(100.0)

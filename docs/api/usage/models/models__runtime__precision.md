@@ -21,7 +21,7 @@ This page contains 1 public callable records owned by `models.runtime.precision`
 
 **Observed usage:**
 
-1. [test fixture: `test_enable_extractor_autocast_skips_transformer`](../../../../tests/integration/test_device.py#L472)
+1. [test fixture: `test_enable_extractor_autocast_skips_transformer`](../../../../tests/integration/test_device.py#L595)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

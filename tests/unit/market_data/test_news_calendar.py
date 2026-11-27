@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
 from market_data.news.calendar import (
     blackout_mask,
     classify,
@@ -38,6 +40,14 @@ def test_parse_ics_unfolds_lines_unescapes_and_converts_to_utc() -> None:
         datetime(2025, 1, 30, 13, 30, tzinfo=UTC),
         "Gross Domestic Product, 4th Quarter and Year 2024 (Advance Estimate)",
     )
+
+
+def test_parse_ics_rejects_unsupported_or_unzoned_event_times() -> None:
+    with pytest.raises(ValueError, match="unsupported DTSTART"):
+        parse_ics("BEGIN:VEVENT\nDTSTART:2025-02-07\nEND:VEVENT")
+    with pytest.raises(ValueError, match="without UTC marker or TZID"):
+        parse_ics("BEGIN:VEVENT\nDTSTART:20250207T083000\nEND:VEVENT")
+    assert parse_ics("BEGIN:VEVENT\nDTSTART:20250207T083000Z\nEND:VEVENT") == []
 
 
 def test_classify_keeps_headline_releases_only() -> None:

@@ -11,7 +11,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -23,10 +23,12 @@ from decisioning.actions import build_discrete_trading_action_schema
 from decisioning.adapters.sb3 import SB3DecisionProvider
 from decisioning.contracts import (
     ActionSchemaRef,
+    ContinuousAction,
     Decision,
     DecisionInput,
     DiscreteAction,
     PredictorMetadata,
+    StructuredAction,
 )
 from decisioning.observations import (
     OBSERVATION_SCHEMA_REPEATED_PAYOUT,
@@ -251,6 +253,267 @@ def test_live_adapter_requires_fit_state_without_diagnostic_opt_in() -> None:
         allow_runtime_normalization_fallback=True,
     )
     assert adapter is not None
+
+
+def test_live_adapter_constructor_rejects_ambiguous_provider_and_model_inputs() -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    with pytest.raises(ValueError, match="provide exactly one of model or provider"):
+        RLStrategyAdapter(config_path="config/base/default.yaml")
+    with pytest.raises(ValueError, match="provide exactly one of model or provider"):
+        RLStrategyAdapter(
+            model=_StubModel(),
+            provider=SB3DecisionProvider(_StubModel(), input_schema_version=OBSERVATION_SCHEMA_V2),
+            config_path="config/base/default.yaml",
+            allow_runtime_normalization_fallback=True,
+        )
+
+
+def test_live_adapter_applies_config_overlay_and_selects_strategy_raw_columns(
+    tmp_path: Path,
+) -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+    from trading.strategies import DistributionStrategy, PO3IFVGStrategy
+
+    overlay = tmp_path / "live-overlay.yaml"
+    overlay.write_text(
+        "env:\n  obs_window: 12\n  strategy_actions: true\n",
+        encoding="utf-8",
+    )
+    adapter = RLStrategyAdapter(
+        provider=SB3DecisionProvider(_StubModel(), input_schema_version=OBSERVATION_SCHEMA_V2),
+        config_path="config/base/default.yaml",
+        features_config_path=overlay,
+        allow_runtime_normalization_fallback=True,
+    )
+
+    assert adapter.obs_window == 12
+    assert adapter._raw_columns() == tuple(PO3IFVGStrategy.raw_columns)
+    adapter.cfg.strategy.name = "distribution"
+    assert adapter._raw_columns() == tuple(DistributionStrategy.raw_columns)
+    adapter.cfg.strategy.name = "baseline"
+    assert adapter._raw_columns() == ()
+
+
+def test_primary_only_runtime_does_not_forward_secondary_market_data(
+    trending_bars: pd.DataFrame,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import features
+    from live.runtime.strategy import RLStrategyAdapter
+
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    adapter.cfg.training.primary_only = True
+    secondary_bars = trending_bars.iloc[:5]
+    received: list[dict[str, Any]] = []
+
+    def fake_build_features(bars: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
+        received.append(kwargs)
+        return pd.DataFrame({"feature": np.zeros(len(bars))}, index=bars.index)
+
+    monkeypatch.setattr(features, "build_features", fake_build_features)
+    adapter.update_bars(trending_bars, secondary_bars=secondary_bars)
+
+    assert received[0]["secondary"] is None
+    assert received[0]["force"] is True
+    assert adapter._secondary_bars is secondary_bars
+
+
+@pytest.mark.parametrize("bars", [pd.DataFrame(), pd.DataFrame({"open": [1.0]})])
+def test_live_adapter_preserves_last_close_when_update_has_no_close(
+    bars: pd.DataFrame,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    adapter._last_close = 123.0
+    monkeypatch.setattr(adapter, "_rebuild_features", lambda _bars: pd.DataFrame())
+
+    adapter.update_bars(bars)
+
+    assert adapter._last_close == 123.0
+    assert adapter._bars is bars
+
+
+def test_live_adapter_requires_bars_before_building_observation() -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    with pytest.raises(RuntimeError, match=r"update_bars\(\) must be called"):
+        adapter.build_observation()
+
+
+def test_live_entry_state_visibility_requires_lifecycle_snapshot(tmp_path: Path) -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    overlay = tmp_path / "entry-state-overlay.yaml"
+    overlay.write_text(
+        "env:\n  entry_state_machine: true\n  entry_state_observation: true\n",
+        encoding="utf-8",
+    )
+    adapter = RLStrategyAdapter(
+        provider=SB3DecisionProvider(_StubModel(), input_schema_version=OBSERVATION_SCHEMA_V2),
+        config_path="config/base/default.yaml",
+        features_config_path=overlay,
+        allow_runtime_normalization_fallback=True,
+    )
+    adapter._features = pd.DataFrame({"close": [20_000.0]})
+
+    with pytest.raises(ValueError, match="entry_state"):
+        adapter.build_observation({})
+
+
+def test_live_adapter_rejects_provider_schema_and_normalization_artifact_mismatch(
+    tmp_path: Path,
+) -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    action_schema = ActionSchemaRef("a1", "hold", ("hold",), "discrete")
+
+    class WrongSchemaProvider:
+        metadata = PredictorMetadata("test", "test", "test", "wrong-observation", action_schema)
+
+        def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision:
+            del input, deterministic
+            return Decision(DiscreteAction(0, "hold"), action_schema)
+
+    with pytest.raises(ValueError, match="input schema differs from the live observation schema"):
+        RLStrategyAdapter(
+            provider=WrongSchemaProvider(),
+            config_path="config/base/default.yaml",
+            allow_runtime_normalization_fallback=True,
+        )
+
+    missing_state = tmp_path / "missing-normalization.json"
+    with pytest.raises(FileNotFoundError, match="feature normalization state not found"):
+        RLStrategyAdapter(
+            model=_StubModel(),
+            config_path="config/base/default.yaml",
+            normalization_state_path=missing_state,
+        )
+
+    invalid_state = tmp_path / "invalid-normalization.json"
+    invalid_state.write_text('{"schema": "wrong"}', encoding="utf-8")
+    with pytest.raises(ValueError, match="unsupported feature normalization state"):
+        RLStrategyAdapter(
+            model=_StubModel(),
+            config_path="config/base/default.yaml",
+            normalization_state_path=invalid_state,
+        )
+
+    valid_state = tmp_path / "normalization.json"
+    valid_state.write_text('{"schema": "feature-normalization-v1", "stages": {}}', encoding="utf-8")
+    adapter = RLStrategyAdapter(
+        model=_StubModel(),
+        config_path="config/base/default.yaml",
+        normalization_state_path=valid_state,
+    )
+    assert adapter._normalization_state == {"schema": "feature-normalization-v1", "stages": {}}
+
+
+def test_live_adapter_maps_scalar_and_directional_provider_decisions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from live.runtime.strategy import RLStrategyAdapter
+
+    class Provider:
+        def __init__(self, action: ContinuousAction | StructuredAction) -> None:
+            self.action = action
+            coordinates = (
+                tuple(action.coordinates)
+                if isinstance(action, StructuredAction)
+                else ("direction",)
+            )
+            self.metadata = PredictorMetadata(
+                "test",
+                "test",
+                "test",
+                OBSERVATION_SCHEMA_V2,
+                ActionSchemaRef("a1", "action", coordinates, "continuous"),
+            )
+
+        def predict(self, input: DecisionInput, *, deterministic: bool = True) -> Decision:
+            del input, deterministic
+            return Decision(self.action, self.metadata.action_schema)
+
+    adapter = RLStrategyAdapter(
+        provider=Provider(ContinuousAction(-0.25)),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    monkeypatch.setattr(adapter, "build_observation", lambda _account_state=None: {})
+    assert adapter.predict_signal() == -0.25
+    assert adapter.last_decision is not None
+    assert isinstance(adapter.last_decision.action, ContinuousAction)
+
+    adapter.provider = Provider(StructuredAction({"direction": 1.0}))
+    assert adapter.predict_signal() == 1.0
+    assert adapter.last_decision is not None
+    assert cast(Any, adapter.last_decision.action) == StructuredAction({"direction": 1.0})
+    adapter.provider = Provider(StructuredAction({"risk": 0.5}))
+    with pytest.raises(ValueError, match="must be discrete, scalar or include direction"):
+        adapter.predict_signal()
+
+
+def test_live_strategy_fails_closed_and_maps_sell_hold_with_secondary_data(
+    trending_bars: pd.DataFrame,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from live.runtime.contracts import LiveSignal
+    from live.runtime.strategy import RLStrategyAdapter
+
+    provider = SB3DecisionProvider(_StubModel(), input_schema_version=OBSERVATION_SCHEMA_V2)
+    adapter = RLStrategyAdapter(
+        provider=provider,
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    recorded_updates: list[tuple[pd.DataFrame, pd.DataFrame | None]] = []
+    monkeypatch.setattr(
+        adapter,
+        "update_bars",
+        lambda bars, secondary_bars=None: recorded_updates.append((bars, secondary_bars)),
+    )
+
+    secondary_bars = trending_bars.iloc[:2]
+
+    class SecondaryData(_StubData):
+        calls = 0
+
+        def get_data(self) -> pd.DataFrame:
+            self.calls += 1
+            return secondary_bars
+
+    secondary_data = SecondaryData(secondary_bars)
+    strategy = adapter.as_strategy(_StubData(trending_bars), secondary_data)
+
+    monkeypatch.setattr(adapter, "predict_signal", lambda: -1)
+    assert strategy.signal() == ("US100.cash", LiveSignal.SELL)
+    assert recorded_updates[-1][0] is trending_bars
+    assert recorded_updates[-1][1] is secondary_bars
+    assert secondary_data.calls == 1
+
+    monkeypatch.setattr(adapter, "predict_signal", lambda: 0)
+    assert strategy.signal() == ("US100.cash", LiveSignal.HOLD)
+
+    def fail_inference() -> int:
+        raise ValueError("invalid account snapshot")
+
+    monkeypatch.setattr(adapter, "predict_signal", fail_inference)
+    assert strategy.signal() == ("US100.cash", LiveSignal.NONE)
 
 
 def test_rl_bridge_accepts_a_decision_provider(trending_bars):

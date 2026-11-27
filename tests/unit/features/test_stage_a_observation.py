@@ -15,7 +15,7 @@ from features import (
     ensure_london_atr_distances,
     select_obs_columns,
 )
-from features.context.reachability import max_tp_distance
+from features.context.reachability import max_tp_distance, rr_reaches
 from features.technical.indicators import ny_session_clock
 from live.runtime.strategy import RLStrategyAdapter
 from simulation.environment.env import TradingEnv
@@ -278,3 +278,51 @@ def test_reachability_uses_dst_aware_new_york_session_window() -> None:
 
     assert distances.iloc[:4].isna().all()
     assert distances.iloc[4:].eq(10.0).all()
+
+
+def test_reachability_remains_unknown_when_bars_have_no_new_york_session() -> None:
+    idx = pd.date_range("2025-01-06 00:00", periods=4, freq="1min", tz="UTC")
+    close = pd.Series(100.0, index=idx)
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 5.0, "low": close - 5.0, "close": close}, index=idx
+    )
+
+    distances = max_tp_distance(
+        bars,
+        pd.Series(1.0, index=idx),
+        session_tz="America/New_York",
+        source_clock_model="native",
+    )
+
+    assert distances.isna().all()
+
+
+def test_reachability_falls_back_to_higher_timeframe_day_bias() -> None:
+    index = pd.date_range("2024-01-02 16:30", periods=4, freq="1min").append(
+        pd.date_range("2024-01-03 16:30", periods=2, freq="1min")
+    )
+    close = pd.Series(100.0, index=index)
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 5.0, "low": close - 5.0, "close": close},
+        index=index,
+    )
+    features = pd.DataFrame(
+        {
+            "atr_5": 1.0,
+            "po3_manipulation_low": 98.0,
+            "po3_manipulation_high": 104.0,
+            "htf_day_bias": -1.0,
+        },
+        index=index,
+    )
+
+    reachable = max_tp_distance(bars, features["atr_5"])
+    obs = attach_reachable_r(features, bars, features)
+
+    assert reachable.iloc[4:].eq(10.0).all()
+    assert obs["reachable_r"].iloc[4:].eq(2.5).all()
+
+
+def test_reachability_allows_trade_before_any_session_range_is_known() -> None:
+    assert rr_reaches(100.0, 98.0, 10.0, float("nan"))
+    assert rr_reaches(100.0, 98.0, 10.0, float("inf"))

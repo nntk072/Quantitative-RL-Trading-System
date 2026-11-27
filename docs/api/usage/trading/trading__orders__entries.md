@@ -120,19 +120,30 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Whether dynamic tp meets the requested condition.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_dynamic_target_obeys_the_reachable_risk_distance_boundary`](../../../../tests/unit/trading/test_entry_order_boundary_coverage.py#L155)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = dynamic_tp(direction=..., entry_price=..., sl_price=..., reward_fraction=..., max_tp_distance=...)
+def test_dynamic_target_obeys_the_reachable_risk_distance_boundary() -> None:
+    at_cap, rejected = dynamic_tp(
+        direction=1,
+        entry_price=100.0,
+        sl_price=95.0,
+        reward_fraction=1.0,
+        max_tp_distance=5.0,
+    )
+    assert rejected is False
+    assert at_cap == pytest.approx(105.0)
+
+    below_cap, rejected = dynamic_tp(
+        direction=1,
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

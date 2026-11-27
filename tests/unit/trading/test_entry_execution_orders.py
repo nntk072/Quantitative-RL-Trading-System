@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import re
+from typing import Any, cast
+
 import pandas as pd
 import pytest
 
@@ -60,3 +63,33 @@ def test_limit_order_expiry_rejects_invalid_ttl_or_bar_duration(
 ) -> None:
     with pytest.raises(ValueError):
         limit_order_expiry(pd.Timestamp("2025-01-06 16:31:00", tz="UTC"), ttl, duration)
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"direction": 0}, "direction must be -1 or +1"),
+        ({"reference_price": float("nan")}, "inputs must be finite"),
+        ({"offset_atr": -0.1}, "offset nonnegative"),
+        ({"reference_price": 1.0, "atr": 10.0, "offset_atr": 1.0}, "must remain positive"),
+    ],
+)
+def test_limit_price_rejects_invalid_geometry_inputs(
+    overrides: dict[str, float], message: str
+) -> None:
+    values = {
+        "direction": 1,
+        "reference_price": 100.0,
+        "atr": 1.0,
+        "offset_atr": 0.5,
+        "point_size": 0.25,
+    }
+    values.update(overrides)
+
+    with pytest.raises(ValueError, match=re.escape(message)):
+        limit_price_from_atr_offset(**cast(Any, values))
+
+
+def test_limit_order_expiry_requires_timezone_aware_submission_time() -> None:
+    with pytest.raises(ValueError, match="timezone-aware"):
+        limit_order_expiry(pd.Timestamp("2025-01-06 16:31"), 1, pd.Timedelta(minutes=1))

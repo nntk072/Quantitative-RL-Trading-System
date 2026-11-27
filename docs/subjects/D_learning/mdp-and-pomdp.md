@@ -77,7 +77,7 @@ it does not by itself qualify a research result or predict a return.
 
 The runtime assembles observations and configured masks. An eligible action can still be a poor decision; a missing observation row is different from an ineligible action.
 
-- Source: `simulation/environment/observation_runtime.py` at `c0d982f94ab9df8b2a9ddd013d2ae9a562573529`.
+- Source: `simulation/environment/observations/runtime.py` at `c0d982f94ab9df8b2a9ddd013d2ae9a562573529`.
 - Focused check: `tests/unit/simulation/test_environment/test_observation_schema.py`.
 - Practical check: Inspect branch and mask meaning before comparing trajectories.
 
@@ -116,7 +116,7 @@ the exact source-facing obligations for maintainers.
 | The vector adapter preserves Gymnasium episode endings | The adapter combines terminated or truncated into SB3 done, records TimeLimit.truncated only for truncation without termination, saves terminal_observation, then resets that slot. | `learning/rl/environment_adapter.py::_shard_worker` |
 | The account branch has declared coordinates | The account schema declares its version and ordered coordinates, with optional entry-state coordinates. | `decisioning/observations.py::build_observation_schema` |
 | The visible sequence is a finite history | The fixed window retains recent real rows and left-pads short histories with a row mask. | `decisioning/observations.py::pad_observation_window` |
-| Eligibility and observation are separate | The runtime assembles observations and configured masks. | `simulation/environment/observation_runtime.py` |
+| Eligibility and observation are separate | The runtime assembles observations and configured masks. | `simulation/environment/observations/runtime.py` |
 
 ## Verify
 

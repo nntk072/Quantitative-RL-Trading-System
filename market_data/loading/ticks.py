@@ -831,6 +831,27 @@ class TickBook:
         i0 = int(np.searchsorted(self._ts, start_ns, side="left"))
         return i0 < len(self._ts) and int(self._ts[i0]) < end_ns
 
+    def last_bar_quote_ns(
+        self, bar_start: pd.Timestamp, bar_minutes: int = 1
+    ) -> tuple[int, float, float] | None:
+        """Return the final source-ordered quote in a half-open bar interval.
+
+        Args:
+            bar_start: Start of the bar interval.
+            bar_minutes: Length of the interval in minutes.
+
+        Returns:
+            The final quote as ``(UTC nanoseconds, bid, ask)``, or ``None`` when
+            the interval contains no ticks.
+        """
+        start_ns = pd.Timestamp(bar_start).value
+        end_ns = start_ns + int(pd.Timedelta(minutes=bar_minutes).value)
+        i1 = int(np.searchsorted(self._ts, end_ns, side="left"))
+        if i1 == 0 or int(self._ts[i1 - 1]) < start_ns:
+            return None
+        idx = i1 - 1
+        return int(self._ts[idx]), float(self._bid[idx]), float(self._ask[idx])
+
     def bar_quote_ns(
         self, bar_start: pd.Timestamp, bar_minutes: int = 1
     ) -> Iterator[tuple[int, float, float]]:

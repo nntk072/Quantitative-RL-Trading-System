@@ -121,11 +121,9 @@ def _reference_quote(env: Any, index: int) -> tuple[float, float] | None:
     bar = env._bar_at(index)
     if getattr(env, "_tickbook", None) is not None:
         bar_time = pd.Timestamp(env._bar_time(index))
-        last_quote = None
-        for quote in env._tickbook.bar_quotes(
+        last_quote = env._tickbook.last_bar_quote_ns(
             bar_time, bar_minutes=max(1, int(round(float(env._minutes_per_step))))
-        ):
-            last_quote = quote
+        )
         if last_quote is not None:
             _quote_time, bid, ask = last_quote
             return float(bid), float(ask)

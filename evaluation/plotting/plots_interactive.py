@@ -1,13 +1,13 @@
 """Compatibility API for the interactive Plotly chart families."""
 
-from .interactive_comparison import (
+from .interactive.comparison import (
     plot_baseline_comparison,
 )
-from .interactive_orders import (
+from .interactive.orders import (
     plot_per_trade_orders,
     plot_price_with_orders,
 )
-from .interactive_performance import (
+from .interactive.performance import (
     plot_daily_pnl,
     plot_drawdown,
     plot_equity_curve,
@@ -15,10 +15,10 @@ from .interactive_performance import (
     plot_returns_dist,
     plot_trade_pnl_hist,
 )
-from .interactive_plot_rendering import _PLOTLY_AVAILABLE, _check, _save
-from .interactive_po3 import (
+from .interactive.po3 import (
     plot_fvg_signals_interactive,
 )
+from .interactive.rendering import _PLOTLY_AVAILABLE, _check, _save
 
 __all__ = [
     "plot_equity_curve",

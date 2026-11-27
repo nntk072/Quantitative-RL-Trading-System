@@ -5,8 +5,9 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from decisioning.trade_setup import trade_setup_candidate_id
+from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT, trade_setup_candidate_id
 from features.context.trade_setup_candidates import (
+    TradeSetupEventIdentity,
     trade_setup_candidate_event_identities,
     trade_setup_candidate_event_time_fields,
     trade_setup_event_is_current,
@@ -178,6 +179,107 @@ def test_pending_setup_fails_closed_when_identity_is_unavailable() -> None:
         False,
         "source_setup_identity_unavailable",
     )
+
+
+@pytest.mark.parametrize("candidate_id", [TRADE_SETUP_CATEGORY_COUNT, 10_000])
+def test_pending_setup_fails_closed_for_out_of_catalog_identity(candidate_id: int) -> None:
+    identity = TradeSetupEventIdentity(
+        candidate_id=candidate_id,
+        source_event_id="forged-event",
+        source_event_times_ns=(),
+        status="identified",
+    )
+
+    assert trade_setup_event_is_current(identity, {}) == (
+        False,
+        "source_setup_identity_unavailable",
+    )
+
+
+def test_pending_setup_fails_closed_for_no_trade_identity() -> None:
+    identity = TradeSetupEventIdentity(
+        candidate_id=0,
+        source_event_id="forged-no-trade-event",
+        source_event_times_ns=(),
+        status="identified",
+    )
+
+    assert trade_setup_event_is_current(identity, {}) == (
+        False,
+        "source_setup_identity_unavailable",
+    )
+
+
+def test_pending_setup_fails_closed_when_identity_omits_required_event_fields() -> None:
+    candidate_id, row = _setup_row("fvg_retest")
+    identity = TradeSetupEventIdentity(
+        candidate_id=candidate_id,
+        source_event_id="incomplete-event",
+        source_event_times_ns=(),
+        status="identified",
+    )
+
+    assert trade_setup_event_is_current(identity, row) == (
+        False,
+        "source_setup_identity_unavailable",
+    )
+
+
+@pytest.mark.parametrize(
+    ("idea", "direction_field"),
+    (
+        ("po3", "M5_po3_distribution_direction"),
+        ("standard_deviation", "M5_standard_deviation_leg_direction"),
+    ),
+)
+def test_pending_directional_setup_fails_closed_when_direction_is_missing(
+    idea: str, direction_field: str
+) -> None:
+    candidate_id, row = _setup_row(idea)
+    identity = trade_setup_candidate_event_identities(row, (candidate_id,))[0]
+    del row[direction_field]
+
+    assert trade_setup_event_is_current(identity, row) == (
+        False,
+        "source_setup_state_unavailable",
+    )
+
+
+def test_pending_standard_deviation_setup_fails_closed_on_unparseable_direction() -> None:
+    candidate_id, row = _setup_row("standard_deviation")
+    identity = trade_setup_candidate_event_identities(row, (candidate_id,))[0]
+    row["M5_standard_deviation_leg_direction"] = "invalid"
+
+    assert trade_setup_event_is_current(identity, row) == (
+        False,
+        "source_setup_invalidated",
+    )
+
+
+def test_pending_setup_fails_closed_on_overflowing_timestamp_coercion() -> None:
+    candidate_id, row = _setup_row("ifvg_retest")
+    identity = trade_setup_candidate_event_identities(row, (candidate_id,))[0]
+    timestamp_field = trade_setup_candidate_event_time_fields(candidate_id)[0][0]
+    row[timestamp_field] = 10**10000
+
+    assert trade_setup_event_is_current(identity, row) == (
+        False,
+        "source_setup_invalidated",
+    )
+
+
+def test_candidate_resolution_coerces_vector_flags_and_ignores_invalid_flags() -> None:
+    candidate_id, row = _setup_row("po3")
+    eligibility_field = "entry_idea_po3_M5_long"
+    row[eligibility_field] = [0.0, 1.0]
+
+    resolved = trade_setup_candidate_event_identities(row)
+
+    assert [identity.candidate_id for identity in resolved] == [candidate_id]
+    assert resolved[0].status == "identified"
+
+    row[eligibility_field] = "invalid"
+    assert trade_setup_candidate_event_identities(row) == ()
 
 
 def test_pending_setup_fails_closed_when_active_state_is_missing() -> None:

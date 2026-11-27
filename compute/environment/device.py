@@ -410,7 +410,7 @@ def _current_cgroup_dir() -> Path | None:
     try:
         for line in Path("/proc/self/cgroup").read_text(encoding="utf-8").splitlines():
             hierarchy, _, relative = line.partition("::")
-            if not hierarchy and relative:
+            if hierarchy == "0" and relative:
                 return Path("/sys/fs/cgroup") / relative.lstrip("/")
     except OSError:
         pass

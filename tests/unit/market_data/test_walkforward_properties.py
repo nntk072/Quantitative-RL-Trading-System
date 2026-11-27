@@ -27,6 +27,34 @@ def test_default_walkforward_contract_matches_five_explicit_folds() -> None:
         assert (default.test_idx == explicit.test_idx).all()
 
 
+def test_negative_label_horizon_does_not_weaken_purge() -> None:
+    baseline = list(
+        purged_walk_forward(
+            1000,
+            n_splits=3,
+            test_size=0.2,
+            purge_bars=10,
+            embargo_bars=5,
+            label_horizon=0,
+        )
+    )
+    negative = list(
+        purged_walk_forward(
+            1000,
+            n_splits=3,
+            test_size=0.2,
+            purge_bars=10,
+            embargo_bars=5,
+            label_horizon=-20,
+        )
+    )
+
+    assert len(negative) == len(baseline)
+    for expected, actual in zip(baseline, negative, strict=True):
+        assert (actual.train_idx == expected.train_idx).all()
+        assert (actual.test_idx == expected.test_idx).all()
+
+
 @pytest.mark.parametrize(
     ("n", "n_splits", "test_size"),
     (

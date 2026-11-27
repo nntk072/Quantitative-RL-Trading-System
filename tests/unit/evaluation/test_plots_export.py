@@ -136,6 +136,34 @@ def test_metrics_fields(metrics):
     assert 0.0 <= metrics.win_rate <= 1.0
 
 
+def test_shared_plot_helpers_keep_legacy_paths_and_explicit_exports():
+    from evaluation.plotting import chart_indicators, chart_levels, plot_rendering, plot_series
+    from evaluation.plotting.shared import (
+        _EXPORTS,
+        indicators,
+        levels,
+        rendering,
+        series,
+    )
+    from evaluation.plotting.shared import (
+        __all__ as shared_exports,
+    )
+
+    compatibility = (
+        (plot_rendering, rendering),
+        (plot_series, series),
+        (chart_indicators, indicators),
+        (chart_levels, levels),
+    )
+    for legacy, canonical in compatibility:
+        assert all(name in vars(canonical) for name in legacy.__all__)
+        assert all(getattr(legacy, name) is getattr(canonical, name) for name in legacy.__all__)
+
+    assert set(shared_exports) <= set(_EXPORTS)
+    shared = __import__("evaluation.plotting.shared", fromlist=["*"])
+    assert all(getattr(shared, name) is not None for name in shared_exports)
+
+
 def test_build_summary_table(metrics):
     table = build_summary_table(metrics)
     assert "Sharpe" in table
@@ -428,6 +456,17 @@ def test_plot_trade_pnl_hist(synthetic_trades, tmp_path):
     assert (tmp_path / "pnl_hist.png").stat().st_size > 0
 
 
+def test_plot_trade_pnl_hist_exports_safe_no_data_fallback(tmp_path):
+    from evaluation.plotting.performance import plot_trade_pnl_hist
+
+    output = tmp_path / "nested" / "empty_pnl.png"
+    fig = plot_trade_pnl_hist(pd.DataFrame({"time": []}), out_path=output, dpi=72)
+
+    assert fig.axes[0].texts[0].get_text() == "No trade PnL data"
+    assert output.is_file()
+    assert output.stat().st_size > 0
+
+
 def test_plot_returns_dist(synthetic_equity, tmp_path):
     from evaluation.plotting.plots import plot_returns_dist
 
@@ -544,6 +583,47 @@ def test_target_update_plot_ignores_missing_partial_close_time() -> None:
         plt.close(figure)
 
 
+def test_target_update_ends_at_its_own_slot_fill_not_another_slot_event() -> None:
+    from matplotlib import pyplot as plt
+
+    from evaluation.plotting.orders import _draw_target_updates
+
+    start = pd.Timestamp("2025-01-21 19:04:00", tz="Etc/GMT-3")
+    unrelated_fill = start + pd.Timedelta(minutes=1)
+    matching_fill = start + pd.Timedelta(minutes=3)
+    events = pd.DataFrame(
+        [
+            {
+                "type": "tp_update",
+                "tp_slot": "TP2",
+                "time": start,
+                "effective_time": start,
+                "price": 21140.0,
+            },
+            {
+                "type": "tp_partial_close",
+                "tp_slot": "TP1",
+                "time": unrelated_fill,
+                "price": 21120.0,
+            },
+            {
+                "type": "tp_partial_close",
+                "tp_slot": "TP2",
+                "time": matching_fill,
+                "price": 21140.0,
+            },
+        ]
+    )
+    figure, axis = plt.subplots()
+    try:
+        _draw_target_updates(axis, events)
+
+        assert len(axis.lines) == 1
+        assert list(np.asarray(axis.lines[0].get_xdata())) == [start, matching_fill]
+    finally:
+        plt.close(figure)
+
+
 def test_macd_backtest_fills_within_bar_and_charts_render(tmp_path):
     """End-to-end regression: run the real MACD baseline through the engine,
     verify every fill price lands within its executing bar's [low, high]
@@ -645,12 +725,228 @@ def test_interactive_equity(synthetic_equity, tmp_path):
     assert (tmp_path / "equity.html").stat().st_size > 0
 
 
+def test_interactive_trade_order_equity_places_payout_at_following_trade(
+    tmp_path,
+) -> None:
+    pytest.importorskip("plotly")
+    from evaluation.plotting.plots_interactive import plot_equity_curve
+
+    index = pd.date_range("2025-01-02 15:00", periods=4, freq="min", tz="UTC")
+    equity = pd.Series([100.0, 101.0, 100.0, 103.0], index=index)
+    trades = pd.DataFrame(
+        [
+            {"type": "open", "direction": 1, "time": index[0], "price": 100.0},
+            {"type": "close", "time": index[1], "price": 101.0, "equity": 101.0},
+            {"type": "payout_reset", "time": index[1] + pd.Timedelta(seconds=30)},
+            {"type": "open", "direction": 1, "time": index[2], "price": 100.0},
+            {"type": "close", "time": index[3], "price": 103.0, "equity": 103.0},
+        ]
+    )
+    output = tmp_path / "trade-equity.html"
+
+    figure = plot_equity_curve(equity, trades=trades, out_path=output)
+
+    traces = {trace.name: trace for trace in figure.data}
+    assert list(traces["Equity"].x) == [0, 1]
+    assert list(traces["Equity"].y) == [101.0, 103.0]
+    assert len(figure.layout.shapes) == 1
+    assert figure.layout.shapes[0].x0 == figure.layout.shapes[0].x1 == 1
+    assert output.is_file()
+
+
 def test_interactive_drawdown(synthetic_equity, tmp_path):
     pytest.importorskip("plotly")
     from evaluation.plotting.plots_interactive import plot_drawdown
 
     plot_drawdown(synthetic_equity, out_path=tmp_path / "drawdown.html")
     assert (tmp_path / "drawdown.html").stat().st_size > 0
+
+
+def test_interactive_performance_charts_explain_empty_inputs() -> None:
+    pytest.importorskip("plotly")
+    from evaluation.plotting.interactive_performance import (
+        plot_daily_pnl,
+        plot_monthly_returns_heatmap,
+        plot_trade_pnl_hist,
+    )
+
+    empty_equity = pd.Series(dtype=float, index=pd.DatetimeIndex([], tz="UTC"))
+    daily = plot_daily_pnl(empty_equity)
+    monthly = plot_monthly_returns_heatmap(
+        pd.Series([100.0], index=pd.DatetimeIndex(["2025-01-01"], tz="UTC"))
+    )
+    trade_pnl = plot_trade_pnl_hist(pd.DataFrame({"time": [pd.Timestamp("2025-01-01")]}))
+
+    assert not daily.data
+    assert daily.layout.annotations[0].text == "No daily P&L"
+    assert not monthly.data
+    assert monthly.layout.annotations[0].text == "Insufficient data"
+    assert not trade_pnl.data
+    assert trade_pnl.layout.annotations[0].text == "No trade PnL data"
+
+
+def test_static_performance_package_exports_and_legacy_paths_are_stable() -> None:
+    from evaluation.plotting import comparison as comparison_compat
+    from evaluation.plotting import equity as equity_compat
+    from evaluation.plotting import performance as grouped
+    from evaluation.plotting import plots
+    from evaluation.plotting.performance import charts, comparison, equity
+
+    public_names = [
+        "plot_baseline_comparison",
+        "plot_daily_pnl",
+        "plot_direction_summary",
+        "plot_drawdown",
+        "plot_equity_curve",
+        "plot_monthly_returns_heatmap",
+        "plot_returns_dist",
+        "plot_trade_pnl_hist",
+    ]
+    assert grouped.__all__ == public_names
+    assert all(hasattr(grouped, name) for name in public_names)
+    unknown_plot = "unknown_plot"
+    with pytest.raises(AttributeError, match="has no attribute 'unknown_plot'"):
+        getattr(grouped, unknown_plot)
+    assert equity_compat.plot_drawdown is equity.plot_drawdown
+    assert equity_compat.plot_equity_curve is equity.plot_equity_curve
+    assert comparison_compat.plot_baseline_comparison is comparison.plot_baseline_comparison
+    assert plots.plot_equity_curve is equity.plot_equity_curve
+    assert plots.plot_daily_pnl is charts.plot_daily_pnl
+    assert plots.plot_baseline_comparison is comparison.plot_baseline_comparison
+
+
+def test_interactive_package_exports_and_legacy_module_shims_are_stable() -> None:
+    from evaluation.plotting import interactive as grouped
+    from evaluation.plotting import (
+        interactive_comparison,
+        interactive_orders,
+        interactive_performance,
+        interactive_plot_rendering,
+        interactive_po3,
+        plots_interactive,
+    )
+    from evaluation.plotting.interactive import (
+        comparison,
+        orders,
+        performance,
+        po3,
+        rendering,
+    )
+
+    public_names = [
+        "plot_baseline_comparison",
+        "plot_daily_pnl",
+        "plot_drawdown",
+        "plot_equity_curve",
+        "plot_fvg_signals_interactive",
+        "plot_monthly_returns_heatmap",
+        "plot_per_trade_orders",
+        "plot_price_with_orders",
+        "plot_returns_dist",
+        "plot_trade_pnl_hist",
+    ]
+    assert grouped.__all__ == public_names
+    assert all(hasattr(grouped, name) for name in public_names)
+    unknown_plot = "unknown_plot"
+    with pytest.raises(AttributeError, match="has no attribute 'unknown_plot'"):
+        getattr(grouped, unknown_plot)
+    assert interactive_comparison.plot_baseline_comparison is comparison.plot_baseline_comparison
+    assert interactive_orders.plot_per_trade_orders is orders.plot_per_trade_orders
+    assert interactive_orders.plot_price_with_orders is orders.plot_price_with_orders
+    assert interactive_performance.plot_daily_pnl is performance.plot_daily_pnl
+    assert interactive_performance.plot_equity_curve is performance.plot_equity_curve
+    assert interactive_po3.plot_fvg_signals_interactive is po3.plot_fvg_signals_interactive
+    assert interactive_plot_rendering.__all__ == rendering.__all__
+    assert all(
+        getattr(interactive_plot_rendering, name) is getattr(rendering, name)
+        for name in rendering.__all__
+    )
+    assert interactive_plot_rendering._check is rendering._check
+    assert interactive_plot_rendering._save is rendering._save
+    assert plots_interactive.__all__ == [
+        "plot_equity_curve",
+        "plot_drawdown",
+        "plot_daily_pnl",
+        "plot_trade_pnl_hist",
+        "plot_returns_dist",
+        "plot_monthly_returns_heatmap",
+        "plot_baseline_comparison",
+        "plot_price_with_orders",
+        "plot_per_trade_orders",
+        "plot_fvg_signals_interactive",
+        "_check",
+        "_save",
+        "_PLOTLY_AVAILABLE",
+    ]
+
+
+def test_order_chart_package_exports_and_legacy_shims_are_stable() -> None:
+    from evaluation.plotting import (
+        chart_overlays,
+        order_chart,
+        order_chart_data,
+        order_chart_renderers,
+        order_window,
+        orders,
+        overlay_events,
+        shared,
+    )
+    from evaluation.plotting.orders import (
+        charts,
+        events,
+        geometry,
+        overlays,
+        renderers,
+        window,
+    )
+    from evaluation.plotting.orders import order_chart_features as features
+
+    assert orders.__all__ == ["plot_per_trade_orders", "plot_price_with_orders"]
+    assert orders.plot_per_trade_orders is charts.plot_per_trade_orders
+    assert orders.plot_price_with_orders is charts.plot_price_with_orders
+    assert order_window.prepare_order_chart is window.prepare_order_chart
+    assert order_chart_data.order_levels is geometry.order_levels
+    assert order_chart_data._feature_zones is features._feature_zones
+    assert order_chart_renderers.draw_order_levels_mpl is renderers.draw_order_levels_mpl
+    assert chart_overlays.draw_overlays_mpl is overlays.draw_overlays_mpl
+    assert overlay_events.build_overlay_events is events.build_overlay_events
+    assert order_chart.order_levels is geometry.order_levels
+    assert order_chart.draw_order_levels_mpl is renderers.draw_order_levels_mpl
+    unknown_chart = "unknown_chart"
+    unknown_plot = "unknown_plot"
+    with pytest.raises(AttributeError, match="has no attribute 'unknown_chart'"):
+        getattr(orders, unknown_chart)
+    with pytest.raises(AttributeError, match="has no attribute 'unknown_plot'"):
+        getattr(shared, unknown_plot)
+
+
+def test_interactive_equity_daily_limit_tracks_each_calendar_day() -> None:
+    pytest.importorskip("plotly")
+    from evaluation.plotting.plots_interactive import plot_equity_curve
+
+    index = pd.DatetimeIndex(
+        ["2025-01-02T15:00:00Z", "2025-01-02T15:01:00Z", "2025-01-03T15:00:00Z"]
+    )
+    equity = pd.Series([100.0, 90.0, 110.0], index=index)
+
+    figure = plot_equity_curve(equity, daily_loss_limit=5.0)
+
+    daily_limit = next(trace for trace in figure.data if trace.name.startswith("Daily loss limit"))
+    assert list(daily_limit.y) == [95.0, 95.0, 105.0]
+    assert list(daily_limit.x) == list(index)
+
+
+def test_interactive_performance_charts_fail_when_plotly_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("plotly")
+    from evaluation.plotting.interactive import performance as interactive_performance
+    from evaluation.plotting.interactive import rendering as interactive_plot_rendering
+
+    monkeypatch.setattr(interactive_plot_rendering, "_PLOTLY_AVAILABLE", False)
+
+    with pytest.raises(ImportError, match="plotly is required for interactive charts"):
+        interactive_performance.plot_daily_pnl(pd.Series(dtype=float))
 
 
 def test_interactive_per_trade_orders_mt5_style(synthetic_bars, synthetic_trades, tmp_path):
@@ -1377,3 +1673,41 @@ def test_experiment_run_fast_skips_optional_order_rendering(
     assert not invoked
     assert (tmp_path / "fast_charts" / "training" / "metrics.json").exists()
     assert (tmp_path / "fast_charts" / "training" / "equity.png").exists()
+
+
+def test_interactive_rendering_reports_missing_plotly_and_creates_output_parent(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    import builtins
+    import runpy
+    from pathlib import Path
+
+    import evaluation.plotting.interactive_plot_rendering as renderer
+
+    if renderer._PLOTLY_AVAILABLE:
+        renderer._check()
+    target = tmp_path / "nested" / "chart.html"
+    written: list[str] = []
+
+    class Figure:
+        def write_html(self, path: str, *, include_plotlyjs: str) -> None:
+            written.extend([path, include_plotlyjs])
+
+    renderer._save(Figure(), target)
+    assert target.parent.is_dir()
+    assert written == [str(target), "cdn"]
+
+    original_import = builtins.__import__
+
+    def without_plotly(name, *args, **kwargs):
+        if name == "plotly.graph_objects":
+            raise ImportError("plotly intentionally unavailable in this test")
+        return original_import(name, *args, **kwargs)
+
+    source = Path(__file__).resolve().parents[3] / "evaluation/plotting/interactive/rendering.py"
+    with monkeypatch.context() as patch:
+        patch.setattr(builtins, "__import__", without_plotly)
+        optional_module = runpy.run_path(str(source))
+    assert optional_module["_PLOTLY_AVAILABLE"] is False
+    with pytest.raises(ImportError, match="plotly is required"):
+        optional_module["_check"]()

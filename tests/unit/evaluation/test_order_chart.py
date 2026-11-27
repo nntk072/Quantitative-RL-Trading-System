@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+from types import SimpleNamespace
 from typing import Any, cast
 
 import matplotlib
@@ -16,6 +17,7 @@ import pytest
 from matplotlib.figure import Figure
 
 import evaluation.plotting.order_chart as legacy_order_chart
+import evaluation.plotting.orders.geometry as order_chart_geometry
 from evaluation.metrics.trades import TradeChartMetrics, compute_trade_metrics
 from evaluation.plotting.chart_levels import (
     at_sample_extreme,
@@ -32,11 +34,36 @@ from evaluation.plotting.chart_overlays import (
     draw_overlays_mpl,
 )
 from evaluation.plotting.order_chart_data import (
+    LevelSeg,
+    OrderLevels,
+    ZoneBand,
+    _active_swing,
+    _as_timeframes,
+    _feature_position,
+    _feature_swing_segments,
     _feature_zones,
+    _finite_at,
+    _idea_context,
+    _in_window,
+    _on_chart,
+    _optional_text,
     _retracement_segments,
+    _selected_timeframes,
     order_levels,
 )
 from evaluation.plotting.order_chart_renderers import draw_order_levels_mpl
+from evaluation.plotting.order_window import (
+    _align_ts,
+    _event_timestamp,
+    _extend_trade_window,
+    _extract_window,
+    _ny_session_positions,
+    _on_trade_or_previous_day,
+    _session_end_pos,
+    _session_end_positions,
+    _structure_anchors,
+    prepare_order_chart,
+)
 from evaluation.plotting.orders import _position_events
 from evaluation.plotting.overlay_events import (
     _rays_from_origins,
@@ -150,6 +177,135 @@ def test_swing_ray_ends_at_first_later_candle_that_sweeps_it() -> None:
 
     assert ray.t0 == idx[0]
     assert ray.t1 == idx[3]
+
+
+def test_order_chart_metadata_helpers_handle_invalid_values_and_timezone_alignment() -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=2, freq="min", tz="UTC")
+    frame = pd.DataFrame({"level": [1.0, np.inf]}, index=idx)
+
+    assert _in_window(None, frame) is False
+    assert _in_window(idx[0] + pd.Timedelta(seconds=30), frame) is True
+    assert _in_window(idx[0] + pd.Timedelta(minutes=3), frame) is False
+    assert _finite_at(frame, "missing", idx[0]) is None
+    assert _finite_at(frame, "level", idx[1]) is None
+    assert _finite_at(pd.DataFrame({"level": [True]}, index=[idx[0]]), "level", idx[0]) is None
+    assert _optional_text(None) == ""
+    assert _optional_text(pd.NA) == ""
+    assert _optional_text(np.array([1, 2])) == "[1 2]"
+    assert _feature_position(frame, idx[0].tz_localize(None)) == 0
+    assert _feature_position(frame, idx[0].tz_convert("US/Eastern")) == 0
+    assert _feature_position(frame.iloc[:0], idx[0]) is None
+    assert _feature_position(pd.DataFrame({"x": [1]}), idx[0]) is None
+    assert _as_timeframes("h1") == ("H1",)
+    assert _as_timeframes(1) == ()
+
+
+def test_order_chart_idea_metadata_parses_and_filters_timeframes() -> None:
+    parsed = pd.Series(
+        {
+            "entry_ideas": "['po3', 'fvg_retest']",
+            "entry_idea_timeframes": "{'po3': ['m5', 'h1']} ",
+        }
+    )
+    ideas, timeframes = _idea_context(parsed)
+
+    assert ideas == {"po3", "fvg_retest"}
+    assert timeframes == {"po3": ["m5", "h1"]}
+    assert _selected_timeframes(parsed, "po3") == ("M5", "H1")
+    assert _selected_timeframes(parsed, "missing") == ()
+    malformed = pd.Series({"entry_ideas": "[broken", "entry_idea_timeframes": "{broken"})
+    assert _idea_context(malformed) == (set(), {})
+    assert _selected_timeframes(pd.Series(dtype=object), "po3") == ("M1",)
+
+
+def test_order_chart_active_swing_selects_latest_live_matching_ray() -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=5, freq="min")
+    events = OverlayEvents(
+        swings=[
+            SwingRay(idx[0], idx[4], 10.0, "high", origin=idx[0]),
+            SwingRay(idx[2], idx[4], 12.0, "high", origin=idx[2]),
+            SwingRay(idx[1], idx[4], 8.0, "low", origin=idx[1]),
+        ]
+    )
+
+    assert _active_swing(events, idx[3], "high") == 12.0
+    assert _active_swing(events, idx[0], "low") is None
+    window = pd.DataFrame({"close": [1.0] * len(idx)}, index=idx)
+    assert _on_chart(10.0, idx[2], window, 0.0, 1.0) is True
+    assert _on_chart(None, idx[2], window, 0.0, 1.0) is False
+
+
+def test_mtf_swing_segment_maps_to_source_wick_and_deduplicates_lower_swing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=3, freq="1min", tz="UTC")
+    bars = pd.DataFrame(
+        {"open": [10.0, 9.0, 9.0], "high": [10.0, 9.0, 9.0], "low": [8.0] * 3}, index=idx
+    )
+    source_levels = pd.DataFrame(
+        {
+            "last_swing_high": [10.0, 10.0],
+            "last_swing_high_time": [idx[0], idx[0]],
+            "last_swing_low": [np.nan, np.nan],
+            "last_swing_low_time": [pd.NaT, pd.NaT],
+        },
+        index=pd.DatetimeIndex([idx[0], idx[1]]),
+    )
+    monkeypatch.setattr(order_chart_geometry, "resample", lambda _bars, _tf: source_levels)
+    monkeypatch.setattr(
+        order_chart_geometry, "structure_levels", lambda *_args, **_kwargs: source_levels
+    )
+    features = pd.DataFrame({"H1_last_swing_high": [10.0, 10.0, np.nan]}, index=idx)
+
+    segments = _feature_swing_segments(features, bars, ("H1",), bars=bars)
+
+    assert len(segments) == 1
+    assert segments[0].label == "H1 Swing High"
+    assert segments[0].price == 10.0
+    assert segments[0].t0 == idx[0]
+    assert segments[0].t1 == idx[1]
+    assert segments[0].mark == idx[0]
+    assert (
+        _feature_swing_segments(
+            features,
+            bars,
+            ("H1",),
+            lower_timeframe_swings=(
+                SimpleNamespace(side="high", t0=idx[0], t1=idx[1], price=10.0),
+            ),
+            bars=bars,
+        )
+        == []
+    )
+
+
+@pytest.mark.parametrize(
+    ("pivot_time", "wick_price"),
+    [(pd.NaT, 10.0), (pd.Timestamp("2026-03-02 15:00", tz="UTC"), 10.0), (None, 9.0)],
+)
+def test_mtf_swing_segment_omits_missing_or_unmappable_source_pivots(
+    monkeypatch: pytest.MonkeyPatch,
+    pivot_time: object,
+    wick_price: float,
+) -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=3, freq="1min", tz="UTC")
+    bars = pd.DataFrame({"high": [wick_price, 9.0, 9.0], "low": [8.0] * 3}, index=idx)
+    source_levels = pd.DataFrame(
+        {
+            "last_swing_high": [10.0, 10.0],
+            "last_swing_high_time": [pivot_time, pivot_time],
+            "last_swing_low": [np.nan, np.nan],
+            "last_swing_low_time": [pd.NaT, pd.NaT],
+        },
+        index=pd.DatetimeIndex([idx[0], idx[1]]),
+    )
+    monkeypatch.setattr(order_chart_geometry, "resample", lambda _bars, _tf: source_levels)
+    monkeypatch.setattr(
+        order_chart_geometry, "structure_levels", lambda *_args, **_kwargs: source_levels
+    )
+    features = pd.DataFrame({"H1_last_swing_high": [10.0, 10.0, np.nan]}, index=idx)
+
+    assert _feature_swing_segments(features, bars, ("H1",), bars=bars) == []
 
 
 def test_sweep_label_uses_legend_instead_of_overlapping_the_line() -> None:
@@ -1364,3 +1520,147 @@ def test_candidate_sweep_line_uses_feature_pivot_timestamp_for_new_entry() -> No
         100.0,
         "M15 liquidity sweep",
     )
+
+
+def test_order_window_aligns_timestamps_and_recovers_event_time_from_bar() -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=4, freq="min", tz="UTC")
+    assert _align_ts(idx[0].tz_localize(None), idx) == idx[0]
+    assert _align_ts(idx[0].tz_convert("US/Eastern"), idx) == idx[0]
+    with pytest.raises(ValueError, match="missing timestamp"):
+        _align_ts(cast(pd.Timestamp, pd.NaT), idx)
+
+    assert _event_timestamp(pd.Series({"time": pd.NaT, "bar": 2}), idx) == idx[2]
+    assert _event_timestamp(pd.Series({"time": "bad", "actual_tick_time": idx[1]}), idx) == idx[1]
+    assert _event_timestamp(pd.Series({"time": "bad", "bar": "bad"}), idx) is None
+
+
+def test_order_window_session_positions_and_trade_day_anchor_rules() -> None:
+    idx = pd.date_range("2026-03-02 16:00", periods=430, freq="min")
+    open_time = pd.Timestamp("2026-03-02 22:55")
+    close_time = pd.Timestamp("2026-03-02 23:05")
+
+    positions = _ny_session_positions(idx, open_time, close_time)
+    assert positions.size > 0
+    assert idx[positions[0]] == pd.Timestamp("2026-03-02 16:30")
+    assert idx[positions[-1]] == pd.Timestamp("2026-03-02 23:00")
+    ends = _session_end_positions(idx)
+    assert ends[positions[0]] == positions[-1]
+    assert ends[positions[-1]] == positions[-1]
+    assert _session_end_positions(pd.DatetimeIndex([])).size == 0
+    assert _session_end_pos(idx, -1) == -1
+    assert _session_end_pos(idx, len(idx)) == len(idx)
+    assert _session_end_pos(idx, 0) == 0
+    assert _on_trade_or_previous_day(pd.Timestamp("2026-03-01 23:00"), open_time)
+    assert _on_trade_or_previous_day(pd.Timestamp("2026-03-02 00:00"), open_time)
+    assert not _on_trade_or_previous_day(pd.Timestamp("2026-02-28 23:00"), open_time)
+
+
+def test_order_window_extracts_context_and_caps_to_calendar_and_session() -> None:
+    idx = pd.date_range("2026-03-02 15:00", periods=500, freq="min")
+    bars = pd.DataFrame({"close": np.arange(len(idx))}, index=idx)
+    start = pd.Timestamp("2026-03-02 22:58")
+    end = pd.Timestamp("2026-03-02 23:02")
+    ends = _session_end_positions(idx)
+
+    selected = _extract_window(bars, start, end, 5, ends)
+
+    assert selected.index[0] == pd.Timestamp("2026-03-02 22:53")
+    assert selected.index[-1] == end
+    assert selected.index.max().date() == start.date()
+    isolated_session_ends = np.arange(len(bars), dtype=int)
+    assert _extract_window(bars, start, end, 5, isolated_session_ends).index[-1] == end
+
+
+def test_order_window_anchors_and_extension_keep_nearby_structure_only() -> None:
+    idx = pd.date_range("2026-03-01 00:00", "2026-03-02 23:59", freq="min")
+    open_time = pd.Timestamp("2026-03-02 16:30")
+    close_time = pd.Timestamp("2026-03-02 17:00")
+    events = OverlayEvents(
+        swings=[
+            SwingRay(idx[100], idx[-1], 10.0, "high", origin=idx[110]),
+            SwingRay(idx[-100], idx[-1], 12.0, "high", origin=idx[-100]),
+        ],
+        sweeps=[SweepLine(idx[110], idx[-1], 9.0, "low", "previous")],
+        smt=[
+            SmtSegment(idx[1430], 10.0, idx[2440], 11.0, "high", "near"),
+            SmtSegment(idx[0], 10.0, idx[1], 11.0, "high", "old"),
+        ],
+    )
+    anchors = _structure_anchors(events, open_time, close_time)
+    assert anchors == [idx[110], idx[110], idx[1430], idx[2440]]
+
+    bars = pd.DataFrame({"close": np.arange(len(idx))}, index=idx)
+    window = bars.loc["2026-03-02 16:30":"2026-03-02 17:00"]
+    assert _extend_trade_window(bars, window, [], open_time) is window
+    assert _extend_trade_window(bars, window.iloc[:0], anchors, open_time).empty
+    extended = _extend_trade_window(bars, window, anchors, open_time, pad=2)
+    assert extended.index[0] == idx[108]
+    assert extended.index[-1] == window.index[-1]
+    assert len(extended) == len(window) + 10
+
+
+def test_prepare_order_chart_fails_closed_on_unresolvable_close() -> None:
+    idx = pd.date_range("2026-03-02 16:30", periods=5, freq="min")
+    bars = pd.DataFrame({"close": np.arange(5)}, index=idx)
+    result = prepare_order_chart(
+        bars,
+        pd.Series({"time": idx[0]}),
+        pd.Series({"time": pd.NaT, "bar": "invalid"}),
+        overlay_events=OverlayEvents(),
+        full_overlays={},
+        context_bars=1,
+    )
+    assert result is None
+
+
+def test_order_renderer_draws_stop_retracement_zone_and_session_annotations() -> None:
+    t0 = pd.Timestamp("2026-03-02 16:30")
+    t1 = t0 + pd.Timedelta(minutes=5)
+    levels = OrderLevels(
+        ylim=(90.0, 110.0),
+        t_open=t0,
+        t_close=t1,
+        entry=100.0,
+        direction=1,
+        exit_price=102.0,
+        red=(95.0, 99.0),
+        green=(100.0, 105.0),
+        segs=[
+            LevelSeg("Stop loss", 95.0, t0, t1, "red", "--"),
+            LevelSeg("Fib/SD: 0.5 (H1)", 101.0, t0, t1, "purple", "--", t0),
+            LevelSeg("Fib/SD: 0.618 (H1)", 102.0, t0, t1, "purple", "--"),
+            LevelSeg("MAE", 94.0, t0, t1, "pink", ":"),
+        ],
+        deviations=[(1.0, 106.0), (2.0, 108.0)],
+        manip_spans=[(t0, t0 + pd.Timedelta(minutes=1))] * 2,
+        manip_ends=[t0 + pd.Timedelta(minutes=2)] * 2,
+        distribution_spans=[(t0 + pd.Timedelta(minutes=2), t1)] * 2,
+        off_chart_levels=[("far TP", 120.0, "green"), ("far SL", 80.0, "red")],
+        zones=[
+            ZoneBand("H1 bull FVG", 100.0, 103.0, t0, t1, "blue"),
+            ZoneBand("H1 bull FVG", 100.0, 103.0, t0, t1, "blue"),
+        ],
+    )
+    updates = pd.DataFrame(
+        [
+            {"type": "ignored", "effective_time": t0, "price": 97.0},
+            {"type": "sl_update", "effective_time": t0 + pd.Timedelta(minutes=3), "price": 99.0},
+            {"type": "sl_update", "effective_time": t0 + pd.Timedelta(minutes=1), "price": 98.0},
+        ]
+    )
+    fig, ax = plt.subplots()
+
+    draw_order_levels_mpl(ax, levels, updates)
+
+    labels = [line.get_label() for line in ax.lines]
+    patch_labels = [patch.get_label() for patch in ax.patches]
+    assert "Stop loss" in labels
+    assert "Active stop after partial" in labels
+    assert patch_labels.count("PO3 manipulation phase") == 1
+    assert patch_labels.count("PO3 distribution phase") == 1
+    assert labels.count("manipulation end") == 1
+    assert labels.count("Swing Fibonacci / SD levels") == 1
+    assert labels.count("Zone midpoint") == 1
+    assert len(ax.texts) >= 5
+    assert ax.get_ylim() == (90.0, 110.0)
+    plt.close(fig)

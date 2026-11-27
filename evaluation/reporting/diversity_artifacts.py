@@ -11,7 +11,7 @@ from evaluation.metrics.decision_diversity import (
     DiversityThresholds,
     diversity_report,
 )
-from evaluation.plotting.diversity import render_decision_diversity_figures
+from evaluation.plotting.diagnostics.diversity import render_decision_diversity_figures
 
 
 def write_decision_artifacts(

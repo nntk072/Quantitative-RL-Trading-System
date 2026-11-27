@@ -13,7 +13,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -431,17 +431,9 @@ def build_features(
                         block = apply_rolling_zscore_state(block, source_state)
                     else:
                         if fit_state_path is not None:
-                            if train_mask is None:
-                                raise ValueError(
-                                    "persisting a feature normalization state requires a training mask"
-                                )
-                            if daily_train_mask is None:
-                                raise ValueError(
-                                    "persisting D1 source normalization requires a training mask"
-                                )
                             captured_stages["source:D1"] = fit_rolling_zscore_state(
                                 block,
-                                train_mask=daily_train_mask,
+                                train_mask=cast(pd.Series, daily_train_mask),
                                 window=window,
                                 mode=normalization_mode,
                             )
@@ -529,13 +521,9 @@ def build_features(
             feat = apply_rolling_zscore_state(matrix_to_normalize, matrix_state)
         else:
             if fit_state_path is not None:
-                if train_mask is None:
-                    raise ValueError(
-                        "persisting a feature normalization state requires a training mask"
-                    )
                 captured_stages["matrix"] = fit_rolling_zscore_state(
                     matrix_to_normalize,
-                    train_mask=train_mask,
+                    train_mask=cast(pd.Series, train_mask),
                     window=window,
                     mode=normalization_mode,
                 )
@@ -554,13 +542,9 @@ def build_features(
             feat = apply_rolling_zscore_state(feat, matrix_state)
         else:
             if fit_state_path is not None:
-                if train_mask is None:
-                    raise ValueError(
-                        "persisting a feature normalization state requires a training mask"
-                    )
                 captured_stages["matrix"] = fit_rolling_zscore_state(
                     feat,
-                    train_mask=train_mask,
+                    train_mask=cast(pd.Series, train_mask),
                     window=window,
                     mode=normalization_mode,
                 )
@@ -900,7 +884,7 @@ def build_features(
             "window": normalization_window,
             "stages": captured_stages,
         }
-        if "matrix" not in captured_stages:
+        if "matrix" not in captured_stages:  # pragma: no cover - valid persistence paths capture it
             raise RuntimeError("feature builder did not capture its matrix normalization fit")
         write_json_atomic(fit_state_path, final_state, default=None)
 

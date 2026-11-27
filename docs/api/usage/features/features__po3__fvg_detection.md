@@ -14,7 +14,7 @@ This page contains 2 public callable records owned by `features.po3.fvg_detectio
 
 **Observed usage:**
 
-1. [test fixture: `test_fvg_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L67)
+1. [test fixture: `test_fvg_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L68)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -25,7 +25,7 @@ def test_fvg_with_custom_config(self, sample_bars: pd.DataFrame) -> None:
     assert isinstance(result, pd.DataFrame)
 ```
 
-2. [test fixture: `test_fvg_buffer_fraction_is_not_forced_to_ten_percent`](../../../../tests/unit/features/test_po3_config.py#L139)
+2. [test fixture: `test_fvg_buffer_fraction_is_not_forced_to_ten_percent`](../../../../tests/unit/features/test_po3_config.py#L140)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

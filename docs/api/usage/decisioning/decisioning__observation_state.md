@@ -44,24 +44,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert result["entry_state_diagnostics"]["entered"] == 0
 ```
 
-2. [test fixture: `test_env_uses_armed_candidate_after_per_bar_setup_disappears`](../../../../tests/unit/simulation/test_environment/test_entry_state_machine.py#L310)
+2. [test fixture: `test_entry_state_one_hot_rejects_unknown_lifecycle_state`](../../../../tests/unit/decisioning/test_observations.py#L149)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        allow_agent_sl_mode=False,
-        allow_ema_exit=False,
-    )
-    observation, _ = env.reset()
-    assert observation["account"].shape == (10,)
-    assert tuple(observation["account"][6:]) == entry_state_one_hot("FLAT")
-    decoded_states: list[str] = []
-    original_decode = env._decode_action
-
-    def track_decoded_state(action: Any, feat_row: Any = None) -> tuple[int, float, float, str]:
-        assert env.entry_state_machine is not None
-# … caller assertions omitted …
+def test_entry_state_one_hot_rejects_unknown_lifecycle_state() -> None:
+    with pytest.raises(ValueError, match="unknown entry state"):
+        entry_state_one_hot("CLOSED")
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

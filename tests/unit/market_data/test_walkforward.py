@@ -96,9 +96,58 @@ def test_extreme_purge_yields_no_fold() -> None:
     assert splits == []
 
 
+@pytest.mark.parametrize(
+    ("n", "n_splits", "test_size"),
+    [(0, 5, 0.2), (100, 0, 0.2), (100, 5, 0.0), (100, 5, -0.1)],
+)
+def test_invalid_walkforward_dimensions_yield_no_splits(
+    n: int, n_splits: int, test_size: float
+) -> None:
+    assert list(purged_walk_forward(n, n_splits, test_size)) == []
+
+
+def test_small_total_test_budget_still_allocates_one_bar_per_fold() -> None:
+    splits = list(
+        purged_walk_forward(
+            n=100,
+            n_splits=5,
+            test_size=0.01,
+            purge_bars=0,
+            embargo_bars=0,
+        )
+    )
+
+    assert [split.test_idx.tolist() for split in splits] == [[95], [96], [97], [98], [99]]
+
+
 def test_legacy_overlap_documented() -> None:
     """Legacy stepper still overlaps (F5 regression fixture)."""
     with pytest.warns(DeprecationWarning):
         splits = list(purged_walk_forward_legacy(n=1000, n_splits=5))
     assert len(splits) >= 2
     assert splits[0].test_idx.max() >= splits[1].test_idx.min()
+
+
+@pytest.mark.parametrize(
+    ("purge_bars", "embargo_bars", "test_size"),
+    (
+        (10_000, 10_000, 0.2),
+        (60, 20, 0.0),
+    ),
+    ids=("empty-training-window", "empty-test-window"),
+)
+def test_legacy_splitter_skips_folds_without_train_or_test_rows(
+    purge_bars: int, embargo_bars: int, test_size: float
+) -> None:
+    with pytest.warns(DeprecationWarning):
+        splits = list(
+            purged_walk_forward_legacy(
+                n=1000,
+                n_splits=5,
+                purge_bars=purge_bars,
+                embargo_bars=embargo_bars,
+                test_size=test_size,
+            )
+        )
+
+    assert splits == []

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import runpy
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -35,6 +37,63 @@ def test_bar_audit_counts_invalid_ohlc_and_timestamp_order(tmp_path: Path) -> No
     period = result["quality_counts_by_period"]["day"]["2025-01-02"]
     assert period["out_of_order_adjacent_timestamps"] == 1
     assert period["invalid_ohlc_rows"] == 1
+
+
+def test_tick_audit_counts_large_gap_across_chunk_boundary(tmp_path: Path) -> None:
+    path = tmp_path / "US100.cash_ticks_gap.csv"
+    path.write_text(
+        "<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\t<FLAGS>\n"
+        "2025.01.02\t10:00:00.000\t10\t11\t\t\t6\n"
+        "2025.01.02\t11:00:01.000\t10\t11\t\t\t6\n",
+        encoding="utf-8",
+    )
+
+    result = scan_csv(path, chunksize=1)
+
+    assert result["observed_gap_counts"] == {
+        "greater_than_1s": 1,
+        "greater_than_60s": 1,
+        "greater_than_3600s": 1,
+    }
+    assert result["quality_counts_by_period"]["day"]["2025-01-02"]["gap_greater_than_3600s"] == 1
+
+
+@pytest.mark.parametrize(("role", "expected"), [("train", "training"), ("test", "testing")])
+def test_daily_audit_infers_date_only_layout_and_normalizes_legacy_role(
+    tmp_path: Path, role: str, expected: str
+) -> None:
+    path = tmp_path / f"US500.cash_D1_{role}.csv"
+    path.write_text(
+        "<DATE>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\n2025.01.02\t10\t12\t9\t11\n",
+        encoding="utf-8",
+    )
+
+    record = scan_csv(path, chunksize=1, source_role=role)
+
+    assert record["source_role"] == expected
+    assert record["timeframe"] == "D1"
+    assert record["row_count"] == 1
+
+
+@pytest.mark.parametrize(
+    ("contents", "message"),
+    [
+        ("<TIME>\t<CLOSE>\n10:00:00\t100\n", "missing DATE column"),
+        ("<DATE>\t<OPEN>\t<CLOSE>\n2025.01.02\t10\t10\n", "unsupported market input columns"),
+        (
+            "<DATE>\t<TIME>\t<BID>\t<ASK>\n2025.01.02\t10:00:00.001\t10\t10.5\n",
+            "unsupported tick columns",
+        ),
+    ],
+)
+def test_quality_scan_rejects_incomplete_source_schema(
+    tmp_path: Path, contents: str, message: str
+) -> None:
+    path = tmp_path / "incomplete.csv"
+    path.write_text(contents, encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        scan_csv(path, chunksize=1)
 
 
 def test_tick_audit_classifies_missing_quotes_and_timestamp_ties(tmp_path: Path) -> None:
@@ -253,3 +312,97 @@ def test_build_report_verifies_manifest_hashes_and_quote_minute_coverage(
             "minute overlap only; no session calendar or within-minute execution chronology implied"
         ),
     }
+
+
+def test_build_report_omits_tick_coverage_without_matching_m1_bars(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    tick = tmp_path / "data/testing/US500.cash_ticks_fixture.csv"
+    tick.parent.mkdir(parents=True)
+    tick.write_text(
+        "<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\n"
+        "2025.01.02\t10:00:00.001\t10\t11\t10.5\t1\n",
+        encoding="utf-8",
+    )
+    audit_module = tmp_path / "market_data/quality_audit.py"
+    audit_module.parent.mkdir()
+    shutil.copyfile(Path(quality_audit.__file__), audit_module)
+    campaign_path = tmp_path / "outputs/campaign.json"
+    campaign_path.parent.mkdir()
+    campaign_path.write_text(
+        json.dumps(
+            {
+                "fingerprint": "tick-only-campaign",
+                "data_inputs": {
+                    "testing:data/testing/US500.cash_ticks_fixture.csv": quality_audit.sha256_file(
+                        tick
+                    )
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(quality_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(quality_audit, "__file__", str(audit_module))
+    monkeypatch.setattr(
+        quality_audit,
+        "_campaign_path_from_repository",
+        lambda path: (tmp_path / path, path.as_posix()),
+    )
+    monkeypatch.setattr(subprocess, "check_output", lambda *_args, **_kwargs: "a" * 40)
+
+    report = build_report(Path("outputs/campaign.json"), chunksize=1)
+
+    assert report["input_count"] == 1
+    assert report["m1_tick_minute_coverage"] == {}
+
+
+def test_quality_audit_module_entrypoint_dispatches_help(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(sys, "argv", ["quality-audit", "--help"])
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(str(Path(quality_audit.__file__).resolve()), run_name="__main__")
+
+    assert exit_info.value.code == 0
+    assert "usage:" in capsys.readouterr().out
+
+
+def test_quality_audit_cli_refuses_to_overwrite_existing_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "existing.json"
+    output.write_text("prior report", encoding="utf-8")
+    monkeypatch.setattr(quality_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        sys, "argv", ["quality-audit", "--campaign", "missing.json", "--out", "existing.json"]
+    )
+
+    with pytest.raises(FileExistsError, match="refusing to overwrite existing evidence"):
+        quality_audit.main()
+
+    assert output.read_text(encoding="utf-8") == "prior report"
+
+
+def test_quality_audit_cli_writes_report_to_new_nested_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    output = tmp_path / "reports" / "nested" / "quality.json"
+    report = {
+        "input_count": 1,
+        "input_bytes_scanned": 12,
+        "all_inputs_present": True,
+        "all_input_hashes_match": True,
+    }
+    monkeypatch.setattr(quality_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(quality_audit, "build_report", lambda *_args, **_kwargs: report)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["quality-audit", "--campaign", "campaign.json", "--out", "reports/nested/quality.json"],
+    )
+
+    quality_audit.main()
+
+    assert json.loads(output.read_text(encoding="utf-8")) == report

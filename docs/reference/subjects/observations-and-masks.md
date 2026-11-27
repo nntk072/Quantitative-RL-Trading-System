@@ -9,13 +9,13 @@ tables live in the [observation schemas reference](../observation_schemas.md).
 array and row mask. Real rows are 1; left-padding rows are 0. Long input keeps
 the latest rows; empty input produces zeros and an all-zero mask.
 
-`simulation.environment.observations.prepare_observation_feature_channels`
+`simulation.environment.observations.schema.prepare_observation_feature_channels`
 replaces non-finite values with zero. When `env.feature_validity_channels` is
 enabled, it also appends a finite-value channel for each feature. This is a
 cell-level signal; it is distinct from the sequence row mask.
 
 The runtime observation assembled by
-`simulation.environment.observation_runtime` always includes `seq`,
+`simulation.environment.observations.runtime` always includes `seq`,
 `seq_mask`, and `account`. Configuration may add `regime` and `regime_mask`,
 `trade_setup_mask`, candidate geometry arrays, timeframe sequences and masks,
 or a VAE branch. `config/base/default.yaml` is the setting source of truth.
@@ -45,8 +45,8 @@ validation path.
 
 For exact coordinate tables and serialized field shapes, consult the canonical
 reference. For implementation behavior, consult `decisioning/observations.py`,
-`simulation/environment/observations.py`, and
-`simulation/environment/observation_runtime.py`.
+`simulation/environment/observations/schema.py`, and
+`simulation/environment/observations/runtime.py`.
 
 ## Validation and known limits
 

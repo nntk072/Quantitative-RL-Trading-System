@@ -7,6 +7,8 @@ api_paths:
 - configuration/paths.py
 - configuration/schema.py
 caller_paths:
+- tests/unit/features/test_feature_matrix_builder_remaining_contracts.py
+- tests/unit/training/test_data_stage_remaining_contracts.py
 - tests/research/test_simulator_local_session_trace_verifier.py
 - evaluation/reanalysis/checkpoint_reanalysis.py
 - evaluation/reanalysis/datasets.py
@@ -61,6 +63,7 @@ caller_paths:
 - tests/unit/training/test_quality_registry.py
 - tests/unit/training/test_survival_gate.py
 - tests/unit/training/test_train_rl_decomposition.py
+- tests/unit/training/test_walk_forward_validation_coverage.py
 - tests/unit/training/test_survival_campaign_resume.py
 - tests/unit/training/test_training_smoke.py
 - tests/unit/training/test_variant_overrides_match_legacy.py

@@ -136,6 +136,159 @@ def test_gap_reaction_context_keeps_fvg_and_ifvg_distinct() -> None:
     assert context["gap_reactions"] == {"FVG": ["M3"], "IFVG": ["H1"]}
 
 
+def test_ifvg_confirmation_timeframe_is_preserved_for_unretested_context() -> None:
+    row = {
+        "entry_idea_ifvg_unretested_long": 1.0,
+        "ifvg_bull_confirmed": 1.0,
+        "ifvg_bull_confirmation_tf_code": 15.0,
+    }
+
+    context = entry_idea_context(row, 1)
+
+    assert context["ideas"] == ["ifvg_unretested"]
+    assert context["timeframes"] == {"ifvg_unretested": ["M15"]}
+    assert context["gap_reactions"] == {"IFVG": ["M15"]}
+
+
+def test_ifvg_confirmation_codes_route_bare_confirmation_to_its_timeframe() -> None:
+    features = pd.DataFrame(
+        {
+            "ifvg_bull_confirmed": [1.0],
+            "ifvg_bull_confirmation_tf_code": [5.0],
+        },
+        index=pd.RangeIndex(1),
+    )
+
+    ideas = build_entry_idea_features(features)
+    context = entry_idea_context(
+        {
+            "entry_idea_ifvg_unretested_long": 1.0,
+            "ifvg_bull_confirmed": 1.0,
+            "ifvg_bull_confirmation_tf_code": 5.0,
+        },
+        1,
+    )
+
+    assert ideas.loc[0, "entry_idea_ifvg_unretested_M5_long"] == 1.0
+    assert ideas.loc[0, "entry_idea_ifvg_unretested_M1_long"] == 0.0
+    assert context["timeframes"]["ifvg_unretested"] == ["M5"]
+    assert context["gap_reactions"]["IFVG"] == ["M5"]
+
+
+def test_invalid_ifvg_confirmation_code_falls_back_to_m1_eligibility() -> None:
+    source = pd.DataFrame(
+        {
+            "ifvg_bull_confirmed": [1.0],
+            "ifvg_bull_confirmation_tf_code": ["unavailable"],
+        }
+    )
+
+    ideas = build_entry_idea_features(source)
+    context = entry_idea_context(
+        {
+            "entry_idea_ifvg_unretested_long": ideas.loc[0, "entry_idea_ifvg_unretested_long"],
+            "ifvg_bull_confirmed": 1.0,
+            "ifvg_bull_confirmation_tf_code": "unavailable",
+        },
+        1,
+    )
+
+    assert ideas.loc[0, "entry_idea_ifvg_unretested_M1_long"] == 1.0
+    assert ideas.loc[0, "entry_idea_ifvg_unretested_M5_long"] == 0.0
+    assert context["timeframes"]["ifvg_unretested"] == ["M1"]
+    assert context["gap_reactions"]["IFVG"] == ["M1"]
+
+
+def test_invalid_retest_source_values_do_not_create_eligibility_masks() -> None:
+    source = pd.DataFrame(
+        {
+            "M5_fvg_retest_bull": ["invalid"],
+            "M5_ifvg_retest_bull": [np.nan],
+            "M5_ifvg_bull_confirmed": [-1.0],
+        }
+    )
+
+    ideas = build_entry_idea_features(source)
+
+    assert ideas.loc[0, "entry_idea_fvg_retest_long"] == 0.0
+    assert ideas.loc[0, "entry_idea_ifvg_retest_long"] == 0.0
+    assert ideas.loc[0, "entry_idea_ifvg_unretested_long"] == 0.0
+    assert ideas.loc[0, "entry_idea_long_count"] == 0.0
+
+
+def test_po3_idea_requires_matching_same_timeframe_distribution_and_live_ifvg() -> None:
+    features = pd.DataFrame(
+        {
+            "M5_po3_distribution": [1.0, 1.0],
+            "M5_po3_distribution_direction": [1.0, -1.0],
+            "M5_po3_distribution_after_ifvg": [1.0, 1.0],
+            "M5_ifvg_bull_active": [1.0, 1.0],
+            "M5_ifvg_bear_active": [1.0, 1.0],
+        }
+    )
+
+    ideas = build_entry_idea_features(features)
+
+    assert ideas["entry_idea_po3_M5_long"].tolist() == [1.0, 0.0]
+    assert ideas["entry_idea_po3_M5_short"].tolist() == [0.0, 1.0]
+
+
+def test_po3_direction_only_legacy_state_keeps_matching_live_ifvg_eligible() -> None:
+    features = pd.DataFrame(
+        {
+            "M5_po3_distribution_direction": [1.0],
+            "M5_po3_distribution_after_ifvg": [1.0],
+            "M5_ifvg_bull_active": [1.0],
+        }
+    )
+
+    ideas = build_entry_idea_features(features)
+
+    assert ideas.loc[0, "entry_idea_po3_M5_long"] == 1.0
+    assert ideas.loc[0, "entry_idea_po3_M5_short"] == 0.0
+
+
+def test_entry_context_rejects_nontrade_direction_and_ignores_malformed_zones() -> None:
+    empty = entry_idea_context({"entry_idea_fvg_retest_long": 1.0}, 0, include_zones=True)
+    assert empty == {
+        "ideas": [],
+        "timeframes": {},
+        "stop_timeframe_floor": "M1",
+        "standard_deviation_timeframes": [],
+        "gap_reactions": {},
+        "zones": [],
+    }
+
+    malformed = {
+        "entry_idea_fvg_retest_long": 1.0,
+        "M5_fvg_retest_bull": 1.0,
+        "M5_fvg_bull_active": 1.0,
+        "M5_fvg_bull_low": [101.0, float("nan")],
+        "M5_fvg_bull_high": [100.0, 102.0],
+    }
+    context = entry_idea_context(malformed, 1, include_zones=True)
+
+    assert context["ideas"] == ["fvg_retest"]
+    assert context["zones"] == []
+
+
+def test_entry_context_keeps_each_valid_vector_zone_for_plotting() -> None:
+    row = {
+        "entry_idea_fvg_retest_long": 1.0,
+        "M5_fvg_retest_bull": 1.0,
+        "M5_fvg_bull_active": 1.0,
+        "M5_fvg_bull_low": np.array([100.0, 102.0]),
+        "M5_fvg_bull_high": np.array([101.0, 103.0]),
+    }
+
+    context = entry_idea_context(row, 1, include_zones=True)
+
+    assert [(zone["low"], zone["high"]) for zone in context["zones"]] == [
+        (100.0, 101.0),
+        (102.0, 103.0),
+    ]
+
+
 def test_entry_ideas_handle_duplicate_input_columns_and_keep_overlapping_contexts() -> None:
     # Feature blocks can contain repeated labels after concatenation. Selecting
     # such a label by name returns a DataFrame, so consume source columns by
@@ -232,6 +385,30 @@ def test_po3_context_records_only_the_ifvg_used_for_distribution() -> None:
             "high": 101.0,
             "start_time_ns": 1_735_000_000_000_000_000,
         },
+    ]
+
+
+def test_po3_context_falls_back_to_active_zones_when_confirmation_metadata_is_bad() -> None:
+    row = {
+        "entry_idea_po3_long": 1.0,
+        "M5_po3_distribution": 1.0,
+        "M5_po3_distribution_direction": 1.0,
+        "M5_po3_distribution_after_ifvg": 1.0,
+        "M5_ifvg_bull_active": 1.0,
+        "po3_ifvg_confirmation_tf_code": "invalid",
+        "M5_fvg_bull_active": 1.0,
+        "M5_fvg_bull_low": [98.0, "bad"],
+        "M5_fvg_bull_high": [99.0, 101.0],
+        "M5_ifvg_bull_low": [98.5],
+        "M5_ifvg_bull_high": [99.5],
+    }
+
+    context = entry_idea_context(row, 1, include_zones=True)
+
+    assert context["timeframes"]["po3"] == ["M5"]
+    assert [(zone["family"], zone["low"], zone["high"]) for zone in context["zones"]] == [
+        ("fvg", 98.0, 99.0),
+        ("ifvg", 98.5, 99.5),
     ]
 
 

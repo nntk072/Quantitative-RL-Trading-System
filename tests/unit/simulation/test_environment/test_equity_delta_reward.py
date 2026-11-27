@@ -32,3 +32,9 @@ def test_equity_delta_reward_keeps_breach_terminal_penalty() -> None:
 def test_equity_delta_reward_requires_positive_fixed_risk() -> None:
     with pytest.raises(ValueError, match="fixed_risk_usd"):
         EquityDeltaReward(0.0)
+
+
+def test_equity_delta_reward_rejects_nonfinite_equity_change() -> None:
+    reward = EquityDeltaReward(500.0)
+    with pytest.raises(ValueError, match="non-finite equity change"):
+        reward(float("nan"))

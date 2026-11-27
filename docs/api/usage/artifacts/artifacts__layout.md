@@ -12,7 +12,7 @@ This page contains 32 public callable records owned by `artifacts.layout`. Statu
 
 **Observed usage:**
 
-1. [test fixture: `test_timestamped_run_path_keeps_existing_layout_without_creating_directory`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L43)
+1. [test fixture: `test_timestamped_run_path_keeps_existing_layout_without_creating_directory`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L45)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -29,7 +29,7 @@ def test_timestamped_run_path_keeps_existing_layout_without_creating_directory(
     assert not run_path.exists()
 ```
 
-2. [test fixture: `test_artifact_layout_rejects_path_components`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L64)
+2. [test fixture: `test_artifact_layout_rejects_path_components`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L66)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -60,7 +60,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L600)
+1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L579)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -120,7 +120,7 @@ def gpu_experiment_run(self, experiment_run_id: str) -> ExperimentRunArtifactLay
 
 **Observed usage:**
 
-1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L77)
+1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L79)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -135,6 +135,8 @@ def test_artifact_layout_keeps_safe_run_namespaces(tmp_path: Path) -> None:
     assert layout.evaluation("checkpoint-replay.v1") == (
         tmp_path / "evaluation" / "checkpoint-replay.v1"
     )
+    assert layout.research() == tmp_path / "research"
+    assert layout.reports() == tmp_path / "reports"
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -168,7 +170,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L74)
+1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L76)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -183,6 +185,8 @@ def test_artifact_layout_keeps_safe_run_namespaces(tmp_path: Path) -> None:
     assert layout.evaluation("checkpoint-replay.v1") == (
         tmp_path / "evaluation" / "checkpoint-replay.v1"
     )
+    assert layout.research() == tmp_path / "research"
+    assert layout.reports() == tmp_path / "reports"
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -250,7 +254,7 @@ def experiment_run(self, experiment_run_id: str) -> Path:
 
 **Observed usage:**
 
-1. [test fixture: `test_gpu_experiment_run_layout_preserves_existing_paths_and_names_artifact_roles`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L85)
+1. [test fixture: `test_gpu_experiment_run_layout_preserves_existing_paths_and_names_artifact_roles`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L99)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -267,7 +271,7 @@ def test_gpu_experiment_run_layout_preserves_existing_paths_and_names_artifact_r
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_experiment_run_layout_rejects_unsafe_experiment_run_ids`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L115)
+2. [test fixture: `test_experiment_run_layout_rejects_unsafe_experiment_run_ids`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L129)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -302,20 +306,28 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   Path returned by ``reports``.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L83)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = ArtifactLayout(...)
-result = instance.reports()
+def test_artifact_layout_keeps_safe_run_namespaces(tmp_path: Path) -> None:
+    layout = ArtifactLayout(tmp_path)
+
+    assert layout.run("run_seed42_tcn") == tmp_path / "runs" / "run_seed42_tcn"
+    assert layout.experiment_run("experiment-run-20261030") == (
+        tmp_path / "experiment_runs" / "experiment-run-20261030"
+    )
+    assert layout.evaluation("checkpoint-replay.v1") == (
+        tmp_path / "evaluation" / "checkpoint-replay.v1"
+    )
+    assert layout.research() == tmp_path / "research"
+    assert layout.reports() == tmp_path / "reports"
 ```
 
-**Lifecycle context:** This callable participates in `ArtifactLayout`: Resolve canonical paths for run, evaluation, research, and report artifacts. Related public lifecycle methods: {py:obj}`artifacts.layout.ArtifactLayout.runs`, {py:obj}`artifacts.layout.ArtifactLayout.run`, {py:obj}`artifacts.layout.ArtifactLayout.timestamped_run`, {py:obj}`artifacts.layout.ArtifactLayout.experiment_runs`, {py:obj}`artifacts.layout.ArtifactLayout.experiment_run`, {py:obj}`artifacts.layout.ArtifactLayout.gpu_experiment_run`, {py:obj}`artifacts.layout.ArtifactLayout.evaluation`, {py:obj}`artifacts.layout.ArtifactLayout.research`
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -338,20 +350,28 @@ The input, output, and error contract above is the safe boundary for a caller. F
   Path returned by ``research``.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L82)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = ArtifactLayout(...)
-result = instance.research()
+def test_artifact_layout_keeps_safe_run_namespaces(tmp_path: Path) -> None:
+    layout = ArtifactLayout(tmp_path)
+
+    assert layout.run("run_seed42_tcn") == tmp_path / "runs" / "run_seed42_tcn"
+    assert layout.experiment_run("experiment-run-20261030") == (
+        tmp_path / "experiment_runs" / "experiment-run-20261030"
+    )
+    assert layout.evaluation("checkpoint-replay.v1") == (
+        tmp_path / "evaluation" / "checkpoint-replay.v1"
+    )
+    assert layout.research() == tmp_path / "research"
+    assert layout.reports() == tmp_path / "reports"
 ```
 
-**Lifecycle context:** This callable participates in `ArtifactLayout`: Resolve canonical paths for run, evaluation, research, and report artifacts. Related public lifecycle methods: {py:obj}`artifacts.layout.ArtifactLayout.runs`, {py:obj}`artifacts.layout.ArtifactLayout.run`, {py:obj}`artifacts.layout.ArtifactLayout.timestamped_run`, {py:obj}`artifacts.layout.ArtifactLayout.experiment_runs`, {py:obj}`artifacts.layout.ArtifactLayout.experiment_run`, {py:obj}`artifacts.layout.ArtifactLayout.gpu_experiment_run`, {py:obj}`artifacts.layout.ArtifactLayout.evaluation`, {py:obj}`artifacts.layout.ArtifactLayout.research`
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -382,7 +402,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L73)
+1. [test fixture: `test_artifact_layout_keeps_safe_run_namespaces`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L75)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -397,6 +417,8 @@ def test_artifact_layout_keeps_safe_run_namespaces(tmp_path: Path) -> None:
     assert layout.evaluation("checkpoint-replay.v1") == (
         tmp_path / "evaluation" / "checkpoint-replay.v1"
     )
+    assert layout.research() == tmp_path / "research"
+    assert layout.reports() == tmp_path / "reports"
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -463,7 +485,7 @@ def run(self, run_id: str) -> Path:
 
 **Observed usage:**
 
-1. [test fixture: `test_timestamped_run_path_keeps_existing_layout_without_creating_directory`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L46)
+1. [test fixture: `test_timestamped_run_path_keeps_existing_layout_without_creating_directory`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L48)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1256,7 +1278,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L600)
+1. [test fixture: `test_manager_uses_default_allocation_done_marker`](../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L579)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1276,7 +1298,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L389)
+2. [production caller: `_manager`](../../../../compute/slurm/worker_dispatch.py#L387)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

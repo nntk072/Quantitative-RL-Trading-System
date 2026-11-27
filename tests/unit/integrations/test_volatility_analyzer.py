@@ -154,3 +154,78 @@ def test_destructor_shuts_the_terminal_down(
     analyzer.__del__()
 
     assert calls == ["shutdown"]
+
+
+def test_ranking_sorts_by_score_and_skips_unavailable_symbols(
+    analyzer: va.VolatilityAnalyzer, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    metrics = {
+        "EURUSD": {"symbol": "EURUSD", "score": 0.4},
+        "GBPUSD": None,
+        "US100": {"symbol": "US100", "score": 1.2},
+    }
+    monkeypatch.setattr(
+        analyzer,
+        "calculate_volatility_metrics",
+        lambda symbol, _timeframe: metrics[symbol],
+    )
+
+    ranked = analyzer.rank_symbols_by_volatility(["EURUSD", "GBPUSD", "US100"])
+
+    assert [item["symbol"] for item in ranked] == ["US100", "EURUSD"]
+
+
+def test_selection_applies_score_floor_and_symbol_limit(
+    analyzer: va.VolatilityAnalyzer, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        analyzer,
+        "rank_symbols_by_volatility",
+        lambda *_args: [
+            {"symbol": "US100", "score": 1.0, "atr_percentage": 0.8, "volatility": 0.4},
+            {"symbol": "US500", "score": 0.7, "atr_percentage": 0.6, "volatility": 0.3},
+            {"symbol": "EURUSD", "score": 0.2, "atr_percentage": 0.1, "volatility": 0.1},
+        ],
+    )
+
+    selected = analyzer.select_top_volatile_symbols(
+        ["US100", "US500", "EURUSD"], max_symbols=1, min_volatility_threshold=0.5
+    )
+
+    assert selected == ["US100"]
+
+
+def test_symbol_info_maps_broker_fields_and_handles_missing_or_broken_metadata(
+    analyzer: va.VolatilityAnalyzer, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    info = SimpleNamespace(
+        name="EURUSD",
+        description="Euro / US Dollar",
+        currency_base="EUR",
+        currency_profit="USD",
+        trade_mode=4,
+        visible=True,
+        select=True,
+    )
+    monkeypatch.setattr(mt5, "symbol_info", lambda _symbol: info)
+    mapped = analyzer.get_symbol_info("EURUSD")
+
+    assert mapped == {
+        "symbol": "EURUSD",
+        "name": "EURUSD",
+        "description": "Euro / US Dollar",
+        "currency_base": "EUR",
+        "currency_profit": "USD",
+        "trade_mode": 4,
+        "visible": True,
+        "select": True,
+    }
+
+    monkeypatch.setattr(mt5, "symbol_info", lambda _symbol: None)
+    assert analyzer.get_symbol_info("MISSING") is None
+
+    def fail_info(_symbol: str) -> None:
+        raise RuntimeError("terminal disconnected")
+
+    monkeypatch.setattr(mt5, "symbol_info", fail_info)
+    assert analyzer.get_symbol_info("EURUSD") is None

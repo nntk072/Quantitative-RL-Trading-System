@@ -14,7 +14,7 @@ This page contains 3 public callable records owned by `artifacts.manifest`. Stat
 
 **Observed usage:**
 
-1. [test fixture: `test_manifest_rejects_invalid_identity_fields`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L211)
+1. [test fixture: `test_manifest_rejects_invalid_identity_fields`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -22,6 +22,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_manifest_rejects_invalid_identity_fields(values, message) -> None:
     with pytest.raises(ValueError, match=message):
         ArtifactManifest(**values)
+```
+
+2. [test fixture: `test_manifest_rejects_invalid_metadata_shapes`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L280)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_manifest_rejects_invalid_metadata_shapes(changes, message: str) -> None:
+    values = {
+        "kind": "run",
+        "artifact_id": "run:1",
+        "created_at": "2026-11-26T00:00:00+00:00",
+        "retention": RetentionClass.RUN_RETAINED,
+        "parents": (),
+        "provenance": {},
+    }
+    values.update(changes)
+
+    with pytest.raises(ValueError, match=message):
+        ArtifactManifest(**values)  # type: ignore[arg-type]
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -61,7 +81,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_manifest_read_requires_a_mapping_root`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L219)
+1. [test fixture: `test_manifest_read_requires_a_mapping_root`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L233)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -74,7 +94,7 @@ def test_manifest_read_requires_a_mapping_root(tmp_path: Path) -> None:
         ArtifactManifest.read(path)
 ```
 
-2. [test fixture: `test_manifest_read_rejects_unknown_fields`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L230)
+2. [test fixture: `test_manifest_read_rejects_unknown_fields`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L244)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

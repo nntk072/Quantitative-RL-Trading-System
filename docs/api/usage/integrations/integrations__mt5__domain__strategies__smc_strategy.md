@@ -12,41 +12,40 @@ This page contains 6 public callable records owned by `integrations.mt5.domain.s
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L141)
+1. [test fixture: `test_smc_order_blocks_require_a_strong_candle_followed_by_consolidation`](../../../../tests/unit/integrations/test_mt5_strategies.py#L82)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_smc_order_blocks_require_a_strong_candle_followed_by_consolidation() -> None:
+    strategy = SMCStrategy(PriceData(pd.DataFrame()), order_block_periods=1)
+    frame = pd.DataFrame(
+        {
+            "open": [10.0, 10.0, 20.0],
+            "high": [11.0, 20.0, 21.0],
+            "low": [9.0, 10.0, 19.0],
+# … caller assertions omitted …
 ```
 
-2. [production caller: `__init__`](../../../../integrations/mt5/domain/strategies/combined_strategy.py#L46)
+2. [test fixture: `test_smc_fair_value_gaps_detect_bullish_and_bearish_separation`](../../../../tests/unit/integrations/test_mt5_strategies.py#L116)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
+def test_smc_fair_value_gaps_detect_bullish_and_bearish_separation(
+    frame: pd.DataFrame, bullish_at: int | None, bearish_at: int | None
+) -> None:
+    bullish, bearish = SMCStrategy(PriceData(frame)).identify_fair_value_gaps(frame)
 
-        if "crossover" in strategies:
-            self.strategies["crossover"] = CrossOverStrategy(trading_data)
-
-        if "smc" in strategies:
-            self.strategies["smc"] = SMCStrategy(trading_data)
-
-        if "trend_breakout" in strategies:
-            self.strategies["trend_breakout"] = TrendBreakoutStrategy(trading_data)
+    assert (bullish_at is not None) is bool(bullish.any())
+    assert (bearish_at is not None) is bool(bearish.any())
+    if bullish_at is not None:
+        assert bullish.iloc[bullish_at]
+    if bearish_at is not None:
+        assert bearish.iloc[bearish_at]
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -63,41 +62,40 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L141)
+1. [test fixture: `test_smc_order_blocks_require_a_strong_candle_followed_by_consolidation`](../../../../tests/unit/integrations/test_mt5_strategies.py#L82)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_smc_order_blocks_require_a_strong_candle_followed_by_consolidation() -> None:
+    strategy = SMCStrategy(PriceData(pd.DataFrame()), order_block_periods=1)
+    frame = pd.DataFrame(
+        {
+            "open": [10.0, 10.0, 20.0],
+            "high": [11.0, 20.0, 21.0],
+            "low": [9.0, 10.0, 19.0],
+# … caller assertions omitted …
 ```
 
-2. [production caller: `__init__`](../../../../integrations/mt5/domain/strategies/combined_strategy.py#L46)
+2. [test fixture: `test_smc_fair_value_gaps_detect_bullish_and_bearish_separation`](../../../../tests/unit/integrations/test_mt5_strategies.py#L116)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
+def test_smc_fair_value_gaps_detect_bullish_and_bearish_separation(
+    frame: pd.DataFrame, bullish_at: int | None, bearish_at: int | None
+) -> None:
+    bullish, bearish = SMCStrategy(PriceData(frame)).identify_fair_value_gaps(frame)
 
-        if "crossover" in strategies:
-            self.strategies["crossover"] = CrossOverStrategy(trading_data)
-
-        if "smc" in strategies:
-            self.strategies["smc"] = SMCStrategy(trading_data)
-
-        if "trend_breakout" in strategies:
-            self.strategies["trend_breakout"] = TrendBreakoutStrategy(trading_data)
+    assert (bullish_at is not None) is bool(bullish.any())
+    assert (bearish_at is not None) is bool(bearish.any())
+    if bullish_at is not None:
+        assert bullish.iloc[bullish_at]
+    if bearish_at is not None:
+        assert bearish.iloc[bearish_at]
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -128,7 +126,25 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L163)
+1. [test fixture: `test_smc_fair_value_gaps_detect_bullish_and_bearish_separation`](../../../../tests/unit/integrations/test_mt5_strategies.py#L116)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_smc_fair_value_gaps_detect_bullish_and_bearish_separation(
+    frame: pd.DataFrame, bullish_at: int | None, bearish_at: int | None
+) -> None:
+    bullish, bearish = SMCStrategy(PriceData(frame)).identify_fair_value_gaps(frame)
+
+    assert (bullish_at is not None) is bool(bullish.any())
+    assert (bearish_at is not None) is bool(bearish.any())
+    if bullish_at is not None:
+        assert bullish.iloc[bullish_at]
+    if bearish_at is not None:
+        assert bearish.iloc[bearish_at]
+```
+
+2. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -177,7 +193,21 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L166)
+1. [test fixture: `test_smc_market_structure_follows_ordered_highs_and_lows`](../../../../tests/unit/integrations/test_mt5_strategies.py#L133)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_smc_market_structure_follows_ordered_highs_and_lows(direction: str) -> None:
+    levels: np.ndarray[Any, Any] = np.arange(20, dtype=float)
+    if direction == "bearish":
+        levels = levels[::-1]
+    frame = pd.DataFrame({"high": levels + 1.0, "low": levels})
+
+    assert SMCStrategy(PriceData(frame)).identify_market_structure(frame) == direction
+```
+
+2. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L166)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -226,7 +256,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L160)
+1. [test fixture: `test_smc_detects_bearish_order_block_followed_by_consolidation`](../../../../tests/unit/integrations/test_mt5_strategy_signal_contracts.py#L131)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            "low": [19.0, 9.5, 9.5],
+            "close": [20.0, 10.0, 10.0],
+        }
+    )
+
+    bullish, bearish = strategy.identify_order_blocks(frame)
+
+    assert bearish.iloc[1]
+    assert not bullish.any()
+```
+
+2. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/smc_strategy.py#L160)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -267,20 +314,39 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Tuple of (symbol, signal)
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_trend_breakout_signal_requires_breakout_trend_and_moving_average_alignment`](../../../../tests/unit/integrations/test_mt5_strategy_signal_contracts.py#L76)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = SMCStrategy(...)
-result = instance.signal()
+# … caller setup omitted …
+    else:
+        levels = (float(frame["low"].iloc[-1]) + 0.5, 110.0)
+    monkeypatch.setattr(strategy, "identify_support_resistance", lambda _frame: levels)
+    monkeypatch.setattr(strategy, "calculate_trend_strength", lambda _frame: 30.0)
+
+    assert strategy.signal() == ("US100", expected)
 ```
 
-**Lifecycle context:** This callable participates in `SMCStrategy`: Smart Money Concepts (SMC) Strategy. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_order_blocks`, {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_fair_value_gaps`, {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.identify_market_structure`, {py:obj}`integrations.mt5.domain.strategies.smc_strategy.SMCStrategy.signal`
+2. [test fixture: `test_trend_continuation_signal_requires_nearby_support_and_volume_confirmation`](../../../../tests/unit/integrations/test_mt5_strategy_signal_contracts.py#L87)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_trend_continuation_signal_requires_nearby_support_and_volume_confirmation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = _bars(np.linspace(90.0, 100.0, 30))
+    strategy = TrendBreakoutStrategy(FrameData(frame), lookback_period=20)
+    monkeypatch.setattr(strategy, "identify_support_resistance", lambda _frame: (99.8, 120.0))
+    monkeypatch.setattr(strategy, "calculate_trend_strength", lambda _frame: 35.0)
+
+    assert strategy.signal() == ("US100", Signal.BUY)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

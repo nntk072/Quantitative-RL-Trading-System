@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import multiprocessing as mp
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pytest
@@ -277,6 +277,17 @@ def test_reuse_only_validates_and_reuses_existing_bundle(tmp_path: Path) -> None
             reuse_only=True,
         )
 
+    altered_shape = {name: value.copy() for name, value in arrays.items()}
+    altered_shape["bar_ohlc"] = altered_shape["bar_ohlc"][:-1]
+    with pytest.raises(ValueError, match="cached bundle array metadata differs"):
+        build_bundle(
+            tmp_path,
+            arrays=altered_shape,
+            config=config,
+            source_fingerprints=sources,
+            reuse_only=True,
+        )
+
 
 def test_reuse_only_fails_when_bundle_is_missing(tmp_path: Path) -> None:
     """Reuse-only mode never silently builds a missing bundle."""
@@ -372,3 +383,80 @@ def test_bundle_arrays_are_read_only(tmp_path: Path) -> None:
     loaded = load_bundle(bundle_path)
 
     assert all(array.flags.writeable is False for array in loaded.arrays.values())
+
+
+@pytest.mark.parametrize(
+    ("arrays", "error", "message"),
+    [
+        ({}, ValueError, "at least one array"),
+        ({"../escape": np.asarray([1])}, ValueError, "invalid bundle array name"),
+        ({"bars": object()}, TypeError, "must be a numpy array"),
+        ({"bars": np.asarray([object()], dtype=object)}, TypeError, "object dtype"),
+    ],
+)
+def test_build_rejects_unsafe_or_unsupported_array_inputs(
+    tmp_path: Path,
+    arrays: object,
+    error: type[Exception],
+    message: str,
+) -> None:
+    from simulation.environment.shared_bundle import build_bundle
+
+    source_arrays = cast(dict[str, np.ndarray[Any, Any]], arrays)
+    with pytest.raises(error, match=message):
+        build_bundle(
+            tmp_path,
+            arrays=source_arrays,
+            config={},
+            source_fingerprints={},
+        )
+
+    assert not (tmp_path / "shared_env").exists()
+
+
+def test_bundle_key_normalizes_paths_and_ignores_non_mapping_config_branches() -> None:
+    from simulation.environment.shared_bundle import bundle_key
+
+    path_config = {"features": Path("features/config.json"), "env": 7}
+    string_config = {"features": "features/config.json", "env": 7}
+
+    assert bundle_key(path_config, {}) == bundle_key(string_config, {})
+
+
+@pytest.mark.parametrize(
+    ("mutate_manifest", "message"),
+    [
+        (lambda manifest: manifest.update(arrays={}), "no array entries"),
+        (
+            lambda manifest: manifest["arrays"]["bar_ohlc"].update(file="../outside.npy"),
+            "invalid array filename",
+        ),
+        (
+            lambda manifest: manifest["arrays"]["bar_ohlc"].update(shape=[1]),
+            "array metadata mismatch",
+        ),
+    ],
+)
+def test_load_bundle_rejects_missing_entries_and_unsafe_array_paths(
+    tmp_path: Path,
+    mutate_manifest: Any,
+    message: str,
+) -> None:
+    import json
+
+    from simulation.environment.shared_bundle import build_bundle, load_bundle
+
+    arrays, config = _fixture_bundle_inputs()
+    bundle_path = build_bundle(
+        tmp_path,
+        arrays=arrays,
+        config=config,
+        source_fingerprints={"bars": {"size": 32}},
+    )
+    manifest_path = bundle_path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    mutate_manifest(manifest)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_bundle(bundle_path)

@@ -12,7 +12,7 @@
 
 ## Resolved citation correction
 
-The timing paragraph now cites `simulation/environment/trade_accounting_runtime.py::_stamp_exit`, `simulation/environment/step_action_execution.py`, and `simulation/backtest/event_driven_backtest.py::_fill_quote_event` for fill times, while retaining `simulation/environment/step_accounting_runtime.py::_record_step_accounting` for equity valuation time. The named integration tests exist.
+The timing paragraph now cites `simulation/environment/accounting/trades.py::_stamp_exit`, `simulation/environment/step_action_execution.py`, and `simulation/backtest/event_driven_backtest.py::_fill_quote_event` for fill times, while retaining `simulation/environment/accounting/step.py::_record_step_accounting` for equity valuation time. The named integration tests exist.
 
 ## Document and notebook checks
 

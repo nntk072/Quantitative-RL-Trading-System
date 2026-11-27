@@ -16,7 +16,7 @@ class Trader(ABC):
         Returns:
             Result of open a position; returns the broker result object or None on failure.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body
 
     @abstractmethod
     def close_positions(self, *args: Any, **kwargs: Any) -> Any:
@@ -29,7 +29,7 @@ class Trader(ABC):
         Returns:
             Result of close positions selected by adapter-specific filters.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body
 
     @abstractmethod
     def get_opened_positions(self, *args: Any, **kwargs: Any) -> Any:
@@ -42,7 +42,7 @@ class Trader(ABC):
         Returns:
             Result of return open positions matching adapter-specific filters.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body
 
     @abstractmethod
     def get_all_positions(self, *args: Any, **kwargs: Any) -> Any:
@@ -55,7 +55,7 @@ class Trader(ABC):
         Returns:
             Result of return all positions visible through the adapter.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body
 
     @abstractmethod
     def send_to_break_even(self, *args: Any, **kwargs: Any) -> Any:
@@ -68,7 +68,7 @@ class Trader(ABC):
         Returns:
             Result of adjust selected positions to their break-even stop level.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body
 
     @abstractmethod
     def calculate_position_size(self, *args: Any, **kwargs: Any) -> Any:
@@ -81,4 +81,4 @@ class Trader(ABC):
         Returns:
             Result of calculate a broker-compatible position size for a stop distance.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body

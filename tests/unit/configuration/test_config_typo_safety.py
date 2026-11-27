@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
+from omegaconf import OmegaConf
 
-from configuration import load_config, merge_config_overlay
+from configuration import configuration_loader, load_config, merge_config_overlay
 
 _ROOT = Path(__file__).resolve().parents[3]
 _CONFIG_OVERLAYS = (
@@ -22,6 +24,11 @@ def test_typoed_override_raises() -> None:
     """
     with pytest.raises(ValueError, match="does not exist in default.yaml"):
         load_config(["ppo.leraning_rate=1e-4"])
+
+
+def test_override_rejects_a_non_mapping_root_config() -> None:
+    with pytest.raises(ValueError, match="roots must be mappings"):
+        configuration_loader.apply_overrides(OmegaConf.create(["not", "a", "mapping"]), [])  # type: ignore[arg-type]
 
 
 def test_missing_section_raises() -> None:
@@ -211,3 +218,35 @@ def test_shared_overlay_merge_rejects_mapping_shape_changes(overlay, message) ->
     """A known key still cannot replace a whole config section with a scalar."""
     with pytest.raises(ValueError, match=message):
         merge_config_overlay(load_config(), overlay)
+
+
+def test_packaged_default_resource_fallback_is_used_when_checkout_default_is_absent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    packaged_path = tmp_path / "packaged-default.yaml"
+    observed: list[Path] = []
+    monkeypatch.setattr(cast(Any, configuration_loader).Path, "is_file", lambda _path: False)
+    monkeypatch.setattr(
+        configuration_loader,
+        "files",
+        lambda _package: SimpleNamespace(joinpath=lambda *_resources: "default-resource"),
+    )
+    monkeypatch.setattr(
+        configuration_loader, "as_file", lambda _resource: nullcontext(packaged_path)
+    )
+
+    def load_overlay(path: Any) -> str:
+        observed.append(Path(path))
+        return "loaded-config"
+
+    monkeypatch.setattr(configuration_loader, "load_config_overlay", load_overlay)
+
+    assert configuration_loader._load_default_config() == "loaded-config"
+    assert observed == [packaged_path]
+
+
+def test_optimizer_validation_tolerates_absent_optional_sections() -> None:
+    configuration_loader._validate_optimizer_values(OmegaConf.create({}))

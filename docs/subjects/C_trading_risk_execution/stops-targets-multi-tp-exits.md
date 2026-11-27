@@ -5,7 +5,7 @@
 
 ## Summary and use this when
 
-An entry has a direction, a stop, and one or more targets. The order layer constructs and validates levels; the position layer tracks target slots and remaining size; the environment applies fills. The notebook demonstrates deterministic selection and geometry, not a trade result. Sources: `trading/orders/entries.py`, `trading/orders/selection.py`, `trading/positions/multi_tp.py`, `simulation/environment/protective_level_runtime.py`.
+An entry has a direction, a stop, and one or more targets. The order layer constructs and validates levels; the position layer tracks target slots and remaining size; the environment applies fills. The notebook demonstrates deterministic selection and geometry, not a trade result. Sources: `trading/orders/entries.py`, `trading/orders/selection.py`, `trading/positions/multi_tp.py`, `simulation/environment/exits/protective_levels.py`.
 
 - Use this guide when investigating rejected stop/target geometry.
 - Use it when interpreting TP slot identity and a partial close.
@@ -43,11 +43,11 @@ The TP mode decoder has fixed, breakeven, and trailing outcomes. A value inside 
 
 `reorder_remaining_targets` disables invalid or duplicate remaining levels after position changes; it does not fabricate a replacement target. The position retains hit-mask and original-size fields to prevent a later partial from being sized against the already reduced remainder. Source: `trading/positions/multi_tp.py::reorder_remaining_targets`; `trading/execution/broker.py::Position`.
 
-At an ambiguous OHLC bar that spans a stop and target, environment tests assert stop-first treatment. A gap through a stop can fill at the open or worse. Those are simulator assumptions, not observed broker fills. Source: `simulation/environment/protective_level_runtime.py`; tests: `tests/unit/simulation/test_environment/test_tp_execution.py::test_ambiguous_ohlc_uses_stop_before_any_target`, `test_gap_through_stop_fills_at_open_or_worse`.
+At an ambiguous OHLC bar that spans a stop and target, environment tests assert stop-first treatment. A gap through a stop can fill at the open or worse. Those are simulator assumptions, not observed broker fills. Source: `simulation/environment/exits/protective_levels.py`; tests: `tests/unit/simulation/test_environment/test_tp_execution.py::test_ambiguous_ohlc_uses_stop_before_any_target`, `test_gap_through_stop_fills_at_open_or_worse`.
 
 ### Why these boundaries matter
 
-Order construction answers which levels are proposed. Validation answers whether the proposed geometry is coherent. Position state answers how much remains after a fill. Execution answers the actual fill price and time. Mixing those stages can make a target look valid despite an impossible stop or count a partial position as multiple trades. Sources: `trading/orders/entries.py`, `trading/orders/selection.py`, `trading/positions/multi_tp.py`, `simulation/environment/trade_accounting_runtime.py`.
+Order construction answers which levels are proposed. Validation answers whether the proposed geometry is coherent. Position state answers how much remains after a fill. Execution answers the actual fill price and time. Mixing those stages can make a target look valid despite an impossible stop or count a partial position as multiple trades. Sources: `trading/orders/entries.py`, `trading/orders/selection.py`, `trading/positions/multi_tp.py`, `simulation/environment/accounting/trades.py`.
 
 ## Worked example
 

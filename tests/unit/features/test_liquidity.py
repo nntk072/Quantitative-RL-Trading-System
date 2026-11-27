@@ -10,6 +10,7 @@ from features.context.liquidity import (
     detect_bos,
     detect_liquidity_sweeps,
     detect_liquidity_sweeps_retained,
+    detect_mss,
 )
 from features.technical.structure import structure_levels
 
@@ -167,6 +168,51 @@ def test_retained_sweep_uses_atr_overshoot_limit(
 
     assert result["sweep_high"].iloc[2] == expected
     assert result["n_swept_high"].iloc[2] == expected
+
+
+@pytest.mark.parametrize(("bar_low", "expected"), [(9.75, 1.0), (9.25, 0.0)])
+def test_retained_low_sweep_uses_atr_overshoot_limit(
+    monkeypatch: pytest.MonkeyPatch, bar_low: float, expected: float
+) -> None:
+    bars = make_bars([(10.5, 9.5, 10.0), (10.5, 9.5, 10.0), (10.5, bar_low, bar_low + 0.2)])
+    levels = pd.DataFrame(
+        {
+            "retained_high_1": [np.nan, np.nan, np.nan],
+            "retained_high_1_loc": [np.nan, np.nan, np.nan],
+            "retained_low_1": [np.nan, 10.0, 10.0],
+            "retained_low_1_loc": [np.nan, 0.0, 0.0],
+        },
+        index=bars.index,
+    )
+    monkeypatch.setattr(
+        "features.context.liquidity.structure_levels", lambda *args, **kwargs: levels
+    )
+    monkeypatch.setattr(
+        "features.context.liquidity.atr",
+        lambda frame, period: pd.Series(0.5, index=frame.index),
+    )
+
+    result = detect_liquidity_sweeps_retained(bars, max_sweep_distance_atr=1.0, max_levels=1)
+
+    assert result["sweep_low"].iloc[2] == expected
+    assert result["n_swept_low"].iloc[2] == expected
+    if expected:
+        assert result["swept_low_level"].iloc[2] == pytest.approx(10.0)
+        assert result["swept_low_loc"].iloc[2] == pytest.approx(0.0)
+
+
+def test_mss_computes_bos_when_not_supplied() -> None:
+    index = pd.date_range("2024-01-02 01:05", periods=4, freq="1min")
+    bars = pd.DataFrame({"close": [100.0, 98.0, 102.0, 102.0]}, index=index)
+    structure = pd.DataFrame(
+        {"last_swing_high": [101.0] * 4, "last_swing_low": [99.0] * 4}, index=index
+    )
+
+    result = detect_mss(bars, structure)
+
+    assert result["mss_up"].tolist() == [0, 0, 1, 0]
+    assert result["mss_up_level"].iloc[2] == pytest.approx(101.0)
+    pd.testing.assert_frame_equal(result, detect_mss(bars, structure, detect_bos(bars, structure)))
 
 
 class TestBos:

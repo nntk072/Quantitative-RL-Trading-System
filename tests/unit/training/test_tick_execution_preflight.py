@@ -6,6 +6,7 @@ import pytest
 from market_data.loading.ticks import TickBook, tick_execution_coverage
 from training.setup.tick_execution_preflight import (
     registered_no_fill_quote_anchors,
+    tick_execution_split_coverage,
     tick_execution_split_schedule,
     validate_registered_no_fill_anchors,
 )
@@ -129,3 +130,86 @@ def test_registered_quote_gap_lookup_preserves_dotted_symbol_names() -> None:
     anchor = "2025-01-20T18:01:00+00:00"
 
     assert registered_no_fill_quote_anchors({"US100.cash": [anchor]}, "US100.cash") == [anchor]
+
+
+def test_tick_preflight_rejects_misaligned_labels_and_masks() -> None:
+    index = pd.date_range("2025-01-20 14:30", periods=2, freq="min", tz="UTC")
+    valid_mask = pd.Series([True, True], index=index)
+    with pytest.raises(ValueError, match="session_labels index"):
+        tick_execution_split_schedule(
+            index,
+            valid_mask,
+            "2025-01-20",
+            session_labels=pd.Series(["ny", "ny"], index=index[::-1]),
+        )
+    with pytest.raises(ValueError, match="train_mask index"):
+        tick_execution_split_schedule(
+            index,
+            pd.Series([True, True], index=index[::-1]),
+            "2025-01-20",
+            session_labels=pd.Series(["ny", "ny"], index=index),
+        )
+
+
+@pytest.mark.parametrize(
+    ("index", "message"),
+    [
+        (pd.DatetimeIndex(["2025-01-20 14:30", "2025-01-20 14:31"]), "timezone-aware"),
+        (
+            pd.DatetimeIndex(["2025-01-20 14:31Z", "2025-01-20 14:30Z"]),
+            "monotonic",
+        ),
+    ],
+)
+def test_tick_preflight_rejects_unusable_source_clocks(
+    index: pd.DatetimeIndex, message: str
+) -> None:
+    mask = pd.Series([True, True], index=index)
+    with pytest.raises(ValueError, match=message):
+        tick_execution_split_schedule(
+            index,
+            mask,
+            "2025-01-20",
+            session_labels=pd.Series(["ny", "ny"], index=index),
+        )
+
+
+def test_report_schedule_converts_aware_test_start_and_accepts_default_close_days() -> None:
+    index = pd.date_range("2025-01-20 14:30", periods=3, freq="min", tz="UTC")
+    mask = pd.Series([True, True, True], index=index)
+    labels = pd.Series(["ny", "ny", "ny"], index=index)
+
+    schedule = tick_execution_split_schedule(
+        index,
+        mask,
+        "2025-01-20T09:31:00-05:00",
+        session_labels=labels,
+        scheduled_session_closes={"2025-01-21": "13:00"},
+    )
+
+    assert schedule["train"]["decision_positions"].tolist() == [0, 1, 2]
+    assert schedule["test"]["decision_positions"].tolist() == [1, 2]
+
+
+def test_split_coverage_checks_each_scheduled_split() -> None:
+    index = pd.date_range("2025-01-20 14:30", periods=3, freq="min", tz="UTC")
+    mask = pd.Series([True, False, False], index=index)
+    labels = pd.Series(["ny", "ny", "ny"], index=index)
+    tickbook = TickBook(
+        index.to_numpy(dtype="datetime64[ns]").astype("int64"),
+        pd.Series([100.0, 100.1, 100.2]).to_numpy(),
+        pd.Series([100.1, 100.2, 100.3]).to_numpy(),
+    )
+
+    result = tick_execution_split_coverage(
+        tickbook,
+        index,
+        mask,
+        "2025-01-20T14:31:00Z",
+        session_labels=labels,
+        max_latency_ns_exclusive=1,
+        max_quote_wait_ms=60_000,
+    )
+
+    assert set(result) == {"train", "test"}
+    assert result["train"]["covered_count"] == 1

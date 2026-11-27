@@ -68,25 +68,38 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `write_calibration_artifacts`](../../../../evaluation/reporting/diagnostics.py#L115)
+1. [test fixture: `test_calibration_report_clips_probabilities_and_omits_empty_bins`](../../../../tests/unit/evaluation/test_calibration.py#L19)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    long_wr = float(np.mean(long_out)) if long_out else 0.5
-    short_wr = float(np.mean(short_out)) if short_out else 0.5
+def test_calibration_report_clips_probabilities_and_omits_empty_bins() -> None:
+    report = calibration_report(np.asarray([-0.2, 1.2]), np.asarray([0.0, 1.0]), n_bins=4)
 
-    preds = np.asarray([long_wr if d == 1 else short_wr for d, _ in records], dtype=np.float64)
-    outcomes = np.asarray([y for _, y in records], dtype=np.float64)
-    report = calibration_report(preds, outcomes, n_bins=min(10, max(3, len(records) // 5)))
+    np.testing.assert_allclose(report.bin_centers, [0.0, 1.0])
+    np.testing.assert_allclose(report.bin_win_rates, [0.0, 1.0])
+    np.testing.assert_array_equal(report.bin_counts, [1, 1])
+    assert report.ece == 0.0
+    assert report.brier == 0.0
+    assert "bins=2  n=2" in report.summary()
+```
 
-    payload = {
-        "ece": report.ece,
-        "brier": report.brier,
-        "n": int(report.bin_counts.sum()),
+2. [test fixture: `test_empty_calibration_report_and_reliability_plot_are_supported`](../../../../tests/unit/evaluation/test_calibration.py#L30)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_empty_calibration_report_and_reliability_plot_are_supported() -> None:
+    empty = calibration_report(np.asarray([]), np.asarray([]))
+    assert empty.bin_counts.size == 0
+    assert np.isnan(empty.ece)
+    assert np.isnan(empty.brier)
+
+    fig, ax = plt.subplots()
 # … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -118,7 +131,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `write_calibration_artifacts`](../../../../evaluation/reporting/diagnostics.py#L130)
+1. [test fixture: `test_empty_calibration_report_and_reliability_plot_are_supported`](../../../../tests/unit/evaluation/test_calibration.py#L36)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert empty.bin_counts.size == 0
+    assert np.isnan(empty.ece)
+    assert np.isnan(empty.brier)
+
+    fig, ax = plt.subplots()
+    returned = plot_reliability_diagram(empty, ax)
+    assert returned is ax
+    assert len(ax.patches) == 0
+    plt.close(fig)
+
+    created = plot_reliability_diagram(empty)
+# … caller assertions omitted …
+```
+
+2. [production caller: `write_calibration_artifacts`](../../../../evaluation/reporting/diagnostics.py#L130)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -134,6 +167,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
     return payload
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -158,7 +193,23 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `plot_reliability_diagram`](../../../../evaluation/metrics/calibration.py#L127)
+1. [test fixture: `test_calibration_report_clips_probabilities_and_omits_empty_bins`](../../../../tests/unit/evaluation/test_calibration.py#L26)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_calibration_report_clips_probabilities_and_omits_empty_bins() -> None:
+    report = calibration_report(np.asarray([-0.2, 1.2]), np.asarray([0.0, 1.0]), n_bins=4)
+
+    np.testing.assert_allclose(report.bin_centers, [0.0, 1.0])
+    np.testing.assert_allclose(report.bin_win_rates, [0.0, 1.0])
+    np.testing.assert_array_equal(report.bin_counts, [1, 1])
+    assert report.ece == 0.0
+    assert report.brier == 0.0
+    assert "bins=2  n=2" in report.summary()
+```
+
+2. [production caller: `plot_reliability_diagram`](../../../../evaluation/metrics/calibration.py#L127)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -175,26 +226,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     ax.set_ylim(0, 1)
     plt.tight_layout()
     return ax
-```
-
-2. [production caller: `write_calibration_artifacts`](../../../../evaluation/reporting/diagnostics.py#L123)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        "ece": report.ece,
-        "brier": report.brier,
-        "n": int(report.bin_counts.sum()),
-        "long_win_rate": long_wr,
-        "short_win_rate": short_wr,
-        "summary": report.summary(),
-    }
-    split_dir = Path(split_dir)
-    write_text_atomic(split_dir / "calibration.json", json.dumps(payload, indent=2))
-
-    if save_plots:
-# … caller assertions omitted …
 ```
 
 **Workflow context:**

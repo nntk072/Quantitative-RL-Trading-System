@@ -29,7 +29,7 @@ from features.pipeline.feature_matrix_builder import build_features
 from market_data.loading.market_data_ingestion import run_pipeline
 from market_data.loading.tick_book_pipeline import build_tick_books
 from market_data.splits.definitions import make_train_mask, split_bars
-from simulation.environment.observations import split_obs_columns, timeframe_starts
+from simulation.environment.observations.schema import split_obs_columns, timeframe_starts
 from simulation.environment.trading_environment_factory import scheduled_session_closes
 
 ROOT = repository_root(__file__)
@@ -44,9 +44,9 @@ SOURCE_PATHS = (
     "features/pipeline/schema.py",
     "features/context/policy_market.py",
     "features/context/reachability.py",
-    "simulation/environment/observations.py",
+    "simulation/environment/observations/schema.py",
     "simulation/environment/observation_arrays_initialization.py",
-    "simulation/environment/observation_runtime.py",
+    "simulation/environment/observations/runtime.py",
     "market_data/loading/market_data_ingestion.py",
     "market_data/loading/tick_book_pipeline.py",
 )

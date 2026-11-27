@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -18,6 +19,7 @@ from compute.environment.device import (
     suggest_n_steps,
 )
 from compute.environment.precision import (
+    configure_accelerator_for_training,
     configure_cuda_for_training,
     get_autocast_context,
     get_autocast_dtype,
@@ -205,12 +207,75 @@ def test_configure_cuda_for_training_is_noop_safe() -> None:
     configure_cuda_for_training()
 
 
+def test_cpu_accelerator_setup_is_an_early_noop(monkeypatch: pytest.MonkeyPatch) -> None:
+    import torch
+
+    from compute.environment import precision
+
+    monkeypatch.delenv("PYTORCH_CUDA_ALLOC_CONF", raising=False)
+    monkeypatch.setattr(precision, "discover_device_capabilities", lambda _device: pytest.fail())
+
+    configure_accelerator_for_training(torch.device("cpu"))
+    configure_cuda_for_training("cpu")
+
+    assert "PYTORCH_CUDA_ALLOC_CONF" not in __import__("os").environ
+
+
 def test_autocast_is_a_noop_on_cpu() -> None:
     import torch
 
     assert get_autocast_dtype("cpu") is None
     with get_autocast_context("cpu"):
         assert not torch.is_autocast_enabled("cpu")
+
+
+@pytest.mark.parametrize(
+    ("override", "expected"),
+    [
+        ("fp32", None),
+        ("fp16", "torch.float16"),
+        ("bf16", "torch.bfloat16"),
+    ],
+)
+def test_autocast_explicit_dtype_overrides(
+    monkeypatch: pytest.MonkeyPatch,
+    override: str,
+    expected: str | None,
+) -> None:
+    import torch
+
+    from compute.environment import precision
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        precision,
+        "discover_device_capabilities",
+        lambda _device: pytest.fail("explicit dtype must bypass capability discovery"),
+    )
+
+    chosen = get_autocast_dtype("cuda:0", override=override)
+
+    actual = None if chosen is None else str(chosen)
+    assert actual == expected
+
+
+def test_autocast_rejects_unknown_dtype_override() -> None:
+    with pytest.raises(ValueError, match="compute.autocast_dtype"):
+        get_autocast_dtype("cpu", override="float8")
+    with pytest.raises(ValueError, match="Invalid device value"):
+        get_autocast_dtype("not-a-device")
+
+
+def test_autocast_context_can_be_disabled_on_visible_cuda(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch, "autocast", lambda **_kwargs: pytest.fail("autocast should be off"))
+
+    with get_autocast_context("cuda:0", enabled=False):
+        assert True
 
 
 @pytest.mark.parametrize(
@@ -443,6 +508,64 @@ def test_scale_training_cfg_uses_bundle_worker_budget(monkeypatch: pytest.Monkey
     )
     scale_training_cfg(cfg, torch.device("cpu"), "tcn")
     assert observed["worker_ram_bytes"] == device_mod._BUNDLE_WORKER_RAM_BYTES
+
+
+def test_scale_training_cfg_applies_cgroup_slurm_and_explicit_worker_caps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+
+    from compute.environment import device as device_mod
+
+    monkeypatch.setattr(device_mod, "_read_meminfo", lambda: (512 * _GiB, 400 * _GiB))
+    monkeypatch.setattr(device_mod, "_read_cgroup_memory_limit", lambda: (128 * _GiB, 32 * _GiB))
+    monkeypatch.setattr(device_mod, "_read_slurm_memory_limit", lambda: 64 * _GiB)
+    monkeypatch.setattr(device_mod, "_read_cgroup_cpu_count", lambda: 8)
+    monkeypatch.setenv("QUANT_RL_MAX_N_ENVS", "6")
+    cfg = OmegaConf.create(
+        {
+            "env": {"n_envs": 16},
+            "ppo": {"n_steps": 512, "batch_size": 128, "n_epochs": 10},
+        }
+    )
+
+    scale_training_cfg(cfg, torch.device("cpu"), "mlp")
+
+    assert int(cfg.env.n_envs) == 4
+
+
+def test_resource_limit_readers_parse_current_cgroup_and_slurm_units(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from compute.environment import device as device_mod
+
+    cgroup_files = {
+        Path("/proc/self/cgroup"): "0::/job/42\n",
+        Path("/sys/fs/cgroup/job/42/memory.max"): str(16 * _GiB),
+        Path("/sys/fs/cgroup/job/42/memory.current"): str(5 * _GiB),
+        Path("/sys/fs/cgroup/job/42/cpu.max"): "600000 100000\n",
+    }
+
+    def read_cgroup_file(path: Path, encoding: str = "utf-8") -> str:
+        del encoding
+        try:
+            return cgroup_files[path]
+        except KeyError as exc:
+            raise FileNotFoundError(path) from exc
+
+    monkeypatch.setattr(Path, "read_text", read_cgroup_file)
+    assert device_mod._current_cgroup_dir() == Path("/sys/fs/cgroup/job/42")
+    assert device_mod._read_cgroup_memory_limit() == (16 * _GiB, 5 * _GiB)
+    assert device_mod._read_cgroup_cpu_count() == 6
+
+    monkeypatch.setenv("SLURM_MEM_PER_NODE", "2.5G")
+    monkeypatch.setenv("SLURM_CPUS_PER_TASK", "12")
+    assert device_mod._read_slurm_memory_limit() == int(2.5 * _GiB)
+    assert device_mod._read_slurm_cpu_limit() == 12
+    monkeypatch.setenv("SLURM_MEM_PER_NODE", "malformed")
+    monkeypatch.setenv("SLURM_CPUS_PER_TASK", "malformed")
+    assert device_mod._read_slurm_memory_limit() is None
+    assert device_mod._read_slurm_cpu_limit() is None
 
 
 def test_enable_extractor_autocast_skips_transformer() -> None:

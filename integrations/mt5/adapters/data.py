@@ -13,7 +13,7 @@ class TradingData(ABC):
         Returns:
             DataFrame returned by ``get_data``.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body
 
     @abstractmethod
     def get_symbol(self) -> str:
@@ -22,4 +22,4 @@ class TradingData(ABC):
         Returns:
             Text returned by ``get_symbol``.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body

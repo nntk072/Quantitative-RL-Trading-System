@@ -36,25 +36,59 @@ This page contains 2 public callable records owned by `features.pipeline.feature
 
 **Observed usage:**
 
-1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L99)
+1. [test fixture: `test_missing_cached_d1_fit_rebuilds_source_normalization_state`](../../../../tests/unit/features/test_feature_matrix_builder_remaining_contracts.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def _build_chart_features(
-    run_cfg: Any,
-    feature_cfg: Any,
-    primary: pd.DataFrame,
-    secondary: pd.DataFrame | None,
-) -> pd.DataFrame:
-    train_mask = _chart_feature_train_mask(run_cfg, pd.DatetimeIndex(primary.index))
-    return build_features(
+# … caller setup omitted …
+    cfg.features.zscore_window = 3
+    train_mask = pd.Series(np.arange(len(primary)) < 160, index=primary.index)
+    cache_path = tmp_path / "features.parquet"
+    fit_state_path = tmp_path / "normalization.json"
+
+    original = build_features(
+        primary,
+        cfg=cfg,
+        train_mask=train_mask,
+        timeframe_bars={"D1": daily},
+        cache_path=cache_path,
+        fit_state_path=fit_state_path,
+        force=True,
+    )
+    damaged_state: dict[str, Any] = json.loads(fit_state_path.read_text(encoding="utf-8"))
+    assert "source:D1" in damaged_state["stages"]
+    del damaged_state["stages"]["source:D1"]
+    fit_state_path.write_text(json.dumps(damaged_state), encoding="utf-8")
+
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_empty_secondary_timeframe_keeps_m1_smt_and_skips_only_that_htf_block`](../../../../tests/unit/features/test_feature_matrix_builder_remaining_contracts.py#L133)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    cfg.features.structure.enabled = False
+    cfg.features.smt.enabled = True
+    cfg.features.smt.timeframes = ["M1", "M5"]
+    cfg.features.zscore_window = 10
+
+    features = build_features(
         primary,
         secondary=secondary,
-        cfg=feature_cfg,
-        train_mask=train_mask,
+        cfg=cfg,
+        secondary_timeframe_bars={"M5": empty_m5},
+        force=True,
     )
+
+    assert "smt_corr" in features
+    assert "M5_smt_corr" not in features
+    assert not any(str(column).startswith("M1_") for column in features.columns)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -95,25 +129,59 @@ def _build_chart_features(
 
 **Observed usage:**
 
-1. [production caller: `_build_chart_features`](../../../../evaluation/reporting/order_chart_regeneration.py#L99)
+1. [test fixture: `test_missing_cached_d1_fit_rebuilds_source_normalization_state`](../../../../tests/unit/features/test_feature_matrix_builder_remaining_contracts.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def _build_chart_features(
-    run_cfg: Any,
-    feature_cfg: Any,
-    primary: pd.DataFrame,
-    secondary: pd.DataFrame | None,
-) -> pd.DataFrame:
-    train_mask = _chart_feature_train_mask(run_cfg, pd.DatetimeIndex(primary.index))
-    return build_features(
+# … caller setup omitted …
+    cfg.features.zscore_window = 3
+    train_mask = pd.Series(np.arange(len(primary)) < 160, index=primary.index)
+    cache_path = tmp_path / "features.parquet"
+    fit_state_path = tmp_path / "normalization.json"
+
+    original = build_features(
+        primary,
+        cfg=cfg,
+        train_mask=train_mask,
+        timeframe_bars={"D1": daily},
+        cache_path=cache_path,
+        fit_state_path=fit_state_path,
+        force=True,
+    )
+    damaged_state: dict[str, Any] = json.loads(fit_state_path.read_text(encoding="utf-8"))
+    assert "source:D1" in damaged_state["stages"]
+    del damaged_state["stages"]["source:D1"]
+    fit_state_path.write_text(json.dumps(damaged_state), encoding="utf-8")
+
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_empty_secondary_timeframe_keeps_m1_smt_and_skips_only_that_htf_block`](../../../../tests/unit/features/test_feature_matrix_builder_remaining_contracts.py#L133)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    cfg.features.structure.enabled = False
+    cfg.features.smt.enabled = True
+    cfg.features.smt.timeframes = ["M1", "M5"]
+    cfg.features.zscore_window = 10
+
+    features = build_features(
         primary,
         secondary=secondary,
-        cfg=feature_cfg,
-        train_mask=train_mask,
+        cfg=cfg,
+        secondary_timeframe_bars={"M5": empty_m5},
+        force=True,
     )
+
+    assert "smt_corr" in features
+    assert "M5_smt_corr" not in features
+    assert not any(str(column).startswith("M1_") for column in features.columns)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

@@ -224,3 +224,34 @@ class TestTPValidation:
         assert not validate_tp_levels(-1, entry, sl, [95.0, 97.0, 94.0])
         # Invalid: TP above SL
         assert not validate_tp_levels(-1, entry, sl, [103.0, None, 94.0])
+
+    @pytest.mark.parametrize(
+        ("direction", "entry", "sl", "targets", "message"),
+        [
+            (1, 100.0, 100.0, [102.0], "Long SL"),
+            (1, 100.0, 98.0, [99.0], "Long TP"),
+            (1, 100.0, 98.0, [98.0], "Long TP"),
+            (1, 100.0, 98.0, [104.0, 103.0], "strictly increasing"),
+            (-1, 100.0, 100.0, [98.0], "Short SL"),
+            (-1, 100.0, 102.0, [101.0], "Short TP"),
+            (-1, 100.0, 102.0, [102.0], "Short TP"),
+            (-1, 100.0, 102.0, [96.0, 97.0], "strictly decreasing"),
+        ],
+    )
+    def test_invalid_tp_geometry_can_raise_a_specific_contract_error(
+        self,
+        direction: int,
+        entry: float,
+        sl: float,
+        targets: list[float],
+        message: str,
+    ) -> None:
+        with pytest.raises(ValueError, match=message):
+            validate_tp_levels(direction, entry, sl, targets, raise_exc=True)
+
+
+def test_tp_selection_empty_menu_and_inactive_fraction_fallbacks() -> None:
+    assert decode_tp_selections(0, 1, 2, menu_size=0) == (None, None, None)
+    assert decode_tp_fractions(1000.0, -1000.0, active_slots=(None, False, None)) == (1.0,)
+    with pytest.raises(ValueError, match="active_slots must have length 3"):
+        decode_tp_fractions(0.0, 0.0, active_slots=(True, False))

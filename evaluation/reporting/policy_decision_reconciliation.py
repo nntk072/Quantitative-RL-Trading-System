@@ -1356,6 +1356,8 @@ def reconcile_policy_decisions(
         report["status"] = "mismatch"
     elif report["incomplete_reasons"]:
         report["status"] = "incomplete"
+    elif failures:
+        report["status"] = "mismatch"
     else:
         report["status"] = "matched"
     return report

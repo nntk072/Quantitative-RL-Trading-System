@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from features.po3.fvg import build_fvg_zone_features_with_event_ledger
 from features.po3.fvg_detection import FVGConfig, detect_fvg
 from features.po3.ifvg_detection import (
     IFVGConfig,
@@ -139,6 +140,35 @@ class TestDetectIFVGConfirmation:
         config = FVGConfig(reaction_buffer_fraction=0.0)
 
         assert config.reaction_buffer_fraction == 0.0
+
+    def test_fvg_zone_builder_returns_typed_empty_outputs_for_empty_history(self) -> None:
+        index = pd.DatetimeIndex([], tz="UTC")
+        bars = pd.DataFrame(columns=["open", "high", "low", "close"], index=index)
+
+        features, events = build_fvg_zone_features_with_event_ledger(bars)
+
+        assert features.empty
+        assert features.index.equals(index)
+        assert "fvg_bull_active" in features.columns
+        assert events.empty
+
+    def test_fvg_zone_builder_rejects_negative_reaction_buffer(self) -> None:
+        bars = pd.DataFrame(
+            {
+                "open": [1.0, 2.0, 3.0],
+                "high": [2.0, 3.0, 4.0],
+                "low": [0.0, 1.0, 2.0],
+                "close": [1.0, 2.0, 3.0],
+            },
+            index=pd.date_range("2025-01-01", periods=3, freq="min"),
+        )
+
+        with pytest.raises(
+            ValueError, match="reaction_buffer_fraction must be finite and nonnegative"
+        ):
+            build_fvg_zone_features_with_event_ledger(
+                bars, FVGConfig(reaction_buffer_fraction=-0.1)
+            )
 
     def test_ifvg_binary_values(self, sample_bars: pd.DataFrame) -> None:
         """Test that IFVG signals are binary (0 or 1)."""
@@ -1103,3 +1133,39 @@ class TestBuildFVGZonesForPlot:
         assert bull
         # Causal start is after the forming HTF closes + shift → 16:45.
         assert bull[0].start_ts == pd.Timestamp("2025-01-02 16:45", tz="Etc/GMT-3")
+
+
+def test_ifvg_config_rejects_negative_or_nonfinite_confirmation_buffer() -> None:
+    with pytest.raises(ValueError, match="must be nonnegative"):
+        IFVGConfig(close_through_threshold=-0.1)
+    with pytest.raises(ValueError, match="must be finite"):
+        IFVGConfig(close_through_threshold=float("nan"))
+
+
+def test_ifvg_event_ledger_requires_timestamped_source_bars() -> None:
+    bars = pd.DataFrame({"high": [2.0], "low": [1.0], "close": [1.5]})
+    fvg = pd.DataFrame(index=bars.index)
+
+    with pytest.raises(TypeError, match="requires a DatetimeIndex"):
+        detect_ifvg_confirmation_events(bars, fvg)
+
+
+def test_bearish_ltf_fvg_trigger_waits_until_after_confirmation() -> None:
+    index = pd.date_range("2025-01-01", periods=2, freq="min")
+    bars = pd.DataFrame(
+        {"high": [12.0, 12.0], "low": [9.0, 9.0], "close": [8.0, 11.0]},
+        index=index,
+    )
+    ifvg = pd.DataFrame(
+        {
+            "ifvg_bearish_confirmed": [1, 1],
+            "ifvg_bearish_low": [10.0, 10.0],
+            "ifvg_bearish_high": [12.0, 12.0],
+        },
+        index=index,
+    )
+
+    entries = detect_entry_trigger(bars, ifvg, entry_type="ltf_fvg")
+
+    assert entries["entry_short"].tolist() == [0, 1]
+    assert entries["entry_trigger_type"].tolist() == ["", "ltf_fvg"]

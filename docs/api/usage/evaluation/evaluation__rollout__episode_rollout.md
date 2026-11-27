@@ -48,6 +48,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert metrics.expectancy == pytest.approx(10.0)
 ```
 
+2. [test fixture: `test_run_episode_collects_equity_accounting_and_entry_diagnostics`](../../../../tests/unit/evaluation/test_episode_rollout_contracts.py#L49)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+                "done": True,
+            },
+        ]
+    )
+
+    metrics = run_episode(env, lambda _observation: 0, periods_per_year=2)
+
+    assert env.actions == [0, 0]
+    assert metrics.total_pnl == pytest.approx(0.0)
+    assert metrics.periods_per_year == 2
+    assert metrics.extras["entry_opened"] == 1.0
+# … caller assertions omitted …
+```
+
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
@@ -99,6 +119,26 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert metrics.n_trades == 1
     assert metrics.win_rate == pytest.approx(1.0)
     assert metrics.expectancy == pytest.approx(10.0)
+```
+
+2. [test fixture: `test_run_episode_collects_equity_accounting_and_entry_diagnostics`](../../../../tests/unit/evaluation/test_episode_rollout_contracts.py#L49)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+                "done": True,
+            },
+        ]
+    )
+
+    metrics = run_episode(env, lambda _observation: 0, periods_per_year=2)
+
+    assert env.actions == [0, 0]
+    assert metrics.total_pnl == pytest.approx(0.0)
+    assert metrics.periods_per_year == 2
+    assert metrics.extras["entry_opened"] == 1.0
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

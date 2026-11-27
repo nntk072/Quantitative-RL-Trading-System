@@ -64,8 +64,6 @@ def purged_walk_forward(
 
     total_test = max(n_splits, int(n * test_size))
     test_len = total_test // n_splits
-    if test_len < 1:
-        return
 
     purge_effective = purge_bars + max(0, int(label_horizon))
     test_region_start = n - n_splits * test_len
@@ -78,13 +76,9 @@ def purged_walk_forward(
         test_end = test_start + test_len
         train_end = test_start - embargo_bars
         train_end_purged = max(0, train_end - purge_effective)
-        if train_end_purged <= 0:
-            continue
 
         train_idx = np.arange(0, train_end_purged)
         test_idx = np.arange(test_start, test_end)
-        if len(test_idx) == 0:
-            continue
         yield WFSplit(train_idx=train_idx, test_idx=test_idx, fold=fold)
 
 

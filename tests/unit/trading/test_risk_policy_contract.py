@@ -187,3 +187,36 @@ def test_risk_contract_rejects_unsupported_versions_and_invalid_amounts() -> Non
         RiskDecision(False, 1.0)
     with pytest.raises(ValueError, match="unsupported risk decision schema"):
         RiskDecision(True, 1.0, schema_version="risk-decision-v2")
+
+
+@pytest.mark.parametrize("field", ["equity", "daily_pnl", "open_risk", "daily_loss_limit"])
+def test_risk_state_rejects_non_finite_account_values(field: str) -> None:
+    values: dict[str, float] = {
+        "equity": 100_000.0,
+        "daily_pnl": -100.0,
+        "open_risk": 10.0,
+        "daily_loss_limit": 500.0,
+    }
+    values[field] = float("nan")
+
+    with pytest.raises(ValueError, match="risk state values must be finite"):
+        RiskState(
+            equity=values["equity"],
+            daily_pnl=values["daily_pnl"],
+            open_risk=values["open_risk"],
+            daily_loss_limit=values["daily_loss_limit"],
+            daily_pnl_basis=RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+        )
+
+
+def test_risk_state_and_decision_reject_negative_loss_limit_and_risk_amount() -> None:
+    with pytest.raises(ValueError, match="daily_loss_limit must be non-negative"):
+        RiskState(
+            equity=100_000.0,
+            daily_pnl=0.0,
+            open_risk=0.0,
+            daily_loss_limit=-1.0,
+            daily_pnl_basis=RISK_DAILY_PNL_BASIS_SESSION_EQUITY,
+        )
+    with pytest.raises(ValueError, match="risk_amount must be finite and non-negative"):
+        RiskDecision(True, -0.01)

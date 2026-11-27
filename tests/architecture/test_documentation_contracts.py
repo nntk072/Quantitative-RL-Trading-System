@@ -235,6 +235,19 @@ def test_documentation_ci_builds_the_site_for_main() -> None:
     assert "autoapi.extension" in sphinx_config
 
 
+def test_autoapi_ignores_shadowed_legacy_modules() -> None:
+    import runpy
+
+    config = runpy.run_path(str(ROOT / "docs/conf.py"))
+    ignored = set(config.get("autoapi_ignore", ()))
+
+    assert {
+        "*/evaluation/plotting/orders.py",
+        "*/evaluation/plotting/performance.py",
+        "*/simulation/environment/diagnostics.py",
+    } <= ignored
+
+
 def test_markdown_link_checker_reports_broken_relative_targets(tmp_path: Path) -> None:
     page = tmp_path / "guide.md"
     (tmp_path / "reference.md").write_text("# Reference\n", encoding="utf-8")

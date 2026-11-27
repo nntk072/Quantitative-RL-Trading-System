@@ -12,7 +12,7 @@ This page contains 3 public callable records owned by `models.encoders.mtf_share
 
 **Observed usage:**
 
-1. [test fixture: `_encoder_factories`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L67)
+1. [test fixture: `_encoder_factories`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L74)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -31,7 +31,7 @@ def _encoder_factories() -> tuple[Callable[[], Any], ...]:
     )
 ```
 
-2. [test fixture: `test_shared_tcn_uses_one_temporal_core_for_all_nine_streams`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L127)
+2. [test fixture: `test_shared_tcn_uses_one_temporal_core_for_all_nine_streams`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L134)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -79,7 +79,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_efficient_mtf_encoders_have_nine_tokens_finite_gradients_and_provenance`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L86)
+1. [test fixture: `test_efficient_mtf_encoders_have_nine_tokens_finite_gradients_and_provenance`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L93)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -98,7 +98,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert provenance["attention_feedforward_dim"] == 32
 ```
 
-2. [test fixture: `test_shared_tcn_uses_one_temporal_core_for_all_nine_streams`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L141)
+2. [test fixture: `test_shared_tcn_uses_one_temporal_core_for_all_nine_streams`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L148)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

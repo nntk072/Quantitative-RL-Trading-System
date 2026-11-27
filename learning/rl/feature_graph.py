@@ -58,9 +58,7 @@ class FeatureGraphCache:
         captured.graph.replay()
         return captured.output.clone()
 
-    def _capture(
-        self, obs: dict[str, torch.Tensor], extractor: Any
-    ) -> _Captured:  # pragma: no cover - needs CUDA graph capture
+    def _capture(self, obs: dict[str, torch.Tensor], extractor: Any) -> _Captured:
         """Record the eager forward into a CUDA graph with private static inputs.
 
         Args:
@@ -136,9 +134,7 @@ class GraphedForwardCache:
         captured.graph.replay()
         return tuple(output.clone() for output in captured.outputs)
 
-    def _capture(
-        self, obs: dict[str, torch.Tensor], extra: tuple[Any, ...]
-    ) -> _CapturedForward:  # pragma: no cover - needs CUDA graph capture
+    def _capture(self, obs: dict[str, torch.Tensor], extra: tuple[Any, ...]) -> _CapturedForward:
         """Record the forward into a CUDA graph with private static inputs.
 
         Args:

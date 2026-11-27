@@ -491,6 +491,28 @@ class TestBuildFeaturesPipeline:
         assert merged.features.structure.candidate_price_increment is None
         assert merged.costs.point_size == 0.01
 
+    @pytest.mark.parametrize(
+        ("entry_settings", "message"),
+        [
+            (
+                {"retracement_low": 0.8, "retracement_high": 0.7},
+                "entry-idea retracement bounds must satisfy",
+            ),
+            ({"timeframes": ["M2"]}, "unsupported entry-idea timeframe: M2"),
+        ],
+    )
+    def test_feature_pipeline_rejects_invalid_entry_idea_configuration(
+        self,
+        deterministic_bars: pd.DataFrame,
+        entry_settings: dict[str, Any],
+        message: str,
+    ) -> None:
+        cfg_data = _default_cfg()
+        cfg_data["features"]["entry_ideas"] = {"enabled": True, **entry_settings}
+
+        with pytest.raises(ValueError, match=message):
+            build_features(deterministic_bars, cfg=OmegaConf.create(cfg_data))
+
     def test_htf_sweep_metadata_and_audit_sidecar_are_cached(
         self, deterministic_bars: pd.DataFrame, tmp_path: Any
     ) -> None:

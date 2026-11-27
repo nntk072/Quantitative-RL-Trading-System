@@ -150,6 +150,8 @@ def _timeframe_signal(frame: pd.DataFrame, suffix: str, timeframe: str) -> pd.Se
                 f"{suffix.removesuffix('_confirmed')}_confirmation_tf_code",
             )
             if code_positions:
+                if timeframe == "M1":
+                    signal &= ~_positive_any_positions(frame, bare_positions)
                 expected_code = next(
                     code for code, tf_name in _TIMEFRAME_CODES.items() if tf_name == timeframe
                 )

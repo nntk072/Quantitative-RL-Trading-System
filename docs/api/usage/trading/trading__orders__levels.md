@@ -27,19 +27,20 @@ This page contains 2 public callable records owned by `trading.orders.levels`. S
   Eligible projected prices in configured order.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_deviation_levels_require_a_finite_positive_swing_range`](../../../../tests/unit/trading/test_order_level_geometry.py#L24)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = deviation_levels(swing_low=..., swing_high=..., candle_lo=..., candle_hi=...)
+def test_deviation_levels_require_a_finite_positive_swing_range(
+    swing_low: float, swing_high: float
+) -> None:
+    assert deviation_levels(swing_low, swing_high, 99.0, 111.0) == []
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -73,7 +74,19 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `deviation_levels`](../../../../trading/orders/levels.py#L51)
+1. [test fixture: `test_candle_proximity_uses_half_span_padding_and_rejects_nonfinite_levels`](../../../../tests/unit/trading/test_order_level_geometry.py#L11)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_candle_proximity_uses_half_span_padding_and_rejects_nonfinite_levels() -> None:
+    assert level_near_candles(8.0, 10.0, 14.0)
+    assert not level_near_candles(7.99, 10.0, 14.0)
+    assert not level_near_candles(float("nan"), 10.0, 14.0)
+    assert not level_near_candles(12.0, 10.0, float("inf"))
+```
+
+2. [production caller: `deviation_levels`](../../../../trading/orders/levels.py#L51)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -93,6 +106,8 @@ def deviation_levels(
             out.append((float(k), price))
     return out
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

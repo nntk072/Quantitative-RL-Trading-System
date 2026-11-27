@@ -73,6 +73,18 @@ def test_empty_higher_timeframe_does_not_add_empty_columns() -> None:
     pd.testing.assert_frame_equal(aligned, m1)
 
 
+def test_alignment_prefixes_primary_and_higher_timeframe_columns() -> None:
+    index = pd.date_range("2025-01-06 09:00", periods=3, freq="min", tz="UTC")
+    m1 = pd.DataFrame({"close": [10.0, 11.0, 12.0]}, index=index)
+    higher_index = pd.DatetimeIndex([index[0] - pd.Timedelta(minutes=5)])
+    higher = pd.DataFrame({"close": [100.0]}, index=higher_index)
+
+    aligned = align_timeframes(m1, {"M5": higher}, prefix="US500", completed_bars=False)
+
+    assert list(aligned.columns) == ["US500_close", "US500_M5_close"]
+    assert aligned["US500_M5_close"].tolist() == [100.0, 100.0, 100.0]
+
+
 def test_timeframe_close_times_clip_a_short_session_final_bar() -> None:
     index = pd.DatetimeIndex([pd.Timestamp("2025-01-06 16:58", tz="UTC")])
     bars = pd.DataFrame({"close": [100.0]}, index=index)

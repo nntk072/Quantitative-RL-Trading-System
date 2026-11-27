@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any, cast
 
 import pytest
@@ -152,3 +153,126 @@ def test_legacy_named_cache_module_forwards_to_stable_parser(monkeypatch) -> Non
 
     assert named_cache_rebuild.main() == 0
     assert captured == [["--plan-only"]]
+
+
+@pytest.mark.parametrize(
+    ("command", "module_name", "attribute"),
+    [
+        ("run", "experiments.runs", "run_experiment"),
+        ("status", "experiments.runs.status", "main"),
+        ("summarize", "experiments.runs.reporting", "main"),
+        ("checkpoint-map", "experiments.runs.checkpoints", "main"),
+        ("recover-cache", "experiments.runs.cache_failure_recovery", "main"),
+    ],
+)
+def test_main_forwards_each_run_command_with_original_argv_restored(
+    monkeypatch: pytest.MonkeyPatch,
+    command: str,
+    module_name: str,
+    attribute: str,
+) -> None:
+    seen: list[list[str]] = []
+    module = ModuleType(module_name)
+
+    def command_main() -> None:
+        seen.append(sys.argv[1:])
+
+    setattr(module, attribute, command_main)
+    if module_name == "experiments.runs":
+        import experiments.runs
+
+        monkeypatch.setattr(experiments.runs, attribute, command_main)
+    else:
+        import experiments.runs
+
+        monkeypatch.setitem(sys.modules, module_name, module)
+        monkeypatch.setattr(
+            experiments.runs,
+            module_name.rsplit(".", maxsplit=1)[-1],
+            module,
+            raising=False,
+        )
+    argv = ["qrl-experiment", command, "--sample", "value"]
+    monkeypatch.setattr(sys, "argv", argv)
+
+    cli.main()
+
+    assert seen == [["--sample", "value"]]
+    assert sys.argv == argv
+
+
+def test_main_propagates_nonzero_run_exit_and_restores_argv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import experiments.runs
+
+    monkeypatch.setattr(experiments.runs, "run_experiment", lambda: 2)
+    argv = ["qrl-experiment", "run"]
+    monkeypatch.setattr(sys, "argv", argv)
+
+    with pytest.raises(SystemExit, match="2"):
+        cli.main()
+
+    assert sys.argv == argv
+
+
+def test_root_catalog_command_propagates_nonzero_catalog_status(monkeypatch) -> None:
+    monkeypatch.setattr(cli, "run_variant_catalog_cli", lambda _argv: 5)
+    monkeypatch.setattr(sys, "argv", ["qrl-experiment", "catalog", "--check"])
+
+    with pytest.raises(SystemExit, match="5"):
+        cli.main()
+
+
+def test_variant_catalog_cli_passes_explicit_arguments(monkeypatch: pytest.MonkeyPatch) -> None:
+    from experiments.variants import catalog as variant_catalog
+
+    calls: list[list[str] | None] = []
+
+    def catalog_main(argv: list[str] | None) -> int:
+        calls.append(argv)
+        return 0
+
+    monkeypatch.setattr(variant_catalog, "main", catalog_main)
+
+    assert cli.run_variant_catalog_cli(["--check"]) == 0
+    assert calls == [["--check"]]
+
+
+def test_run_named_cache_command_resolves_relative_paths_and_prints_result(
+    monkeypatch: pytest.MonkeyPatch, capsys
+) -> None:
+    from experiments.runs import named_cache_rebuild
+
+    calls: list[tuple[Path, Path]] = []
+
+    def rebuild(backup: Path, report: Path) -> dict[str, str]:
+        calls.append((backup, report))
+        return {"status": "complete"}
+
+    monkeypatch.setattr(named_cache_rebuild, "rebuild", rebuild)
+
+    assert (
+        cli.run_named_cache_rebuild_cli(["--backup-dir", "backup", "--report", "report.json"]) == 0
+    )
+
+    root = Path(cli.__file__).resolve().parents[1]
+    assert calls == [(root / "backup", root / "report.json")]
+    assert '"status": "complete"' in capsys.readouterr().out
+
+
+def test_run_variant_ablation_cli_delegates_parsed_request(monkeypatch: pytest.MonkeyPatch) -> None:
+    from experiments.variants import variant_ablation_runner
+
+    captured: list[VariantAblationRequest] = []
+    monkeypatch.setattr(
+        variant_ablation_runner,
+        "run_variant_ablation",
+        lambda request: captured.append(request),
+    )
+
+    cli.run_variant_ablation_cli(["--bars-csv", "bars.csv", "--features-csv", "features.csv"])
+
+    assert len(captured) == 1
+    assert captured[0].bars_csv == Path("bars.csv")
+    assert captured[0].features_csv == Path("features.csv")

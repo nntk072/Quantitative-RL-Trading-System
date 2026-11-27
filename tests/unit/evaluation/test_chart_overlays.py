@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import builtins
+from importlib import import_module
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -11,6 +14,8 @@ import pandas as pd
 import pytest
 
 from evaluation.plotting.chart_indicators import (
+    break_overlay_gaps,
+    compute_chart_overlays,
     compute_chart_overlays_full,
     compute_mtf_ema_overlays,
     select_ema_overlays,
@@ -19,6 +24,11 @@ from evaluation.plotting.chart_overlays import (
     OverlayEvents,
     build_overlay_events,
     compute_vwap_for_chart,
+)
+from evaluation.plotting.performance import (
+    plot_direction_summary,
+    plot_monthly_returns_heatmap,
+    plot_returns_dist,
 )
 from evaluation.plotting.plot_series import (
     daily_drawdown_pct,
@@ -270,6 +280,104 @@ def test_plot_daily_pnl_writes(tmp_path) -> None:
     eq = pd.Series(np.linspace(100_000, 101_000, 20), index=idx)
     plot_daily_pnl(eq, daily_loss_limit=5_000.0, out_path=tmp_path / "daily_pnl.png", dpi=72)
     assert (tmp_path / "daily_pnl.png").stat().st_size > 0
+
+
+def test_daily_pnl_and_direction_summary_show_empty_ledgers(tmp_path) -> None:
+    empty_equity = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
+    daily = plot_daily_pnl(empty_equity, out_path=tmp_path / "empty-daily-pnl.png", dpi=72)
+    assert any(text.get_text() == "No daily P&L" for text in daily.axes[0].texts)
+    assert (tmp_path / "empty-daily-pnl.png").is_file()
+
+    unclosed = pd.DataFrame([{"type": "open", "direction": 1, "time": "2025-01-01"}])
+    summary = plot_direction_summary(unclosed)
+    assert len(summary.axes) == 2
+    assert all(
+        any(text.get_text() == "No completed trades" for text in axis.texts)
+        for axis in summary.axes
+    )
+    daily.clear()
+    summary.clear()
+
+
+def test_return_distribution_omits_optional_scipy_overlay_when_import_fails(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    original_import = builtins.__import__
+
+    def import_without_scipy(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "scipy.stats":
+            raise ImportError("optional scipy unavailable")
+        return original_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", import_without_scipy)
+    index = pd.date_range("2025-01-02", periods=4, freq="h")
+    equity = pd.Series([100.0, 101.0, 99.0, 102.0], index=index)
+
+    fig = plot_returns_dist(equity, out_path=tmp_path / "returns-without-scipy.png", dpi=72)
+
+    assert fig.axes[0].patches
+    assert all(line.get_label() != "Normal fit" for line in fig.axes[0].lines)
+    assert (tmp_path / "returns-without-scipy.png").stat().st_size > 0
+
+
+def test_monthly_return_plot_handles_single_month_and_constant_equity(tmp_path) -> None:
+    index = pd.DatetimeIndex(["2025-01-31T21:00:00Z"])
+    sparse = plot_monthly_returns_heatmap(
+        pd.Series([100.0], index=index), out_path=tmp_path / "sparse-months.png", dpi=72
+    )
+    assert any(
+        text.get_text() == "Insufficient data for monthly heatmap" for text in sparse.axes[0].texts
+    )
+    assert (tmp_path / "sparse-months.png").stat().st_size > 0
+
+    monthly_index = pd.date_range("2025-01-31", periods=3, freq="ME")
+    constant = plot_monthly_returns_heatmap(pd.Series([100.0] * 3, index=monthly_index))
+    assert len(constant.axes[0].images) == 1
+    sparse.clear()
+    constant.clear()
+
+
+def test_equity_series_helpers_handle_empty_and_timezone_aware_inputs() -> None:
+    empty = pd.Series(dtype=float, index=pd.DatetimeIndex([]))
+    assert session_start_equity(empty).empty
+    assert daily_pnl(empty).empty
+    assert drawdown_ylim(empty, 0.0) == (-1.0, 0.0)
+    assert drawdown_ylim(pd.Series([np.nan]), -5.0) == (-5.0, 0.0)
+
+    index = pd.date_range("2026-03-02 23:30", periods=3, freq="h", tz="America/New_York")
+    equity = pd.Series([100.0, 95.0, 110.0], index=index)
+    np.testing.assert_allclose(session_start_equity(equity), [100.0, 95.0, 95.0])
+    assert daily_pnl(equity).tolist() == [0.0, 15.0]
+
+
+def test_window_chart_indicators_and_empty_mtf_resample_path(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = _ohlc(n=80)
+    overlays = compute_chart_overlays(bars)
+    assert set(overlays) == {"ema50", "macd", "signal", "histogram", "rsi", "vwap"}
+    assert all(series.index.equals(bars.index) for series in overlays.values())
+
+    import evaluation.plotting.chart_indicators as indicators
+
+    resample_module = import_module("market_data.transforms.resample")
+
+    monkeypatch.setattr(resample_module, "resample", lambda *_args: pd.DataFrame())
+    mtf = indicators.compute_mtf_ema_overlays(bars, ("M1", "H1"), periods=(9,))
+    assert list(mtf) == ["M1_ema_9"]
+    assert mtf["M1_ema_9"].index.equals(bars.index)
+
+
+def test_overlay_gap_breaker_preserves_short_and_duplicate_timestamp_series() -> None:
+    single = pd.Series([1.0], index=pd.DatetimeIndex(["2026-03-02 16:30"]), name="ema50")
+    duplicate = pd.Series(
+        [1.0, 2.0],
+        index=pd.DatetimeIndex(["2026-03-02 16:30", "2026-03-02 16:30"]),
+        name="ema50",
+    )
+
+    assert break_overlay_gaps({"ema50": single})["ema50"].equals(single)
+    assert break_overlay_gaps({"ema50": duplicate})["ema50"].equals(duplicate)
 
 
 def test_per_trade_chart_with_overlays(tmp_path) -> None:

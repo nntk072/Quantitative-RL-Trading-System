@@ -77,6 +77,20 @@ def test_events_use_standard_et_times_and_skip_unconfigured_ids(tmp_path: Path) 
     assert all(len(row.source_sha256) == 64 for row in rows)
 
 
+def test_fred_event_uses_default_name_for_known_release(tmp_path: Path) -> None:
+    path = tmp_path / "fred.json"
+    path.write_text(
+        json.dumps({"release_dates": [{"release_id": 46, "date": "2025-01-14"}]}),
+        encoding="utf-8",
+    )
+
+    rows = events_from_fred_json(path)
+
+    assert len(rows) == 1
+    assert rows[0].category == "PPI"
+    assert rows[0].summary == "FRED release (FRED release 46)"
+
+
 @pytest.mark.parametrize("missing", [True])
 def test_main_refuses_to_run_without_api_key(
     monkeypatch: pytest.MonkeyPatch, missing: bool
@@ -86,3 +100,22 @@ def test_main_refuses_to_run_without_api_key(
     monkeypatch.delenv("FRED_API_KEY", raising=False)
     with pytest.raises(SystemExit):
         fred.main(["--out", "unused.json"])
+
+
+def test_main_writes_fetched_release_payload_without_network(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from market_data.news import fred
+
+    output = tmp_path / "nested" / "release_dates.json"
+    monkeypatch.setenv("FRED_API_KEY", "test-key")
+    monkeypatch.setattr(
+        fred,
+        "fetch_release_dates",
+        lambda api_key, start, end: {"release_dates": [{"release_id": 10, "date": "2025-01-15"}]},
+    )
+
+    assert fred.main(["--start", "2025-01-01", "--end", "2025-12-31", "--out", str(output)]) == 0
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "release_dates": [{"release_id": 10, "date": "2025-01-15"}]
+    }

@@ -32,6 +32,12 @@ def test_candidate_geometry_rejects_invalid_candidate_slot_inputs(
         candidate_geometry_slot(candidate_id, entry_type)
 
 
+@pytest.mark.parametrize("slot", [-1, 217, 2.5, True])
+def test_candidate_geometry_semantics_reject_invalid_slot_values(slot: int | float) -> None:
+    with pytest.raises(ValueError, match="outside the candidate-geometry observation"):
+        candidate_geometry_slot_semantics(slot)
+
+
 def test_candidate_geometry_observation_schema_versions_fixed_slot_contract() -> None:
     schema = candidate_geometry_observation_schema()
     assert schema["candidate_count"] == 217

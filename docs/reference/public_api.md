@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 723 |
+| stable | 798 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 471 |
-| private implementation | 990 |
+| cross-package internal | 645 |
+| private implementation | 1108 |
 
 ## Public package exports
 
@@ -224,11 +224,85 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `sweep_delay_breakdown` | function | [evaluation.metrics.performance](../../evaluation/metrics/performance.py#L217) | stable |
 | `CI.as_tuple` | method | [evaluation.metrics.bootstrap](../../evaluation/metrics/bootstrap.py#L70) | stable |
 | `CalibrationReport.summary` | method | [evaluation.metrics.calibration](../../evaluation/metrics/calibration.py#L31) | stable |
-| `plot_drawdown` | function | [evaluation.plotting.equity](../../evaluation/plotting/equity.py#L245) | stable |
-| `plot_equity_curve` | function | [evaluation.plotting.equity](../../evaluation/plotting/equity.py#L41) | stable |
+| `plot_drawdown` | function | [evaluation.plotting.performance.equity](../../evaluation/plotting/performance/equity.py#L247) | stable |
+| `plot_equity_curve` | function | [evaluation.plotting.performance.equity](../../evaluation/plotting/performance/equity.py#L41) | stable |
 | `plot_per_trade_orders` | function | [evaluation.plotting.orders](../../evaluation/plotting/orders.py#L626) | stable |
-| `plot_per_trade_orders_html (alias for plot_per_trade_orders)` | function | [evaluation.plotting.interactive_orders](../../evaluation/plotting/interactive_orders.py#L217) | stable |
+| `plot_per_trade_orders_html (alias for plot_per_trade_orders)` | function | [evaluation.plotting.interactive.orders](../../evaluation/plotting/interactive/orders.py#L217) | stable |
 | `plot_price_with_orders` | function | [evaluation.plotting.orders](../../evaluation/plotting/orders.py#L37) | stable |
+| `plot_activity_24h` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_annotated_ny_session` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_coverage_calendar` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_coverage_with_gaps` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_curated_feature_hists` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_event_rates` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_feature_histograms` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_fvg_signals` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_ifvg_event_study` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_ifvg_occupancy_monthly` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_log_return_dist` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_ny_return_tails` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_pca_ifvg` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_session_profile` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_signal_counts` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_signals_for_day` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_split_overlay` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_spread_regime` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `write_data_eda` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
+| `plot_hold_time_pnl` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_hold_time_pnl_html` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_holding_time_hist` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_mae_mfe` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_mae_mfe_html` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_pnl_box_by_regime` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_pnl_histogram` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_rolling_winrate` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_rolling_winrate_html` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_tod_heatmap` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_tod_heatmap_html` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `render_decision_diversity_figures` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `write_distribution_artifacts` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `write_trade_diagnostics` | external | [None](../../evaluation/plotting/diagnostics/__init__.py) | stable |
+| `plot_baseline_comparison` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_daily_pnl` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_drawdown` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_equity_curve` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_fvg_signals_interactive` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_monthly_returns_heatmap` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_per_trade_orders` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_price_with_orders` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_returns_dist` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_trade_pnl_hist` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `BREACH_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `CLOSE_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `EQUITY_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `LONG_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `PEAK_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `SHORT_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `STYLE` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `apply_mpl_date_axis` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `at_sample_extreme` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `break_overlay_gaps` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `chart_ylim` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `compute_chart_overlays` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `compute_chart_overlays_full` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `compute_ema50` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `compute_macd_sma` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `compute_mtf_ema_overlays` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `daily_drawdown_pct` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `daily_drawdown_usd` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `daily_loss_limit_series` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `daily_pnl` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `deviation_levels` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `drawdown_ylim` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `isolated_spike_mask` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `level_near_candles` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `max_drawdown_pct` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `ohlc_ok_mask` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `select_ema_overlays` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `session_start_equity` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `slice_overlays` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `tradable_mask` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
+| `wick_time` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
 | `main` | function | [evaluation.reanalysis](../../evaluation/reanalysis/__init__.py#L1) | stable |
 | `aggregate_seeds` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L60) | stable |
 | `build_comparison_table` | function | [evaluation.reporting.run_summary](../../evaluation/reporting/run_summary.py#L294) | stable |
@@ -364,22 +438,22 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `VolatilityAnalyzer` | class | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L11) | stable |
 | `MT5Data.get_data` | method | [integrations.mt5.domain.data_sources.mt5_data](../../integrations/mt5/domain/data_sources/mt5_data.py#L25) | stable |
 | `MT5Data.get_symbol` | method | [integrations.mt5.domain.data_sources.mt5_data](../../integrations/mt5/domain/data_sources/mt5_data.py#L37) | stable |
-| `MultiSymbolManager.add_symbol` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L127) | stable |
-| `MultiSymbolManager.get_active_symbols` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L193) | stable |
-| `MultiSymbolManager.get_all_data_sources` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L86) | stable |
-| `MultiSymbolManager.get_all_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L119) | stable |
-| `MultiSymbolManager.get_data_source` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L75) | stable |
-| `MultiSymbolManager.get_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L108) | stable |
-| `MultiSymbolManager.refresh_data` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L183) | stable |
-| `MultiSymbolManager.remove_symbol` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L158) | stable |
-| `MultiSymbolManager.update_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L94) | stable |
+| `MultiSymbolManager.add_symbol` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L126) | stable |
+| `MultiSymbolManager.get_active_symbols` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L189) | stable |
+| `MultiSymbolManager.get_all_data_sources` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L85) | stable |
+| `MultiSymbolManager.get_all_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L118) | stable |
+| `MultiSymbolManager.get_data_source` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L74) | stable |
+| `MultiSymbolManager.get_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L107) | stable |
+| `MultiSymbolManager.refresh_data` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L181) | stable |
+| `MultiSymbolManager.remove_symbol` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L156) | stable |
+| `MultiSymbolManager.update_volatility_metrics` | method | [integrations.mt5.domain.multi_symbol_manager](../../integrations/mt5/domain/multi_symbol_manager.py#L93) | stable |
 | `RiskManager.calculate_position_size` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L268) | stable |
-| `RiskManager.calculate_stop_loss_price` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L399) | stable |
-| `RiskManager.check_risk_limits` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L551) | stable |
+| `RiskManager.calculate_stop_loss_price` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L397) | stable |
+| `RiskManager.check_risk_limits` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L549) | stable |
 | `RiskManager.get_account_balance` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L130) | stable |
 | `RiskManager.get_account_equity` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L150) | stable |
-| `RiskManager.get_total_exposure` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L440) | stable |
-| `RiskManager.get_volatility_multiplier` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L644) | stable |
+| `RiskManager.get_total_exposure` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L438) | stable |
+| `RiskManager.get_volatility_multiplier` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L642) | stable |
 | `RiskManager.supports_training_account_loss_guardrails` | method | [integrations.mt5.domain.risk_manager](../../integrations/mt5/domain/risk_manager.py#L19) | stable |
 | `CombinedStrategy` | class | [integrations.mt5.domain.strategies.combined_strategy](../../integrations/mt5/domain/strategies/combined_strategy.py#L10) | stable |
 | `CrossOverStrategy` | class | [integrations.mt5.domain.strategies.cross_over_strategy](../../integrations/mt5/domain/strategies/cross_over_strategy.py#L8) | stable |
@@ -404,10 +478,10 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `MT5Trader.open_position` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L16) | stable |
 | `MT5Trader.send_to_break_even` | method | [integrations.mt5.domain.trader](../../integrations/mt5/domain/trader.py#L225) | stable |
 | `VolatilityAnalyzer.calculate_atr` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L50) | stable |
-| `VolatilityAnalyzer.calculate_volatility_metrics` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L94) | stable |
-| `VolatilityAnalyzer.get_symbol_info` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L212) | stable |
-| `VolatilityAnalyzer.rank_symbols_by_volatility` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L155) | stable |
-| `VolatilityAnalyzer.select_top_volatile_symbols` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L179) | stable |
+| `VolatilityAnalyzer.calculate_volatility_metrics` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L88) | stable |
+| `VolatilityAnalyzer.get_symbol_info` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L206) | stable |
+| `VolatilityAnalyzer.rank_symbols_by_volatility` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L149) | stable |
+| `VolatilityAnalyzer.select_top_volatile_symbols` | method | [integrations.mt5.domain.volatility_analyzer](../../integrations/mt5/domain/volatility_analyzer.py#L173) | stable |
 
 ### `learning`
 
@@ -473,23 +547,24 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `write_tick_cache` | function | [market_data.cache.ticks](../../market_data/cache/ticks.py#L128) | stable |
 | `BAR_CACHE_VERSION` | value | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L45) | stable |
 | `TickBook` | class | [market_data.loading.ticks](../../market_data/loading/ticks.py#L632) | stable |
-| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L1119) | stable |
+| `build_tick_book` | function | [market_data.loading.ticks](../../market_data/loading/ticks.py#L1140) | stable |
 | `build_tick_books` | function | [market_data.loading.tick_book_pipeline](../../market_data/loading/tick_book_pipeline.py#L23) | stable |
 | `iter_ticks_chunks` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L192) | stable |
 | `load_bars` | function | [market_data.loading.bars](../../market_data/loading/bars.py#L74) | stable |
 | `run_pipeline` | function | [market_data.loading.market_data_ingestion](../../market_data/loading/market_data_ingestion.py#L141) | stable |
-| `TickBook.bar_arrays` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L853) | stable |
-| `TickBook.bar_quote_ns` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L834) | stable |
-| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L871) | stable |
+| `TickBook.bar_arrays` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L874) | stable |
+| `TickBook.bar_quote_ns` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L855) | stable |
+| `TickBook.bar_quotes` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L892) | stable |
 | `TickBook.content_sha256` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L797) | stable |
-| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L930) | stable |
-| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L894) | stable |
+| `TickBook.delayed_exit_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L951) | stable |
+| `TickBook.delayed_exit_quote` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L915) | stable |
 | `TickBook.execution_quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L706) | stable |
 | `TickBook.first_limit_execution_event` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L733) | stable |
 | `TickBook.has_ticks_between` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L817) | stable |
+| `TickBook.last_bar_quote_ns` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L834) | stable |
 | `TickBook.quote_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L660) | stable |
 | `TickBook.quote_event_at` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L679) | stable |
-| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L994) | stable |
+| `TickBook.slice` | method | [market_data.loading.ticks](../../market_data/loading/ticks.py#L1015) | stable |
 | `CalendarEvent` | class | [market_data.news.calendar](../../market_data/news/calendar.py#L60) | stable |
 | `NewsGuardConfig` | class | [market_data.news.guard](../../market_data/news/guard.py#L30) | stable |
 | `blackout_mask` | function | [market_data.news.calendar](../../market_data/news/calendar.py#L255) | stable |
@@ -613,7 +688,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 |---|---|---|---|
 | `AccountState` | class | [trading.account.account_state](../../trading/account/account_state.py#L28) | stable |
 | `TradingPolicyConfig` | class | [trading.policy.config](../../trading/policy/config.py#L24) | stable |
-| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L200) | stable |
+| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L202) | stable |
 | `ACCOUNT_STATE_TRACE_SCHEMA` | value | [trading.account.snapshots](../../trading/account/snapshots.py#L9) | stable |
 | `AccountState` | class | [trading.account.account_state](../../trading/account/account_state.py#L28) | stable |
 | `account_state_snapshot` | function | [trading.account.snapshots](../../trading/account/snapshots.py#L12) | stable |
@@ -713,13 +788,13 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `TradingPolicyConfig` | class | [trading.policy.config](../../trading/policy/config.py#L24) | stable |
 | `build_payout_reset_event` | function | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L51) | stable |
 | `evaluate_payout` | function | [trading.policy.repeated_payout](../../trading/policy/repeated_payout.py#L25) | stable |
-| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L200) | stable |
-| `resolve_trading_policy_mapping` | function | [trading.policy.config](../../trading/policy/config.py#L283) | stable |
+| `resolve_trading_policy` | function | [trading.policy.config](../../trading/policy/config.py#L202) | stable |
+| `resolve_trading_policy_mapping` | function | [trading.policy.config](../../trading/policy/config.py#L285) | stable |
 | `uses_fixed_risk_budget` | function | [trading.policy.fixed_risk](../../trading/policy/fixed_risk.py#L8) | stable |
 | `TradingPolicyConfig.daily_loss_limit` | method | [trading.policy.config](../../trading/policy/config.py#L72) | stable |
 | `TradingPolicyConfig.from_mapping` | method | [trading.policy.config](../../trading/policy/config.py#L81) | stable |
 | `TradingPolicyConfig.repeated_payout` | method | [trading.policy.config](../../trading/policy/config.py#L63) | stable |
-| `TradingPolicyConfig.to_dict` | method | [trading.policy.config](../../trading/policy/config.py#L191) | stable |
+| `TradingPolicyConfig.to_dict` | method | [trading.policy.config](../../trading/policy/config.py#L193) | stable |
 | `TradingPolicyConfig.validate` | method | [trading.policy.config](../../trading/policy/config.py#L134) | stable |
 | `reorder_remaining_targets` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L47) | stable |
 | `target_close_size` | function | [trading.positions.multi_tp](../../trading/positions/multi_tp.py#L10) | stable |
@@ -789,7 +864,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `PO3IFVGStrategy.entry_gap` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L205) | stable |
 | `PO3IFVGStrategy.entry_liquidity` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L189) | stable |
 | `PO3IFVGStrategy.entry_setup` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L254) | stable |
-| `PO3IFVGStrategy.sl_candidates` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L407) | stable |
+| `PO3IFVGStrategy.sl_candidates` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L393) | stable |
 | `PO3IFVGStrategy.sl_reference` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L139) | stable |
 | `PO3IFVGStrategy.target_candidates` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L156) | stable |
 | `PO3IFVGStrategy.validate_entry` | method | [trading.strategies.po3_ifvg](../../trading/strategies/po3_ifvg.py#L125) | stable |

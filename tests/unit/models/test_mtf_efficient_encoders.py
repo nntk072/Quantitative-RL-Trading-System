@@ -8,10 +8,17 @@ import pytest
 import torch
 from gymnasium import spaces
 
+from models.encoders.lite_tcn import LiteTCNEncoder
+from models.encoders.mtf import MTFEncoder
+from models.encoders.mtf_efficiency_components import (
+    MTFReasoningOutput,
+    batch_mask,
+    observation_streams,
+)
 from models.encoders.mtf_m1_htf_lite_reasoning import M1TCNHTFLiteReasoningEncoder
 from models.encoders.mtf_m1_htf_snapshot_reasoning import M1TCNHTFSnapshotReasoningEncoder
 from models.encoders.mtf_reasoning import MTFReasoningEncoder
-from models.encoders.mtf_shared_tcn_reasoning import SharedTCNMTFReasoningEncoder
+from models.encoders.mtf_shared_tcn_reasoning import SharedTCNMTFReasoningEncoder, _SharedTCNCore
 
 _STREAMS = (
     ("seq", "seq_mask", 60, 5),
@@ -266,3 +273,162 @@ def test_snapshot_htf_encoder_ignores_history_but_uses_latest_valid_state() -> N
     torch.testing.assert_close(reference, history_output, rtol=0.0, atol=0.0)
     assert not torch.allclose(reference, latest_output)
     assert encoder.encoder_provenance["htf_summary_type"] == "latest_valid_snapshot_shared_mlp"
+
+
+def test_efficient_mtf_space_and_mask_contracts_fail_closed() -> None:
+    with pytest.raises(TypeError, match="Dict observation space"):
+        observation_streams(spaces.Box(-1.0, 1.0, shape=(6,)))
+
+    missing_stream = dict(_space().spaces)
+    del missing_stream["seq_m5"]
+    with pytest.raises(ValueError, match="require seq_m5 and mask_m5"):
+        observation_streams(spaces.Dict(missing_stream))
+
+    mismatched_mask = dict(_space().spaces)
+    mismatched_mask["mask_m5"] = spaces.Box(0.0, 1.0, shape=(99,))
+    with pytest.raises(ValueError, match="mask_m5 must match"):
+        observation_streams(spaces.Dict(mismatched_mask))
+
+    no_account = dict(_space().spaces)
+    del no_account["account"]
+    with pytest.raises(ValueError, match="account observation"):
+        observation_streams(spaces.Dict(no_account))
+
+    with pytest.raises(ValueError, match="mask length"):
+        batch_mask(torch.ones(1, 4), batch_size=1, timesteps=3)
+    with pytest.raises(ValueError, match="mask batch size"):
+        batch_mask(torch.ones(2, 3), batch_size=1, timesteps=3)
+    assert batch_mask(torch.tensor([1, 0, 1]), batch_size=2, timesteps=3).shape == (2, 3)
+
+
+def test_mtf_reasoning_output_rejects_invalid_dimensions_and_masks() -> None:
+    with pytest.raises(ValueError, match="divisible by attention_heads"):
+        MTFReasoningOutput(
+            _space(),
+            latent_dim=10,
+            account_dim=None,
+            attention_heads=4,
+            feedforward_dim=32,
+            dropout=0.0,
+        )
+
+    module = MTFReasoningOutput(
+        _space(),
+        latent_dim=8,
+        account_dim=None,
+        attention_heads=2,
+        feedforward_dim=16,
+        dropout=0.0,
+    )
+    with pytest.raises(ValueError, match="MTF tokens must have shape"):
+        module.finish(torch.zeros(2, 8, 8), torch.ones(2, 8, dtype=torch.bool), torch.zeros(2, 6))
+    with pytest.raises(ValueError, match="validity mask must have shape"):
+        module.finish(torch.zeros(2, 9, 8), torch.ones(2, 8, dtype=torch.bool), torch.zeros(2, 6))
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [{"dilations": ()}, {"dilations": (0,)}, {"channels": 0}, {"kernel_size": 0}],
+)
+def test_lite_tcn_rejects_empty_or_nonpositive_convolution_parameters(
+    kwargs: dict[str, Any],
+) -> None:
+    with pytest.raises(ValueError, match="LiteTCN"):
+        LiteTCNEncoder(_space(), **kwargs)
+
+
+def test_mtf_reasoning_encoder_rejects_incompatible_attention_width() -> None:
+    with pytest.raises(ValueError, match="divisible by attention_heads"):
+        MTFReasoningEncoder(
+            _space(),
+            latent_dim=10,
+            channels=(8, 8),
+            dropout=0.0,
+            attention_heads=4,
+        )
+
+
+@pytest.mark.parametrize(
+    ("spec", "exception", "message"),
+    [
+        (
+            spaces.Box(-1.0, 1.0, shape=(6,)),
+            TypeError,
+            "Dict observation space",
+        ),
+        (
+            spaces.Dict(
+                {
+                    "account": spaces.Box(-1.0, 1.0, shape=(6,)),
+                    "seq_m5": spaces.Box(-1.0, 1.0, shape=(4, 2)),
+                    "mask_m5": spaces.Box(0.0, 1.0, shape=(4,)),
+                }
+            ),
+            ValueError,
+            "M1 'seq' observation stream",
+        ),
+        (
+            spaces.Dict(
+                {
+                    "account": spaces.Box(-1.0, 1.0, shape=(6,)),
+                    "seq": spaces.Box(-1.0, 1.0, shape=(4, 2)),
+                }
+            ),
+            ValueError,
+            "missing mask observation",
+        ),
+        (
+            spaces.Dict(
+                {
+                    "account": spaces.Box(-1.0, 1.0, shape=(6,)),
+                    "seq": spaces.Box(-1.0, 1.0, shape=(2,)),
+                    "seq_mask": spaces.Box(0.0, 1.0, shape=(2,)),
+                }
+            ),
+            TypeError,
+            "seq must be a Box",
+        ),
+    ],
+)
+def test_mtf_encoder_rejects_invalid_observation_spaces(spec, exception, message) -> None:
+    with pytest.raises(exception, match=message):
+        MTFEncoder(spec, latent_dim=8, channels=(4,), dropout=0.0)
+
+
+def test_efficient_mtf_stream_contract_rejects_non_matrix_sequence() -> None:
+    observation_space = spaces.Dict(
+        {
+            "account": spaces.Box(-1.0, 1.0, shape=(6,)),
+            "seq": spaces.Box(-1.0, 1.0, shape=(60,)),
+            "seq_mask": spaces.Box(0.0, 1.0, shape=(60,)),
+        }
+    )
+
+    with pytest.raises(TypeError, match=r"seq must have a \(window, features\) shape"):
+        observation_streams(observation_space)
+
+
+def test_shared_tcn_core_requires_at_least_one_channel() -> None:
+    with pytest.raises(ValueError, match="channels must contain at least one width"):
+        _SharedTCNCore(4, 8, (), 3, 0.0)
+
+
+@pytest.mark.parametrize(
+    "encoder_type",
+    [
+        SharedTCNMTFReasoningEncoder,
+        M1TCNHTFLiteReasoningEncoder,
+        M1TCNHTFSnapshotReasoningEncoder,
+    ],
+)
+def test_efficient_mtf_encoders_reject_nonpositive_adapter_width(encoder_type) -> None:
+    with pytest.raises(ValueError, match="adapter_dim must be positive"):
+        encoder_type(
+            _space(),
+            latent_dim=16,
+            channels=(8, 8),
+            dropout=0.0,
+            attention_heads=4,
+            feedforward_dim=32,
+            adapter_dim=0,
+        )

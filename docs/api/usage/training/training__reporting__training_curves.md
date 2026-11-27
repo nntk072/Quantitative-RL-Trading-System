@@ -23,7 +23,23 @@ This page contains 2 public callable records owned by `training.reporting.traini
 
 **Observed usage:**
 
-1. [test fixture: `test_save_dashboard_plots`](../../../../tests/unit/training/test_training_curves.py#L153)
+1. [test fixture: `test_dashboard_plot_export_skips_csv_with_no_columns`](../../../../tests/unit/training/test_training_curve_empty_input.py#L13)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_dashboard_plot_export_skips_csv_with_no_columns(tmp_path: Path) -> None:
+    log_path = tmp_path / "empty-dashboard.csv"
+    log_path.write_text("\n", encoding="utf-8")
+    output_dir = tmp_path / "plots"
+
+    save_dashboard_plots(log_path, output_dir)
+
+    assert output_dir.is_dir()
+    assert list(output_dir.iterdir()) == []
+```
+
+2. [test fixture: `test_save_dashboard_plots`](../../../../tests/unit/training/test_training_curves.py#L204)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -43,26 +59,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_write_training_progress_artifacts`](../../../../training/runner/seed_runtime.py#L785)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-                    seed_model_dir,
-                    dpi=getattr(cfg.output, "dpi", 150),
-                )
-                if trade_setup_plots:
-                    log.info("Saved trade-setup learning plots: %s", trade_setup_plots)
-            save_dashboard_plots(
-                seed_model_dir / "dashboard_log.csv",
-                out_dir=seed_model_dir,
-                dpi=getattr(cfg.output, "dpi", 150),
-                save_html=getattr(cfg.output, "save_html", False),
-            )
-        except Exception as exc:
-            log.warning("Training progress plots skipped: %s", exc)
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -90,7 +87,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_save_training_plots`](../../../../tests/unit/training/test_training_curves.py#L93)
+1. [test fixture: `test_save_training_plots`](../../../../tests/unit/training/test_training_curves.py#L94)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -107,7 +104,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         assert (tmp_path / f"{name}.png").stat().st_size > 0, f"Missing {name}.png"
 ```
 
-2. [test fixture: `test_save_training_plots_empty_log`](../../../../tests/unit/training/test_training_curves.py#L121)
+2. [test fixture: `test_save_training_plots_empty_log`](../../../../tests/unit/training/test_training_curves.py#L122)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

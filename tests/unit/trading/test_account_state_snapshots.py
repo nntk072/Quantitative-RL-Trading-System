@@ -1,8 +1,38 @@
 """Stable account trace fields for evaluations and research evidence."""
 
+import pytest
+
 from trading.account import AccountState
 from trading.account.snapshots import account_state_snapshot
 from trading.execution.broker import Position
+
+
+def test_account_state_rejects_invalid_policy_and_payout_modes() -> None:
+    with pytest.raises(ValueError, match="unsupported daily PnL basis override"):
+        AccountState(daily_pnl_basis_override="unknown")  # type: ignore[arg-type]
+
+    account = AccountState()
+    with pytest.raises(ValueError, match="unsupported max_drawdown_mode"):
+        account.reset_operating_balance(90_000.0, max_drawdown_mode="trailing")
+
+
+@pytest.mark.parametrize("value", [True, "not-a-number", float("inf")])
+def test_account_state_rejects_non_finite_or_non_numeric_money(value: object) -> None:
+    with pytest.raises(ValueError, match="open_pnl must be finite"):
+        AccountState().update_equity(value)  # type: ignore[arg-type]
+
+
+def test_account_state_observation_and_drawdown_fallbacks() -> None:
+    account = AccountState(initial_balance=100_000.0)
+    account.update_equity(1_000.0)
+    account.update_equity(-500.0)
+    assert account.trailing_drawdown_pct() == pytest.approx(1_500 / 101_000)
+    assert account.to_array() == pytest.approx([0.0, -0.005, -0.005, 0.0, 0.005])
+
+    account.peak_equity = 0.0
+    assert account.trailing_drawdown_pct() == 0.0
+    account.initial_balance = 0.0
+    assert account.drawdown_pct() == 0.0
 
 
 def test_account_state_snapshot_records_position_and_limit_order_lifecycle() -> None:

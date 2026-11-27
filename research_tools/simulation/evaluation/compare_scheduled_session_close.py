@@ -32,7 +32,7 @@ SOURCE_PATHS = (
     "simulation/backtest/event_driven_backtest.py",
     "simulation/backtest/protective_events.py",
     "simulation/backtest/runtime.py",
-    "simulation/environment/episode_runtime.py",
+    "simulation/environment/episode/lifecycle.py",
     "market_data/loading/ticks.py",
     "tests/integration/backtest/test_risk_lifecycle_characterization.py",
 )

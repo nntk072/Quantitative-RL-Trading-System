@@ -390,20 +390,6 @@ class PO3IFVGStrategy(TradingStrategy):
         bear = _any(row, "fvg_retest_bear")
         return 0 if bull == bear else (1 if bull else -1)
 
-    def _flag_any(self, row: pd.Series, bound: tuple[str, ...] | None, stem: str) -> bool:
-        """Process any.
-
-        Args:
-            row: Row index or record being processed.
-            bound: Items supplied for the bound, in input order.
-            stem: Text or path value identifying the stem.
-
-        Returns:
-            Whether flag any meets the requested condition.
-        """
-        names = bound if bound is not None else columns_matching(row.index, stem)
-        return any(_flag(row, name) for name in names)
-
     def sl_candidates(self, *, direction: int, row: pd.Series) -> list[tuple[str, float]]:
         """Structural SL ladder for trader ``sl_anchor`` selection.
 

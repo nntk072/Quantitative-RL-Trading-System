@@ -10,19 +10,21 @@ This page contains 3 public callable records owned by `models.encoders.lite_tcn`
 
 **Exact API:** {py:obj}`models.encoders.lite_tcn.LiteTCNEncoder` · **Source:** [models/encoders/lite_tcn.py:95](../../../../models/encoders/lite_tcn.py#L95)
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_lite_tcn_rejects_empty_or_nonpositive_convolution_parameters`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L337)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = LiteTCNEncoder(observation_space=..., seq_len=..., n_features=..., latent_dim=..., channels=..., dilations=..., kernel_size=..., dropout=..., account_dim=...)
+def test_lite_tcn_rejects_empty_or_nonpositive_convolution_parameters(
+    kwargs: dict[str, Any],
+) -> None:
+    with pytest.raises(ValueError, match="LiteTCN"):
+        LiteTCNEncoder(_space(), **kwargs)
 ```
 
-**Lifecycle context:** Compact causal depthwise-separable TCN with the standard 160-wide output.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

@@ -4,8 +4,8 @@
 
 ## Source claims checked
 
-1. Step PnL is current equity plus payout withdrawn this step minus prior equity: confirmed in `simulation/environment/step_accounting_runtime.py::_record_step_accounting`.
-2. Close fills receive unique records and aggregate into one position lifecycle: confirmed in `simulation/environment/trade_accounting_runtime.py::_stamp_exit`; `_note_close` retains the first realized close value for step reward use.
+1. Step PnL is current equity plus payout withdrawn this step minus prior equity: confirmed in `simulation/environment/accounting/step.py::_record_step_accounting`.
+2. Close fills receive unique records and aggregate into one position lifecycle: confirmed in `simulation/environment/accounting/trades.py::_stamp_exit`; `_note_close` retains the first realized close value for step reward use.
 3. Equity-delta reward divides step PnL by positive finite fixed dollar risk and substitutes a hard-breach penalty: confirmed in `simulation/environment/rewards.py::EquityDeltaReward`.
 4. Equity-log-growth reward uses supplied after-cost equity endpoints without a second cost deduction: confirmed in `simulation/environment/rewards.py::EquityLogGrowthReward`.
 5. The named component keys exist, and nonzero raw rewards are rescaled on clipping to match the returned signal: confirmed in `simulation/environment/rewards.py::REWARD_PART_KEYS` and `fit_reward_parts`.

@@ -85,7 +85,7 @@ def test_policy_action_conversion_rejects_actions_that_disagree_with_schema(
         to_policy_action(decision)
 ```
 
-2. [test fixture: `test_continuous_and_structured_actions_enforce_schema_shape_and_finiteness`](../../../../tests/unit/decisioning/test_contracts.py#L48)
+2. [test fixture: `test_continuous_and_structured_actions_enforce_schema_shape_and_finiteness`](../../../../tests/unit/decisioning/test_contracts.py#L55)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -206,29 +206,24 @@ def _input(schema_version: str = "observation-v1") -> DecisionInput:
     return DecisionInput({"seq": np.zeros((2, 3), dtype=np.float32)}, schema_version)
 ```
 
-2. [test fixture: `test_supervised_learner_fits_self_describing_artifact_and_provider`](../../../../tests/unit/learning/test_learning_supervised_reference.py#L67)
+2. [test fixture: `test_rule_based_provider_enforces_input_and_action_schema_metadata`](../../../../tests/unit/decisioning/test_contracts.py#L87)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    assert result.training_steps == 8
-    provider = load_reference_torch_provider(checkpoint)
-    assert provider.metadata.training_paradigm == "supervised"
-    assert provider.metadata.model_family == "torch_mlp_classifier"
-    decision = provider.predict(
-        DecisionInput(
-            observation={
-                "seq": np.zeros((10, 2), dtype=np.float32),
-                "account": np.zeros(6, dtype=np.float32),
-            },
-            schema_version="account-state-v1",
-        ),
-    )
-    assert isinstance(decision.action, DiscreteAction)
-    assert (
-        decision.action.name == provider.metadata.action_schema.coordinates[decision.action.index]
-    )
+        return expected
+
+    provider = RuleBasedDecisionProvider(rule, metadata)
+
+    assert provider.metadata == metadata
+    assert provider.predict(DecisionInput({}, "obs-v1"), deterministic=False) == expected
+    with pytest.raises(ValueError, match="observation schema"):
+        provider.predict(DecisionInput({}, "obs-v2"))
+
+    wrong_action = Decision(
+        DiscreteAction(0, "hold"), ActionSchemaRef("v1", "other", ("hold",), "discrete")
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -321,7 +316,23 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `__init__`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L28)
+1. [test fixture: `test_rule_based_provider_enforces_input_and_action_schema_metadata`](../../../../tests/unit/decisioning/test_contracts.py#L78)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_rule_based_provider_enforces_input_and_action_schema_metadata() -> None:
+    action_schema = ActionSchemaRef("v1", "actions", ("hold",), "discrete")
+    metadata = PredictorMetadata("rule", "rule", "rules", "obs-v1", action_schema)
+    expected = Decision(DiscreteAction(0, "hold"), action_schema)
+
+    def rule(_input: DecisionInput) -> Decision:
+        return expected
+
+# … caller assertions omitted …
+```
+
+2. [test fixture: `__init__`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L28)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -338,30 +349,6 @@ def __init__(self, action: Decision) -> None:
             version="test-v1", key="test", coordinates=("action",), kind="test"
         ),
     )
-```
-
-2. [test fixture: `test_rule_and_sb3_providers_share_the_same_rollout_boundary`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L127)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_rule_and_sb3_providers_share_the_same_rollout_boundary() -> None:
-    action_schema = ActionSchemaRef(
-        version="discrete-v1", key="hold-enter", coordinates=("hold", "enter"), kind="discrete"
-    )
-    metadata = PredictorMetadata(
-        provider_id="rule",
-        model_family="rule",
-        training_paradigm="rule_based",
-        input_schema_version="obs-v1",
-        action_schema=action_schema,
-    )
-    rule_inputs: list[DecisionInput] = []
-
-    def _rule(input: DecisionInput) -> Decision:
-        rule_inputs.append(input)
-        return Decision(DiscreteAction(1, "enter"), action_schema)
-# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

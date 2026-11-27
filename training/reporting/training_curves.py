@@ -754,7 +754,10 @@ def save_dashboard_plots(
     out_dir.mkdir(parents=True, exist_ok=True)
     if not log_path.exists() or log_path.stat().st_size == 0:
         return
-    df = pd.read_csv(log_path)
+    try:
+        df = pd.read_csv(log_path)
+    except pd.errors.EmptyDataError:
+        return
     if df.empty or "timestep" not in df.columns:
         return
 

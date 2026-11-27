@@ -369,3 +369,168 @@ def test_experiment_run_summary_writes_groupable_csv(tmp_path: Path) -> None:
     assert row["controller_status"] == "failed"
     assert row["train_pnl"] == "-100.0"
     assert json.loads(row["train_pnl_reconciliation"]) == {"status": "verified"}
+
+
+def test_summary_falls_back_from_escaped_log_and_preserves_missing_worker_evidence(
+    tmp_path: Path,
+) -> None:
+    experiment_run_dir = tmp_path / "summary-fallback"
+    run_key = "variant__seed7"
+    attempt_dir = experiment_run_dir / "runs" / "attempts" / run_key / "attempt1"
+    run_dir = attempt_dir / run_key / "20261101_000000_run"
+    _write_json(
+        experiment_run_dir / "experiment_run.json",
+        {
+            "experiment_run_id": "summary-fallback",
+            "jobs": [
+                {
+                    "key": run_key,
+                    "variant": "variant",
+                    "seed": 7,
+                    "status": "failed",
+                    "exit_code": 1,
+                    "failure_reason": "worker failed after writing partial evidence",
+                    "attempts": 1,
+                    "log": "../outside.log",
+                },
+                {
+                    "key": "not_started__seed11",
+                    "variant": "not_started",
+                    "seed": 11,
+                    "status": "pending",
+                    "attempts": 0,
+                },
+            ],
+        },
+    )
+    _write_json(experiment_run_dir / "reports" / "experiment_run_status.json", {})
+    (run_dir / "training").mkdir(parents=True)
+    (run_dir / "training" / "metrics.json").write_text("{invalid json", encoding="utf-8")
+    (run_dir / "config.yaml").write_text("account: [invalid yaml", encoding="utf-8")
+
+    outside_log = tmp_path / "outside.log"
+    outside_log.write_text("[test] survived=False days=0/10\n", encoding="utf-8")
+    fallback_log = experiment_run_dir / "logs" / "workers" / f"{run_key}.log"
+    fallback_log.parent.mkdir(parents=True)
+    fallback_log.write_text(
+        "[test/report-only] Sharpe=0.5 MaxDD=1.00% Trades=1 Return=0.10% survived=True days=4/10\n",
+        encoding="utf-8",
+    )
+
+    summary = build_summary(experiment_run_dir)
+    report = render_markdown(summary)
+
+    failed_job, pending_job = summary["jobs"]
+    assert failed_job["worker_log"] == "logs/workers/variant__seed7.log"
+    assert failed_job["test_replay_report_only"] == {
+        "survived_full_period": True,
+        "days_traded": 4,
+        "days_total": 10,
+    }
+    assert failed_job["train_metrics"] is None
+    assert failed_job["account_currency"] is None
+    assert failed_job["train_pnl_reconciliation"]["status"] == "unavailable"
+    assert failed_job["evidence_sha256"]["training/metrics.json"] is not None
+    assert pending_job["attempt"] == 0
+    assert pending_job["run_artifact_dir"] is None
+    assert "yes / 4/10" in report
+    assert "worker failed after writing partial evidence" in report
+
+
+@pytest.mark.parametrize(
+    ("manifest_payload", "status_payload"),
+    [
+        (None, {}),
+        ({"jobs": []}, None),
+        ([], {}),
+        ({"jobs": []}, "not-an-object"),
+    ],
+)
+def test_summary_requires_readable_manifest_and_status_objects(
+    tmp_path: Path,
+    manifest_payload: Any,
+    status_payload: Any,
+) -> None:
+    experiment_run_dir = tmp_path / "incomplete-summary"
+    if manifest_payload is not None:
+        _write_json(experiment_run_dir / "experiment_run.json", manifest_payload)
+    if status_payload is not None:
+        _write_json(experiment_run_dir / "reports" / "experiment_run_status.json", status_payload)
+
+    with pytest.raises(
+        ValueError, match="experiment_run.json and reports/experiment_run_status.json are required"
+    ):
+        build_summary(experiment_run_dir)
+
+
+def test_summary_skips_malformed_records_and_preserves_partial_job_evidence(tmp_path: Path) -> None:
+    experiment_run_dir = tmp_path / "malformed-partial-summary"
+    _write_json(
+        experiment_run_dir / "experiment_run.json",
+        {
+            "comparison_families": [
+                None,
+                {
+                    "id": "family",
+                    "domain": "data",
+                    "title": "History inputs",
+                    "comparison_type": "matched",
+                    "entries": [
+                        "malformed-arm",
+                        {
+                            "variant": "partial",
+                            "label": "B",
+                            "role": "treatment",
+                            "changed_factors": ["history input"],
+                        },
+                    ],
+                },
+            ],
+            "jobs": [
+                None,
+                ["not", "a", "job"],
+                {"key": ""},
+                {
+                    "key": "not-started",
+                    "variant": "not-started",
+                    "attempts": 0,
+                    "seed": 42,
+                    "status": "pending",
+                },
+                {
+                    "key": "partial__seed-unknown",
+                    "variant": "partial",
+                    "attempts": 1,
+                    "seed": "unknown",
+                    "status": "failed",
+                    "failure_reason": "worker exited before saving metrics",
+                },
+            ],
+        },
+    )
+    _write_json(experiment_run_dir / "reports" / "experiment_run_status.json", {})
+
+    summary = build_summary(experiment_run_dir)
+    report = render_markdown(summary)
+
+    assert [job["run_key"] for job in summary["jobs"]] == [
+        "not-started",
+        "partial__seed-unknown",
+    ]
+    assert summary["seed"] is None
+    assert summary["seeds"] == [42]
+    assert summary["seed_metadata_complete"] is False
+    pending, partial = summary["jobs"]
+    assert pending["attempt"] == 0
+    assert pending["run_artifact_dir"] is None
+    assert partial["family_id"] == "family"
+    assert partial["arm_label"] == "B"
+    assert partial["family_memberships"][0]["changed_factors"] == ["history input"]
+    assert partial["train_metrics"] is None
+    assert partial["test_metrics_report_only"] is None
+    assert partial["training_episode_coverage"]["status"] == "missing"
+    assert partial["evidence_sha256"]["training/metrics.json"] is None
+    assert partial["evidence_sha256"]["attempt_provenance.json"] is None
+    assert partial["run_artifact_dir"] is None
+    assert "worker exited before saving metrics" in report
+    assert "family:B" in report

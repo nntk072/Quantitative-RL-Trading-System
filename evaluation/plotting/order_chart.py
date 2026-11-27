@@ -1,15 +1,7 @@
-"""Compatibility exports for per-trade chart geometry and renderers."""
+"""Compatibility facade for per-trade order-chart geometry and drawing."""
 
-from evaluation.plotting.order_chart_data import (
-    LevelSeg,
-    OrderLevels,
-    ZoneBand,
-    order_levels,
-)
-from evaluation.plotting.order_chart_renderers import (
-    draw_order_levels_mpl,
-    draw_order_levels_plotly,
-)
+from evaluation.plotting.orders.geometry import LevelSeg, OrderLevels, ZoneBand, order_levels
+from evaluation.plotting.orders.renderers import draw_order_levels_mpl, draw_order_levels_plotly
 
 __all__ = [
     "LevelSeg",

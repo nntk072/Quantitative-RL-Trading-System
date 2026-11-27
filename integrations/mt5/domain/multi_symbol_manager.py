@@ -63,7 +63,6 @@ class MultiSymbolManager:
                     logger.warning(f"Symbol {symbol} not available, skipping")
                     continue
 
-                    # Create data source
                 data_source = MT5Data(symbol, self.timeframe)
 
                 self.data_sources[symbol] = data_source
@@ -143,7 +142,6 @@ class MultiSymbolManager:
                 logger.error(f"Symbol {symbol} not available")
                 return False
 
-                # Create data source
             data_source = MT5Data(symbol, self.timeframe)
 
             self.data_sources[symbol] = data_source
@@ -181,14 +179,12 @@ class MultiSymbolManager:
             return False
 
     def refresh_data(self) -> None:
-        """Refresh data for all symbols."""
-        for symbol, _data_source in self.data_sources.items():
-            try:
-                # Data will be refreshed when get_data() is called
-                # This is just a placeholder for future optimization
-                pass
-            except Exception as e:
-                logger.error(f"Error refreshing data for {symbol}: {e}")
+        """Keep the legacy refresh hook as a no-op.
+
+        Data sources refresh when their ``get_data`` method is called. This
+        compatibility hook intentionally performs no work.
+        """
+        return None
 
     def get_active_symbols(self) -> list[str]:
         """Get list of active (available) symbols.

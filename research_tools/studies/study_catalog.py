@@ -310,7 +310,7 @@ def _parse_module_import_inventories(
 
     def imported_file(module: str) -> Path | None:
         path = root.joinpath(*module.split("."))
-        for candidate in (path.with_suffix(".py"), path / "__init__.py"):
+        for candidate in (path / "__init__.py", path.with_suffix(".py")):
             if candidate.is_file():
                 return _repo_path(root, candidate.relative_to(root).as_posix(), "API inventory")
         return None

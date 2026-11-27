@@ -24,6 +24,11 @@ api_paths:
 - learning/self_supervised/vae_pre_ny.py
 - learning/supervised/reference.py
 caller_paths:
+- tests/unit/learning/test_vector_environment_factory_contracts.py
+- tests/unit/learning/test_action_schema_validation_contracts.py
+- tests/unit/learning/test_hybrid_distribution_contracts.py
+- tests/unit/learning/test_lagrangian_callback_config_boundaries.py
+- tests/unit/learning/test_environment_adapter_coverage.py
 - evaluation/reanalysis/sb3_checkpoint_backend.py
 - experiments/runs/checkpoint_lineage.py
 - tests/architecture/test_public_imports.py
@@ -35,9 +40,14 @@ caller_paths:
 - tests/unit/learning/test_candidate_geometry_policy.py
 - tests/unit/learning/test_checkpoint_resume.py
 - tests/unit/learning/test_feature_graph.py
+- tests/unit/learning/test_hybrid_agent_boundary_contracts.py
+- tests/unit/learning/test_hybrid_runtime_remaining_contracts.py
 - tests/unit/learning/test_host_mask_check.py
 - tests/unit/learning/test_learning_callbacks_coverage.py
 - tests/unit/learning/test_learning_contracts.py
+- tests/unit/learning/test_learning_callbacks_coverage.py
+- tests/unit/learning/test_rl_edge_contracts.py
+- tests/unit/learning/test_rl_agent_additional_runtime_contracts.py
 - tests/unit/learning/test_learning_supervised_reference.py
 - tests/unit/learning/test_overlap_collect.py
 - tests/unit/learning/test_rl_edge_contracts.py
@@ -66,6 +76,7 @@ caller_paths:
 - tests/unit/training/test_lagrangian_callback.py
 - tests/unit/training/test_periodic_checkpoint.py
 - tests/unit/training/test_sac_smoke.py
+- tests/unit/training/test_seed_runtime_additional_coverage.py
 - tests/unit/training/test_save_checkpoint.py
 - training/runner/data_stage.py
 - training/runner/seed_runtime.py
@@ -76,8 +87,9 @@ caller_paths:
 - tests/unit/learning/test_graph_replay_cache.py
 - tests/unit/learning/test_update_graph_dispatch.py
 - tests/unit/learning/test_update_graph_replay_loop.py
+- tests/unit/learning/test_update_graph_fake_capture.py
 source_scopes:
-  - {path: learning/rl, study_ids: [learning.ppo_action_probability_contract, learning.sac_action_replay_and_budget, learning.seed_resume_and_fit_identity]}
+  - {path: learning/rl, study_ids: [learning.ppo_action_probability_contract, learning.sac_action_replay_and_budget, learning.seed_resume_and_fit_identity, learning.agent_factory_and_action_schema]}
   - {path: learning/supervised, study_ids: [learning.auxiliary_target_isolation]}
   - {path: learning/self_supervised, study_ids: [learning.auxiliary_target_isolation]}
   - {path: learning/contracts.py, study_ids: [learning.seed_resume_and_fit_identity, learning.auxiliary_target_isolation]}
@@ -91,7 +103,7 @@ studies:
     type: code_check
     question: Do PPO samples, stored action probabilities, entropy, returns, and updates use matching action semantics?
     source_paths: [learning/rl/ppo.py, learning/rl/hybrid.py, learning/rl/rollout_buffer.py]
-    checks: [tests/unit/training/test_training_smoke.py, tests/unit/models/test_ppo_log_std.py]
+    checks: [tests/unit/training/test_training_smoke.py, tests/unit/models/test_ppo_log_std.py, tests/unit/learning/test_hybrid_runtime_remaining_contracts.py]
     outputs: [ppo_contract_check]
   - id: learning.sac_action_replay_and_budget
     type: code_check
@@ -99,6 +111,12 @@ studies:
     source_paths: [learning/rl/agent.py, learning/rl/learner.py]
     checks: [tests/unit/training/test_sac_smoke.py, tests/unit/training/test_fit_request.py]
     outputs: [sac_contract_check]
+  - id: learning.agent_factory_and_action_schema
+    type: code_check
+    question: Does agent construction fail clearly when required runtime components are unavailable, and bind categorical schema to the model action width?
+    source_paths: [learning/rl/agent.py]
+    checks: [tests/unit/learning/test_rl_agent_additional_runtime_contracts.py]
+    outputs: [agent_factory_and_schema_check]
   - id: learning.seed_resume_and_fit_identity
     type: code_check
     question: Do seeds, devices, fit requests, checkpoints, and resumed optimizer state retain one learning identity?

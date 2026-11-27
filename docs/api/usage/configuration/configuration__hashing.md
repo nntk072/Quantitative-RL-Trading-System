@@ -26,7 +26,7 @@ This page contains 1 public callable records owned by `configuration.hashing`. S
 
 **Observed usage:**
 
-1. [test fixture: `test_configuration_serialization_and_repository_path_helpers`](../../../../tests/unit/configuration/test_configuration_helpers.py#L15)
+1. [test fixture: `test_configuration_serialization_and_repository_path_helpers`](../../../../tests/unit/configuration/test_configuration_helpers.py#L19)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

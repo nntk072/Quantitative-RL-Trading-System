@@ -165,7 +165,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_load_release_times_reads_utc_column`](../../../../tests/unit/market_data/test_news_guard.py#L153)
+1. [test fixture: `test_load_release_times_reads_utc_column`](../../../../tests/unit/market_data/test_news_guard.py#L154)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -238,7 +238,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_spike_blocks_new_entries_outside_ny_open_window`](../../../../tests/unit/market_data/test_news_guard.py#L59)
+1. [test fixture: `test_spike_blocks_new_entries_outside_ny_open_window`](../../../../tests/unit/market_data/test_news_guard.py#L60)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -264,7 +264,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert not mask[0:6].any()
 ```
 
-2. [test fixture: `test_ny_open_manipulation_is_not_treated_as_news`](../../../../tests/unit/market_data/test_news_guard.py#L80)
+2. [test fixture: `test_ny_open_manipulation_is_not_treated_as_news`](../../../../tests/unit/market_data/test_news_guard.py#L81)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -324,7 +324,22 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L684)
+1. [test fixture: `test_news_guard_config_is_optional_and_resolves_relative_calendar_path`](../../../../tests/unit/market_data/test_news_guard.py#L158)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_news_guard_config_is_optional_and_resolves_relative_calendar_path() -> None:
+    assert news_guard_config(None) is None
+    assert news_guard_config({"enabled": False}) is None
+
+    config = news_guard_config(
+        {
+            "enabled": True,
+# … caller assertions omitted …
+```
+
+2. [production caller: `make_env`](../../../../simulation/environment/trading_environment_factory.py#L684)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -344,25 +359,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `make_bundle_env`](../../../../simulation/environment/worker.py#L313)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        limit_order_require_trade_through=bool(
-            execution.get("limit_order_require_trade_through", False)
-        ),
-        randomized_fill_latency_ms=float(execution.get("randomized_fill_latency_ms", 0.0)),
-        max_tick_quote_wait_ms=int(execution.get("max_tick_quote_wait_ms", 60_000)),
-        news_guard=news_guard_config(execution.get("news_spike_guard")),
-        server_side_protective_orders=bool(execution.get("server_side_protective_orders", False)),
-        mtf=spec.arch
-        in {
-            "mtf",
-            "mtf_empty_stream_masked_v1",
-# … caller assertions omitted …
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

@@ -14,7 +14,7 @@ This page contains 5 public callable records owned by `features.po3.trigger_rule
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_trigger_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L210)
+1. [test fixture: `test_entry_trigger_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L240)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -27,7 +27,7 @@ def test_entry_trigger_with_custom_config(self, sample_bars: pd.DataFrame) -> No
     assert isinstance(entry_result, pd.DataFrame)
 ```
 
-2. [test fixture: `test_retest_requires_a_bar_after_confirmation`](../../../../tests/unit/features/test_po3_config.py#L231)
+2. [test fixture: `test_retest_requires_a_bar_after_confirmation`](../../../../tests/unit/features/test_po3_config.py#L261)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -80,7 +80,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_trigger_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L172)
+1. [test fixture: `test_entry_trigger_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L202)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -94,7 +94,7 @@ def test_entry_trigger_returns_expected_columns(self, sample_bars: pd.DataFrame)
     assert "entry_trigger_type" in entry_result.columns
 ```
 
-2. [test fixture: `test_entry_trigger_output_shape`](../../../../tests/unit/features/test_po3_config.py#L181)
+2. [test fixture: `test_entry_trigger_output_shape`](../../../../tests/unit/features/test_po3_config.py#L211)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -147,7 +147,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_htf_fvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L299)
+1. [test fixture: `test_htf_fvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L329)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -162,7 +162,7 @@ def test_htf_fvg_returns_expected_columns(self, sample_bars: pd.DataFrame) -> No
     assert "htf_fvg_bearish_high" in result.columns
 ```
 
-2. [test fixture: `test_htf_fvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L309)
+2. [test fixture: `test_htf_fvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L339)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -216,7 +216,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_ltf_ifvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L338)
+1. [test fixture: `test_ltf_ifvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L368)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -231,7 +231,7 @@ def test_ltf_ifvg_returns_expected_columns(self, sample_bars: pd.DataFrame) -> N
     assert "ltf_ifvg_bearish_high" in result.columns
 ```
 
-2. [test fixture: `test_ltf_ifvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L348)
+2. [test fixture: `test_ltf_ifvg_output_shape`](../../../../tests/unit/features/test_po3_config.py#L378)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

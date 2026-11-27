@@ -5,7 +5,15 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from evaluation.plotting.data_plots import plot_session_profile, write_data_eda
+from evaluation.plotting import data_plots
+from evaluation.plotting.data import exploration as data_exploration
+from evaluation.plotting.data_plots import (
+    plot_feature_histograms,
+    plot_log_return_dist,
+    plot_session_profile,
+    plot_signals_for_day,
+    write_data_eda,
+)
 
 
 def _ny_bars(n: int = 500, *, volume: bool = True, tickvol: bool = False) -> pd.DataFrame:
@@ -81,6 +89,78 @@ def test_session_profile_zero_volume_uses_tickvol(tmp_path):
     bars["volume"] = 0
     fig = plot_session_profile(bars, out_path=tmp_path / "sess.png", dpi=72)
     assert len(fig.axes) == 2
+
+
+def test_session_profile_with_no_ny_bars_shows_empty_state_and_saves(tmp_path):
+    bars = _ny_bars(n=3)
+    bars.index = pd.date_range("2025-01-02 00:00", periods=3, freq="min")
+
+    fig = plot_session_profile(bars, out_path=tmp_path / "off-session.png", dpi=72)
+
+    assert len(fig.axes) == 1
+    assert any(text.get_text() == "No NY bars" for text in fig.axes[0].texts)
+    assert (tmp_path / "off-session.png").stat().st_size > 0
+
+
+def test_log_return_plot_handles_constant_and_nonpositive_close_series():
+    index = pd.date_range("2025-01-02 16:30", periods=3, freq="min")
+    constant = plot_log_return_dist(pd.DataFrame({"close": [100.0] * 3}, index=index))
+    assert len(constant.axes[0].lines) == 1
+    assert np.isfinite(constant.axes[0].lines[0].get_ydata()).all()
+
+    invalid = plot_log_return_dist(pd.DataFrame({"close": [100.0, 0.0, -1.0]}, index=index))
+    assert any(text.get_text() == "No returns" for text in invalid.axes[0].texts)
+    constant.clear()
+    invalid.clear()
+
+
+def test_constant_feature_histogram_uses_fallback_range_without_failure():
+    index = pd.date_range("2025-01-02 16:30", periods=3, freq="min")
+    fig = plot_feature_histograms(pd.DataFrame({"rsi": [50.0, 50.0, 50.0]}, index=index))
+
+    assert "rsi" in fig.axes[0].get_title()
+    assert "n=3" in fig.axes[0].get_title()
+    assert fig.axes[0].patches
+    fig.clear()
+
+
+def test_empty_eda_input_creates_destination_without_partial_plot_files(tmp_path):
+    destination = tmp_path / "empty-eda"
+
+    out = write_data_eda(destination, pd.DataFrame(columns=["close"]))
+
+    assert out == destination
+    assert out.is_dir()
+    assert list(out.iterdir()) == []
+
+
+def test_daily_signal_writer_continues_after_one_day_plot_failure(tmp_path, monkeypatch, caplog):
+    index = pd.date_range("2025-01-02 16:30", periods=2, freq="1D")
+    features = pd.DataFrame({"entry_long": [1, 1]}, index=index)
+    calls: list[pd.Timestamp] = []
+
+    def fail_plot(_features, day, **_kwargs):
+        calls.append(pd.Timestamp(day))
+        raise RuntimeError("renderer unavailable")
+
+    monkeypatch.setattr(data_exploration, "plot_signals_for_day", fail_plot)
+    output = tmp_path / "daily-signals"
+
+    data_plots._write_signals_by_day(features, output, dpi=72)
+
+    assert output.is_dir()
+    assert len(calls) == 2
+    assert "renderer unavailable" in caplog.text
+
+
+def test_signal_day_with_no_matching_session_bars_renders_empty_state():
+    index = pd.date_range("2025-01-02 00:00", periods=3, freq="min")
+    features = pd.DataFrame({"entry_long": [0, 1, 0]}, index=index)
+
+    fig = plot_signals_for_day(features, pd.Timestamp("2025-01-02"))
+
+    assert any(text.get_text() == "No NY signals" for text in fig.axes[0].texts)
+    fig.clear()
 
 
 def test_write_data_eda_po3_by_day(tmp_path):

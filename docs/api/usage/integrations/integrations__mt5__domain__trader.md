@@ -12,41 +12,44 @@ This page contains 8 public callable records owned by `integrations.mt5.domain.t
 
 **Observed usage:**
 
-1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L85)
+1. [test fixture: `test_send_to_break_even_modifies_stop_only_after_profit_threshold`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L79)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    monkeypatch: pytest.MonkeyPatch,
-    position_type: int,
-    expected_order_type: int,
-    expected_price: float,
-) -> None:
-    trader = MT5Trader()
-    positions = pd.DataFrame(
-        [
-            {
-                "ticket": 17,
-                "symbol": "US100.cash",
+            }
+        ]
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    MT5Trader().send_to_break_even(positions, percentage=0.5)
+
+    assert len(submitted) == 1
+    assert submitted[0] == {
+        "action": mt5.TRADE_ACTION_SLTP,
+        "symbol": "US100",
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_open_position_uses_a_fill_mode_supported_by_symbol`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L164)
+2. [test fixture: `test_calculate_position_size_converts_stop_distance_to_lots`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L126)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "order_send",
-        send_order,
+        "account_info",
+        lambda: SimpleNamespace(balance=10_000.0),
         raising=False,
     )
 
-    result = MT5Trader().open_position("US100.cash", 0.1, 0, "test", 42)
+    lots = MT5Trader().calculate_position_size("US100", stop_loss=98.0, per_to_risk=0.01)
 
-    assert result is not None
-    assert submitted[0]["type_filling"] == expected
+    assert lots == pytest.approx(2.5)
+    assert calls == [
+        ("select", ("US100", True)),
+        ("tick", "US100"),
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -66,41 +69,44 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L85)
+1. [test fixture: `test_send_to_break_even_modifies_stop_only_after_profit_threshold`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L79)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    monkeypatch: pytest.MonkeyPatch,
-    position_type: int,
-    expected_order_type: int,
-    expected_price: float,
-) -> None:
-    trader = MT5Trader()
-    positions = pd.DataFrame(
-        [
-            {
-                "ticket": 17,
-                "symbol": "US100.cash",
+            }
+        ]
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    MT5Trader().send_to_break_even(positions, percentage=0.5)
+
+    assert len(submitted) == 1
+    assert submitted[0] == {
+        "action": mt5.TRADE_ACTION_SLTP,
+        "symbol": "US100",
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_open_position_uses_a_fill_mode_supported_by_symbol`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L164)
+2. [test fixture: `test_calculate_position_size_converts_stop_distance_to_lots`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L126)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "order_send",
-        send_order,
+        "account_info",
+        lambda: SimpleNamespace(balance=10_000.0),
         raising=False,
     )
 
-    result = MT5Trader().open_position("US100.cash", 0.1, 0, "test", 42)
+    lots = MT5Trader().calculate_position_size("US100", stop_loss=98.0, per_to_risk=0.01)
 
-    assert result is not None
-    assert submitted[0]["type_filling"] == expected
+    assert lots == pytest.approx(2.5)
+    assert calls == [
+        ("select", ("US100", True)),
+        ("tick", "US100"),
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -134,20 +140,29 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   Position size in broker lots.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_calculate_position_size_converts_stop_distance_to_lots`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L126)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = MT5Trader(...)
-result = instance.calculate_position_size(symbol=..., stop_loss=..., per_to_risk=...)
+# … caller setup omitted …
+        "account_info",
+        lambda: SimpleNamespace(balance=10_000.0),
+        raising=False,
+    )
+
+    lots = MT5Trader().calculate_position_size("US100", stop_loss=98.0, per_to_risk=0.01)
+
+    assert lots == pytest.approx(2.5)
+    assert calls == [
+        ("select", ("US100", True)),
+        ("tick", "US100"),
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This callable participates in `MT5Trader`: Execution adapter for submitting and managing MetaTrader positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.trader.MT5Trader.open_position`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.close_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_opened_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_all_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.send_to_break_even`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.calculate_position_size`
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -175,42 +190,36 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_close_position_uses_executable_quote_side`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L113)
+1. [test fixture: `test_close_position_skips_request_when_quote_is_unavailable`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L186)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        lambda _symbol: SimpleNamespace(bid=100.1, ask=100.2),
-        raising=False,
-    )
-    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+    monkeypatch.setattr(trader, "get_all_positions", lambda: positions)
+    monkeypatch.setattr(mt5, "symbol_info", lambda _symbol: _symbol_info(), raising=False)
+    monkeypatch.setattr(mt5, "symbol_info_tick", lambda _symbol: None, raising=False)
+    monkeypatch.setattr(mt5, "order_send", lambda request: requests.append(request), raising=False)
 
-    trader.close_positions(
-        "test", symbol="US100.cash", position_type=position_type, magic_number=42
-    )
+    trader.close_positions("test", symbol="US100", magic_number=42)
 
-    assert len(submitted) == 1
-    assert submitted[0]["type"] == expected_order_type
-    assert submitted[0]["price"] == expected_price
+    assert requests == []
 ```
 
-2. [test fixture: `test_close_position_uses_ioc_when_symbol_disallows_fok`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L262)
+2. [test fixture: `test_close_position_skips_request_when_symbol_metadata_is_unusable`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L218)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "order_send",
-        send_partial_close,
+        lambda _symbol: SimpleNamespace(bid=99.9, ask=100.1),
         raising=False,
     )
+    monkeypatch.setattr(mt5, "order_send", lambda request: requests.append(request), raising=False)
 
-    trader.close_positions(
-        "test", symbol="US100.cash", position_type=mt5.ORDER_TYPE_BUY, magic_number=42
-    )
+    trader.close_positions("test", symbol="US100", magic_number=42)
 
-    assert submitted[0]["type_filling"] == mt5.ORDER_FILLING_IOC
+    assert requests == []
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -238,19 +247,42 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `close_positions`](../../../../integrations/mt5/domain/trader.py#L100)
+1. [test fixture: `test_get_all_positions_returns_empty_frame_for_missing_or_empty_snapshot`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L257)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-        df_open_positions = self.get_all_positions()
+def test_get_all_positions_returns_empty_frame_for_missing_or_empty_snapshot(
+    monkeypatch: pytest.MonkeyPatch, broker_positions: object
+) -> None:
+    monkeypatch.setattr(mt5, "positions_get", lambda: broker_positions, raising=False)
 
-        if not df_open_positions.empty:
-            if "magic" not in df_open_positions.columns:
-                raise ValueError("cannot verify MT5 position ownership without magic metadata")
-            df_open_positions = df_open_positions[df_open_positions["magic"] == magic_number]
-# … caller assertions omitted …
+    positions = MT5Trader().get_all_positions()
+
+    assert positions.empty
+    assert list(positions.columns) == []
 ```
+
+2. [test fixture: `test_get_all_positions_returns_empty_frame_when_snapshot_query_raises`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L271)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_get_all_positions_returns_empty_frame_when_snapshot_query_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def raise_query_error() -> None:
+        raise RuntimeError("terminal disconnected")
+
+    monkeypatch.setattr(mt5, "positions_get", raise_query_error, raising=False)
+
+    positions = MT5Trader().get_all_positions()
+
+    assert positions.empty
+    assert list(positions.columns) == []
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -355,7 +387,26 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_open_position_uses_a_fill_mode_supported_by_symbol`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L164)
+1. [test fixture: `test_open_position_returns_none_when_terminal_disables_autotrading`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L165)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        "order_send",
+        send_order,
+        raising=False,
+    )
+
+    result = MT5Trader().open_position("US100", 0.1, mt5.ORDER_TYPE_BUY, "test", 42, 99.0, 102.0)
+
+    assert result is None
+    assert len(requests) == 1
+    assert requests[0]["sl"] == 99.0
+    assert requests[0]["tp"] == 102.0
+```
+
+2. [test fixture: `test_open_position_uses_a_fill_mode_supported_by_symbol`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L164)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -370,23 +421,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
     assert result is not None
     assert submitted[0]["type_filling"] == expected
-```
-
-2. [test fixture: `test_open_position_rejects_volume_off_symbol_step`](../../../../tests/unit/live/test_mt5_trader_quotes.py#L182)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        lambda _symbol: _symbol_info(mt5.SYMBOL_FILLING_FOK, mt5.SYMBOL_TRADE_EXECUTION_MARKET),
-        raising=False,
-    )
-    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
-
-    result = MT5Trader().open_position("US100.cash", 0.015, 0, "test", 42)
-
-    assert result is None
-    assert submitted == []
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -413,20 +447,29 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   percentage: Profit threshold used to trigger the adjustment.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_send_to_break_even_modifies_stop_only_after_profit_threshold`](../../../../tests/unit/integrations/test_mt5_trader_management.py#L79)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = MT5Trader(...)
-result = instance.send_to_break_even(df=..., percentage=...)
+# … caller setup omitted …
+            }
+        ]
+    )
+    monkeypatch.setattr(mt5, "order_send", lambda order: submitted.append(order), raising=False)
+
+    MT5Trader().send_to_break_even(positions, percentage=0.5)
+
+    assert len(submitted) == 1
+    assert submitted[0] == {
+        "action": mt5.TRADE_ACTION_SLTP,
+        "symbol": "US100",
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This callable participates in `MT5Trader`: Execution adapter for submitting and managing MetaTrader positions. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.trader.MT5Trader.open_position`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.close_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_opened_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.get_all_positions`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.send_to_break_even`, {py:obj}`integrations.mt5.domain.trader.MT5Trader.calculate_position_size`
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

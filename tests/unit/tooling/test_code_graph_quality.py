@@ -244,6 +244,44 @@ def test_same_module_unique_unqualified_call_becomes_exact(monkeypatch) -> None:
     assert "same-module" in audits[0].resolution_reason
 
 
+def test_test_only_helpers_do_not_ambiguate_production_calls(monkeypatch) -> None:
+    c = _db()
+    source = str((mod.ROOT / "pkg" / "model.py").resolve())
+    production_target = str((mod.ROOT / "pkg" / "codec.py").resolve())
+    test_target = str((mod.ROOT / "tests" / "unit" / "test_model.py").resolve())
+    c.executemany(
+        "insert into nodes values (?,?,?,?,?)",
+        [
+            ("encode", f"{production_target}::encode", production_target, "", "Function"),
+            ("encode", f"{test_target}::FakeCodec.encode", test_target, "FakeCodec", "Function"),
+        ],
+    )
+    c.execute(
+        "insert into edges values (?,?,?,?,?,?,?)",
+        (
+            f"{source}::run",
+            "encode",
+            source,
+            2,
+            "unresolved",
+            '{"receiver":"codec","receiver_binding":"unknown"}',
+            "CALLS",
+        ),
+    )
+    monkeypatch.setattr(mod, "_module_imports", lambda path: {})
+    monkeypatch.setattr(mod, "_repo_top_modules", lambda: {"pkg", "tests"})
+    monkeypatch.setattr(
+        mod,
+        "_parse_file",
+        lambda path: ("", mod.ast.parse("def run(codec):\n    return codec.encode()\n")),
+    )
+
+    audits, _, _ = mod.classify_calls(c)
+
+    assert audits[0].category == "internal_unresolved"
+    assert audits[0].candidate_targets == [f"{production_target}::encode"]
+
+
 def test_self_method_resolves_to_enclosing_class(monkeypatch) -> None:
     c = _db()
     src = str((mod.ROOT / "pkg" / "a.py").resolve())

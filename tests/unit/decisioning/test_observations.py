@@ -5,10 +5,12 @@ from typing import Any
 import numpy as np
 import pytest
 
+from decisioning.observation_state import entry_state_one_hot
 from decisioning.observations import (
     _LEGACY_REPEATED_PAYOUT_SCHEMA_ID,
     OBSERVATION_SCHEMA_REPEATED_PAYOUT,
     _canonicalize_saved_observation_schema_id,
+    account_state_v2,
     build_observation_schema,
     normalized_account_vector,
     pad_observation_window,
@@ -140,3 +142,78 @@ def test_pad_observation_window_rejects_dimensions_other_than_one_or_two(
 ) -> None:
     with pytest.raises(ValueError, match="must be 1D or 2D"):
         pad_observation_window(sequence, 2)
+
+
+def test_entry_state_one_hot_rejects_unknown_lifecycle_state() -> None:
+    with pytest.raises(ValueError, match="unknown entry state"):
+        entry_state_one_hot("CLOSED")
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"initial_sl_price": float("nan")}, "initial_sl_price must be finite"),
+        ({"active_sl_price": float("inf")}, "active_sl_price must be finite"),
+        ({"tp_prices": (100.0, float("nan"), None)}, "tp_prices must be finite"),
+        ({"tp_hit_mask": True}, "tp_hit_mask must be an integer bitmask"),
+        ({"tp_hit_mask": 8}, "tp_hit_mask must contain only three target bits"),
+    ],
+)
+def test_account_state_v2_rejects_invalid_optional_position_metadata(
+    kwargs: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        account_state_v2(
+            equity=100_000.0,
+            initial_balance=100_000.0,
+            position_direction=1.0,
+            open_pnl=0.0,
+            **kwargs,
+        )
+
+
+def test_account_state_v2_keeps_flat_position_management_coordinates_zero() -> None:
+    values = account_state_v2(
+        equity=100_000.0,
+        initial_balance=100_000.0,
+        position_direction=0.0,
+        open_pnl=0.0,
+        planned_risk_usd=500.0,
+        trailing_drawdown_pct=0.02,
+        trailing_drawdown_limit=0.1,
+        daily_loss=100.0,
+        daily_loss_limit=500.0,
+        loss_from_initial=200.0,
+        max_loss_limit=1000.0,
+        risk_per_trade_limit=500.0,
+        current_price=100.0,
+        entry_price=100.0,
+        initial_sl_price=95.0,
+        active_sl_price=98.0,
+        remaining_size=1.0,
+        initial_size=1.0,
+        position_age_bars=10.0,
+        tp_hit_mask=0b111,
+        tp_prices=(110.0, 120.0, 130.0),
+        sl_mode="trailing",
+        tp_mode="breakeven",
+        exit_mode="ema_21",
+    )
+
+    # Fixed schema positions 1:4 encode direction, PnL and unrealized R; the
+    # following management coordinates are masked when no position is open.
+    np.testing.assert_array_equal(values[1:4], [0.0, 0.0, 0.0])
+    np.testing.assert_array_equal(values[14:], np.zeros(14, dtype=np.float32))
+
+
+def test_account_state_v2_rejects_overflowed_normalized_output() -> None:
+    with (
+        np.errstate(over="ignore"),
+        pytest.raises(ValueError, match="produced a non-finite observation"),
+    ):
+        account_state_v2(
+            equity=1.0,
+            initial_balance=1.0,
+            position_direction=0.0,
+            open_pnl=1e100,
+        )

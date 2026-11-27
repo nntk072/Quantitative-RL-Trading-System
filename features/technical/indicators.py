@@ -351,7 +351,7 @@ def ny_session_clock(
     if session_tz is not None:
         if local.tz is None:
             if source_clock_model != "native":
-                raise ValueError(
+                raise ValueError(  # pragma: no cover - non-native clocks are aware or rejected earlier
                     f"source clock {source_clock_model!r} requires a timezone-aware index"
                 )
             local = local.tz_localize(session_tz)

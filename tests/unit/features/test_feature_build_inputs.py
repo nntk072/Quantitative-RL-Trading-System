@@ -36,6 +36,17 @@ def test_split_raw_fvg_features_keeps_model_features_separate() -> None:
     ]
 
 
+def test_split_raw_fvg_features_without_raw_columns_preserves_input_index() -> None:
+    index = pd.date_range("2025-01-06", periods=2, freq="min", tz="UTC")
+    features = pd.DataFrame({"ret_1": [0.1, -0.1]}, index=index)
+
+    model_features, raw_features = split_raw_fvg_features(features)
+
+    pd.testing.assert_frame_equal(model_features, features)
+    assert raw_features.empty
+    assert raw_features.index.equals(index)
+
+
 def test_configured_feature_timeframes_supports_nested_and_flat_config() -> None:
     nested_cfg = OmegaConf.create({"smt": {"enabled": True, "timeframes": ["M5", "H1"]}})
     flat_cfg = OmegaConf.create({"smt_timeframes": ["M3", "M15"]})

@@ -73,7 +73,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_bar_quote_derives_ask_from_close`](../../../../tests/unit/trading/test_cost_model.py#L62)
+1. [test fixture: `test_bar_quote_derives_ask_from_close`](../../../../tests/unit/trading/test_cost_model.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -134,7 +134,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_fill_price_buy_is_ask`](../../../../tests/unit/trading/test_cost_model.py#L45)
+1. [test fixture: `test_fill_price_buy_is_ask`](../../../../tests/unit/trading/test_cost_model.py#L53)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -145,7 +145,7 @@ def test_fill_price_buy_is_ask():
     assert fill == pytest.approx(100.5)
 ```
 
-2. [test fixture: `test_fill_price_sell_is_bid`](../../../../tests/unit/trading/test_cost_model.py#L51)
+2. [test fixture: `test_fill_price_sell_is_bid`](../../../../tests/unit/trading/test_cost_model.py#L59)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -188,7 +188,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_total_cost_is_commission_only`](../../../../tests/unit/trading/test_cost_model.py#L57)
+1. [test fixture: `test_total_cost_is_commission_only`](../../../../tests/unit/trading/test_cost_model.py#L65)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

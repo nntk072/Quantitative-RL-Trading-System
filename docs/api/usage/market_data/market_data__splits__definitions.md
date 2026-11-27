@@ -26,7 +26,7 @@ This page contains 8 public callable records owned by `market_data.splits.defini
 
 **Observed usage:**
 
-1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L88)
+1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L91)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,7 +90,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight`](../../../../tests/unit/market_data/test_data_split.py#L131)
+1. [test fixture: `test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight`](../../../../tests/unit/market_data/test_data_split.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -108,7 +108,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert mask.tolist() == [True, False]
 ```
 
-2. [test fixture: `test_inclusive_train_end_uses_local_calendar_day_across_dst`](../../../../tests/unit/market_data/test_data_split.py#L148)
+2. [test fixture: `test_inclusive_train_end_uses_local_calendar_day_across_dst`](../../../../tests/unit/market_data/test_data_split.py#L180)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -178,7 +178,7 @@ def test_smoke_fixture_spans_default_split(tmp_path: Path) -> None:
     assert not test_bars.empty
 ```
 
-2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L36)
+2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L39)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -219,7 +219,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L88)
+1. [test fixture: `test_get_split_config_fallback`](../../../../tests/unit/market_data/test_data_split.py#L91)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -281,7 +281,24 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L135)
+1. [test fixture: `test_optional_train_start_config_treats_missing_and_blank_as_unset`](../../../../tests/unit/market_data/test_data_split.py#L142)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_optional_train_start_config_treats_missing_and_blank_as_unset() -> None:
+    assert get_train_start_config(None) is None
+    assert (
+        get_train_start_config(OmegaConf.create({"data": {"split": {"train_start": "   "}}}))
+        is None
+    )
+    assert (
+        get_train_start_config(OmegaConf.create({"data": {"split": {"train_start": "2025-01-01"}}}))
+        == "2025-01-01"
+    )
+```
+
+2. [production caller: `reconstruct_reanalysis_datasets`](../../../../evaluation/reanalysis/datasets.py#L135)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -301,15 +318,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_chart_feature_train_mask`](../../../../evaluation/reporting/order_chart_regeneration.py#L78)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def _chart_feature_train_mask(cfg: Any, index: pd.DatetimeIndex) -> pd.Series:
-    train_end, _ = get_split_config(cfg)
-    return make_train_mask(index, train_end, get_train_start_config(cfg))
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -342,7 +351,7 @@ def _chart_feature_train_mask(cfg: Any, index: pd.DatetimeIndex) -> pd.Series:
 
 **Observed usage:**
 
-1. [test fixture: `test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight`](../../../../tests/unit/market_data/test_data_split.py#L131)
+1. [test fixture: `test_inclusive_train_end_keeps_subsecond_rows_and_excludes_next_midnight`](../../../../tests/unit/market_data/test_data_split.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -360,7 +369,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert mask.tolist() == [True, False]
 ```
 
-2. [test fixture: `test_inclusive_train_end_uses_local_calendar_day_across_dst`](../../../../tests/unit/market_data/test_data_split.py#L148)
+2. [test fixture: `test_inclusive_train_end_uses_local_calendar_day_across_dst`](../../../../tests/unit/market_data/test_data_split.py#L180)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -412,7 +421,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_split_bars_matches_split_train_test`](../../../../tests/unit/market_data/test_data_split.py#L115)
+1. [test fixture: `test_split_bars_matches_split_train_test`](../../../../tests/unit/market_data/test_data_split.py#L118)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -502,7 +511,7 @@ def test_smoke_fixture_spans_default_split(tmp_path: Path) -> None:
     assert not test_bars.empty
 ```
 
-2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L36)
+2. [test fixture: `test_train_max_date`](../../../../tests/unit/market_data/test_data_split.py#L39)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

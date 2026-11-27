@@ -1,7 +1,7 @@
 # Reward and attribution contract
 
 **Status:** draft
-**Source of truth:** `simulation/environment/rewards.py`; `simulation/environment/step_accounting_runtime.py`; `simulation/environment/step_info_runtime.py` at `c0d982f94ab9df8b2a9ddd013d2ae9a562573529`.
+**Source of truth:** `simulation/environment/rewards.py`; `simulation/environment/accounting/step.py`; `simulation/environment/episode/info.py` at `c0d982f94ab9df8b2a9ddd013d2ae9a562573529`.
 
 ## Step ledger inputs
 

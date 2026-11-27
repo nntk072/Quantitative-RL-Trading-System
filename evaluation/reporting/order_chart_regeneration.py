@@ -528,7 +528,7 @@ def _replot_split(
             swing_timeframes=swing_timeframes,
             **chart_cfg,
         )
-    from evaluation.plotting.trade_plots import write_trade_diagnostics
+    from evaluation.plotting.diagnostics.trade import write_trade_diagnostics
 
     log.info("Re-plotting trade diagnostics → %s", split_dir)
     write_trade_diagnostics(

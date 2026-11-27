@@ -27,7 +27,18 @@ This page contains 4 public callable records owned by `trading.account.limits`. 
 
 **Observed usage:**
 
-1. [test fixture: `test_daily_loss_is_start_minus_equity_when_losing`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L24)
+1. [test fixture: `test_daily_loss_is_positive_only_when_equity_is_below_session_start`](../../../../tests/unit/trading/test_account_limits_contract.py#L22)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_daily_loss_is_positive_only_when_equity_is_below_session_start(
+    start: float, equity: float, expected: float
+) -> None:
+    assert canonical_daily_loss(start, equity) == expected
+```
+
+2. [test fixture: `test_daily_loss_is_start_minus_equity_when_losing`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L24)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -35,16 +46,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_daily_loss_is_start_minus_equity_when_losing() -> None:
     # 10000 - 9700 = 300
     assert canonical_daily_loss(10000.0, 9700.0) == pytest.approx(300.0)
-```
-
-2. [test fixture: `test_daily_loss_is_zero_when_equity_rose`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L29)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_daily_loss_is_zero_when_equity_rose() -> None:
-    # 10000 - 10200 = -200, floored at 0
-    assert canonical_daily_loss(10000.0, 10200.0) == 0.0
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -79,7 +80,22 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_daily_floor_is_start_minus_limit`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L34)
+1. [test fixture: `test_loss_floors_and_remaining_capacity_respect_exact_and_breached_boundaries`](../../../../tests/unit/trading/test_account_limits_contract.py#L26)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_loss_floors_and_remaining_capacity_respect_exact_and_breached_boundaries() -> None:
+    assert daily_floor(100_000.0, 2_500.0) == 97_500.0
+    assert remaining_daily_capacity(100_000.0, 99_000.0, 2_500.0) == 1_500.0
+    assert remaining_daily_capacity(100_000.0, 97_500.0, 2_500.0) == 0.0
+    assert remaining_daily_capacity(100_000.0, 96_000.0, 2_500.0) == 0.0
+    assert remaining_account_capacity(98_000.0, 95_000.0) == 3_000.0
+    assert remaining_account_capacity(95_000.0, 95_000.0) == 0.0
+    assert remaining_account_capacity(94_000.0, 95_000.0) == 0.0
+```
+
+2. [test fixture: `test_daily_floor_is_start_minus_limit`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -89,19 +105,7 @@ def test_daily_floor_is_start_minus_limit() -> None:
     assert daily_floor(10000.0, 500.0) == pytest.approx(9500.0)
 ```
 
-2. [production caller: `daily_floor`](../../../../trading/account/account_state.py#L198)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def daily_floor(self, daily_loss_limit: float) -> float:
-    anchor = (
-        self.session_start_balance
-        if self.daily_pnl_basis == "ftmo_midnight_balance"
-        else self.session_start_equity
-    )
-    return compute_daily_floor(anchor, daily_loss_limit)
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -133,7 +137,22 @@ def daily_floor(self, daily_loss_limit: float) -> float:
 
 **Observed usage:**
 
-1. [test fixture: `test_remaining_account_capacity_above_floor_and_at_floor`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L49)
+1. [test fixture: `test_loss_floors_and_remaining_capacity_respect_exact_and_breached_boundaries`](../../../../tests/unit/trading/test_account_limits_contract.py#L30)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_loss_floors_and_remaining_capacity_respect_exact_and_breached_boundaries() -> None:
+    assert daily_floor(100_000.0, 2_500.0) == 97_500.0
+    assert remaining_daily_capacity(100_000.0, 99_000.0, 2_500.0) == 1_500.0
+    assert remaining_daily_capacity(100_000.0, 97_500.0, 2_500.0) == 0.0
+    assert remaining_daily_capacity(100_000.0, 96_000.0, 2_500.0) == 0.0
+    assert remaining_account_capacity(98_000.0, 95_000.0) == 3_000.0
+    assert remaining_account_capacity(95_000.0, 95_000.0) == 0.0
+    assert remaining_account_capacity(94_000.0, 95_000.0) == 0.0
+```
+
+2. [test fixture: `test_remaining_account_capacity_above_floor_and_at_floor`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L49)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -143,15 +162,6 @@ def test_remaining_account_capacity_above_floor_and_at_floor() -> None:
     assert remaining_account_capacity(9700.0, 9000.0) == pytest.approx(700.0)
     # 8900 - 9000 = -100, floored at 0
     assert remaining_account_capacity(8900.0, 9000.0) == 0.0
-```
-
-2. [production caller: `remaining_account_capacity`](../../../../trading/account/account_state.py#L225)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def remaining_account_capacity(self, account_floor: float) -> float:
-    return compute_remaining_account_capacity(self.equity, account_floor)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -187,7 +197,22 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_remaining_daily_capacity_is_equity_above_the_floor`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L39)
+1. [test fixture: `test_loss_floors_and_remaining_capacity_respect_exact_and_breached_boundaries`](../../../../tests/unit/trading/test_account_limits_contract.py#L27)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_loss_floors_and_remaining_capacity_respect_exact_and_breached_boundaries() -> None:
+    assert daily_floor(100_000.0, 2_500.0) == 97_500.0
+    assert remaining_daily_capacity(100_000.0, 99_000.0, 2_500.0) == 1_500.0
+    assert remaining_daily_capacity(100_000.0, 97_500.0, 2_500.0) == 0.0
+    assert remaining_daily_capacity(100_000.0, 96_000.0, 2_500.0) == 0.0
+    assert remaining_account_capacity(98_000.0, 95_000.0) == 3_000.0
+    assert remaining_account_capacity(95_000.0, 95_000.0) == 0.0
+    assert remaining_account_capacity(94_000.0, 95_000.0) == 0.0
+```
+
+2. [test fixture: `test_remaining_daily_capacity_is_equity_above_the_floor`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L39)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -195,16 +220,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_remaining_daily_capacity_is_equity_above_the_floor() -> None:
     # floor 9500; 9700 - 9500 = 200
     assert remaining_daily_capacity(10000.0, 9700.0, 500.0) == pytest.approx(200.0)
-```
-
-2. [test fixture: `test_remaining_daily_capacity_is_zero_once_breached`](../../../../tests/unit/trading/test_semantic_oracle_limits_sizing.py#L44)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_remaining_daily_capacity_is_zero_once_breached() -> None:
-    # floor 9500; 9400 - 9500 = -100, floored at 0 (breach latch input)
-    assert remaining_daily_capacity(10000.0, 9400.0, 500.0) == 0.0
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

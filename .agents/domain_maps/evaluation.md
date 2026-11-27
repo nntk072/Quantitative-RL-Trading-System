@@ -34,9 +34,9 @@ Purged walk-forward split construction lives in `market_data/splits/walkforward.
 | `evaluation/plotting/plots.py` | Compatibility exports for static chart families |
 | `evaluation/plotting/plot_rendering.py` | Shared Matplotlib setup, palette, and file output |
 | `evaluation/plotting/equity.py` | Equity and drawdown charts |
-| `evaluation/plotting/performance.py` | Daily PnL, distribution, and direction charts |
+| `evaluation/plotting/performance/charts.py` | Daily PnL and return-distribution charts |
 | `evaluation/plotting/comparison.py` | Baseline comparison charts |
-| `evaluation/plotting/orders.py` | Price/order and per-trade chart orchestration |
+| `evaluation/plotting/orders/charts.py` | Price/order and per-trade chart orchestration |
 | `evaluation/plotting/order_chart_data.py` | Candle-anchored trade chart geometry |
 | `evaluation/plotting/order_chart_renderers.py` | Matplotlib and Plotly trade chart rendering |
 | `evaluation/plotting/diversity.py` | Decision-diversity diagnostic charts |

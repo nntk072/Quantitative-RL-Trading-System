@@ -18,7 +18,7 @@ from features.context.trade_setup_candidates import trade_setup_candidate_featur
 from market_data.news.guard import causal_atr5
 
 from .mixin_base import RuntimeMixinBase
-from .observations import (
+from .observations.schema import (
     DEFAULT_HTF_WINDOWS,
     HTF_BRANCHES,
     split_obs_columns,

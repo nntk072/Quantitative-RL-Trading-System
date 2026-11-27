@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from trading.execution import Position
-from trading.positions import target_close_size
+from trading.positions import reorder_remaining_targets, target_close_size
 
 
 def test_final_target_closes_remainder_without_runner() -> None:
@@ -51,3 +51,23 @@ def test_missing_slot_fraction_falls_back_to_equal_active_allocation() -> None:
     )
 
     assert target_close_size(pos, 2, is_final=False) == pytest.approx(0.5)
+
+
+def test_reorder_remaining_targets_removes_nonmonotonic_levels_and_updates_active_target() -> None:
+    pos = Position(
+        direction=1,
+        size=0.6,
+        entry_price=100.0,
+        margin_used=0.0,
+        tp1_price=102.0,
+        tp2_price=101.0,
+        tp3_price=103.0,
+        tp_price=102.0,
+    )
+
+    reorder_remaining_targets(pos, point_size=0.01)
+
+    assert pos.tp1_price == 102.0
+    assert pos.tp2_price is None
+    assert pos.tp3_price == 103.0
+    assert pos.tp_price == 102.0

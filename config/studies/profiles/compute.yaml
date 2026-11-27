@@ -13,6 +13,7 @@ api_paths:
 - compute/slurm/worker_resources.py
 - compute/cli.py
 caller_paths:
+- tests/unit/compute/test_worker_visible_device_tokens.py
 - experiments/runs/execution.py
 - experiments/runs/preflight_migration.py
 - learning/rl/agent.py
@@ -30,6 +31,7 @@ caller_paths:
 - tests/unit/compute/test_continuation_handoff.py
 - tests/unit/compute/test_device_sizing.py
 - tests/unit/compute/test_worker_dispatch_parsing.py
+- tests/unit/compute/test_coverage_gap_paths.py
 source_scopes:
   - {path: compute/environment, study_ids: [compute.device_and_precision_selection]}
   - {path: compute/slurm, study_ids: [compute.resource_and_worker_contract]}

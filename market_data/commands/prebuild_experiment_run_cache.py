@@ -136,12 +136,11 @@ def _experiment_run_data_overrides() -> list[str]:
     spec = yaml.safe_load(spec_path.read_text(encoding="utf-8"))
     if not isinstance(spec, dict) or not isinstance(spec.get("variants"), list):
         raise ValueError("experiment run spec must contain a variants list")
-    data_prefixes = (
-        "data.cache_dir=",
-        "data.datasets.training.raw_dir=",
-        "data.datasets.testing.raw_dir=",
-        "data.price_discretization.",
-    )
+    data_path_overrides = {
+        "data.cache_dir",
+        "data.datasets.training.raw_dir",
+        "data.datasets.testing.raw_dir",
+    }
     profile = _experiment_run_profile_overrides(spec.get("data_profile"))
     raw_explicit = spec.get("config_overrides", {})
     if not isinstance(raw_explicit, dict):
@@ -149,7 +148,7 @@ def _experiment_run_data_overrides() -> list[str]:
     explicit = {
         str(key): str(value).lower() if isinstance(value, bool) else str(value)
         for key, value in raw_explicit.items()
-        if str(key).startswith(data_prefixes)
+        if str(key) in data_path_overrides or str(key).startswith("data.price_discretization.")
     }
     experiments = yaml.safe_load((ROOT / "config" / "experiments.yaml").read_text(encoding="utf-8"))
     policies = [

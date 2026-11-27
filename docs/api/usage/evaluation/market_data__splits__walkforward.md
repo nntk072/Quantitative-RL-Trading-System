@@ -14,21 +14,21 @@ This page contains 2 public callable records owned by `market_data.splits.walkfo
 
 **Observed usage:**
 
-1. [production caller: `purged_walk_forward`](../../../../market_data/splits/walkforward.py#L88)
+1. [production caller: `purged_walk_forward`](../../../../market_data/splits/walkforward.py#L82)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+        train_end = test_start - embargo_bars
+        train_end_purged = max(0, train_end - purge_effective)
 
         train_idx = np.arange(0, train_end_purged)
         test_idx = np.arange(test_start, test_end)
-        if len(test_idx) == 0:
-            continue
         yield WFSplit(train_idx=train_idx, test_idx=test_idx, fold=fold)
 ```
 
-2. [production caller: `purged_walk_forward_legacy`](../../../../market_data/splits/walkforward.py#L136)
+2. [production caller: `purged_walk_forward_legacy`](../../../../market_data/splits/walkforward.py#L130)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

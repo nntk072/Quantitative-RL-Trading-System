@@ -18,19 +18,24 @@ This page contains 1 public callable records owned by `experiments.runs`. Status
   Numeric result returned by ``run_experiment``.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_experiment_run_package_entrypoint_delegates_to_controller`](../../../../tests/unit/experiments/test_experiment_run_artifacts.py#L1327)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = run_experiment()
+# … caller setup omitted …
+        calls.append("main")
+        return 0
+
+    monkeypatch.setattr(execution, "main", main)
+
+    assert run_experiment() == 0
+    assert calls == ["main"]
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

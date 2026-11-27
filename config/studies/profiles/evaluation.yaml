@@ -1,6 +1,12 @@
 module_id: evaluation
 source_roots: [evaluation, research_tools/evaluation]
 api_paths:
+- evaluation/metrics/calibration.py
+- evaluation/metrics/candle_quality.py
+- evaluation/plotting/interactive_plot_rendering.py
+- evaluation/plotting/interactive_comparison.py
+- evaluation/plotting/interactive/__init__.py
+- evaluation/reanalysis/checkpoint.py
 - evaluation/__init__.py
 - evaluation/candidate_eligibility.py
 - evaluation/candidate_execution.py
@@ -26,15 +32,20 @@ api_paths:
 - evaluation/plotting/__init__.py
 - evaluation/plotting/chart_indicators.py
 - evaluation/plotting/chart_levels.py
+- evaluation/plotting/shared/__init__.py
 - evaluation/plotting/chart_overlays.py
 - evaluation/plotting/data_plots.py
 - evaluation/plotting/defense_plots.py
+- evaluation/plotting/data/__init__.py
 - evaluation/plotting/distribution_plots.py
 - evaluation/plotting/order_chart.py
+- evaluation/plotting/orders/__init__.py
+- evaluation/plotting/orders/events.py
+- evaluation/plotting/orders/geometry.py
 - evaluation/plotting/order_chart_data.py
 - evaluation/plotting/order_chart_renderers.py
 - evaluation/plotting/order_window.py
-- evaluation/plotting/orders.py
+- evaluation/plotting/performance/__init__.py
 - evaluation/plotting/overlay_events.py
 - evaluation/plotting/plot_series.py
 - evaluation/plotting/plots.py
@@ -50,6 +61,8 @@ api_paths:
 - evaluation/reporting/account_state_trace_reconciliation.py
 - evaluation/reporting/box_table.py
 - evaluation/reporting/cost_decomposition.py
+- evaluation/rollout/__init__.py
+- evaluation/rollout/baseline_features.py
 - evaluation/reporting/dataset_renderers.py
 - evaluation/reporting/diagnostics.py
 - evaluation/reporting/diversity_artifacts.py
@@ -72,7 +85,46 @@ api_paths:
 - evaluation/rollout/random_eligible_setup.py
 - evaluation/rollout/structure_priority_setup.py
 - evaluation/rollout/trained_policy_rollout.py
+- evaluation/plotting/interactive_performance.py
 caller_paths:
+- tests/unit/evaluation/test_order_chart_mplfinance_contracts.py
+- tests/unit/evaluation/test_decision_diversity_coverage.py
+- tests/unit/evaluation/test_checkpoint_reanalysis_and_order_helpers.py
+- tests/unit/evaluation/test_baseline_stop_features.py
+- tests/unit/evaluation/test_interactive_baseline_comparison.py
+- tests/unit/training/test_seed_runtime_additional_coverage.py
+- tests/unit/evaluation/test_reanalysis_main_flow_contracts.py
+- tests/unit/evaluation/test_bootstrap_edge_cases.py
+- tests/unit/evaluation/test_calibration.py
+- tests/unit/evaluation/test_candidate_boundary_contracts.py
+- tests/unit/evaluation/test_order_plot_origin_contract.py
+- tests/unit/evaluation/test_plot_data_selection_contracts.py
+- tests/unit/evaluation/test_order_chart_trace_contract.py
+- tests/unit/evaluation/test_overlay_event_edge_contracts.py
+- tests/unit/evaluation/test_reanalysis_output_safety.py
+- tests/unit/evaluation/test_matched_return_contracts.py
+- tests/unit/evaluation/test_matched_baseline_validation_contracts.py
+- tests/unit/evaluation/test_metrics_path_edge_contracts.py
+- tests/unit/evaluation/test_reanalysis_checkpoint.py
+- tests/unit/evaluation/test_reanalysis_dataset_paths.py
+- tests/unit/evaluation/test_reanalysis_provenance_contracts.py
+- tests/unit/evaluation/test_reanalysis_runtime_paths.py
+- tests/unit/evaluation/test_order_chart_plotter_contracts.py
+- tests/unit/evaluation/test_matched_setup_baseline_bundle.py
+- tests/unit/evaluation/test_matched_baseline_bundle_input_boundaries.py
+- tests/unit/evaluation/test_order_chart_regeneration_summary_contracts.py
+- tests/unit/evaluation/test_matched_setup_baseline_control_rollout.py
+- tests/unit/evaluation/test_reanalysis_remaining_coverage.py
+- tests/unit/evaluation/test_reporting_remaining_coverage.py
+- tests/unit/evaluation/test_reanalysis_validation.py
+- tests/unit/evaluation/test_checkpoint_reanalysis_edge_contracts.py
+- tests/unit/evaluation/test_order_chart_data_legacy_fallbacks.py
+- tests/unit/evaluation/test_reconciliation_missing_evidence_contracts.py
+- tests/unit/evaluation/test_reporting_coverage_paths.py
+- tests/unit/evaluation/test_policy_decision_reconciliation_remaining_contracts.py
+- tests/unit/evaluation/test_overlay_events_remaining_contracts.py
+- tests/unit/evaluation/test_account_state_trace_reconciliation_remaining_contracts.py
+- tests/unit/evaluation/test_episode_rollout_contracts.py
 - experiments/variants/variant_ablation_runner.py
 - tests/integration/backtest/test_account_transition_parity.py
 - tests/integration/backtest/test_agent_selected_entry_execution.py
@@ -147,6 +199,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_eligibility_wiring.py
 - tests/unit/training/test_dashboard.py
 - tests/unit/training/test_seed_runtime_coverage.py
+- tests/unit/training/test_walk_forward_validation_coverage.py
 - tests/unit/training/test_survival_gate.py
 - tests/unit/training/test_train_rl_decomposition.py
 - training/artifacts/evaluation_result_writer.py
@@ -162,6 +215,7 @@ caller_paths:
 - training/runner/training.py
 - training/runner/walk_forward_validation.py
 - training/setup/environments.py
+- tests/unit/evaluation/test_performance_metric_remaining_contracts.py
 source_scopes:
   - {path: evaluation/metrics, study_ids: [evaluation.metrics_and_inference, evaluation.cohorts_and_baseline_matching, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}
   - {path: evaluation/rollout, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}
@@ -184,7 +238,7 @@ studies:
     type: code_check
     question: Are metric sources, estimands, pairing, uncertainty, multiplicity, and valid outcome states explicit?
     source_paths: [evaluation/metrics/performance.py, evaluation/metrics/matched_comparison.py, evaluation/metrics/bootstrap.py]
-    checks: [tests/unit/evaluation/test_metrics.py, tests/unit/evaluation/test_matched_comparison.py]
+    checks: [tests/unit/evaluation/test_metrics.py, tests/unit/evaluation/test_matched_comparison.py, tests/unit/training/test_seed_runtime_additional_coverage.py]
     outputs: [metric_and_inference_check]
   - id: evaluation.cohorts_and_baseline_matching
     type: code_check
@@ -196,13 +250,13 @@ studies:
     type: code_check
     question: Can results be rebuilt from immutable run identity, saved config, source data, checkpoint, and evaluation inputs?
     source_paths: [evaluation/reporting/run_manifest.py, evaluation/reporting/evaluation_manifest.py, evaluation/reanalysis/checkpoint_reanalysis.py]
-    checks: [tests/unit/evaluation/test_run_manifest.py, tests/unit/evaluation/test_evaluation_manifest.py]
+    checks: [tests/unit/evaluation/test_run_manifest.py, tests/unit/evaluation/test_evaluation_manifest.py, tests/unit/evaluation/test_reanalysis_dataset_paths.py, tests/unit/evaluation/test_reanalysis_runtime_paths.py, tests/unit/evaluation/test_reporting_coverage_paths.py, tests/unit/evaluation/test_reanalysis_main_flow_contracts.py]
     outputs: [evaluation_provenance_check]
   - id: evaluation.reporting_and_exports
     type: code_check
     question: Do tables, trade exports, plots, and outcome labels derive from verified result artifacts and preserve missing evidence?
-    source_paths: [evaluation/reporting/run_artifact_writer.py, evaluation/reporting/trade_event_export.py, evaluation/reporting/box_table.py]
-    checks: [tests/unit/evaluation/test_run_artifact_writer_limits.py, tests/unit/evaluation/test_evaluation_report_dataset.py]
+    source_paths: [evaluation/reporting/run_artifact_writer.py, evaluation/reporting/trade_event_export.py, evaluation/reporting/box_table.py, evaluation/reporting/trade_note.py, evaluation/reporting/order_chart_regeneration.py, evaluation/reporting/policy_decision_reconciliation.py, evaluation/reporting/account_state_trace_reconciliation.py, evaluation/plotting/orders/charts.py, evaluation/plotting/orders/window.py, evaluation/plotting/orders/geometry.py, evaluation/plotting/orders/order_chart_features.py, evaluation/plotting/orders/geometry_types.py, evaluation/plotting/orders/renderers.py, evaluation/plotting/orders/overlays.py, evaluation/plotting/orders/events.py, evaluation/plotting/interactive_orders.py]
+    checks: [tests/unit/evaluation/test_run_artifact_writer_limits.py, tests/unit/evaluation/test_evaluation_report_dataset.py, tests/unit/evaluation/test_reporting_coverage_paths.py, tests/unit/evaluation/test_order_chart_plotter_contracts.py, tests/unit/evaluation/test_plots_export.py, tests/unit/evaluation/test_policy_decision_reconciliation_remaining_contracts.py, tests/unit/evaluation/test_overlay_events_remaining_contracts.py, tests/unit/evaluation/test_account_state_trace_reconciliation_remaining_contracts.py]
     outputs: [report_and_export_check]
   - id: evaluation.candidate_geometry_value
     type: empirical

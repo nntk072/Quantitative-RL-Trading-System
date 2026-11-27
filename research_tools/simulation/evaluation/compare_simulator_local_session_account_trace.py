@@ -690,8 +690,8 @@ def build_report(
         },
         "code_sha256": {
             "simulation/environment/env.py": _sha256(ROOT / "simulation/environment/env.py"),
-            "simulation/environment/risk_runtime.py": _sha256(
-                ROOT / "simulation/environment/risk_runtime.py"
+            "simulation/environment/risk/runtime.py": _sha256(
+                ROOT / "simulation/environment/risk/runtime.py"
             ),
             "simulation/backtest/event_driven_backtest.py": _sha256(
                 ROOT / "simulation/backtest/event_driven_backtest.py"

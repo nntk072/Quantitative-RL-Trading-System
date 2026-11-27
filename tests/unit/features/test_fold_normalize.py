@@ -75,6 +75,30 @@ def test_fitted_state_rejects_changed_feature_order() -> None:
         apply_rolling_zscore_state(frame[["second", "first"]], state)
 
 
+def test_fitted_state_preserves_unavailable_training_statistics_as_nan() -> None:
+    frame = pd.DataFrame({"feature": [float("nan"), float("nan"), 5.0]})
+    mask = pd.Series([True, True, False])
+
+    state = fit_rolling_zscore_state(frame, train_mask=mask, window=2)
+    transformed = apply_rolling_zscore_state(frame.iloc[2:], state)
+
+    assert state["mean"]["feature"] is None
+    assert state["scale"]["feature"] is None
+    assert transformed["feature"].isna().all()
+
+
+@pytest.mark.parametrize(
+    ("frame", "message"),
+    [
+        (pd.DataFrame([[1.0, 2.0]], columns=["same", "same"]), "unique feature columns"),
+        (pd.DataFrame([[1.0, 2.0]], columns=[1, "1"]), "unique string feature names"),
+    ],
+)
+def test_fit_state_rejects_ambiguous_feature_names(frame: pd.DataFrame, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        fit_rolling_zscore_state(frame, train_mask=pd.Series([True]), window=1)
+
+
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [("mode", "runtime_refit", "unsupported mode"), ("window", 0, "invalid window")],
@@ -89,6 +113,31 @@ def test_fitted_state_rejects_invalid_fit_contract_metadata(
         window=2,
     )
     state[field] = value
+
+    with pytest.raises(ValueError, match=message):
+        apply_rolling_zscore_state(frame, state)
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda state: state.update(schema="other"), "unsupported feature normalization"),
+        (lambda state: state.update(mean=[]), "requires mean and scale mappings"),
+        (lambda state: state.update(scale={}), "statistics do not match"),
+        (
+            lambda state: state["mean"].update(feature=None),
+            "incomplete feature normalization statistics",
+        ),
+        (
+            lambda state: state["scale"].update(feature=0.0),
+            "invalid feature normalization statistics",
+        ),
+    ],
+)
+def test_apply_state_rejects_inconsistent_saved_statistics(mutate: Any, message: str) -> None:
+    frame = pd.DataFrame({"feature": [1.0, 2.0]})
+    state = fit_rolling_zscore_state(frame, train_mask=pd.Series([True, True]), window=2)
+    mutate(state)
 
     with pytest.raises(ValueError, match=message):
         apply_rolling_zscore_state(frame, state)

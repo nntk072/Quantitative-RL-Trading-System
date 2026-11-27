@@ -1,14 +1,14 @@
-# Evaluation · `plotting.equity`
+# Evaluation · `plotting.performance.equity`
 
-This page contains 2 public callable records owned by `evaluation.plotting.equity`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 2 public callable records owned by `evaluation.plotting.performance.equity`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `plot_drawdown`
 
-**Kind:** function · **Status:** stable · **Owner:** `evaluation.plotting.equity`
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.plotting.performance.equity`
 
 **Purpose:** Two-panel chart: peak-to-trough DD (%) and daily DD (USD).
 
-**Exact API:** {py:obj}`evaluation.plotting.equity.plot_drawdown` · **Source:** [evaluation/plotting/equity.py:245](../../../../evaluation/plotting/equity.py#L245)
+**Exact API:** {py:obj}`evaluation.plotting.performance.equity.plot_drawdown` · **Source:** [evaluation/plotting/performance/equity.py:247](../../../../evaluation/plotting/performance/equity.py#L247)
 
 **Inputs and outputs:**
 
@@ -48,11 +48,11 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 ## `plot_equity_curve`
 
-**Kind:** function · **Status:** stable · **Owner:** `evaluation.plotting.equity`
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.plotting.performance.equity`
 
 **Purpose:** Equity over time with peak line, FTMO threshold lines, and breach markers.
 
-**Exact API:** {py:obj}`evaluation.plotting.equity.plot_equity_curve` · **Source:** [evaluation/plotting/equity.py:41](../../../../evaluation/plotting/equity.py#L41)
+**Exact API:** {py:obj}`evaluation.plotting.performance.equity.plot_equity_curve` · **Source:** [evaluation/plotting/performance/equity.py:41](../../../../evaluation/plotting/performance/equity.py#L41)
 
 **Inputs and outputs:**
 

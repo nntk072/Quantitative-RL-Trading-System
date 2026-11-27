@@ -81,7 +81,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve trading policy settings from an attribute-based configuration.
 
-**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:200](../../../../trading/policy/config.py#L200)
+**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:202](../../../../trading/policy/config.py#L202)
 
 **Inputs and outputs:**
 
@@ -242,7 +242,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve trading policy settings from an attribute-based configuration.
 
-**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:200](../../../../trading/policy/config.py#L200)
+**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy` · **Source:** [trading/policy/config.py:202](../../../../trading/policy/config.py#L202)
 
 **Inputs and outputs:**
 
@@ -330,7 +330,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Resolve trading policy settings from a mapping configuration.
 
-**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy_mapping` · **Source:** [trading/policy/config.py:283](../../../../trading/policy/config.py#L283)
+**Exact API:** {py:obj}`trading.policy.config.resolve_trading_policy_mapping` · **Source:** [trading/policy/config.py:285](../../../../trading/policy/config.py#L285)
 
 **Inputs and outputs:**
 
@@ -510,7 +510,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_configured_backtest_runner_resolves_static_daily_loss_semantics`](../../../../tests/unit/training/test_backtest_runner_policy.py#L17)
+1. [test fixture: `test_configured_backtest_runner_resolves_static_daily_loss_semantics`](../../../../tests/unit/training/test_backtest_runner_policy.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -526,7 +526,7 @@ def test_configured_backtest_runner_resolves_static_daily_loss_semantics() -> No
     assert not policy.repeated_payout
 ```
 
-2. [test fixture: `test_configured_backtest_runner_resolves_repeated_payout_lifecycle`](../../../../tests/unit/training/test_backtest_runner_policy.py#L24)
+2. [test fixture: `test_configured_backtest_runner_resolves_repeated_payout_lifecycle`](../../../../tests/unit/training/test_backtest_runner_policy.py#L40)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -554,7 +554,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Return the policy settings as a JSON-compatible mapping.
 
-**Exact API:** {py:obj}`trading.policy.config.TradingPolicyConfig.to_dict` · **Source:** [trading/policy/config.py:191](../../../../trading/policy/config.py#L191)
+**Exact API:** {py:obj}`trading.policy.config.TradingPolicyConfig.to_dict` · **Source:** [trading/policy/config.py:193](../../../../trading/policy/config.py#L193)
 
 **Inputs and outputs:**
 

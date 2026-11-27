@@ -16,6 +16,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$SCRIPT_DIR"
+PYTHON_BIN="${QRL_PYTHON:-python3}"
 
 CRGRAPH_BIN=""
 if [[ -n "${CODE_REVIEW_GRAPH_BIN:-}" && -x "${CODE_REVIEW_GRAPH_BIN}" ]]; then
@@ -49,10 +50,10 @@ shift || true
 
 case "$cmd" in
   quality)
-    exec python3 scripts/dev/code_graph/graph_quality.py report --label final "$@"
+    exec "$PYTHON_BIN" scripts/dev/code_graph/graph_quality.py report --label final "$@"
     ;;
   verify-critical)
-    exec python3 scripts/dev/code_graph/graph_quality.py check "$@"
+    exec "$PYTHON_BIN" scripts/dev/code_graph/graph_quality.py check "$@"
     ;;
   build|update|postprocess|embed|watch|status|forget|visualize|wiki|register|unregister|repos|eval|detect-changes|enrich|dead-code|query|impact|search|flows|flow|communities|community|architecture|large-functions|refactor|serve|mcp|daemon)
     exec "$CRGRAPH_BIN" "$cmd" "$@"

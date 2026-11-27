@@ -707,6 +707,12 @@ def classify_calls(c: sqlite3.Connection) -> tuple[list[CallAudit], dict[str, An
         critical = any(source_file.startswith(prefix) for prefix in CRITICAL_AREAS)
         short = target.rsplit("::", 1)[-1].rsplit(".", 1)[-1]
         candidates = list(nodes_by_name.get(short, ()))
+        if not source_file.startswith("tests/"):
+            candidates = [
+                candidate
+                for candidate in candidates
+                if not candidate["file_path"].startswith("tests/")
+            ]
         try:
             extra = json.loads(r["extra"] or "{}")
         except json.JSONDecodeError:

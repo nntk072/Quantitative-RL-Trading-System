@@ -12,7 +12,33 @@ This page contains 23 public callable records owned by `decisioning.trade_setup`
 
 **Observed usage:**
 
-1. [production caller: `build_trade_setup_action_schema`](../../../../decisioning/trade_setup.py#L323)
+1. [test fixture: `test_tier0_rollout_returns_synthetic_trade_equity_and_seeded_policy_metadata`](../../../../tests/unit/evaluation/test_matched_setup_baseline_cli.py#L260)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    )
+    index = pd.date_range("2025-01-02 15:00", periods=3, freq="min", tz="UTC")
+    bars = pd.DataFrame({"close": [100.0, 101.0, 102.0]}, index=index)
+    features = pd.DataFrame({"synthetic_feature": [0.0, 0.5, 1.0]}, index=index)
+    tickbook = SimpleNamespace(content_sha256=lambda: "synthetic-tickbook-hash")
+    action_schema = TradeSetupActionSchema(
+        names=("trade_setup", "risk"),
+        has_sl_mode=False,
+        has_tp_mode=False,
+        has_multi_tp=False,
+        has_simplex=False,
+    )
+    construction: dict[str, Any] = {}
+
+    class SyntheticEnvironment:
+        def __init__(
+            self,
+# … caller assertions omitted …
+```
+
+2. [production caller: `build_trade_setup_action_schema`](../../../../decisioning/trade_setup.py#L323)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -115,7 +141,36 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `decode_trade_setup_geometry_choice`](../../../../decisioning/trade_setup.py#L465)
+1. [test fixture: `test_geometry_event_record_preserves_explicit_modes_and_coordinates`](../../../../tests/unit/simulation/test_backtest_execution_contracts.py#L71)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_geometry_event_record_preserves_explicit_modes_and_coordinates() -> None:
+    from decisioning.trade_setup import TradeSetupGeometryChoice
+
+    choice = TradeSetupGeometryChoice(
+        stop_anchor_fraction=0.25,
+        target_fraction=0.75,
+        target_selections=(0.2, 0.3, 0.5),
+        simplex_logits=(0.1, -0.1),
+        exit_mode="ema_21",
+        sl_mode="trailing",
+        sl_mode_explicit=True,
+        has_sl_mode=True,
+        tp_mode="breakeven",
+        tp_mode_explicit=True,
+        has_tp_mode=True,
+    )
+
+    assert _geometry_action_record(None) is None
+    assert _geometry_action_record(choice) == {
+        "stop_anchor_fraction": 0.25,
+        "target_fraction": 0.75,
+# … caller assertions omitted …
+```
+
+2. [production caller: `decode_trade_setup_geometry_choice`](../../../../decisioning/trade_setup.py#L465)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -246,7 +301,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_candidate_geometry_observation_schema_versions_fixed_slot_contract`](../../../../tests/unit/decisioning/test_candidate_geometry_contract.py#L36)
+1. [test fixture: `test_candidate_geometry_observation_schema_versions_fixed_slot_contract`](../../../../tests/unit/decisioning/test_candidate_geometry_contract.py#L42)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -440,24 +495,14 @@ def test_candidate_geometry_slots_round_trip_the_full_setup_entry_pair() -> None
             assert candidate_geometry_slot_semantics(slot) == (candidate_id, entry_type)
 ```
 
-2. [test fixture: `test_candidate_geometry_trace_records_selected_slot_snapshot_and_decoded_action`](../../../../tests/unit/evaluation/test_rollout.py#L127)
+2. [test fixture: `test_candidate_geometry_semantics_reject_invalid_slot_values`](../../../../tests/unit/decisioning/test_candidate_geometry_contract.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-
-    selected_id = 5
-    slot = candidate_geometry_slot(selected_id, "limit")
-    count = candidate_geometry_slot_count()
-    candidate_ids = np.asarray(
-        [candidate_geometry_slot_semantics(index)[0] for index in range(count)],
-        dtype=np.int64,
-    )
-    features = np.zeros((count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)), dtype=np.float32)
-    features[slot] = np.arange(len(CANDIDATE_GEOMETRY_FEATURE_NAMES), dtype=np.float32) + 0.5
-    mask = np.zeros(count, dtype=np.bool_)
-# … caller assertions omitted …
+def test_candidate_geometry_semantics_reject_invalid_slot_values(slot: int | float) -> None:
+    with pytest.raises(ValueError, match="outside the candidate-geometry observation"):
+        candidate_geometry_slot_semantics(slot)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -494,7 +539,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_entry_execution_action_decodes_market_and_conditional_limit_controls`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L106)
+1. [test fixture: `test_entry_execution_action_decodes_market_and_conditional_limit_controls`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L108)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -519,7 +564,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_entry_execution_decoder_rejects_invalid_bounds`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L139)
+2. [test fixture: `test_entry_execution_decoder_rejects_invalid_bounds`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L141)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -572,7 +617,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_setup_geometry_decoder_maps_stop_target_and_exit_coordinates`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L154)
+1. [test fixture: `test_setup_geometry_decoder_maps_stop_target_and_exit_coordinates`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L196)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -592,7 +637,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_setup_geometry_decoder_preserves_multi_target_slots_and_simplex_inputs`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L183)
+2. [test fixture: `test_setup_geometry_decoder_preserves_multi_target_slots_and_simplex_inputs`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L225)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -931,7 +976,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_action_and_observation_schemas_use_canonical_coordinates`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L64)
+1. [test fixture: `test_action_and_observation_schemas_use_canonical_coordinates`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L66)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1365,7 +1410,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_candidate_ids_and_semantics_round_trip_for_the_full_catalog`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L23)
+1. [test fixture: `test_candidate_ids_and_semantics_round_trip_for_the_full_catalog`](../../../../tests/unit/decisioning/test_trade_setup_contract.py#L25)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

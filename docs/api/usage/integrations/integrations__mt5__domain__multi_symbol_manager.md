@@ -50,7 +50,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Add a new symbol to the manager.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.add_symbol` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:127](../../../../integrations/mt5/domain/multi_symbol_manager.py#L127)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.add_symbol` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:126](../../../../integrations/mt5/domain/multi_symbol_manager.py#L126)
 
 **Inputs and outputs:**
 
@@ -92,7 +92,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Get list of active (available) symbols.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_active_symbols` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:193](../../../../integrations/mt5/domain/multi_symbol_manager.py#L193)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_active_symbols` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:189](../../../../integrations/mt5/domain/multi_symbol_manager.py#L189)
 
 **Inputs and outputs:**
 
@@ -128,7 +128,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Get all data sources.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_all_data_sources` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:86](../../../../integrations/mt5/domain/multi_symbol_manager.py#L86)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_all_data_sources` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:85](../../../../integrations/mt5/domain/multi_symbol_manager.py#L85)
 
 **Inputs and outputs:**
 
@@ -164,7 +164,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Get volatility metrics for all symbols.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_all_volatility_metrics` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:119](../../../../integrations/mt5/domain/multi_symbol_manager.py#L119)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_all_volatility_metrics` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:118](../../../../integrations/mt5/domain/multi_symbol_manager.py#L118)
 
 **Inputs and outputs:**
 
@@ -200,7 +200,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Get data source for a symbol.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_data_source` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:75](../../../../integrations/mt5/domain/multi_symbol_manager.py#L75)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_data_source` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:74](../../../../integrations/mt5/domain/multi_symbol_manager.py#L74)
 
 **Inputs and outputs:**
 
@@ -249,7 +249,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Get volatility metrics for a symbol.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_volatility_metrics` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:108](../../../../integrations/mt5/domain/multi_symbol_manager.py#L108)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.get_volatility_metrics` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:107](../../../../integrations/mt5/domain/multi_symbol_manager.py#L107)
 
 **Inputs and outputs:**
 
@@ -289,9 +289,9 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Kind:** method · **Status:** stable · **Owner:** `integrations.mt5.domain.multi_symbol_manager`
 
-**Purpose:** Refresh data for all symbols.
+**Purpose:** Keep the legacy refresh hook as a no-op.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.refresh_data` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:183](../../../../integrations/mt5/domain/multi_symbol_manager.py#L183)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.refresh_data` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:181](../../../../integrations/mt5/domain/multi_symbol_manager.py#L181)
 
 **Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
 
@@ -319,7 +319,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Remove a symbol from the manager.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.remove_symbol` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:158](../../../../integrations/mt5/domain/multi_symbol_manager.py#L158)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.remove_symbol` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:156](../../../../integrations/mt5/domain/multi_symbol_manager.py#L156)
 
 **Inputs and outputs:**
 
@@ -361,7 +361,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Update volatility metrics for all symbols.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.update_volatility_metrics` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:94](../../../../integrations/mt5/domain/multi_symbol_manager.py#L94)
+**Exact API:** {py:obj}`integrations.mt5.domain.multi_symbol_manager.MultiSymbolManager.update_volatility_metrics` · **Source:** [integrations/mt5/domain/multi_symbol_manager.py:93](../../../../integrations/mt5/domain/multi_symbol_manager.py#L93)
 
 **Inputs and outputs:**
 

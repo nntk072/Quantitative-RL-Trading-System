@@ -21,7 +21,26 @@ This page contains 4 public callable records owned by `compute.environment.preci
 
 **Observed usage:**
 
-1. [production caller: `configure_cuda_for_training`](../../../../compute/environment/precision.py#L132)
+1. [test fixture: `test_cpu_accelerator_setup_is_an_early_noop`](../../../../tests/integration/test_device.py#L218)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_cpu_accelerator_setup_is_an_early_noop(monkeypatch: pytest.MonkeyPatch) -> None:
+    import torch
+
+    from compute.environment import precision
+
+    monkeypatch.delenv("PYTORCH_CUDA_ALLOC_CONF", raising=False)
+    monkeypatch.setattr(precision, "discover_device_capabilities", lambda _device: pytest.fail())
+
+    configure_accelerator_for_training(torch.device("cpu"))
+    configure_cuda_for_training("cpu")
+
+    assert "PYTORCH_CUDA_ALLOC_CONF" not in __import__("os").environ
+```
+
+2. [production caller: `configure_cuda_for_training`](../../../../compute/environment/precision.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -30,29 +49,6 @@ def configure_cuda_for_training(
     device_hint: str | torch.device | None = None, *, cudnn_benchmark: bool = True
 ) -> None:
     configure_accelerator_for_training(device_hint, cudnn_benchmark=cudnn_benchmark)
-```
-
-2. [production caller: `_prepare_training_configuration`](../../../../training/runner/configuration_stage.py#L43)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-        raise SystemExit(str(exc)) from exc
-    if args.use_vae and not args.vae_path:
-        raise SystemExit("--use-vae requires --vae-path pointing at a trained VAE .pth")
-
-    cfg = load_merged_config(args)
-    configure_accelerator_for_training(
-        cfg.get("device"),
-        cudnn_benchmark=bool(cfg.get("compute", {}).get("cudnn_benchmark", True)),
-    )
-    _setup_rngs(args.seed)
-    try:
-        _validate_q5_resume_state(cfg, resume_checkpoint=args.resume_checkpoint)
-    except ValueError as exc:
-        raise SystemExit(str(exc)) from exc
-# … caller assertions omitted …
 ```
 
 **Workflow context:**
@@ -79,7 +75,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_configure_cuda_for_training_is_noop_safe`](../../../../tests/integration/test_device.py#L205)
+1. [test fixture: `test_configure_cuda_for_training_is_noop_safe`](../../../../tests/integration/test_device.py#L207)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -88,22 +84,23 @@ def test_configure_cuda_for_training_is_noop_safe() -> None:
     configure_cuda_for_training()
 ```
 
-2. [test fixture: `test_configure_cuda_enables_nvidia_tf32_and_allocator`](../../../../tests/integration/test_device.py#L285)
+2. [test fixture: `test_cpu_accelerator_setup_is_an_early_noop`](../../../../tests/integration/test_device.py#L219)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-            supports_bfloat16=True,
-            accelerator_backend="cuda",
-            compute_capability=(8, 0),
-        ),
-    )
-    configure_cuda_for_training(cudnn_benchmark=cudnn_benchmark)
-    assert __import__("os").environ["PYTORCH_CUDA_ALLOC_CONF"] == "expandable_segments:True"
-    assert cuda_matmul.allow_tf32 is True
-    assert cudnn.allow_tf32 is True
-    assert cudnn.benchmark is cudnn_benchmark
+def test_cpu_accelerator_setup_is_an_early_noop(monkeypatch: pytest.MonkeyPatch) -> None:
+    import torch
+
+    from compute.environment import precision
+
+    monkeypatch.delenv("PYTORCH_CUDA_ALLOC_CONF", raising=False)
+    monkeypatch.setattr(precision, "discover_device_capabilities", lambda _device: pytest.fail())
+
+    configure_accelerator_for_training(torch.device("cpu"))
+    configure_cuda_for_training("cpu")
+
+    assert "PYTORCH_CUDA_ALLOC_CONF" not in __import__("os").environ
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -139,7 +136,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_autocast_is_a_noop_on_cpu`](../../../../tests/integration/test_device.py#L212)
+1. [test fixture: `test_autocast_is_a_noop_on_cpu`](../../../../tests/integration/test_device.py#L228)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -150,6 +147,23 @@ def test_autocast_is_a_noop_on_cpu() -> None:
     assert get_autocast_dtype("cpu") is None
     with get_autocast_context("cpu"):
         assert not torch.is_autocast_enabled("cpu")
+```
+
+2. [test fixture: `test_autocast_context_can_be_disabled_on_visible_cuda`](../../../../tests/integration/test_device.py#L277)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_autocast_context_can_be_disabled_on_visible_cuda(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch, "autocast", lambda **_kwargs: pytest.fail("autocast should be off"))
+
+    with get_autocast_context("cuda:0", enabled=False):
+        assert True
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -184,7 +198,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_autocast_is_a_noop_on_cpu`](../../../../tests/integration/test_device.py#L211)
+1. [test fixture: `test_autocast_is_a_noop_on_cpu`](../../../../tests/integration/test_device.py#L227)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -197,18 +211,21 @@ def test_autocast_is_a_noop_on_cpu() -> None:
         assert not torch.is_autocast_enabled("cpu")
 ```
 
-2. [test fixture: `test_autocast_dtype_tracks_device_capabilities`](../../../../tests/integration/test_device.py#L250)
+2. [test fixture: `test_autocast_explicit_dtype_overrides`](../../../../tests/integration/test_device.py#L256)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            accelerator_memory_bytes=None,
-            supports_bfloat16=supports_bfloat16,
-            compute_capability=capability,
-        ),
+        precision,
+        "discover_device_capabilities",
+        lambda _device: pytest.fail("explicit dtype must bypass capability discovery"),
     )
-    assert str(get_autocast_dtype("cuda:0")) == expected
+
+    chosen = get_autocast_dtype("cuda:0", override=override)
+
+    actual = None if chosen is None else str(chosen)
+    assert actual == expected
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

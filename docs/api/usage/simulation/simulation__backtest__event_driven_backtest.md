@@ -129,19 +129,33 @@ This page contains 1 public callable records owned by `simulation.backtest.event
   Mapping from ``str`` keys to ``Any`` values.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_backtest_rejects_invalid_execution_and_observation_configuration`](../../../../tests/unit/simulation/test_backtest_execution_contracts.py#L258)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = run_backtest(bars=..., features=..., policy=..., obs_window=..., cost_model=..., broker_kwargs=..., guardrail_kwargs=..., initial_balance=..., lots=..., max_loss_per_trade_usd=..., take_profit_per_trade_usd=..., tickbook=..., fill_delay_ms=..., randomized_fill_latency_ms=..., max_tick_quote_wait_ms=..., tick_execution_required=..., news_guard=..., server_side_protective_orders=..., execution_seed=..., fill_latency_bars=..., use_structure_sl_tp=..., risk_frac=..., policy_risk_frac_range=..., rr_ratio=..., swing_buffer_pts=..., sl_buffer_pts=..., min_lot=..., max_lot=..., contract_size=..., hold_on_zero=..., exit_action=..., block_overnight=..., eod_risk=..., sl_mode=..., daily_pnl_basis=..., trading_policy=..., tick_fill_slippage_points=..., trade_setup_actions=..., trade_setup_action_schema=..., allow_ema_exit=..., trade_setup_geometry=..., strategy=..., min_sl_atr_mult=..., min_sl_points=..., policy_rr_ratio_range=..., target_timeframes=..., ema_runner_fraction=..., limit_order_max_offset_atr=..., limit_order_max_ttl_bars=..., limit_order_require_trade_through=..., lot_step=..., tp_mode=..., sl_mode_defer_threshold=..., tp_mode_defer_threshold=..., tp_breakeven_alpha=..., observation_schema=..., normalize_account=..., observation_age_scale_bars=..., entry_state_machine=..., candidate_max_age_bars=..., arm_requires_retest=..., regime_observation=..., mtf_observation=..., mtf_windows=..., feature_validity_channels=..., scheduled_session_closes=..., session_start=..., vae=..., pre_ny_by_date=..., pre_ny_data=..., open_manipulation_bars=..., session_timezone=..., source_clock_model=...)
+def test_backtest_rejects_invalid_execution_and_observation_configuration(
+    kwargs: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        run_backtest(pd.DataFrame(), pd.DataFrame(), lambda _obs: 0, **cast(Any, kwargs))
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+2. [test fixture: `test_backtest_rejects_wrong_action_and_observation_schema_types`](../../../../tests/unit/simulation/test_backtest_execution_contracts.py#L282)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_backtest_rejects_wrong_action_and_observation_schema_types(
+    kwargs: dict[str, object], message: str
+) -> None:
+    with pytest.raises(TypeError, match=message):
+        run_backtest(pd.DataFrame(), pd.DataFrame(), lambda _obs: 0, **cast(Any, kwargs))
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

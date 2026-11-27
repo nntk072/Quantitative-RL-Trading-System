@@ -16,7 +16,7 @@ from decisioning.trade_setup import (
 
 from .entry_diagnostics import _empty_entry_diag
 from .mixin_base import RuntimeMixinBase
-from .observations import DEFAULT_HTF_WINDOWS, HTF_BRANCHES
+from .observations.schema import DEFAULT_HTF_WINDOWS, HTF_BRANCHES
 from .timebase import _minutes_per_step
 
 

@@ -14,45 +14,41 @@ This page contains 4 public callable records owned by `integrations.mt5.domain.d
 
 **Observed usage:**
 
-1. [production caller: `_initialize_data_sources`](../../../../integrations/mt5/domain/multi_symbol_manager.py#L67)
+1. [test fixture: `test_get_data_requests_configured_symbol_and_converts_epoch_bar_times`](../../../../tests/unit/integrations/test_mt5_data_source.py#L30)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-                if not mt5.symbol_select(symbol, True):
-                    logger.warning(f"Symbol {symbol} not available, skipping")
-                    continue
+    def copy_rates(symbol: str, timeframe: int, start: int, count: int) -> list[dict[str, int]]:
+        calls.append((symbol, timeframe, start, count))
+        return [{"time": 1_700_000_000, "open": 100}, {"time": 1_700_000_060, "open": 101}]
 
-                    # Create data source
-                data_source = MT5Data(symbol, self.timeframe)
+    monkeypatch.setattr(mt5, "copy_rates_from_pos", copy_rates, raising=False)
+    source = MT5Data("US100.cash", 5)
 
-                self.data_sources[symbol] = data_source
-                logger.info(f"Initialized data source for {symbol}")
+    bars = source.get_data()
 
-            except Exception as e:
+    assert calls == [("US100.cash", 5, 0, 1000)]
+    assert source.get_symbol() == "US100.cash"
 # … caller assertions omitted …
 ```
 
-2. [production caller: `add_symbol`](../../../../integrations/mt5/domain/multi_symbol_manager.py#L147)
+2. [test fixture: `test_get_data_preserves_empty_result_without_inventing_bar_columns`](../../../../tests/unit/integrations/test_mt5_data_source.py#L43)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-            if not mt5.symbol_select(symbol, True):
-                logger.error(f"Symbol {symbol} not available")
-                return False
+def test_get_data_preserves_empty_result_without_inventing_bar_columns(monkeypatch) -> None:
+    monkeypatch.setattr(mt5, "copy_rates_from_pos", lambda *_args: None, raising=False)
 
-                # Create data source
-            data_source = MT5Data(symbol, self.timeframe)
+    bars = MT5Data("US500", 60).get_data()
 
-            self.data_sources[symbol] = data_source
-            self.symbols.append(symbol)
-            logger.info(f"Added symbol {symbol}")
-            return True
-# … caller assertions omitted …
+    assert bars.empty
+    assert list(bars.columns) == []
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -71,45 +67,41 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `_initialize_data_sources`](../../../../integrations/mt5/domain/multi_symbol_manager.py#L67)
+1. [test fixture: `test_get_data_requests_configured_symbol_and_converts_epoch_bar_times`](../../../../tests/unit/integrations/test_mt5_data_source.py#L30)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-                if not mt5.symbol_select(symbol, True):
-                    logger.warning(f"Symbol {symbol} not available, skipping")
-                    continue
+    def copy_rates(symbol: str, timeframe: int, start: int, count: int) -> list[dict[str, int]]:
+        calls.append((symbol, timeframe, start, count))
+        return [{"time": 1_700_000_000, "open": 100}, {"time": 1_700_000_060, "open": 101}]
 
-                    # Create data source
-                data_source = MT5Data(symbol, self.timeframe)
+    monkeypatch.setattr(mt5, "copy_rates_from_pos", copy_rates, raising=False)
+    source = MT5Data("US100.cash", 5)
 
-                self.data_sources[symbol] = data_source
-                logger.info(f"Initialized data source for {symbol}")
+    bars = source.get_data()
 
-            except Exception as e:
+    assert calls == [("US100.cash", 5, 0, 1000)]
+    assert source.get_symbol() == "US100.cash"
 # … caller assertions omitted …
 ```
 
-2. [production caller: `add_symbol`](../../../../integrations/mt5/domain/multi_symbol_manager.py#L147)
+2. [test fixture: `test_get_data_preserves_empty_result_without_inventing_bar_columns`](../../../../tests/unit/integrations/test_mt5_data_source.py#L43)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-            if not mt5.symbol_select(symbol, True):
-                logger.error(f"Symbol {symbol} not available")
-                return False
+def test_get_data_preserves_empty_result_without_inventing_bar_columns(monkeypatch) -> None:
+    monkeypatch.setattr(mt5, "copy_rates_from_pos", lambda *_args: None, raising=False)
 
-                # Create data source
-            data_source = MT5Data(symbol, self.timeframe)
+    bars = MT5Data("US500", 60).get_data()
 
-            self.data_sources[symbol] = data_source
-            self.symbols.append(symbol)
-            logger.info(f"Added symbol {symbol}")
-            return True
-# … caller assertions omitted …
+    assert bars.empty
+    assert list(bars.columns) == []
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -132,20 +124,42 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Bar frame with timestamps converted from terminal epoch seconds.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_get_data_requests_configured_symbol_and_converts_epoch_bar_times`](../../../../tests/unit/integrations/test_mt5_data_source.py#L32)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = MT5Data(...)
-result = instance.get_data()
+# … caller setup omitted …
+        return [{"time": 1_700_000_000, "open": 100}, {"time": 1_700_000_060, "open": 101}]
+
+    monkeypatch.setattr(mt5, "copy_rates_from_pos", copy_rates, raising=False)
+    source = MT5Data("US100.cash", 5)
+
+    bars = source.get_data()
+
+    assert calls == [("US100.cash", 5, 0, 1000)]
+    assert source.get_symbol() == "US100.cash"
+    assert list(bars.columns) == ["time", "open"]
+    assert bars["time"].tolist() == list(pd.to_datetime([1_700_000_000, 1_700_000_060], unit="s"))
 ```
 
-**Lifecycle context:** This callable participates in `MT5Data`: Market-data source that reads recent rates from the MetaTrader terminal. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.data_sources.mt5_data.MT5Data.get_data`, {py:obj}`integrations.mt5.domain.data_sources.mt5_data.MT5Data.get_symbol`
+2. [test fixture: `test_get_data_preserves_empty_result_without_inventing_bar_columns`](../../../../tests/unit/integrations/test_mt5_data_source.py#L43)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_get_data_preserves_empty_result_without_inventing_bar_columns(monkeypatch) -> None:
+    monkeypatch.setattr(mt5, "copy_rates_from_pos", lambda *_args: None, raising=False)
+
+    bars = MT5Data("US500", 60).get_data()
+
+    assert bars.empty
+    assert list(bars.columns) == []
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -168,20 +182,25 @@ The input, output, and error contract above is the safe boundary for a caller. F
   Text returned by ``get_symbol``.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_get_data_requests_configured_symbol_and_converts_epoch_bar_times`](../../../../tests/unit/integrations/test_mt5_data_source.py#L35)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = MT5Data(...)
-result = instance.get_symbol()
+# … caller setup omitted …
+    source = MT5Data("US100.cash", 5)
+
+    bars = source.get_data()
+
+    assert calls == [("US100.cash", 5, 0, 1000)]
+    assert source.get_symbol() == "US100.cash"
+    assert list(bars.columns) == ["time", "open"]
+    assert bars["time"].tolist() == list(pd.to_datetime([1_700_000_000, 1_700_000_060], unit="s"))
 ```
 
-**Lifecycle context:** This callable participates in `MT5Data`: Market-data source that reads recent rates from the MetaTrader terminal. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.data_sources.mt5_data.MT5Data.get_data`, {py:obj}`integrations.mt5.domain.data_sources.mt5_data.MT5Data.get_symbol`
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

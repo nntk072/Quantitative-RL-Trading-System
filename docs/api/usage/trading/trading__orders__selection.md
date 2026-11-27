@@ -107,7 +107,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_tp_mode_agent_override`](../../../../tests/unit/simulation/test_environment/test_tp_mode_state.py#L175)
+2. [test fixture: `test_tp_mode_agent_override`](../../../../tests/unit/simulation/test_environment/test_tp_mode_state.py#L289)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

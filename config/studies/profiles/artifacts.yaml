@@ -1,6 +1,8 @@
 module_id: artifacts
 source_roots: [artifacts, research_tools/artifacts]
 api_paths:
+- artifacts/promotion.py
+- artifacts/retention.py
 - artifacts/__init__.py
 - artifacts/atomic.py
 - artifacts/config_snapshot.py
@@ -9,6 +11,9 @@ api_paths:
 - artifacts/layout.py
 - artifacts/manifest.py
 caller_paths:
+- tests/unit/evaluation/test_reanalysis_validation.py
+- tests/unit/evaluation/test_reanalysis_provenance_contracts.py
+- tests/unit/evaluation/test_checkpoint_reanalysis_edge_contracts.py
 - compute/slurm/continuation.py
 - compute/slurm/worker_dispatch.py
 - evaluation/reanalysis/checkpoint_reanalysis.py

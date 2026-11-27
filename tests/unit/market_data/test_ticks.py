@@ -10,9 +10,9 @@ import pandas as pd
 import pytest
 from omegaconf import OmegaConf
 
-from market_data.cache.ticks import write_tick_cache
-from market_data.loading import build_tick_books
-from market_data.loading.bars import iter_ticks_chunks
+from market_data.cache.ticks import tick_cache_is_complete, write_tick_cache
+from market_data.loading import build_tick_books, tick_book_pipeline
+from market_data.loading.bars import iter_ticks_chunks, load_bars, load_ticks
 from market_data.loading.ticks import (
     TICK_CACHE_VERSION,
     TickBook,
@@ -27,7 +27,14 @@ from market_data.loading.ticks import (
     resolve_tick_exit,
     resolve_tick_limit_execution,
     tick_execution_coverage,
+    tick_price_reaches_level,
     ticks_covering,
+)
+from market_data.transforms.activity import (
+    activity_series,
+    attach_activity,
+    load_tick_index,
+    tick_counts_from_index,
 )
 from market_data.transforms.price_grid import tick_cache_filename
 
@@ -86,9 +93,11 @@ def test_tickbook_content_hash_includes_stable_quote_order() -> None:
     book = _make_book()
     identical = TickBook(book._ts.copy(), book._bid.copy(), book._ask.copy())
     reordered = TickBook(book._ts[::-1].copy(), book._bid[::-1].copy(), book._ask[::-1].copy())
+    repriced = TickBook(book._ts.copy(), book._bid + 0.01, book._ask.copy())
 
     assert book.content_sha256() == identical.content_sha256()
     assert book.content_sha256() != reordered.content_sha256()
+    assert book.content_sha256() != repriced.content_sha256()
 
 
 def test_limit_latency_rng_is_stable_for_shared_order_intent() -> None:
@@ -238,6 +247,30 @@ def test_randomized_execution_rejects_first_tick_beyond_quote_wait_limit():
     )
 
 
+def test_tick_execution_fails_closed_if_quote_accessor_returns_prearrival_tick() -> None:
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+
+    class PrearrivalQuoteBook(TickBook):
+        def execution_quote_event_at(
+            self, timestamp: pd.Timestamp
+        ) -> tuple[pd.Timestamp, float, float]:
+            return pd.Timestamp(timestamp) - pd.Timedelta(nanoseconds=1), 100.0, 100.5
+
+    book = PrearrivalQuoteBook(
+        np.array([(start + pd.Timedelta(seconds=1)).value], dtype=np.int64),
+        np.array([100.0]),
+        np.array([100.5]),
+    )
+
+    with pytest.raises(RuntimeError, match="pre-arrival quote"):
+        resolve_tick_execution(
+            book,
+            start,
+            np.random.default_rng(1729),
+            max_latency_ns_exclusive=0,
+        )
+
+
 def test_scheduled_close_execution_uses_first_tick_after_arrival():
     deadline = pd.Timestamp("2025-01-06 20:00:00", tz="UTC")
     latency_ns = int(np.random.default_rng(1729).integers(0, 30_000_000))
@@ -310,6 +343,27 @@ def test_scheduled_close_uses_first_quote_after_arrival_before_deadline():
     assert fill.order_time == order_time
     assert order_time <= fill.arrival_time < fill.tick_time <= deadline
     assert fill.tick_time == eligible_tick
+
+
+def test_scheduled_close_validates_aware_order_times_and_deadline_order():
+    book = _make_book()
+    deadline = pd.Timestamp("2025-01-06 20:00:00", tz="UTC")
+
+    with pytest.raises(ValueError, match="timezone-aware"):
+        resolve_tick_execution_by_deadline(
+            book,
+            pd.Timestamp("2025-01-06 19:59:00"),
+            deadline,
+            np.random.default_rng(1),
+        )
+
+    with pytest.raises(ValueError, match="cannot be after deadline"):
+        resolve_tick_execution_by_deadline(
+            book,
+            deadline + pd.Timedelta(nanoseconds=1),
+            deadline,
+            np.random.default_rng(1),
+        )
 
 
 def test_buy_limit_uses_first_executable_ask_at_or_below_limit():
@@ -405,6 +459,31 @@ def test_limit_execution_respects_inclusive_expiry():
     assert fill is not None
     assert fill.tick_time == times[1]
     assert fill.tick_time <= times[1]
+
+
+def test_limit_execution_rejects_order_arrival_after_expiry():
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    seed = 1729
+    latency_ns = int(np.random.default_rng(seed).integers(0, 30_000_000))
+    assert latency_ns > 0
+    expiry = start + pd.Timedelta(latency_ns - 1, unit="ns")
+    book = TickBook(
+        np.array([start.value, expiry.value], dtype=np.int64),
+        np.array([100.0, 100.0]),
+        np.array([101.0, 100.0]),
+    )
+
+    fill = resolve_tick_limit_execution(
+        book,
+        direction=1,
+        limit_price=100.0,
+        order_time=start,
+        expiry_time=expiry,
+        rng=np.random.default_rng(seed),
+        max_latency_ns_exclusive=30_000_000,
+    )
+
+    assert fill is None
 
 
 def test_limit_execution_rejects_invalid_side_price_and_timestamps():
@@ -573,6 +652,18 @@ def test_randomized_tick_exit_records_trigger_arrival_and_executable_quote():
     assert 0 <= result.quote.latency_ns < 30_000_000
     assert result.quote.tick_time >= result.quote.arrival_time
     assert result.quote.bid in (94.0, 95.0, 96.0)
+
+
+def test_tick_exit_rejects_invalid_direction() -> None:
+    with pytest.raises(ValueError, match="direction"):
+        resolve_tick_exit(
+            _make_book(),
+            pd.Timestamp("2025-01-06 16:30:00", tz="UTC"),
+            direction=0,
+            sl=95.0,
+            tp=None,
+            rng=np.random.default_rng(1),
+        )
 
 
 def test_tick_exit_treats_one_ulp_as_the_same_protective_price():
@@ -831,6 +922,15 @@ def test_tick_book_honors_helsinki_source_clock_and_cache_identity(tmp_path: Pat
     assert np.array_equal(helsinki._ts, expected_helsinki_ns)
     assert np.array_equal(fixed_carrier._ts, expected_fixed_ns)
 
+    aware_bounds = build_tick_book(
+        csv_path,
+        tz="Etc/GMT-3",
+        source_clock_model="europe_helsinki",
+        start_inclusive="2025-01-06",
+        end_exclusive=pd.Timestamp("2025-01-06 21:30:00", tz="UTC"),
+    )
+    assert np.array_equal(aware_bounds._ts, expected_helsinki_ns[:1])
+
     winter_day = build_tick_book(
         csv_path,
         tz="Etc/GMT-3",
@@ -933,6 +1033,64 @@ def test_build_tick_books_selects_registered_windows_from_one_source(tmp_path: P
         ]["inputs"]
         assert identity["start_inclusive"] == start
         assert identity["end_inclusive"] == end
+
+
+def test_build_tick_books_skips_missing_partition_and_keeps_available_ticks(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    symbol = "US100.cash"
+    present_path = tmp_path / "testing_ticks.csv"
+    _write_tick_csv(present_path, [("2026.01.01", "00:00:00.000", 200.0, 200.6)])
+    cfg = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "cache_dir": str(tmp_path / "cache"),
+                "symbols": [symbol],
+                "tz": "UTC",
+                "datasets": {
+                    "training": {
+                        "raw_dir": str(tmp_path / "missing"),
+                        "tick_files": {symbol: "training_ticks.csv"},
+                    },
+                    "testing": {
+                        "raw_dir": str(tmp_path),
+                        "tick_files": {symbol: present_path.name},
+                    },
+                },
+            },
+        }
+    )
+
+    book = build_tick_books(cfg)[symbol]
+
+    assert book is not None
+    assert len(book) == 1
+    assert book.quote_at(pd.Timestamp("2026-01-01T00:00:00Z")) == pytest.approx((200.0, 200.6))
+    assert "Tick file not found" in caplog.text
+
+
+def test_build_tick_books_uses_bar_fallback_for_empty_tick_source(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    empty_source = tmp_path / "empty_ticks.csv"
+    empty_source.write_text(
+        "<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\n",
+        encoding="utf-8",
+    )
+    config = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {symbol: empty_source.name},
+                "symbols": [symbol],
+                "tz": "UTC",
+            },
+        }
+    )
+
+    assert build_tick_books(config) == {symbol: None}
 
 
 def test_build_tick_book_combines_date_and_session_filters(tmp_path: Path) -> None:
@@ -1099,6 +1257,29 @@ def test_tick_chunk_parser_continues_until_start_date_across_chunks(tmp_path: Pa
     )
 
     assert [row for chunk in chunks for row in chunk["bid"].tolist()] == [101.0]
+
+
+def test_tick_chunk_parser_normalizes_timezone_aware_half_open_bounds(tmp_path: Path) -> None:
+    csv_path = tmp_path / "aware_bounds_ticks.csv"
+    _write_tick_csv(
+        csv_path,
+        [
+            ("2025.12.31", "23:59:59.000", 100.0, 100.6),
+            ("2026.01.01", "00:00:00.000", 101.0, 101.6),
+            ("2026.01.01", "00:00:01.000", 102.0, 102.6),
+        ],
+    )
+
+    chunks = list(
+        iter_ticks_chunks(
+            csv_path,
+            chunksize=1,
+            start_inclusive=pd.Timestamp("2026-01-01T00:00:00Z"),
+            end_exclusive=pd.Timestamp("2026-01-01T00:00:01Z"),
+        )
+    )
+
+    assert [value for chunk in chunks for value in chunk["bid"].tolist()] == [101.0]
 
 
 def test_build_tick_books_development_cutoff_before_first_quote_is_empty(tmp_path: Path) -> None:
@@ -1272,6 +1453,143 @@ def test_build_tick_books_rejects_unconfigured_symbol(tmp_path: Path) -> None:
         build_tick_books(config, symbols=["US500.cash"])
 
 
+def test_build_tick_books_returns_none_when_tick_execution_is_disabled(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    config = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": False},
+            "data": {"symbols": [symbol], "cache_dir": str(tmp_path / "cache")},
+        }
+    )
+
+    assert build_tick_books(config) == {symbol: None}
+    assert not (tmp_path / "cache").exists()
+
+
+def test_build_tick_books_rejects_overlapping_configured_partitions(tmp_path: Path) -> None:
+    symbol = "US100.cash"
+    csv_path = tmp_path / "ticks.csv"
+    _write_tick_csv(csv_path, [("2025.01.06", "16:30:00.000", 100.0, 100.5)])
+    config = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "symbols": [symbol],
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "UTC",
+                "datasets": {
+                    "first": {"raw_dir": str(tmp_path), "tick_files": {symbol: csv_path.name}},
+                    "second": {"raw_dir": str(tmp_path), "tick_files": {symbol: csv_path.name}},
+                },
+            },
+        }
+    )
+
+    with pytest.raises(ValueError, match="partitions overlap or are out of order"):
+        build_tick_books(config)
+
+
+def test_build_tick_books_reports_missing_requested_dataset(tmp_path: Path) -> None:
+    config = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "symbols": ["US100.cash"],
+                "cache_dir": str(tmp_path / "cache"),
+                "tz": "UTC",
+                "datasets": {"training": {"raw_dir": str(tmp_path), "tick_files": {}}},
+            },
+        }
+    )
+
+    with pytest.raises(ValueError, match="datasets are not configured"):
+        build_tick_books(config, datasets=["testing"])
+
+
+def test_build_tick_books_rejects_named_dataset_without_dataset_configuration(
+    tmp_path: Path,
+) -> None:
+    config = OmegaConf.create(
+        {
+            "costs": {"use_tick_execution": True},
+            "data": {
+                "symbols": ["US100.cash"],
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {},
+                "tz": "UTC",
+            },
+        }
+    )
+
+    with pytest.raises(ValueError, match="only the 'all' dataset is configured"):
+        build_tick_books(config, datasets=["training"])
+
+
+def test_build_tick_books_defaults_to_bar_fallback_when_optional_tick_file_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    symbol = "US100.cash"
+    tick_path = tmp_path / "ticks.csv"
+    tick_path.write_text("placeholder", encoding="utf-8")
+    config = OmegaConf.create(
+        {
+            "data": {
+                "raw_dir": str(tmp_path),
+                "cache_dir": str(tmp_path / "cache"),
+                "tick_files": {symbol: tick_path.name},
+                "symbols": [symbol],
+                "tz": "UTC",
+            }
+        }
+    )
+
+    def reject_corrupt_optional_source(**_kwargs: object) -> None:
+        raise ValueError("corrupt optional tick source")
+
+    monkeypatch.setattr(tick_book_pipeline, "build_tick_book", reject_corrupt_optional_source)
+
+    assert build_tick_books(config) == {symbol: None}
+
+
+def test_activity_prefers_nonzero_tick_count_and_skips_dead_volume_columns() -> None:
+    frame = pd.DataFrame(
+        {
+            "tick_count": [1, 3, 4],
+            "tickvol": [7, 8, 9],
+            "volume": [0, 0, 0],
+            "vol": [np.nan, "invalid", np.nan],
+        }
+    )
+
+    activity = activity_series(frame)
+    attached = attach_activity(frame)
+
+    assert activity is not None
+    assert activity.tolist() == [1.0, 3.0, 4.0]
+    assert attached["activity"].tolist() == [1.0, 3.0, 4.0]
+    assert frame.columns.tolist() == ["tick_count", "tickvol", "volume", "vol"]
+
+
+def test_activity_is_absent_when_all_candidate_columns_are_dead() -> None:
+    frame = pd.DataFrame({"tick_count": [0, 0], "tickvol": [np.nan, np.nan], "volume": [0, 0]})
+
+    assert activity_series(frame) is None
+    assert "activity" not in attach_activity(frame).columns
+
+
+def test_load_tick_index_localizes_source_wall_clock_and_counts_bar_ticks(tmp_path: Path) -> None:
+    path = tmp_path / "ticks.csv"
+    _write_tick_csv(path, [("2025.01.06", "16:30:00.000", 100.0, 100.5)])
+
+    tick_index = load_tick_index(path, tz="Etc/GMT-3")
+    bars_index = pd.date_range("2025-01-06 16:30", periods=2, freq="min", tz="Etc/GMT-3")
+    counts = tick_counts_from_index(bars_index, tick_index)
+
+    assert tick_index[0] == pd.Timestamp("2025-01-06 16:30", tz="Etc/GMT-3")
+    assert counts.tolist() == [1.0, 0.0]
+
+
 def test_build_tick_book_chunked_matches_expected(tmp_path: Path):
     """Small synthetic CSV, forced to a 2-row chunksize to exercise the
     cross-chunk forward-fill / session-filter boundary logic.
@@ -1423,6 +1741,14 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
     assert not cache_path.exists()
 
 
+def test_tick_cache_requires_complete_manifest_and_quote_columns(tmp_path: Path) -> None:
+    cache_path = tmp_path / "ticks.parquet"
+
+    assert not tick_cache_is_complete(cache_path)
+    with pytest.raises(ValueError, match="missing columns"):
+        write_tick_cache(cache_path, pd.DataFrame({"bid": [100.0]}), {"cache_id": "x"})
+
+
 def test_nearest_exit_tick_quote_picks_window_tick_closest_to_level() -> None:
     start = pd.Timestamp("2026-01-05T10:00:00Z")
     times = np.array([(start + pd.Timedelta(seconds=s)).value for s in (5, 20, 40)], dtype=np.int64)
@@ -1473,6 +1799,17 @@ def test_nearest_exit_tick_quote_gap_cap_rejects_far_tick() -> None:
     assert nearest_exit_tick_quote(book, start, 1, 99.0, bar_minutes=1) == (101.0, 101.1)
 
 
+def test_nearest_exit_tick_quote_rejects_invalid_direction() -> None:
+    with pytest.raises(ValueError, match="direction"):
+        nearest_exit_tick_quote(
+            _make_book(),
+            pd.Timestamp("2025-01-06 16:30:00", tz="UTC"),
+            0,
+            100.0,
+            bar_minutes=1,
+        )
+
+
 def test_nearest_tick_execution_is_first_tick_after_order_within_cap() -> None:
     order = pd.Timestamp("2026-01-05T10:00:00Z")
     before = (order - pd.Timedelta(seconds=20)).value
@@ -1490,3 +1827,362 @@ def test_nearest_tick_execution_is_first_tick_after_order_within_cap() -> None:
     assert quote.latency_ns == 0
     # Beyond the cap there is no fill.
     assert nearest_tick_execution(book, order, max_gap_ns=10_000_000_000) is None
+
+
+def test_tick_level_crossing_has_one_ulp_tolerance_and_validates_direction() -> None:
+    level = 100.0
+    one_ulp_below = float(np.nextafter(level, -np.inf))
+    one_ulp_above = float(np.nextafter(level, np.inf))
+
+    assert tick_price_reaches_level(one_ulp_below, level, direction=1)
+    assert tick_price_reaches_level(one_ulp_above, level, direction=-1)
+    assert not tick_price_reaches_level(
+        float(np.nextafter(one_ulp_below, -np.inf)), level, direction=1
+    )
+    with pytest.raises(ValueError, match="direction"):
+        tick_price_reaches_level(level, level, direction=0)
+
+
+def test_tick_execution_rejects_negative_latency_bound() -> None:
+    with pytest.raises(ValueError, match="cannot be negative"):
+        resolve_tick_execution(
+            _make_book(),
+            pd.Timestamp("2025-01-06 16:30:00", tz="UTC"),
+            np.random.default_rng(1),
+            max_latency_ns_exclusive=-1,
+        )
+
+
+def test_deadline_execution_rejects_negative_latency_bound() -> None:
+    deadline = pd.Timestamp("2025-01-06 20:00:00", tz="UTC")
+    with pytest.raises(ValueError, match="cannot be negative"):
+        resolve_tick_execution_by_deadline(
+            _make_book(),
+            deadline - pd.Timedelta(minutes=1),
+            deadline,
+            np.random.default_rng(1),
+            max_latency_ns_exclusive=-1,
+        )
+
+
+def test_limit_execution_rejects_negative_latency_and_reversed_expiry() -> None:
+    book = _make_book()
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    rng = np.random.default_rng(1)
+
+    with pytest.raises(ValueError, match="cannot be negative"):
+        resolve_tick_limit_execution(book, 1, 100.0, start, start, rng, max_latency_ns_exclusive=-1)
+    with pytest.raises(ValueError, match="cannot precede"):
+        resolve_tick_limit_execution(
+            book, 1, 100.0, start, start - pd.Timedelta(nanoseconds=1), rng
+        )
+
+
+def test_tickbook_interval_helpers_use_half_open_bar_windows() -> None:
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    inside = start + pd.Timedelta(seconds=30)
+    end = start + pd.Timedelta(minutes=1)
+    book = TickBook(
+        np.array([inside.value, end.value], dtype=np.int64),
+        np.array([100.0, 101.0]),
+        np.array([100.5, 101.5]),
+    )
+
+    assert book.has_ticks_between(start, end)
+    boundary_only = TickBook(
+        np.asarray([end.value], dtype=np.int64), np.asarray([101.0]), np.asarray([101.5])
+    )
+    assert not boundary_only.has_ticks_between(start, end)
+    assert boundary_only.has_ticks_between(end, end + pd.Timedelta(minutes=1))
+    assert list(book.bar_quote_ns(start)) == [(inside.value, 100.0, 100.5)]
+    timestamps, bid, ask = book.bar_arrays(start)
+    np.testing.assert_array_equal(timestamps, [inside.value])
+    np.testing.assert_array_equal(bid, [100.0])
+    np.testing.assert_array_equal(ask, [100.5])
+    empty = TickBook(np.array([], dtype=np.int64), np.array([]), np.array([]))
+    assert not empty.has_ticks_between(start, end)
+    assert list(empty.bar_quote_ns(start)) == []
+
+
+def test_delayed_exit_uses_trigger_then_delayed_observed_quote() -> None:
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    trigger = start + pd.Timedelta(seconds=1)
+    fill_quote = trigger + pd.Timedelta(seconds=2)
+    book = TickBook(
+        np.array([trigger.value, fill_quote.value], dtype=np.int64),
+        np.array([94.0, 93.5]),
+        np.array([94.5, 94.0]),
+    )
+
+    event = book.delayed_exit_event(
+        start, direction=1, sl=95.0, tp=None, delay=pd.Timedelta(seconds=2)
+    )
+
+    assert event == ("sl", fill_quote, 93.5, 94.0)
+    assert book.delayed_exit_quote(
+        start, direction=1, sl=95.0, tp=None, delay=pd.Timedelta(seconds=2)
+    ) == ("sl", 93.5, 94.0)
+    assert (
+        book.delayed_exit_event(start, direction=1, sl=None, tp=None, delay=pd.Timedelta(seconds=2))
+        is None
+    )
+    assert book.execution_quote_event_at(fill_quote + pd.Timedelta(seconds=1)) is None
+    assert (
+        book.delayed_exit_event(start, direction=1, sl=95.0, tp=None, delay=pd.Timedelta(hours=1))
+        is None
+    )
+    assert (
+        book.delayed_exit_quote(start, direction=1, sl=95.0, tp=None, delay=pd.Timedelta(hours=1))
+        is None
+    )
+    assert (
+        book.delayed_exit_event(start, direction=0, sl=95.0, tp=None, delay=pd.Timedelta(seconds=2))
+        is None
+    )
+
+
+def test_delayed_exit_selects_take_profit_trigger_when_no_stop_precedes_it() -> None:
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+    trigger = start + pd.Timedelta(seconds=2)
+    book = TickBook(
+        np.array([(start + pd.Timedelta(seconds=1)).value, trigger.value], dtype=np.int64),
+        np.array([100.0, 106.0]),
+        np.array([100.5, 106.5]),
+    )
+
+    event = book.delayed_exit_event(
+        start,
+        direction=1,
+        sl=95.0,
+        tp=105.0,
+        delay=pd.Timedelta(0),
+    )
+
+    assert event == ("tp", trigger, 106.0, 106.5)
+
+
+def test_tick_execution_coverage_handles_empty_orders_and_rejects_bad_inputs() -> None:
+    report = tick_execution_coverage(
+        None,
+        pd.DatetimeIndex([], tz="UTC"),
+        max_latency_ns_exclusive=0,
+        max_quote_wait_ms=1,
+    )
+    assert report == {
+        "order_count": 0,
+        "covered_count": 0,
+        "unavailable_count": 0,
+        "coverage_fraction": 1.0,
+        "first_unavailable_order_time": None,
+        "unavailable_order_times_utc": [],
+    }
+
+    with pytest.raises(ValueError, match="max_latency_ns_exclusive"):
+        tick_execution_coverage(
+            None,
+            pd.DatetimeIndex([pd.Timestamp("2025-01-06", tz="UTC")]),
+            max_latency_ns_exclusive=30_000_001,
+            max_quote_wait_ms=1,
+        )
+    with pytest.raises(ValueError, match="max_quote_wait_ms"):
+        tick_execution_coverage(
+            None,
+            pd.DatetimeIndex([pd.Timestamp("2025-01-06", tz="UTC")]),
+            max_latency_ns_exclusive=0,
+            max_quote_wait_ms=0,
+        )
+    with pytest.raises(ValueError, match="timezone-aware"):
+        tick_execution_coverage(
+            None,
+            pd.DatetimeIndex([pd.Timestamp("2025-01-06")]),
+            max_latency_ns_exclusive=0,
+            max_quote_wait_ms=1,
+        )
+
+
+def test_ticks_covering_returns_none_for_empty_or_uncovered_inputs() -> None:
+    index = pd.DatetimeIndex([pd.Timestamp("2025-01-06", tz="UTC")])
+    bars = pd.DataFrame({"close": [100.0]}, index=index)
+    outside_book = TickBook(
+        np.array([pd.Timestamp("2025-01-07", tz="UTC").value], dtype=np.int64),
+        np.array([100.0]),
+        np.array([100.5]),
+    )
+
+    assert ticks_covering(None, bars) is None
+    assert (
+        ticks_covering(TickBook(np.array([], dtype=np.int64), np.array([]), np.array([])), bars)
+        is None
+    )
+    assert ticks_covering(_make_book(), bars.iloc[:0]) is None
+    assert ticks_covering(outside_book, bars) is None
+
+
+def test_tick_book_build_diagnostics_require_uncached_source_scan(tmp_path: Path) -> None:
+    source = tmp_path / "ticks.csv"
+    source.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="cache_path=None"):
+        build_tick_book(
+            source,
+            cache_path=tmp_path / "ticks.parquet",
+            diagnostics=TickBookBuildDiagnostics(),
+        )
+
+
+def test_first_limit_execution_event_rejects_invalid_side_price_and_time_order() -> None:
+    book = _make_book()
+    start = pd.Timestamp("2025-01-06 16:30:00", tz="UTC")
+
+    with pytest.raises(ValueError, match=r"direction must be -1 or \+1"):
+        book.first_limit_execution_event(0, 100.0, start, start)
+    with pytest.raises(ValueError, match="finite and positive"):
+        book.first_limit_execution_event(1, float("inf"), start, start)
+    with pytest.raises(ValueError, match="timezone-aware"):
+        book.first_limit_execution_event(1, 100.0, pd.Timestamp("2025-01-06 16:30:00"), start)
+    with pytest.raises(ValueError, match="cannot precede"):
+        book.first_limit_execution_event(1, 100.0, start, start - pd.Timedelta(seconds=1))
+
+
+def test_first_limit_execution_event_uses_inclusive_expiry_and_trade_through() -> None:
+    book = _make_book()
+    start = pd.Timestamp("2025-01-06 16:30:10", tz="UTC")
+    expiry = start
+
+    assert book.first_limit_execution_event(1, 101.6, start, expiry) == (
+        expiry,
+        101.0,
+        101.6,
+    )
+    assert (
+        book.first_limit_execution_event(1, 101.6, start, expiry, require_trade_through=True)
+        is None
+    )
+    assert book.first_limit_execution_event(
+        1, 101.7, start, expiry, require_trade_through=True
+    ) == (expiry, 101.0, 101.6)
+
+
+def test_build_tick_book_preserves_timezone_aware_source_start_bound(tmp_path: Path) -> None:
+    source = tmp_path / "ticks.csv"
+    _write_tick_csv(source, [("2025.01.06", "16:30:00.000", 100.0, 100.5)])
+    timezone = "Etc/GMT-3"
+    start = pd.Timestamp("2025-01-06 16:30:00", tz=timezone)
+
+    book = build_tick_book(
+        source,
+        tz=timezone,
+        session_start=None,
+        session_end=None,
+        start_inclusive=start.isoformat(),
+        end_exclusive=start + pd.Timedelta(minutes=1),
+    )
+
+    assert len(book) == 1
+    assert book.quote_at(start) == pytest.approx((100.0, 100.5))
+
+
+def test_load_bars_accepts_daily_rows_and_applies_timezone_aware_half_open_bounds(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "daily.tsv"
+    source.write_text(
+        "<DATE>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>\n"
+        "2025.01.01\t100\t102\t99\t101\t10\t0\t0.2\n"
+        "2025.01.02\t101\t103\t100\t102\t11\t0\t0.2\n"
+        "2025.01.03\t102\t104\t101\t103\t12\t0\t0.2\n",
+        encoding="utf-8",
+    )
+
+    bars = load_bars(
+        source,
+        start_inclusive=pd.Timestamp("2025-01-02", tz="UTC"),
+        end_exclusive=pd.Timestamp("2025-01-03", tz="UTC"),
+    )
+
+    assert bars.index.tolist() == [pd.Timestamp("2025-01-02")]
+    assert bars.index.name == "datetime"
+    assert bars["close"].tolist() == [102.0]
+    assert bars.attrs["source_diagnostics"] == {
+        "out_of_order_rows": 0,
+        "duplicate_rows": 0,
+        "conflicting_duplicate_timestamps": 0,
+    }
+
+
+def test_load_bars_sorts_source_rows_and_reports_conflicting_duplicates(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    source = tmp_path / "intraday.tsv"
+    source.write_text(
+        "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>\n"
+        "2025.01.01\t00:02:00\t101\t102\t100\t101\t10\t0\t0.2\n"
+        "2025.01.01\t00:01:00\t100\t101\t99\t100\t11\t0\t0.2\n"
+        "2025.01.01\t00:01:00\t100\t101\t99\t100.5\t12\t0\t0.2\n",
+        encoding="utf-8",
+    )
+
+    bars = load_bars(source)
+
+    assert bars.index.is_monotonic_increasing
+    assert bars.attrs["source_diagnostics"] == {
+        "out_of_order_rows": 1,
+        "duplicate_rows": 1,
+        "conflicting_duplicate_timestamps": 1,
+    }
+    assert "bar source order/duplicate diagnostics" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("header", "row", "message"),
+    [
+        (
+            "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>",
+            "2025.01.01\t\t100\t101\t99\t100\t10\t0\t0.2",
+            "invalid bar timestamps",
+        ),
+        (
+            "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>",
+            "2025.01.01\t00:00:00\t100\t101\t99\t100\t10\t0\t-0.1",
+            "invalid spread values",
+        ),
+        (
+            "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>",
+            "2025.01.01\t00:00:00\t100\t99\t101\t100\t10\t0\t0.2",
+            "invalid OHLC rows",
+        ),
+    ],
+)
+def test_load_bars_rejects_invalid_timestamp_spread_and_ohlc(
+    tmp_path: Path, header: str, row: str, message: str
+) -> None:
+    source = tmp_path / "invalid.tsv"
+    source.write_text(f"{header}\n{row}\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_bars(source)
+
+
+def test_load_bars_rejects_unknown_header_before_parsing(tmp_path: Path) -> None:
+    source = tmp_path / "unknown.tsv"
+    source.write_text("date\tvalue\n2025.01.01\t1\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unsupported bar CSV header"):
+        load_bars(source)
+
+
+def test_load_ticks_parses_and_sorts_raw_tick_rows(tmp_path: Path) -> None:
+    source = tmp_path / "ticks.tsv"
+    source.write_text(
+        "<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\t<FLAGS>\n"
+        "2025.01.01\t00:00:02.000\t100.2\t100.4\t0\t1\t0\n"
+        "2025.01.01\t00:00:01.000\t100.1\t100.3\t0\t2\t0\n",
+        encoding="utf-8",
+    )
+
+    ticks = load_ticks(source)
+
+    assert ticks.index.is_monotonic_increasing
+    assert ticks.index.name == "datetime"
+    assert ticks["bid"].tolist() == [100.1, 100.2]
+    assert ticks["volume"].tolist() == [2.0, 1.0]

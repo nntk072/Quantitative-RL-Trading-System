@@ -5,7 +5,7 @@
 
 ## Summary and use this when
 
-The environment first records the account transition, then calculates a configured reward from that transition and risk state. `reward_parts` makes the signal inspectable. Reward is an optimization signal, not a substitute for a trade ledger or a scientific outcome. Sources: `simulation/environment/step_accounting_runtime.py`, `simulation/environment/rewards.py`, `simulation/environment/reward_initialization.py`, `simulation/environment/step_info_runtime.py`.
+The environment first records the account transition, then calculates a configured reward from that transition and risk state. `reward_parts` makes the signal inspectable. Reward is an optimization signal, not a substitute for a trade ledger or a scientific outcome. Sources: `simulation/environment/accounting/step.py`, `simulation/environment/rewards.py`, `simulation/environment/reward_initialization.py`, `simulation/environment/episode/info.py`.
 
 - Use this guide when a positive reward accompanies a losing trade or vice versa.
 - Use it when reconciling partial exits, costs, and episode termination.
@@ -24,9 +24,9 @@ The environment first records the account transition, then calculates a configur
 
 ### Account before reward
 
-`_record_step_accounting` appends current equity, computes a step PnL from the change in equity, accounts for a payout withdrawn during the step, and calls `_calculate_reward`. Fill times can advance the equity valuation timestamp beyond a policy bar's nominal close. Source: `simulation/environment/step_accounting_runtime.py::_record_step_accounting`; test: `tests/unit/simulation/test_environment/test_equity_delta_reward.py`.
+`_record_step_accounting` appends current equity, computes a step PnL from the change in equity, accounts for a payout withdrawn during the step, and calls `_calculate_reward`. Fill times can advance the equity valuation timestamp beyond a policy bar's nominal close. Source: `simulation/environment/accounting/step.py::_record_step_accounting`; test: `tests/unit/simulation/test_environment/test_equity_delta_reward.py`.
 
-`_note_close` tracks realized close PnL and R for the current step; `_stamp_exit` stamps unique fill records and accumulates lifecycle outcomes. Several TP legs inside one step must not become several completed positions. Source: `simulation/environment/trade_accounting_runtime.py::_note_close`, `_stamp_exit`; test: `tests/integration/test_position_fill_accounting.py`.
+`_note_close` tracks realized close PnL and R for the current step; `_stamp_exit` stamps unique fill records and accumulates lifecycle outcomes. Several TP legs inside one step must not become several completed positions. Source: `simulation/environment/accounting/trades.py::_note_close`, `_stamp_exit`; test: `tests/integration/test_position_fill_accounting.py`.
 
 Costs reach account equity through broker fills. A reward built from equity should not subtract modeled spread and commission again. Source: `trading/execution/broker.py::Broker.open_position`, `close_position`; `simulation/environment/rewards.py::EquityLogGrowthReward`; test: `tests/unit/simulation/test_environment/test_equity_log_growth_reward.py`.
 
@@ -48,11 +48,11 @@ Costs reach account equity through broker fills. A reward built from equity shou
 
 `REWARD_PART_KEYS` defines a stable set of buckets: `pnl`, `dsr`, `soft_daily`, `soft_year`, `soft_trailing`, `strategy`, `breach`, `sweep`, `peak_dd`, `peak_eod_dd`, `equity_growth`, and `survival`. `fit_reward_parts` reconciles the component sum with the clipped reward where clipping occurs. Source: `simulation/environment/rewards.py::REWARD_PART_KEYS`, `fit_reward_parts`; test: `tests/unit/evaluation/test_reward_attribution.py`.
 
-The step `info` includes `reward_parts` alongside account equity, position state, decision identifiers, and rejection reasons. A useful attribution trace joins that info with ledger fill IDs and timestamps, rather than treating the reward scalar as a trade outcome. Source: `simulation/environment/step_info_runtime.py::_build_step_info`; `simulation/environment/trade_accounting_runtime.py::_stamp_exit`.
+The step `info` includes `reward_parts` alongside account equity, position state, decision identifiers, and rejection reasons. A useful attribution trace joins that info with ledger fill IDs and timestamps, rather than treating the reward scalar as a trade outcome. Source: `simulation/environment/episode/info.py::_build_step_info`; `simulation/environment/accounting/trades.py::_stamp_exit`.
 
 ### Why different signs can be correct
 
-The reward mode may include soft-band charges, breach penalties, or strategy shaping. A close PnL can be positive while the final reward is negative. Conversely, a dense equity reward can move before a position closes. That difference is a configuration and accounting question; it is not by itself an attribution bug. Sources: `simulation/environment/rewards.py`, `simulation/environment/reward_initialization.py`, `simulation/environment/step_accounting_runtime.py`.
+The reward mode may include soft-band charges, breach penalties, or strategy shaping. A close PnL can be positive while the final reward is negative. Conversely, a dense equity reward can move before a position closes. That difference is a configuration and accounting question; it is not by itself an attribution bug. Sources: `simulation/environment/rewards.py`, `simulation/environment/reward_initialization.py`, `simulation/environment/accounting/step.py`.
 
 ## Worked example
 
@@ -75,8 +75,8 @@ examples/reward-and-attribution
 
 | Item | Contract | Source |
 |---|---|---|
-| Step PnL | Equity delta plus payout withdrawn this step | `simulation/environment/step_accounting_runtime.py::_record_step_accounting` |
-| Realized close | Close PnL/R recorded separately | `simulation/environment/trade_accounting_runtime.py::_note_close` |
+| Step PnL | Equity delta plus payout withdrawn this step | `simulation/environment/accounting/step.py::_record_step_accounting` |
+| Realized close | Close PnL/R recorded separately | `simulation/environment/accounting/trades.py::_note_close` |
 | DSR | Running-moment signal and risk terms | `simulation/environment/rewards.py::DSRReward` |
 | PnL | Realized close PnL scaled by initial balance | `simulation/environment/rewards.py::PnLReward` |
 | R multiple | Finite realized R on a close | `simulation/environment/rewards.py::RMultipleReward` |
@@ -130,9 +130,9 @@ The following cases locate the contract boundary to inspect. They are software c
 
 | Case | Expected inspection result | Source |
 |---|---|---|
-| Open mark changes | Update step equity PnL | `simulation/environment/step_accounting_runtime.py` |
-| Payout withdrawn | Add withdrawal back to step PnL | `simulation/environment/step_accounting_runtime.py` |
-| Multiple TP legs in one step | Aggregate close bookkeeping | `simulation/environment/trade_accounting_runtime.py` |
+| Open mark changes | Update step equity PnL | `simulation/environment/accounting/step.py` |
+| Payout withdrawn | Add withdrawal back to step PnL | `simulation/environment/accounting/step.py` |
+| Multiple TP legs in one step | Aggregate close bookkeeping | `simulation/environment/accounting/trades.py` |
 | No realized close | Keep realized-close reward term absent | `simulation/environment/rewards.py` |
 | Realized R close | Score finite R in rr mode | `simulation/environment/rewards.py` |
 | Nonfinite realized R | Do not score R term | `simulation/environment/rewards.py` |
@@ -148,7 +148,7 @@ The following cases locate the contract boundary to inspect. They are software c
 | Clipped reward | Scale parts to clipped scalar | `simulation/environment/rewards.py` |
 | Incompatible sweep with pnl | Reject combination | `simulation/environment/reward_initialization.py` |
 | Incompatible shaping with equity mode | Reject combination | `simulation/environment/reward_initialization.py` |
-| Step info publication | Include reward parts | `simulation/environment/step_info_runtime.py` |
+| Step info publication | Include reward parts | `simulation/environment/episode/info.py` |
 | Cost already in equity | Avoid second deduction | `simulation/environment/rewards.py` |
 
 ## Maintainer note

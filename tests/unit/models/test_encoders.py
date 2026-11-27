@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Any
+from contextlib import nullcontext
+from typing import Any, cast
 
 import numpy as np
 import pytest
 import torch
 from gymnasium import spaces
+from torch import nn
 
 from models.encoders import (
     GRUEncoder,
@@ -18,7 +20,10 @@ from models.encoders import (
     TCNEncoder,
     TransformerEncoder,
 )
+from models.encoders.mtf_efficiency_components import observation_streams
+from models.encoders.sequence_encoder_components import _resolve_account_dim, _valid_lengths
 from models.factory import encoder_for
+from models.runtime import precision as encoder_precision
 
 
 @pytest.mark.parametrize(
@@ -823,3 +828,181 @@ def test_tcn_arch_is_the_single_sequence_extractor() -> None:
     assert encoder_for("mtf_reasoning") is MTFReasoningEncoder
     assert encoder_for("gru") is GRUEncoder
     assert encoder_for("transformer") is TransformerEncoder
+
+
+def test_transformer_builds_a_causal_mask_when_runtime_window_exceeds_saved_size() -> None:
+    observation_space = spaces.Dict(
+        {
+            "seq": spaces.Box(-1.0, 1.0, shape=(4, 2), dtype=np.float32),
+            "account": spaces.Box(-1.0, 1.0, shape=(6,), dtype=np.float32),
+        }
+    )
+    encoder = TransformerEncoder(
+        observation_space=observation_space,
+        seq_len=4,
+        n_features=2,
+        latent_dim=8,
+        d_model=8,
+        nhead=2,
+    )
+
+    mask = encoder._get_mask(6, torch.device("cpu"))
+
+    assert mask.shape == (6, 6)
+    assert torch.isneginf(mask[0, 1])
+    assert mask[1, 0] == 0.0
+
+
+def test_extractor_precision_wrapper_skips_transformers_and_existing_wrappers() -> None:
+    observation_space = spaces.Dict(
+        {
+            "seq": spaces.Box(-1.0, 1.0, shape=(4, 2), dtype=np.float32),
+            "account": spaces.Box(-1.0, 1.0, shape=(6,), dtype=np.float32),
+        }
+    )
+    transformer = TransformerEncoder(
+        observation_space=observation_space,
+        seq_len=4,
+        n_features=2,
+        latent_dim=8,
+    )
+    original_transformer_forward = cast(Any, transformer.forward).__func__
+    encoder_precision.enable_extractor_autocast(transformer, torch.float16)
+    assert cast(Any, transformer.forward).__func__ is original_transformer_forward
+
+    identity = nn.Identity()
+    original_identity_forward = cast(Any, identity.forward).__func__
+    encoder_precision.enable_extractor_autocast(identity, None)
+    assert cast(Any, identity.forward).__func__ is original_identity_forward
+    cast(Any, identity)._amp_wrapped = True
+    encoder_precision.enable_extractor_autocast(identity, torch.float16)
+    assert cast(Any, identity.forward).__func__ is original_identity_forward
+
+
+def test_fp16_autocast_falls_back_to_fp32_for_nonfinite_inference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    outputs = iter([torch.tensor([float("inf")]), torch.tensor([1.0])])
+
+    class RecordingExtractor(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls = 0
+
+        def forward(self, *_args: Any, **_kwargs: Any) -> torch.Tensor:
+            self.calls += 1
+            return next(outputs)
+
+    monkeypatch.setattr(
+        cast(Any, encoder_precision).torch, "autocast", lambda **_kwargs: nullcontext()
+    )
+    extractor = RecordingExtractor()
+    encoder_precision.enable_extractor_autocast(extractor, torch.float16)
+
+    with torch.no_grad():
+        result = extractor()
+
+    assert result.dtype == torch.float32
+    assert torch.isfinite(result).all()
+    assert extractor.calls == 2
+
+
+def test_autocast_wrapper_rejects_non_tensor_feature_output() -> None:
+    class InvalidExtractor(nn.Module):
+        def forward(self, *_args: Any, **_kwargs: Any) -> str:
+            return "invalid"
+
+    extractor = InvalidExtractor()
+    encoder_precision.enable_extractor_autocast(extractor, torch.float16)
+
+    with pytest.raises(TypeError, match="must return a torch.Tensor"):
+        extractor()
+
+
+def test_autocast_inference_rejects_non_tensor_after_autocast(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class InvalidExtractor(nn.Module):
+        def forward(self, *_args: Any, **_kwargs: Any) -> str:
+            return "invalid"
+
+    monkeypatch.setattr(
+        cast(Any, encoder_precision).torch, "autocast", lambda **_kwargs: nullcontext()
+    )
+    extractor = InvalidExtractor()
+    encoder_precision.enable_extractor_autocast(extractor, torch.bfloat16)
+
+    with torch.no_grad(), pytest.raises(TypeError, match="must return a torch.Tensor"):
+        extractor()
+
+
+@pytest.mark.parametrize(
+    ("retry_output", "exception", "message"),
+    [
+        ("invalid", TypeError, "must return a torch.Tensor"),
+        (torch.tensor([float("nan")]), FloatingPointError, "non-finite features"),
+    ],
+)
+def test_fp16_autocast_retry_rejects_invalid_fp32_output(
+    monkeypatch: pytest.MonkeyPatch, retry_output: object, exception: type[Exception], message: str
+) -> None:
+    outputs = iter([torch.tensor([float("inf")]), retry_output])
+
+    class RecordingExtractor(nn.Module):
+        def forward(self, *_args: Any, **_kwargs: Any) -> object:
+            return next(outputs)
+
+    monkeypatch.setattr(
+        cast(Any, encoder_precision).torch, "autocast", lambda **_kwargs: nullcontext()
+    )
+    extractor = RecordingExtractor()
+    encoder_precision.enable_extractor_autocast(extractor, torch.float16)
+
+    with torch.no_grad(), pytest.raises(exception, match=message):
+        extractor()
+
+
+def test_sequence_encoder_account_contract_rejects_missing_or_mismatched_box() -> None:
+    with pytest.raises(TypeError, match="Dict observation space"):
+        _resolve_account_dim(object(), None)
+    with pytest.raises(TypeError, match="Box account vector"):
+        _resolve_account_dim(spaces.Dict({"seq": spaces.Box(-1, 1, shape=(4, 2))}), None)
+    with pytest.raises(TypeError, match="Box account vector"):
+        _resolve_account_dim(spaces.Dict({"account": spaces.Box(-1, 1, shape=(2, 3))}), None)
+    account_space = spaces.Dict({"account": spaces.Box(-1, 1, shape=(6,))})
+    with pytest.raises(ValueError, match="does not match observation space width 6"):
+        _resolve_account_dim(account_space, 5)
+    assert _resolve_account_dim(account_space, 6) == 6
+
+
+def test_valid_lengths_expands_one_dimensional_mask_and_clamps_empty_rows() -> None:
+    seq = torch.zeros(3, 4, 2)
+
+    lengths = _valid_lengths(seq, {"seq_mask": torch.tensor([1.0, 1.0, 0.0, 0.0])})
+    empty_lengths = _valid_lengths(seq, {"seq_mask": torch.zeros(4)})
+
+    assert lengths.tolist() == [2, 2, 2]
+    assert empty_lengths.tolist() == [1, 1, 1]
+
+
+def test_efficient_mtf_stream_contract_reports_missing_required_streams() -> None:
+    observation_space = spaces.Dict(
+        {
+            "seq": spaces.Box(-1, 1, shape=(4, 2)),
+            "seq_mask": spaces.Box(0, 1, shape=(4,)),
+        }
+    )
+
+    with pytest.raises(ValueError, match="seq_m3 and mask_m3"):
+        observation_streams(observation_space)
+
+
+def test_autocast_precision_remains_inactive_for_none_dtype() -> None:
+    extractor = nn.Identity()
+    sample = torch.ones((2, 3))
+    expected = extractor(sample)
+
+    encoder_precision.enable_extractor_autocast(extractor, None)
+
+    assert torch.equal(extractor(sample), expected)
+    assert not getattr(extractor, "_amp_wrapped", False)

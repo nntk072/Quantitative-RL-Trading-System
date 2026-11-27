@@ -37,6 +37,7 @@ api_paths:
 - training/runner/survival_campaign.py
 - training/runner/training.py
 - training/runner/vae.py
+- training/runner/walk_forward_validation.py
 - training/setup/__init__.py
 - training/setup/callbacks.py
 - training/setup/environments.py
@@ -44,6 +45,12 @@ api_paths:
 - training/setup/model_state.py
 - training/setup/policy_diagnostics.py
 caller_paths:
+- tests/unit/training/test_seed_runtime_development_lifecycle.py
+- tests/unit/training/test_seed_runtime_bundle_export_contract.py
+- tests/unit/training/test_training_curves_optional_plot_dependency.py
+- tests/unit/training/test_dashboard_eval_artifacts.py
+- tests/unit/training/test_training_curve_empty_input.py
+- tests/unit/training/test_variant_resolution.py
 - tests/unit/training/test_observation_memmap.py
 - tests/unit/training/test_survival_gate_remaining_runtime_contracts.py
 - tests/unit/training/test_tick_execution_preflight.py
@@ -56,6 +63,7 @@ caller_paths:
 - tests/integration/test_ablation_oos_smoke.py
 - tests/integration/test_action_schema_contract.py
 - tests/integration/test_scripts_smoke.py
+- tests/unit/training/test_lstm_baseline_contracts.py
 - tests/unit/experiments/test_model_variant_catalog.py
 - tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py
 - tests/unit/models/test_mtf_encoder_registration.py
@@ -89,21 +97,31 @@ caller_paths:
 - tests/unit/training/test_research_protocol.py
 - tests/unit/training/test_run_log.py
 - tests/unit/training/test_seed_runtime_coverage.py
+- tests/unit/training/test_seed_runtime_additional_coverage.py
+- tests/unit/training/test_stable_cli_dispatch.py
+- tests/unit/training/test_training_reporting_contracts.py
+- tests/unit/training/test_baseline_runner_remaining_contracts.py
+- tests/unit/training/test_training_runner_contracts.py
+- tests/unit/training/test_runner_input_contracts.py
 - tests/unit/training/test_sac_smoke.py
 - tests/unit/training/test_survival_campaign_resume.py
 - tests/unit/training/test_survival_gate.py
+- tests/unit/training/test_survival_gate_remaining_coverage.py
 - tests/unit/training/test_sustainable_growth_variant_resolution.py
 - tests/unit/training/test_train_rl_decomposition.py
 - tests/unit/training/test_training_activity_gate.py
 - tests/unit/training/test_training_curves.py
 - tests/unit/training/test_training_main.py
+- tests/unit/training/test_walk_forward_validation_coverage.py
 - tests/unit/training/test_training_smoke.py
 - tests/unit/training/test_vae_admission.py
 - tests/unit/training/test_variant_overrides_match_legacy.py
 - tests/unit/training/test_variant_resolver.py
+- tests/unit/training/test_data_stage_remaining_contracts.py
+- tests/unit/training/test_survival_gate_remaining_runtime_contracts.py
 source_scopes:
   - {path: training/configuration, study_ids: [training.survival_admission_and_locked_data, training.full_path_survival_qualification]}
-  - {path: training/runner, study_ids: [training.configuration_and_data_preparation, training.seed_fold_checkpoint_and_resume]}
+  - {path: training/runner, study_ids: [training.configuration_and_data_preparation, training.seed_fold_checkpoint_and_resume, training.run_artifacts_and_cli]}
   - {path: training/setup, study_ids: [training.configuration_and_data_preparation]}
   - {path: training/callbacks, study_ids: [training.seed_fold_checkpoint_and_resume]}
   - {path: training/artifacts, study_ids: [training.run_artifacts_and_cli, training.seed_fold_checkpoint_and_resume]}
@@ -125,19 +143,19 @@ studies:
     type: code_check
     question: Does portfolio learning require the correct qualified checkpoint and reject report-only data for selection?
     source_paths: [training/configuration/survival_gate.py, training/runner/walk_forward_validation.py]
-    checks: [tests/unit/training/test_survival_gate.py, tests/unit/training/test_research_protocol.py]
+    checks: [tests/unit/training/test_survival_gate.py, tests/unit/training/test_research_protocol.py, tests/unit/training/test_survival_gate_remaining_runtime_contracts.py]
     outputs: [training_admission_check]
   - id: training.seed_fold_checkpoint_and_resume
     type: code_check
     question: Are seed and fold inputs, callbacks, checkpoints, and resume state tied to the effective run identity?
-    source_paths: [training/runner/seed_runtime.py, training/runner/seed_stages.py, training/callbacks/equity.py]
-    checks: [tests/unit/training/test_seed_reproducibility.py, tests/unit/training/test_survival_campaign_resume.py, tests/unit/training/test_periodic_checkpoint.py]
+    source_paths: [training/runner/seed_runtime.py, training/runner/seed_stages.py, training/callbacks/equity.py, training/runner/walk_forward_validation.py, training/runner/training.py]
+    checks: [tests/unit/training/test_seed_reproducibility.py, tests/unit/training/test_survival_campaign_resume.py, tests/unit/training/test_periodic_checkpoint.py, tests/unit/training/test_training_runner_contracts.py]
     outputs: [seed_fold_and_resume_check]
   - id: training.run_artifacts_and_cli
     type: code_check
     question: Do training entry points and artifacts report the requested and realized run settings without bypassing admission?
-    source_paths: [training/cli.py, training/artifacts/snapshots.py, training/artifacts/manifests.py]
-    checks: [tests/unit/training/test_config_snapshot.py, tests/unit/training/test_training_smoke.py]
+    source_paths: [training/cli.py, training/runner/baselines.py, training/artifacts/snapshots.py, training/artifacts/manifests.py, training/reporting/training_curves.py]
+    checks: [tests/unit/training/test_config_snapshot.py, tests/unit/training/test_training_smoke.py, tests/unit/training/test_training_reporting_contracts.py, tests/unit/training/test_baseline_runner_remaining_contracts.py]
     outputs: [training_cli_and_artifact_check]
   - id: training.full_path_survival_qualification
     type: empirical

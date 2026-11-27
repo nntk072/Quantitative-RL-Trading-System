@@ -233,7 +233,7 @@ def test_no_breach():
     assert g.breach_reason(acc) is None
 ```
 
-2. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L96)
+2. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L132)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -293,7 +293,7 @@ def test_no_breach():
     assert g.breach_reason(acc) is None
 ```
 
-2. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L97)
+2. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L133)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -341,7 +341,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L91)
+1. [test fixture: `test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor`](../../../../tests/unit/trading/test_guardrails.py#L127)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -358,7 +358,7 @@ def test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor():
     assert g.breach_reason(acc) == "daily_loss"
 ```
 
-2. [test fixture: `test_daily_percentage_allowance_stays_fixed_for_all_max_drawdown_modes`](../../../../tests/unit/trading/test_guardrails.py#L221)
+2. [test fixture: `test_daily_percentage_allowance_stays_fixed_for_all_max_drawdown_modes`](../../../../tests/unit/trading/test_guardrails.py#L257)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -409,7 +409,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_max_drawdown_breach`](../../../../tests/unit/trading/test_guardrails.py#L104)
+1. [test fixture: `test_max_drawdown_breach`](../../../../tests/unit/trading/test_guardrails.py#L140)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -424,7 +424,7 @@ def test_max_drawdown_breach():
     assert g.breach_reason(acc) == "max_drawdown"
 ```
 
-2. [test fixture: `test_max_loss_not_trailing_hwm`](../../../../tests/unit/trading/test_guardrails.py#L117)
+2. [test fixture: `test_max_loss_not_trailing_hwm`](../../../../tests/unit/trading/test_guardrails.py#L153)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -475,7 +475,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_soft_daily_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L352)
+1. [test fixture: `test_soft_daily_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L388)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -524,7 +524,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L381)
+1. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L417)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -572,7 +572,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_trade_risk_check`](../../../../tests/unit/trading/test_guardrails.py#L164)
+1. [test fixture: `test_trade_risk_check`](../../../../tests/unit/trading/test_guardrails.py#L200)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -584,7 +584,7 @@ def test_trade_risk_check():
     assert g.check_trade_risk(1001.0) is True
 ```
 
-2. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L186)
+2. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L222)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -635,7 +635,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_trailing_dd_is_dollar_from_peak_not_pct_of_peak`](../../../../tests/unit/trading/test_guardrails.py#L365)
+1. [test fixture: `test_trailing_dd_is_dollar_from_peak_not_pct_of_peak`](../../../../tests/unit/trading/test_guardrails.py#L401)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -656,7 +656,7 @@ def test_trailing_dd_is_dollar_from_peak_not_pct_of_peak():
     assert not g.check_max_drawdown(acc)
 ```
 
-2. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L382)
+2. [test fixture: `test_soft_trailing_dd_does_not_hard_breach`](../../../../tests/unit/trading/test_guardrails.py#L418)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -703,7 +703,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L182)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L218)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -723,7 +723,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L207)
+2. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L243)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -812,7 +812,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_max_loss_floor_modes_share_initial_allowance_and_cap_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L158)
+1. [test fixture: `test_max_loss_floor_modes_share_initial_allowance_and_cap_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L194)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -827,7 +827,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert guardrails.check_max_drawdown(account) is breached
 ```
 
-2. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L304)
+2. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L340)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -876,7 +876,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L184)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L220)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -945,7 +945,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L181)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L217)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1008,7 +1008,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L183)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L219)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1028,7 +1028,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L208)
+2. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L244)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1074,7 +1074,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L185)
+1. [test fixture: `test_percentage_limits_use_initial_equity_for_daily_and_max_loss`](../../../../tests/unit/trading/test_guardrails.py#L221)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

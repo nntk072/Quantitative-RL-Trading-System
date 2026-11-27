@@ -238,6 +238,33 @@ class TestSweepConfirmationReward:
         r = reward_fn(0, 0, 100, 95, 90, 98, 92, minutes_since_open=10_000.0)
         assert r == pytest.approx(0.0, abs=1e-9)
 
+    @pytest.mark.parametrize(
+        ("level", "prices", "expected"),
+        [
+            ("london", [101.0, 99.0, 98.0, 97.0], 1.0),
+            ("london", [101.0, 99.0, 101.0], -0.5),
+            ("asian", [96.0, 94.0, 93.0, 92.0], 0.5),
+            ("asian", [96.0, 94.0, 96.0], -0.5),
+        ],
+    )
+    def test_short_side_sweep_confirmation_and_failure(
+        self, level: str, prices: list[float], expected: float
+    ) -> None:
+        reward = SweepConfirmationReward(alpha=1.0, beta=0.0, hold_bars=3)
+        score = 0.0
+        for price in prices:
+            score = reward(
+                0.0,
+                0.0,
+                price,
+                london_high=110.0 if level == "asian" else 105.0,
+                london_low=90.0 if level == "asian" else 100.0,
+                asian_high=108.0,
+                asian_low=95.0,
+                minutes_since_open=0.0,
+            )
+        assert score == pytest.approx(expected)
+
 
 class TestCompositeReward:
     """Tests for CompositeReward class."""

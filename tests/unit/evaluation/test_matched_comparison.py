@@ -81,6 +81,39 @@ def test_paired_equity_metric_intervals_use_exact_shared_prefix_when_one_policy_
     assert intervals["mean_bar_return"].estimate == pytest.approx(expected)
 
 
+def test_paired_equity_metrics_accept_environment_step_indexes() -> None:
+    treatment = pd.Series([100.0, 102.0, 101.0], index=pd.RangeIndex(3))
+    control = pd.Series([100.0, 101.0, 100.0], index=pd.RangeIndex(3))
+
+    intervals = paired_equity_metric_differences(
+        treatment,
+        control,
+        initial_balance=100.0,
+        periods_per_year=100,
+        n_boot=25,
+        rng_seed=9,
+        block_len=2,
+    )
+
+    assert intervals["mean_bar_return"].estimate == pytest.approx(
+        np.mean(np.diff(treatment.to_numpy()) / treatment.to_numpy()[:-1])
+        - np.mean(np.diff(control.to_numpy()) / control.to_numpy()[:-1])
+    )
+
+
+def test_paired_equity_rejects_inconsistent_starting_capital_convention() -> None:
+    index = pd.date_range("2025-01-01", periods=3, freq="min", tz="UTC")
+
+    with pytest.raises(ValueError, match="same initial-capital convention"):
+        paired_equity_metric_differences(
+            pd.Series([100.0, 101.0, 102.0], index=index),
+            pd.Series([99.0, 101.0, 102.0], index=index),
+            initial_balance=100.0,
+            periods_per_year=100,
+            n_boot=10,
+        )
+
+
 def test_paired_bundle_interval_record_matches_manifest_schema() -> None:
     index = pd.date_range("2025-01-01", periods=4, freq="min", tz="UTC")
     protocol = {

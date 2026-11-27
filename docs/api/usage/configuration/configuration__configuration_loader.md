@@ -27,7 +27,22 @@ This page contains 4 public callable records owned by `configuration.configurati
 
 **Observed usage:**
 
-1. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L51)
+1. [test fixture: `test_configuration_override_rejects_non_mapping_default_schema`](../../../../tests/unit/configuration/test_configuration_helpers.py#L58)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_configuration_override_rejects_non_mapping_default_schema(monkeypatch) -> None:
+    import configuration.configuration_loader as loader
+
+    monkeypatch.setattr(loader, "_load_default_config", lambda: OmegaConf.create([]))
+    config = OmegaConf.create({"ppo": {"learning_rate": 0.001}})
+
+    with pytest.raises(ValueError, match="schema and effective config roots must be mappings"):
+        apply_overrides(config, ["ppo.learning_rate=0.01"])
+```
+
+2. [production caller: `load_config`](../../../../configuration/configuration_loader.py#L51)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -152,7 +167,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L34)
+1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -211,7 +226,7 @@ def _load_default_config() -> DictConfig:
 
 **Observed usage:**
 
-1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L37)
+1. [test fixture: `test_configuration_overlay_and_override_reject_invalid_roots`](../../../../tests/unit/configuration/test_configuration_helpers.py#L41)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -381,8 +381,6 @@ class RiskManager:
             volume_step = Decimal(str(lot_step))
             steps = (Decimal(str(capped_size)) - min_volume) // volume_step
             position_size = float(min_volume + steps * volume_step)
-            if position_size < min_lot:
-                return 0.0
 
             logger.info(
                 f"Calculated position size for {symbol}: {position_size} lots "

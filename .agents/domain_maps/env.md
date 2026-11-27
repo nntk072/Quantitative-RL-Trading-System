@@ -6,7 +6,7 @@
 |------|------|
 | `simulation/environment/env.py` | Simulator facade with native transition and Gymnasium adapter |
 | `simulation/contracts/transition.py` | Framework-neutral result of one simulation transition |
-| `simulation/environment/initialization_runtime.py` | Initialization-stage composition root |
+| `simulation/environment/episode/initialization.py` | Initialization-stage composition root |
 | `simulation/environment/market_source_initialization.py` | Market source, frame, tick, and bundle setup |
 | `simulation/environment/account_policy_initialization.py` | Account, broker, cost, and policy setup |
 | `simulation/environment/risk_entry_initialization.py` | Risk controls and entry state-machine setup |
@@ -16,26 +16,26 @@
 | `simulation/environment/observation_arrays_initialization.py` | Observation feature and market arrays |
 | `simulation/environment/action_episode_initialization.py` | Action schema and episode state initialization |
 | `simulation/environment/episode_spaces_initialization.py` | Observation-space construction |
-| `simulation/environment/step_runtime.py` | Step transition stages and result construction |
-| `simulation/environment/action_intent_runtime.py` | Strategy action and entry validation |
-| `simulation/environment/step_constraints_runtime.py` | Risk, session, and delayed-fill constraints |
+| `simulation/environment/episode/step.py` | Step transition stages and result construction |
+| `simulation/environment/entries/action_intent.py` | Strategy action and entry validation |
+| `simulation/environment/episode/constraints.py` | Risk, session, and delayed-fill constraints |
 | `simulation/environment/step_action_execution.py` | Entry and discretionary action execution |
-| `simulation/environment/step_accounting_runtime.py` | Reward and equity accounting |
-| `simulation/environment/entry_funnel_runtime.py` | Candidate evidence and rejection funnel updates |
-| `simulation/environment/step_info_runtime.py` | Step result and constraint telemetry |
-| `simulation/environment/step_end_runtime.py` | Episode progression and termination semantics |
-| `simulation/environment/execution_runtime.py` | Execution service composition root |
-| `simulation/environment/protective_level_runtime.py` | Bar and chronological multi-TP protective-level transitions |
-| `simulation/environment/tick_quote_runtime.py` | Tick exit lookup and randomized quote resolution |
-| `simulation/environment/fill_quote_runtime.py` | Stop, target, and bar quote construction |
-| `simulation/environment/trade_accounting_runtime.py` | Exit provenance and realized PnL/R bookkeeping |
-| `simulation/environment/entry_execution_runtime.py` | Entry quote resolution, opposite-position close, and entry orchestration |
-| `simulation/environment/entry_order_runtime.py` | Strategy and structural entry-level construction |
-| `simulation/environment/risk_runtime.py` | Account guardrails, sizing, reserve, and entry risk-capacity approval |
-| `simulation/environment/position_open_runtime.py` | Initialize selected setup, protective levels, and position state |
-| `simulation/environment/trade_entry_record_runtime.py` | Persist entry fill and setup evidence into the trade ledger |
-| `simulation/environment/episode_runtime.py` | Episode reset, market progression, and transition mechanics |
-| `simulation/environment/ema_exit_runtime.py` | EMA-based protective exit decisions |
+| `simulation/environment/accounting/step.py` | Reward and equity accounting |
+| `simulation/environment/entries/funnel.py` | Candidate evidence and rejection funnel updates |
+| `simulation/environment/episode/info.py` | Step result and constraint telemetry |
+| `simulation/environment/episode/end.py` | Episode progression and termination semantics |
+| `simulation/environment/entries/execution.py` | Execution service composition root |
+| `simulation/environment/exits/protective_levels.py` | Bar and chronological multi-TP protective-level transitions |
+| `simulation/environment/quotes/ticks.py` | Tick exit lookup and randomized quote resolution |
+| `simulation/environment/quotes/fills.py` | Stop, target, and bar quote construction |
+| `simulation/environment/accounting/trades.py` | Exit provenance and realized PnL/R bookkeeping |
+| `simulation/environment/entries/execution.py` | Entry quote resolution, opposite-position close, and entry orchestration |
+| `simulation/environment/entries/orders.py` | Strategy and structural entry-level construction |
+| `simulation/environment/risk/runtime.py` | Account guardrails, sizing, reserve, and entry risk-capacity approval |
+| `simulation/environment/positions/opening.py` | Initialize selected setup, protective levels, and position state |
+| `simulation/environment/positions/entry_record.py` | Persist entry fill and setup evidence into the trade ledger |
+| `simulation/environment/episode/lifecycle.py` | Episode reset, market progression, and transition mechanics |
+| `simulation/environment/exits/ema.py` | EMA-based protective exit decisions |
 | `simulation/environment/action_diagnostics.py` | Action coordinate telemetry |
 | `simulation/environment/entry_diagnostics.py` | Entry rejection and funnel contracts |
 | `simulation/environment/timebase.py` | Bar spacing and broker-clock semantics |
@@ -111,7 +111,7 @@
 
 | Task | Axis | Start file | Contract and focused test | Expected scope | Keep unchanged |
 |---|---|---|---|---|---|
-| Change a state transition | simulation service | `simulation/environment/step_runtime.py` | action/observation contracts; `tests/unit/simulation/test_environment/test_sl_tp_fill.py` | one step or execution service plus golden checks | model family and learner workflow |
+| Change a state transition | simulation service | `simulation/environment/episode/step.py` | action/observation contracts; `tests/unit/simulation/test_environment/test_sl_tp_fill.py` | one step or execution service plus golden checks | model family and learner workflow |
 | Change observation layout | schema evolution | `decisioning/observations.py` | versioned observation schema; `tests/unit/simulation/test_environment/test_observation_schema.py` | schema and compatibility boundary | market-data source and report metrics |
 
 ## Axis of Change
@@ -131,16 +131,16 @@
 ## Verified Source Paths
 
 - `simulation/environment/env.py`
-- `simulation/environment/initialization_runtime.py`
-- `simulation/environment/step_runtime.py`
-- `simulation/environment/action_intent_runtime.py`
-- `simulation/environment/step_constraints_runtime.py`
+- `simulation/environment/episode/initialization.py`
+- `simulation/environment/episode/step.py`
+- `simulation/environment/entries/action_intent.py`
+- `simulation/environment/episode/constraints.py`
 - `simulation/environment/step_action_execution.py`
-- `simulation/environment/step_accounting_runtime.py`
-- `simulation/environment/entry_funnel_runtime.py`
-- `simulation/environment/step_info_runtime.py`
-- `simulation/environment/step_end_runtime.py`
-- `simulation/environment/execution_runtime.py`
+- `simulation/environment/accounting/step.py`
+- `simulation/environment/entries/funnel.py`
+- `simulation/environment/episode/info.py`
+- `simulation/environment/episode/end.py`
+- `simulation/environment/entries/execution.py`
 - `simulation/environment/action_diagnostics.py`
 - `simulation/environment/entry_diagnostics.py`
 - `simulation/environment/timebase.py`

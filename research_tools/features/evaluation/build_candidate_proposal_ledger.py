@@ -61,9 +61,9 @@ SOURCE_FILES = (
     "trading/orders/stops.py",
     "trading/orders/targets.py",
     "simulation/environment/trading_environment_factory.py",
-    "simulation/environment/episode_runtime.py",
-    "simulation/environment/action_intent_runtime.py",
-    "simulation/environment/diagnostics_runtime.py",
+    "simulation/environment/episode/lifecycle.py",
+    "simulation/environment/entries/action_intent.py",
+    "simulation/environment/diagnostics/runtime.py",
     "simulation/environment/step_action_execution.py",
 )
 DATA_MANIFEST = ROOT / "evidence/research/data_identity/raw_data_manifest.json"

@@ -9,7 +9,7 @@ import pandas as pd
 import torch
 
 from simulation.environment.env import TradingEnv
-from simulation.environment.observations import (
+from simulation.environment.observations.schema import (
     closed_window,
     run_starts,
     timeframe_starts,

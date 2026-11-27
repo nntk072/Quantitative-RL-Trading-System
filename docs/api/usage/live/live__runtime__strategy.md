@@ -36,7 +36,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L203)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L205)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -90,7 +90,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L313)
+1. [test fixture: `test_live_strategy_fails_closed_and_maps_sell_hold_with_secondary_data`](../../../../tests/unit/live/test_rl_bridge.py#L501)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        def get_data(self) -> pd.DataFrame:
+            self.calls += 1
+            return secondary_bars
+
+    secondary_data = SecondaryData(secondary_bars)
+    strategy = adapter.as_strategy(_StubData(trending_bars), secondary_data)
+
+    monkeypatch.setattr(adapter, "predict_signal", lambda: -1)
+    assert strategy.signal() == ("US100.cash", LiveSignal.SELL)
+    assert recorded_updates[-1][0] is trending_bars
+    assert recorded_updates[-1][1] is secondary_bars
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_rl_bridge_maps_actions_to_signals`](../../../../tests/unit/live/test_rl_bridge.py#L576)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -105,25 +125,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     symbol, sig = strategy.signal()
     assert symbol == "US100.cash"
     assert sig.value == "buy"
-```
-
-2. [test fixture: `test_account_state_v2_live_policy_fails_closed_without_snapshot`](../../../../tests/unit/live/test_rl_bridge.py#L337)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    adapter = RLStrategyAdapter(
-        model=model,
-        config_path=config_path,
-        allow_runtime_normalization_fallback=True,
-    )
-    strategy = adapter.as_strategy(_StubData(trending_bars))
-
-    symbol, signal = strategy.signal()
-
-    assert symbol == "US100.cash"
-    assert signal.value == "none"
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -206,7 +207,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L233)
+2. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L235)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -257,7 +258,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L238)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L240)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -272,18 +273,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert action == 1
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L295)
+2. [test fixture: `test_live_adapter_maps_scalar_and_directional_provider_decisions`](../../../../tests/unit/live/test_rl_bridge.py#L458)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        "tp3_price": 0.0,
-        "sl_mode": "fixed",
-        "tp_mode": "fixed",
-        "exit_mode": "structural",
-    }
-    assert adapter.predict_signal(state) == 1
+        provider=Provider(ContinuousAction(-0.25)),
+        config_path="config/base/default.yaml",
+        allow_runtime_normalization_fallback=True,
+    )
+    monkeypatch.setattr(adapter, "build_observation", lambda _account_state=None: {})
+    assert adapter.predict_signal() == -0.25
+    assert adapter.last_decision is not None
+    assert isinstance(adapter.last_decision.action, ContinuousAction)
+
+    adapter.provider = Provider(StructuredAction({"direction": 1.0}))
+    assert adapter.predict_signal() == 1.0
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -312,7 +319,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L208)
+1. [test fixture: `test_rl_bridge_observation_contract`](../../../../tests/unit/live/test_rl_bridge.py#L210)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -332,24 +339,22 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_rl_bridge_accepts_a_decision_provider`](../../../../tests/unit/live/test_rl_bridge.py#L269)
+2. [test fixture: `test_primary_only_runtime_does_not_forward_secondary_market_data`](../../../../tests/unit/live/test_rl_bridge.py#L319)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    adapter = RLStrategyAdapter(
-        provider=provider,
-        config_path="config/base/default.yaml",
-        allow_runtime_normalization_fallback=True,
-    )
-    adapter.update_bars(trending_bars)
+    def fake_build_features(bars: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
+        received.append(kwargs)
+        return pd.DataFrame({"feature": np.zeros(len(bars))}, index=bars.index)
 
-    state = {
-        "equity": 100_000.0,
-        "planned_risk_usd": 0.0,
-        "trailing_drawdown": 0.0,
-# … caller assertions omitted …
+    monkeypatch.setattr(features, "build_features", fake_build_features)
+    adapter.update_bars(trending_bars, secondary_bars=secondary_bars)
+
+    assert received[0]["secondary"] is None
+    assert received[0]["force"] is True
+    assert adapter._secondary_bars is secondary_bars
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

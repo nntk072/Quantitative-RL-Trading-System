@@ -660,7 +660,22 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_version_and_layout_survive_sb3_save_load_without_training`](../../../../tests/unit/models/test_action_schema_sb3_roundtrip.py#L68)
+1. [test fixture: `test_discrete_schema_binding_rejects_action_space_width_mismatch`](../../../../tests/unit/learning/test_rl_agent_additional_runtime_contracts.py#L33)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_discrete_schema_binding_rejects_action_space_width_mismatch() -> None:
+    schema = build_discrete_trading_action_schema()
+    model = SimpleNamespace(action_space=spaces.Discrete(schema.width + 1), policy=None)
+
+    with pytest.raises(ValueError, match="width differs from the model action space"):
+        agent.bind_discrete_action_schema(model, schema)
+
+    assert not hasattr(model, "_action_schema")
+```
+
+2. [test fixture: `test_version_and_layout_survive_sb3_save_load_without_training`](../../../../tests/unit/models/test_action_schema_sb3_roundtrip.py#L68)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -676,14 +691,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         validate_model_action_schema(loaded, same_width_other_layout)
 ```
 
-2. [production caller: `key`](../../../../decisioning/actions.py#L44)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def key(self) -> str:
-    return f"discrete-{self.width}"
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
