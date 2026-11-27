@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 import torch
 
-from simulation.environment.diagnostics.errors import DebugStepError
+from simulation.environment.diagnostics import DebugStepError
 from training.callbacks.debug_trace import (
     FlightRecorder,
     account_weights,

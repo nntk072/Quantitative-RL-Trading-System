@@ -18,18 +18,7 @@ from evaluation.metrics.trade_diagnostics import (
     rolling_win_rate,
     weekday_hour_pnl,
 )
-from evaluation.plotting import (
-    diagnostics as diagnostics_package,
-)
-from evaluation.plotting import (
-    distribution_plots as legacy_distributions,
-)
-from evaluation.plotting import (
-    diversity as legacy_diversity,
-)
-from evaluation.plotting import (
-    trade_plots as legacy_trade,
-)
+from evaluation import plotting as plotting_package
 from evaluation.plotting.trade_plots import (
     plot_hold_time_pnl,
     plot_mae_mfe,
@@ -68,30 +57,19 @@ def _trades() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_diagnostics_package_exports_and_legacy_modules_are_stable() -> None:
+def test_plotting_package_exports_are_stable() -> None:
     expected = [
-        "plot_hold_time_pnl",
-        "plot_hold_time_pnl_html",
-        "plot_holding_time_hist",
-        "plot_mae_mfe",
-        "plot_mae_mfe_html",
-        "plot_pnl_box_by_regime",
-        "plot_pnl_histogram",
-        "plot_rolling_winrate",
-        "plot_rolling_winrate_html",
-        "plot_tod_heatmap",
-        "plot_tod_heatmap_html",
-        "render_decision_diversity_figures",
-        "write_distribution_artifacts",
-        "write_trade_diagnostics",
+        "plot_drawdown",
+        "plot_equity_curve",
+        "plot_per_trade_orders",
+        "plot_per_trade_orders_html",
+        "plot_price_with_orders",
     ]
-    assert diagnostics_package.__all__ == expected
-    for legacy_module in (legacy_trade, legacy_distributions, legacy_diversity):
-        for name in legacy_module.__all__:
-            assert getattr(diagnostics_package, name) is getattr(legacy_module, name)
-    unknown_diagnostic = "unknown_diagnostic"
-    with pytest.raises(AttributeError, match="unknown_diagnostic"):
-        getattr(diagnostics_package, unknown_diagnostic)
+    assert plotting_package.__all__ == expected
+    assert all(callable(getattr(plotting_package, name)) for name in expected)
+    unknown_plot = "unknown_plot"
+    with pytest.raises(AttributeError, match="unknown_plot"):
+        getattr(plotting_package, unknown_plot)
 
 
 def _bars() -> pd.DataFrame:
