@@ -923,6 +923,13 @@ scripts:
   entrypoint: cli
   tests: *id010
   migration_state: complete
+- path: scripts/research/benchmarks/check_performance_promotion.py
+  owner_module: compute
+  target: research_tools.compute.benchmarks.performance_promotion
+  entrypoint: cli
+  tests:
+  - tests/unit/research_tools/test_performance_promotion.py
+  migration_state: complete
 - path: scripts/research/benchmarks/compare_encoders.py
   owner_module: models
   target: research_tools.models.benchmarks.compare_encoders

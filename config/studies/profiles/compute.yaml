@@ -46,6 +46,7 @@ source_scopes:
   - {path: compute/cli.py, study_ids: [compute.device_and_precision_selection]}
   - {path: compute/__init__.py, study_ids: [compute.device_and_precision_selection]}
   - {path: research_tools/compute, study_ids: [compute.device_and_precision_selection, compute.resource_and_worker_contract]}
+  - {path: research_tools/compute/benchmarks/performance_promotion.py, study_ids: [compute.performance_promotion_policy]}
 config_paths: [config/base/default.yaml]
 test_paths: [tests/unit/compute, tests/integration/test_device.py]
 studies:
@@ -61,3 +62,9 @@ studies:
     source_paths: [compute/slurm/resources.py, compute/slurm/worker_resources.py]
     checks: [tests/unit/compute/test_worker_resources.py]
     outputs: [worker_resource_check]
+  - id: compute.performance_promotion_policy
+    type: code_check
+    question: Do promotion decisions for optional performance candidates follow the frozen matrix, with correctness gates ahead of speed, dispersion-gated repeats, and rejected trials leaving the baseline in place?
+    source_paths: [research_tools/compute/benchmarks/performance_promotion.py, planning/native_modernization/performance_policy/promotion_matrix.md]
+    checks: [tests/unit/research_tools/test_performance_promotion.py]
+    outputs: [promotion_decision_check]
