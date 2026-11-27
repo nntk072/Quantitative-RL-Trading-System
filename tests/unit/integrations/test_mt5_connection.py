@@ -79,7 +79,7 @@ def test_uninitialized_terminal_is_initialized_before_requested_account_login(
         ("initialize", {"path": "terminal"}),
         (
             "login",
-            {"login": 222, "password": "secret", "server": "demo"},
+            {"login": 222, "password": "secret", "server": "demo"},  # pragma: allowlist secret
         ),  # pragma: allowlist secret
     ]
 
