@@ -49,6 +49,20 @@ _SUPPORTED_EVENT_TYPES = frozenset(
         "tp_update",
     }
 )
+_INCOMPLETE_STATUS_REASONS = frozenset(
+    {
+        "submitted_order_missing_decision_id",
+        "order_lifecycle_event_missing_decision_id",
+        "order_rejection_missing_decision_id",
+        "order_lifecycle_event_missing_order_id",
+        "opened_position_missing_order_id",
+        "opened_position_missing_position_id",
+        "opened_position_missing_decision_id",
+        "close_event_missing_position_id",
+        "limit_fill_contract_fields_missing",
+        "limit_fill_open_link_fields_missing",
+    }
+)
 
 
 def _integer(value: Any) -> int | None:
@@ -1337,7 +1351,8 @@ def reconcile_policy_decisions(
     report["unclosed_position_ids"] = sorted(active_positions)
     if active_positions:
         report["incomplete_reasons"].append("position_ledger_ends_with_open_positions")
-    if failures:
+    status_blockers = _INCOMPLETE_STATUS_REASONS.intersection(report["incomplete_reasons"])
+    if failures and not status_blockers:
         report["status"] = "mismatch"
     elif report["incomplete_reasons"]:
         report["status"] = "incomplete"
