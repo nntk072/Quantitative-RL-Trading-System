@@ -78,11 +78,26 @@ def _source_zone(
             matching = ifvg
     if not matching:
         return None
+
+    def _sort_value(zone: dict[str, Any], key: str, default: float) -> float:
+        """Return a sortable value, using a fallback for malformed zone fields.
+
+        Args:
+            zone: Candidate source zone being ordered.
+            key: Numeric zone field used in the sort key.
+            default: Fallback value when the zone field is invalid.
+
+        Returns:
+            Parsed finite value or the supplied fallback.
+        """
+        value = _finite(zone.get(key))
+        return default if value is None else value
+
     matching.sort(
         key=lambda zone: (
-            int(zone.get("start_time_ns") or 0),
-            float(zone.get("low", np.inf)),
-            float(zone.get("high", np.inf)),
+            _sort_value(zone, "start_time_ns", 0.0),
+            _sort_value(zone, "low", np.inf),
+            _sort_value(zone, "high", np.inf),
         ),
         reverse=True,
     )

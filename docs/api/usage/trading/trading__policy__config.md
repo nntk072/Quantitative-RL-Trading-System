@@ -99,45 +99,61 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L17)
+1. [test fixture: `test_historical_dollar_limits_and_aliases_resolve_to_canonical_policy_fields`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L14)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_repeated_policy_config_resolves_without_changing_default() -> None:
-    legacy = resolve_trading_policy(load_config())
-    assert legacy.mode == "legacy"
-    assert legacy.risk_state_schema_version == "risk-state-v1"
-    assert legacy.daily_pnl_basis == "session_net_equity"
-    assert legacy.daily_loss_includes_open_pnl is True
-    assert legacy.daily_loss_reset_source == "supplied_session_id_transition"
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L43)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_historical_dollar_account_floor_resolves_to_initial_equity_percentage() -> None:
+def test_historical_dollar_limits_and_aliases_resolve_to_canonical_policy_fields() -> None:
     policy = resolve_trading_policy(
         {
-            "account": {"initial_balance": 100_000.0},
+            "account": {"initial_balance": 80_000.0},
             "trading_policy": {
                 "mode": "repeated_payout",
                 "repeated_payout": {
-                    "operating_balance": 100_000.0,
-                    "account_floor_equity": 85_000.0,
+                    "operating_balance": 80_000.0,
+                    "payout_target_balance": 88_000.0,
+                    "daily_loss_limit": 4_000.0,
+                    "account_floor_equity": 72_000.0,
+                    "agent_risk_min_frac": 0.0,
+                    "agent_risk_max_frac": 0.008,
+                    "reserve_cost_buffer_usd": 125.0,
                 },
             },
         }
     )
 
-    assert policy.max_loss_limit_initial_pct == pytest.approx(0.15)
-    assert policy.account_floor == pytest.approx(85_000.0)
-
-    restored = TradingPolicyConfig.from_mapping(
+    assert policy.daily_loss_limit_pct == pytest.approx(0.05)
+    assert policy.daily_loss_limit == pytest.approx(4_000.0)
+    assert policy.max_loss_limit_initial_pct == pytest.approx(0.10)
+    assert policy.account_floor == pytest.approx(72_000.0)
 # … caller assertions omitted …
+```
+
+2. [test fixture: `test_canonical_values_take_precedence_over_historical_aliases`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L43)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_canonical_values_take_precedence_over_historical_aliases() -> None:
+    policy = resolve_trading_policy(
+        {
+            "trading_policy": {
+                "repeated_payout": {
+                    "daily_loss_limit_pct": 0.04,
+                    "daily_loss_limit": 9_000.0,
+                    "max_agent_risk_frac": 0.007,
+                    "agent_risk_max_frac": 0.003,
+                    "execution_reserve_usd": 50.0,
+                    "reserve_cost_buffer_usd": 500.0,
+                }
+            }
+        }
+    )
+
+    assert policy.daily_loss_limit_pct == pytest.approx(0.04)
+    assert policy.max_agent_risk_frac == pytest.approx(0.007)
+    assert policy.execution_reserve_usd == pytest.approx(50.0)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -244,45 +260,61 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L17)
+1. [test fixture: `test_historical_dollar_limits_and_aliases_resolve_to_canonical_policy_fields`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L14)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_repeated_policy_config_resolves_without_changing_default() -> None:
-    legacy = resolve_trading_policy(load_config())
-    assert legacy.mode == "legacy"
-    assert legacy.risk_state_schema_version == "risk-state-v1"
-    assert legacy.daily_pnl_basis == "session_net_equity"
-    assert legacy.daily_loss_includes_open_pnl is True
-    assert legacy.daily_loss_reset_source == "supplied_session_id_transition"
-# … caller assertions omitted …
-```
-
-2. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L43)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_historical_dollar_account_floor_resolves_to_initial_equity_percentage() -> None:
+def test_historical_dollar_limits_and_aliases_resolve_to_canonical_policy_fields() -> None:
     policy = resolve_trading_policy(
         {
-            "account": {"initial_balance": 100_000.0},
+            "account": {"initial_balance": 80_000.0},
             "trading_policy": {
                 "mode": "repeated_payout",
                 "repeated_payout": {
-                    "operating_balance": 100_000.0,
-                    "account_floor_equity": 85_000.0,
+                    "operating_balance": 80_000.0,
+                    "payout_target_balance": 88_000.0,
+                    "daily_loss_limit": 4_000.0,
+                    "account_floor_equity": 72_000.0,
+                    "agent_risk_min_frac": 0.0,
+                    "agent_risk_max_frac": 0.008,
+                    "reserve_cost_buffer_usd": 125.0,
                 },
             },
         }
     )
 
-    assert policy.max_loss_limit_initial_pct == pytest.approx(0.15)
-    assert policy.account_floor == pytest.approx(85_000.0)
-
-    restored = TradingPolicyConfig.from_mapping(
+    assert policy.daily_loss_limit_pct == pytest.approx(0.05)
+    assert policy.daily_loss_limit == pytest.approx(4_000.0)
+    assert policy.max_loss_limit_initial_pct == pytest.approx(0.10)
+    assert policy.account_floor == pytest.approx(72_000.0)
 # … caller assertions omitted …
+```
+
+2. [test fixture: `test_canonical_values_take_precedence_over_historical_aliases`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L43)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_canonical_values_take_precedence_over_historical_aliases() -> None:
+    policy = resolve_trading_policy(
+        {
+            "trading_policy": {
+                "repeated_payout": {
+                    "daily_loss_limit_pct": 0.04,
+                    "daily_loss_limit": 9_000.0,
+                    "max_agent_risk_frac": 0.007,
+                    "agent_risk_max_frac": 0.003,
+                    "execution_reserve_usd": 50.0,
+                    "reserve_cost_buffer_usd": 500.0,
+                }
+            }
+        }
+    )
+
+    assert policy.daily_loss_limit_pct == pytest.approx(0.04)
+    assert policy.max_agent_risk_frac == pytest.approx(0.007)
+    assert policy.execution_reserve_usd == pytest.approx(50.0)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -351,43 +383,40 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L32)
+1. [test fixture: `test_historical_dollar_limits_and_aliases_resolve_to_canonical_policy_fields`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-    assert TradingPolicyConfig(**repeated.to_dict()).validate() == repeated
-    assert repeated.operating_balance == 100_000.0
-    assert repeated.profit_target_balance == 110_000.0
-    assert repeated.account_floor == 90_000.0
-    assert repeated.daily_loss_limit_pct == pytest.approx(0.05)
-    assert repeated.daily_loss_limit == pytest.approx(5_000.0)
-    assert repeated.max_loss_limit_initial_pct == pytest.approx(0.10)
-    assert repeated.max_agent_risk_frac == pytest.approx(0.009)
-    repeated_block = load_config(
-        ["trading_policy.mode=repeated_payout"]
-    ).trading_policy.repeated_payout
+            },
+        }
+    )
+
+    assert policy.daily_loss_limit_pct == pytest.approx(0.05)
+    assert policy.daily_loss_limit == pytest.approx(4_000.0)
+    assert policy.max_loss_limit_initial_pct == pytest.approx(0.10)
+    assert policy.account_floor == pytest.approx(72_000.0)
+    assert policy.profit_target_balance == pytest.approx(88_000.0)
+    assert policy.min_agent_risk_frac == 0.0
+    assert policy.max_agent_risk_frac == pytest.approx(0.008)
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_historical_dollar_daily_limit_is_normalized_to_initial_equity_fraction`](../../../../tests/unit/training/test_backtest_runner_policy.py#L40)
+2. [test fixture: `test_missing_policy_blocks_resolve_to_the_same_valid_legacy_defaults`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L82)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_historical_dollar_daily_limit_is_normalized_to_initial_equity_fraction() -> None:
-    policy = TradingPolicyConfig.from_mapping(
-        {
-            "operating_balance": 100_000.0,
-            "daily_loss_limit": 5_000.0,
-            "account_floor": 90_000.0,
-        }
-    )
+def test_missing_policy_blocks_resolve_to_the_same_valid_legacy_defaults() -> None:
+    absent = resolve_trading_policy(None)
+    empty = resolve_trading_policy({"trading_policy": None})
 
-    assert policy.daily_loss_limit_pct == 0.05
-    assert policy.daily_loss_limit == 5_000.0
-    assert policy.account_floor == 90_000.0
+    assert absent == empty
+    assert absent.mode == "legacy"
+    assert absent.daily_pnl_basis == "session_net_equity"
+    assert absent.daily_loss_includes_open_pnl is True
+    assert absent.daily_loss_limit == pytest.approx(5_000.0)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -421,45 +450,39 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_historical_dollar_account_floor_resolves_to_initial_equity_percentage`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L59)
+1. [test fixture: `test_historical_dollar_conversion_requires_a_positive_operating_balance`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L71)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    )
+def test_historical_dollar_conversion_requires_a_positive_operating_balance(
+    legacy_field: str,
+) -> None:
+    values: dict[str, object] = {"operating_balance": 0.0}
+    values[legacy_field] = 1.0
 
-    assert policy.max_loss_limit_initial_pct == pytest.approx(0.15)
-    assert policy.account_floor == pytest.approx(85_000.0)
-
-    restored = TradingPolicyConfig.from_mapping(
-        {
-            "mode": "repeated_payout",
-            "operating_balance": 100_000.0,
-            "account_floor": 85_000.0,
-        }
-    ).validate()
-    assert restored.max_loss_limit_initial_pct == pytest.approx(0.15)
-    assert restored.account_floor == pytest.approx(85_000.0)
+    with pytest.raises(ValueError, match="operating balance must be positive"):
+        TradingPolicyConfig.from_mapping(values)
 ```
 
-2. [test fixture: `test_historical_dollar_daily_limit_is_normalized_to_initial_equity_fraction`](../../../../tests/unit/training/test_backtest_runner_policy.py#L31)
+2. [test fixture: `test_from_mapping_normalizes_historical_limits_and_round_trips_canonical_state`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L86)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_historical_dollar_daily_limit_is_normalized_to_initial_equity_fraction() -> None:
+def test_from_mapping_normalizes_historical_limits_and_round_trips_canonical_state() -> None:
     policy = TradingPolicyConfig.from_mapping(
         {
-            "operating_balance": 100_000.0,
-            "daily_loss_limit": 5_000.0,
-            "account_floor": 90_000.0,
+            "mode": "legacy",
+            "operating_balance": 80_000.0,
+            "account_floor": 68_000.0,
+            "daily_loss_limit": 4_000.0,
         }
-    )
+    ).validate()
 
-    assert policy.daily_loss_limit_pct == 0.05
-    assert policy.daily_loss_limit == 5_000.0
-    assert policy.account_floor == 90_000.0
+    assert policy.max_loss_limit_initial_pct == pytest.approx(0.15)
+    assert policy.daily_loss_limit_pct == pytest.approx(0.05)
+    assert TradingPolicyConfig.from_mapping(policy.to_dict()).validate() == policy
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -543,7 +566,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L23)
+1. [test fixture: `test_from_mapping_normalizes_historical_limits_and_round_trips_canonical_state`](../../../../tests/unit/trading/test_policy_config_compatibility.py#L97)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_from_mapping_normalizes_historical_limits_and_round_trips_canonical_state() -> None:
+    policy = TradingPolicyConfig.from_mapping(
+        {
+            "mode": "legacy",
+            "operating_balance": 80_000.0,
+            "account_floor": 68_000.0,
+            "daily_loss_limit": 4_000.0,
+        }
+    ).validate()
+
+    assert policy.max_loss_limit_initial_pct == pytest.approx(0.15)
+    assert policy.daily_loss_limit_pct == pytest.approx(0.05)
+    assert TradingPolicyConfig.from_mapping(policy.to_dict()).validate() == policy
+```
+
+2. [test fixture: `test_repeated_policy_config_resolves_without_changing_default`](../../../../tests/unit/trading/test_repeated_payout_policy.py#L23)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -9,14 +9,17 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+import torch
 
 from simulation.environment.diagnostics import DebugStepError
 from training.callbacks.debug_trace import (
     FlightRecorder,
+    account_weights,
     builtin_checks,
     collect_rollout,
     install_flight_recorder,
     merge_env_stats,
+    policy_std,
 )
 
 pytestmark = pytest.mark.unit
@@ -194,6 +197,24 @@ def test_collect_rollout_reports_returns_value_fit_mc_return_and_account_correla
     assert rollout["corr_boot_unrealised_r"] == pytest.approx(1.0)
 
 
+def test_collect_rollout_handles_empty_buffers_and_policy_weight_diagnostics() -> None:
+    empty = collect_rollout(
+        SimpleNamespace(num_timesteps=4, rollout_buffer=SimpleNamespace(returns=[], values=[]))
+    )
+    policy = SimpleNamespace(
+        log_std=torch.tensor([0.0, np.log(4.0)]),
+        account_value_weight=torch.tensor([[1.5, -0.5, 2.0]]),
+    )
+
+    assert empty["timesteps"] == 4
+    assert empty["ret_mean"] == 0.0
+    assert empty["explained_variance"] == 0.0
+    assert policy_std(SimpleNamespace(policy=policy)) == pytest.approx(2.5)
+    assert account_weights(SimpleNamespace(policy=policy)) == [1.5, -0.5, 2.0]
+    assert policy_std(SimpleNamespace()) is None
+    assert account_weights(SimpleNamespace()) == []
+
+
 def test_builtin_checks_flag_sustained_value_and_policy_wiring_health_signals() -> None:
     checks = builtin_checks({"ev_windows": 2, "corr_windows": 2})
     baseline = _healthy()
@@ -268,3 +289,74 @@ def test_train_wrapper_unwraps_debug_step_error_and_records_incident(tmp_path: P
     assert incident["reason"] == "bad reward"
     assert incident["snapshot"] == {"step": 4}
     assert "DebugStepError" in str(incident["traceback"])
+
+
+def test_nested_nonfinite_value_reports_its_full_path(tmp_path: Path) -> None:
+    recorder = FlightRecorder(tmp_path)
+
+    recorder.record({"metrics": {"reward_parts": [0.0, float("nan")]}})
+
+    incident = _incidents(tmp_path)[0]
+    assert incident["reason"] == "non-finite metrics.reward_parts[1]"
+
+
+def test_train_wrapper_keeps_working_when_environment_debug_api_is_unavailable(
+    tmp_path: Path,
+) -> None:
+    class VecEnv:
+        def env_method(self, method: str) -> list[object]:
+            raise TypeError(f"unsupported debug method: {method}")
+
+    model = SimpleNamespace(
+        get_env=lambda: VecEnv(),
+        train=lambda: "trained",
+        learn=lambda: None,
+        num_timesteps=0,
+    )
+    install_flight_recorder(model, tmp_path)
+
+    assert model.train() == "trained"
+
+    trace = json.loads((tmp_path / "debug.jsonl").read_text(encoding="utf-8"))
+    assert trace["reward_steps"] == 0
+    assert trace["mean_entry_risk"] == 0.0
+    assert _incidents(tmp_path) == []
+
+
+def test_learn_wrapper_records_and_reraises_debug_error_without_original(
+    tmp_path: Path,
+) -> None:
+    error = DebugStepError("invalid step", {"step": 9})
+    model = SimpleNamespace(
+        get_env=lambda: object(),
+        train=lambda: None,
+        learn=lambda **_kwargs: (_ for _ in ()).throw(error),
+        num_timesteps=0,
+    )
+    install_flight_recorder(model, tmp_path)
+
+    with pytest.raises(DebugStepError) as raised:
+        model.learn(total_timesteps=10)
+
+    assert raised.value is error
+    incident = _incidents(tmp_path)[0]
+    assert incident["reason"] == "invalid step"
+    assert incident["snapshot"] == {"step": 9}
+    assert "DebugStepError" in str(incident["traceback"])
+
+
+def test_learn_wrapper_records_and_reraises_ordinary_failure(tmp_path: Path) -> None:
+    model = SimpleNamespace(
+        get_env=lambda: object(),
+        train=lambda: None,
+        learn=lambda: (_ for _ in ()).throw(RuntimeError("learn failed")),
+        num_timesteps=0,
+    )
+    install_flight_recorder(model, tmp_path)
+
+    with pytest.raises(RuntimeError, match="learn failed"):
+        model.learn()
+
+    incident = _incidents(tmp_path)[0]
+    assert incident["reason"] == "learn exception"
+    assert "RuntimeError: learn failed" in str(incident["traceback"])

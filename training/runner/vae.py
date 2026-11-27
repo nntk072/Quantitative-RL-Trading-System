@@ -23,7 +23,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import yaml
-from torch.utils.data import DataLoader, Dataset, Subset, random_split
+from torch.utils.data import DataLoader, Dataset, Subset
 
 # Add project root to path before importing VAE
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -180,11 +180,10 @@ def prepare_data(
     # Split into train, validation, test
     train_size = int(0.7 * len(dataset))
     val_size = int(0.15 * len(dataset))
-    test_size = len(dataset) - train_size - val_size
 
-    train_dataset, val_dataset, test_dataset = random_split(
-        dataset, [train_size, val_size, test_size]
-    )
+    train_dataset = Subset(dataset, range(train_size))
+    val_dataset = Subset(dataset, range(train_size, train_size + val_size))
+    test_dataset = Subset(dataset, range(train_size + val_size, len(dataset)))
 
     logger.info(
         f"Dataset sizes: train={len(train_dataset)}, val={len(val_dataset)}, test={len(test_dataset)}"

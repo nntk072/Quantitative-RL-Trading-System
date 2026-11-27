@@ -273,6 +273,35 @@ def test_account_trace_checks_fill_quote_slippage_provenance() -> None:
     )
 
 
+def test_account_trace_verifies_unadjusted_short_entry_and_exit_quotes() -> None:
+    trace = pd.DataFrame([_trace_row()])
+    open_event = _open_event(direction=-1, price=99.0)
+    close_event = _close_event(direction=-1, entry_price=99.0, exit_price=101.0)
+    for event, quote in ((open_event, (99.0, 101.0)), (close_event, (99.0, 101.0))):
+        event.update(
+            {
+                "fill_cost_provenance_schema_version": FILL_COST_PROVENANCE_SCHEMA_VERSION,
+                "pre_execution_quote_bid": quote[0],
+                "pre_execution_quote_ask": quote[1],
+                "broker_execution_quote_bid": quote[0],
+                "broker_execution_quote_ask": quote[1],
+                "slippage_points_applied_here": 0.0,
+                "slippage_applied_here": False,
+                "slippage_application_mode": "none",
+            }
+        )
+
+    result = reconcile_account_state_trace(
+        trace, pd.DataFrame([open_event, close_event]), breach_events=[]
+    )
+
+    assert result["fill_cost_provenance"]["status"] == "matched"
+    assert result["fill_cost_provenance"]["verified_rows"] == 2
+    assert not any(
+        failure["check"] == "fill_price_matches_broker_quote_side" for failure in result["failures"]
+    )
+
+
 def test_account_trace_marks_missing_trade_fill_schema_incomplete() -> None:
     trace = pd.DataFrame(
         [
@@ -1057,6 +1086,93 @@ def test_account_trace_reconstructs_retained_profit_after_dynamic_payout(mode: s
     assert result["status"] == "matched", result["failures"]
 
 
+def test_account_trace_replays_v2_payout_across_pre_and_post_reset_snapshots() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T15:01:00Z",
+                valuation_time="2025-01-06T15:01:00Z",
+                max_drawdown_mode="eod",
+                balance=105_000.0,
+                equity=105_000.0,
+                total_economic_value=105_000.0,
+                session_start_balance=100_000.0,
+                session_start_equity=100_000.0,
+                daily_loss=0.0,
+                max_loss_floor_equity=95_000.0,
+                max_drawdown_from_reference_usd=0.0,
+                loss_from_initial_usd=0.0,
+                max_drawdown_usd=0.0,
+                peak_equity=105_000.0,
+                peak_eod_equity=105_000.0,
+                peak_eod_drawdown_usd=0.0,
+                max_peak_eod_drawdown_usd=0.0,
+                trailing_drawdown_usd=0.0,
+                trade_event_count=2,
+            ),
+            _trace_row(
+                decision_time="2025-01-06T15:02:00Z",
+                valuation_time="2025-01-06T15:02:00Z",
+                max_drawdown_mode="eod",
+                balance=102_500.0,
+                equity=102_500.0,
+                total_economic_value=105_000.0,
+                session_start_balance=102_500.0,
+                session_start_equity=102_500.0,
+                daily_loss=0.0,
+                daily_floor_equity=97_500.0,
+                max_loss_floor_equity=100_000.0,
+                max_drawdown_from_reference_usd=2_500.0,
+                loss_from_initial_usd=0.0,
+                max_drawdown_usd=0.0,
+                peak_equity=105_000.0,
+                peak_eod_equity=105_000.0,
+                peak_eod_drawdown_usd=2_500.0,
+                max_peak_eod_drawdown_usd=0.0,
+                trailing_drawdown_usd=2_500.0,
+                payout_drawdown_floor=100_000.0,
+                cumulative_payouts=2_500.0,
+                trade_event_count=3,
+            ),
+        ]
+    )
+    payout_event = {
+        "type": "payout_reset",
+        "payout_schema_version": "payout_reset.v2",
+        "max_drawdown_mode": "eod",
+        "payout_fraction": 0.5,
+        "profit_above_operating_balance": 5_000.0,
+        "payout": 2_500.0,
+        "retained_profit": 2_500.0,
+        "balance_before_reset": 105_000.0,
+        "operating_balance": 100_000.0,
+        "balance_after_reset": 102_500.0,
+    }
+    events = pd.DataFrame(
+        [
+            _open_event(position_id="payout-profit", commission_per_lot=0.0),
+            _close_event(
+                position_id="payout-profit",
+                exit_price=5_100.0,
+                commission_per_lot=0.0,
+            ),
+            payout_event,
+        ]
+    )
+
+    result = reconcile_account_state_trace(trace, events, breach_events=[])
+
+    assert result["status"] == "matched", result["failures"]
+    assert result["failures"] == []
+    assert result["checks"]["payout_fraction_matches_drawdown_mode"] == 1
+    assert result["checks"]["payout_retained_profit_matches_fraction"] == 1
+    assert result["checks"]["payout_event_balance_identity"] == 1
+    assert result["checks"]["payout_event_matches_replayed_balance"] == 1
+    assert result["checks"]["payout_events_reconstruct_cumulative_payouts"] == 2
+    assert trace.iloc[-1]["balance"] == payout_event["balance_after_reset"]
+    assert trace.iloc[-1]["cumulative_payouts"] == payout_event["payout"]
+
+
 def test_account_trace_fails_closed_on_a_corrupted_cashflow() -> None:
     trace = pd.DataFrame([_trace_row(balance=99_991.0, equity=99_991.0, daily_loss=5.0)])
     events = pd.DataFrame(
@@ -1386,3 +1502,590 @@ def test_account_trace_accepts_completed_session_high_water_mark_transition() ->
     assert result["status"] == "matched", result
     assert result["checks"]["eod_peak_is_monotonic"] == 1
     assert result["checks"]["maximum_eod_drawdown_is_monotonic"] == 1
+
+
+def test_account_trace_empty_ledger_is_incomplete_instead_of_a_zero_pass() -> None:
+    result = reconcile_account_state_trace(pd.DataFrame(), pd.DataFrame(), breach_events=[])
+
+    assert result["status"] == "incomplete"
+    assert result["trace_rows"] == 0
+    assert result["failure_count"] == 0
+    assert "account_state_trace_is_empty" in result["incomplete_reasons"]
+
+
+@pytest.mark.parametrize("tolerance", [0.0, -1.0, float("inf"), float("nan")])
+def test_account_trace_requires_finite_positive_reconciliation_tolerance(tolerance: float) -> None:
+    trace = pd.DataFrame([_trace_row(trade_event_count=0)])
+
+    with pytest.raises(ValueError, match="tolerance must be finite and positive"):
+        reconcile_account_state_trace(trace, pd.DataFrame(), tolerance=tolerance, breach_events=[])
+
+
+def test_account_trace_detects_nonmonotonic_snapshot_valuation_time() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T15:01:00Z",
+                valuation_time="2025-01-06T15:01:00Z",
+                trade_event_count=0,
+            ),
+            _trace_row(
+                decision_time="2025-01-06T15:00:00Z",
+                valuation_time="2025-01-06T15:00:00Z",
+                trade_event_count=0,
+            ),
+        ]
+    )
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame(), breach_events=[])
+
+    assert result["status"] == "mismatch"
+    assert any(failure["check"] == "valuation_time_is_monotonic" for failure in result["failures"])
+
+
+def test_ftmo_daily_risk_anchor_resets_at_trading_day_boundary() -> None:
+    first_day = _trace_row(
+        valuation_time="2025-01-06T15:00:00Z",
+        daily_pnl_basis="ftmo_midnight_balance",
+        balance=99_900.0,
+        equity=99_900.0,
+        total_economic_value=99_900.0,
+        daily_loss=100.0,
+        daily_floor_equity=95_000.0,
+        loss_from_initial_usd=100.0,
+        max_drawdown_usd=100.0,
+        max_drawdown_from_reference_usd=100.0,
+        peak_equity=100_000.0,
+        peak_eod_drawdown_usd=100.0,
+        max_peak_eod_drawdown_usd=100.0,
+        trailing_drawdown_usd=100.0,
+        session_start_balance=100_000.0,
+        session_start_equity=100_000.0,
+        trade_event_count=0,
+    )
+    next_day = _trace_row(
+        valuation_time="2025-01-07T15:00:00Z",
+        daily_pnl_basis="ftmo_midnight_balance",
+        balance=99_900.0,
+        equity=99_900.0,
+        total_economic_value=99_900.0,
+        daily_loss=0.0,
+        daily_floor_equity=94_900.0,
+        loss_from_initial_usd=100.0,
+        max_drawdown_usd=100.0,
+        max_drawdown_from_reference_usd=100.0,
+        peak_equity=100_000.0,
+        peak_eod_drawdown_usd=100.0,
+        max_peak_eod_drawdown_usd=100.0,
+        trailing_drawdown_usd=100.0,
+        session_start_balance=99_900.0,
+        session_start_equity=99_900.0,
+        trade_event_count=0,
+    )
+
+    result = reconcile_account_state_trace(
+        pd.DataFrame([first_day, next_day]), pd.DataFrame(), breach_events=[]
+    )
+
+    assert result["checks"]["daily_risk_anchor_matches_session_or_payout_reset"] == 2
+    assert result["checks"]["daily_risk_equity_anchor_matches_session_or_payout_reset"] == 2
+    assert result["checks"]["ftmo_midnight_daily_loss_matches_equity"] == 2
+    assert not any(
+        failure["check"]
+        in {
+            "daily_risk_anchor_matches_session_or_payout_reset",
+            "daily_risk_equity_anchor_matches_session_or_payout_reset",
+            "ftmo_midnight_daily_loss_matches_equity",
+        }
+        for failure in result["failures"]
+    )
+
+
+def test_v2_breach_fails_closed_when_trace_reason_is_absent() -> None:
+    trace = _v2_breach_trace().drop(columns="breach_reason")
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame(), breach_events=[_v2_breach()])
+
+    assert "hard_breach_trace_reason_is_missing" in result["incomplete_reasons"]
+    assert result["status"] == "incomplete"
+
+
+def test_v2_breach_fails_closed_on_invalid_snapshot_decision_time() -> None:
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(decision_time="not-a-time"),
+        pd.DataFrame(),
+        breach_events=[_v2_breach()],
+    )
+
+    assert "hard_breach_account_snapshot_time_is_invalid" in result["incomplete_reasons"]
+
+
+def test_account_trace_fails_closed_on_unknown_payout_event_schema() -> None:
+    events = pd.DataFrame(
+        [
+            _open_event(),
+            _close_event(exit_price=111.0),
+            {
+                "type": "payout_reset",
+                "payout_schema_version": "payout_reset.v9",
+                "payout": 3.0,
+                "operating_balance": 100_000.0,
+                "balance_before_reset": 100_003.0,
+                "balance_after_reset": 100_000.0,
+            },
+        ]
+    )
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                balance=100_000.0,
+                equity=100_000.0,
+                total_economic_value=100_003.0,
+                cumulative_payouts=3.0,
+                trade_event_count=3,
+            )
+        ]
+    )
+
+    result = reconcile_account_state_trace(trace, events, breach_events=[])
+
+    assert "unsupported_payout_schema" in result["incomplete_reasons"]
+
+
+def test_v2_trace_uses_legacy_unit_point_value_when_marking_open_position() -> None:
+    row = _trace_row(
+        schema_version="account_state_trace.v2",
+        initial_balance=100_000.0,
+        balance=100_000.0,
+        equity=100_004.0,
+        open_pnl=4.0,
+        total_economic_value=100_004.0,
+        position_direction=1,
+        position_size=2.0,
+        position_entry_price=100.0,
+        position_mark_price=102.0,
+        trade_event_count=0,
+        peak_equity=100_004.0,
+    )
+    row.pop("point_value")
+
+    result = reconcile_account_state_trace(pd.DataFrame([row]), pd.DataFrame(), breach_events=[])
+
+    assert result["status"] == "matched", result["failures"]
+    assert "missing_point_value_column" not in result["incomplete_reasons"]
+    assert result["checks"]["position_mark_reconstructs_open_pnl"] == 1
+
+
+@pytest.mark.parametrize(
+    ("overrides", "reason"),
+    [
+        ({"state_phase": "between_actions"}, "unknown_state_phase"),
+        ({"state_phase": None}, "state_phase_is_missing"),
+        ({"session_id": None}, "session_identity_is_missing"),
+    ],
+)
+def test_account_trace_requires_known_phase_and_session_identity(
+    overrides: dict[str, object], reason: str
+) -> None:
+    result = reconcile_account_state_trace(pd.DataFrame([_trace_row(**overrides)]), pd.DataFrame())
+
+    assert result["status"] == "incomplete"
+    assert reason in result["incomplete_reasons"]
+
+
+@pytest.mark.parametrize("event_count", [0.5, 1])
+def test_account_trace_rejects_nonintegral_or_unavailable_event_prefix(
+    event_count: float,
+) -> None:
+    trace = pd.DataFrame([_trace_row(trade_event_count=event_count)])
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame())
+
+    assert result["status"] == "incomplete"
+    assert "invalid_trade_event_prefix" in result["incomplete_reasons"]
+
+
+def test_account_trace_marks_missing_v2_payout_replay_fields_incomplete() -> None:
+    trace = pd.DataFrame([_trace_row(trade_event_count=1)])
+    events = pd.DataFrame(
+        [
+            {
+                "type": "payout_reset",
+                "payout_schema_version": "payout_reset.v2",
+                "max_drawdown_mode": "static",
+                "payout": 3.0,
+                "balance_before_reset": 100_003.0,
+                "operating_balance": 100_000.0,
+                "balance_after_reset": 100_000.0,
+            }
+        ]
+    )
+
+    result = reconcile_account_state_trace(trace, events, breach_events=[])
+
+    assert "payout_v2_fields_missing" in result["incomplete_reasons"]
+
+
+def test_legacy_breach_loss_replay_resets_at_session_boundary() -> None:
+    events = pd.DataFrame(
+        [
+            _open_event(position_id="prior-session", commission_per_lot=0.0),
+            _close_event(
+                position_id="prior-session",
+                exit_price=96.0,
+                commission_per_lot=0.0,
+            ),
+            _open_event(position_id="breach-session", commission_per_lot=0.0),
+            _close_event(
+                position_id="breach-session",
+                exit_price=94.0,
+                commission_per_lot=0.0,
+            ),
+        ]
+    )
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                valuation_time="2025-01-06T14:59:00Z",
+                decision_time="2025-01-06T14:59:00Z",
+                session_id=1,
+                balance=99_996.0,
+                equity=99_996.0,
+                total_economic_value=99_996.0,
+                daily_loss=4.0,
+                loss_from_initial_usd=4.0,
+                max_drawdown_usd=4.0,
+                max_drawdown_from_reference_usd=4.0,
+                peak_equity=100_000.0,
+                peak_eod_drawdown_usd=4.0,
+                max_peak_eod_drawdown_usd=4.0,
+                trailing_drawdown_usd=4.0,
+                trade_event_count=2,
+            ),
+            _trace_row(
+                valuation_time="2025-01-06T15:01:00Z",
+                decision_time="2025-01-06T15:00:00Z",
+                session_id=2,
+                balance=99_990.0,
+                equity=99_990.0,
+                session_start_balance=99_996.0,
+                session_start_equity=99_996.0,
+                daily_loss=6.0,
+                daily_floor_equity=94_996.0,
+                loss_from_initial_usd=10.0,
+                max_drawdown_usd=10.0,
+                max_drawdown_from_reference_usd=10.0,
+                peak_equity=100_000.0,
+                peak_eod_drawdown_usd=10.0,
+                max_peak_eod_drawdown_usd=10.0,
+                trailing_drawdown_usd=10.0,
+                total_economic_value=99_990.0,
+                breach_reason="daily_loss",
+                trade_event_count=4,
+            ),
+        ]
+    )
+    breach = _v2_breach(
+        time="2025-01-06T15:00:00Z",
+        detection_time="2025-01-06T15:00:30Z",
+        trade_event_count=4,
+        session_id=2,
+        equity=99_990.0,
+        daily_loss=6.0,
+        daily_pnl_basis="legacy_gross_closed_losses",
+    )
+
+    result = reconcile_account_state_trace(trace, events, breach_events=[breach])
+
+    assert result["checks"]["hard_breach_pre_close_daily_loss"] == 1
+    assert not any(
+        failure["check"] == "hard_breach_pre_close_daily_loss" for failure in result["failures"]
+    )
+
+
+@pytest.mark.parametrize(
+    ("overrides", "reason"),
+    [
+        ({"daily_loss": -1.0}, "hard_breach_daily_loss_is_invalid"),
+        ({"equity": float("nan")}, "hard_breach_pre_close_identity_is_invalid"),
+        ({"session_id": 1.5}, "hard_breach_pre_close_identity_is_invalid"),
+        ({"detection_time": "not-a-time"}, "hard_breach_detection_time_is_invalid"),
+        ({"trade_event_count": 0.5}, "hard_breach_trade_event_prefix_is_invalid"),
+        ({"time": "not-a-time"}, "hard_breach_decision_label_is_invalid"),
+    ],
+)
+def test_v2_breach_rejects_malformed_event_metadata(
+    overrides: dict[str, object], reason: str
+) -> None:
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(), pd.DataFrame(), breach_events=[_v2_breach(**overrides)]
+    )
+
+    assert reason in result["incomplete_reasons"]
+
+
+def test_duplicate_v2_breach_events_are_reported_as_ambiguous() -> None:
+    breach = _v2_breach()
+
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(), pd.DataFrame(), breach_events=[breach, breach.copy()]
+    )
+
+    assert "hard_breach_trace_match_missing_or_ambiguous" in result["incomplete_reasons"]
+
+
+def test_breach_order_cancel_must_map_to_the_breach_session() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T14:59:00Z",
+                valuation_time="2025-01-06T14:59:00Z",
+                session_id=1,
+                balance=100_000.0,
+                equity=100_000.0,
+                total_economic_value=100_000.0,
+                peak_equity=100_000.0,
+                trade_event_count=1,
+            ),
+            _v2_breach_trace(
+                session_id=2,
+                balance=100_000.0,
+                equity=100_000.0,
+                total_economic_value=100_000.0,
+                peak_equity=100_000.0,
+                session_start_balance=100_000.0,
+                session_start_equity=100_000.0,
+                daily_loss=0.0,
+                trade_event_count=2,
+            )
+            .iloc[0]
+            .to_dict(),
+        ]
+    )
+    events = pd.DataFrame(
+        [
+            {
+                "type": "order_submit",
+                "order_id": "bt:other-session",
+                "decision_bar_time": "2025-01-06T14:59:00Z",
+            },
+            {
+                "type": "order_cancel",
+                "order_id": "bt:other-session",
+                "reason": "account_guardrail_before_limit_fill",
+            },
+        ]
+    )
+    breach = _v2_breach(
+        trade_event_count=1,
+        session_id=2,
+        equity=100_000.0,
+        daily_loss=0.0,
+    )
+
+    result = reconcile_account_state_trace(trace, events, breach_events=[breach])
+
+    assert "hard_breach_prefix_suffix_has_unexpected_events" in result["incomplete_reasons"]
+
+
+@pytest.mark.parametrize(
+    ("event", "reason"),
+    [
+        (
+            {
+                "reason": "daily_loss",
+                "detection_time": "2025-01-06T15:00:00Z",
+                "trade_event_count": 0,
+            },
+            "unsupported_or_missing_hard_breach_event_schema",
+        ),
+        (
+            {
+                "schema_version": "risk-breach-event-v1",
+                "reason": "daily_loss",
+                "trade_event_count": 0,
+            },
+            "hard_breach_detection_time_is_invalid",
+        ),
+        (
+            {
+                "schema_version": "risk-breach-event-v1",
+                "reason": "daily_loss",
+                "detection_time": "2025-01-06T15:00:00Z",
+                "trade_event_count": 0.5,
+            },
+            "hard_breach_trade_event_prefix_is_invalid",
+        ),
+    ],
+)
+def test_v1_breach_rejects_missing_or_malformed_required_fields(
+    event: dict[str, object], reason: str
+) -> None:
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(), pd.DataFrame(), breach_events=[event]
+    )
+
+    assert reason in result["incomplete_reasons"]
+
+
+def test_v2_breach_rejects_snapshot_prefix_before_event_prefix() -> None:
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(trade_event_count=0),
+        pd.DataFrame([{"type": "order_submit"}]),
+        breach_events=[_v2_breach(trade_event_count=1)],
+    )
+
+    assert "hard_breach_trace_prefix_is_invalid" in result["incomplete_reasons"]
+
+
+def test_legacy_breach_rejects_invalid_account_snapshot_event_prefix() -> None:
+    result = reconcile_account_state_trace(
+        _v2_breach_trace(trade_event_count=0.5),
+        pd.DataFrame(),
+        breach_events=[
+            {
+                "schema_version": "risk-breach-event-v1",
+                "time": "2025-01-06T15:00:00Z",
+                "detection_time": "2025-01-06T15:00:00Z",
+                "trade_event_count": 0,
+                "reason": "daily_loss",
+            }
+        ],
+    )
+
+    assert result["status"] == "incomplete"
+    assert "invalid_trade_event_prefix" in result["incomplete_reasons"]
+    assert "hard_breach_trade_event_prefix_is_invalid" in result["incomplete_reasons"]
+
+
+@pytest.mark.parametrize(
+    ("events", "reason"),
+    [
+        (
+            pd.DataFrame([{"legacy_event": "close"}]),
+            "hard_breach_legacy_close_ledger_is_incomplete",
+        ),
+        (
+            pd.DataFrame([{"type": "close", "pnl": None}]),
+            "hard_breach_legacy_close_pnl_is_invalid",
+        ),
+    ],
+)
+def test_legacy_breach_rejects_missing_close_ledger_evidence(
+    events: pd.DataFrame, reason: str
+) -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                decision_time="2025-01-06T14:59:00Z",
+                valuation_time="2025-01-06T14:59:00Z",
+                session_id=1,
+                trade_event_count=0,
+            ),
+            _v2_breach_trace(
+                daily_pnl_basis="legacy_gross_closed_losses",
+                session_id=2,
+                trade_event_count=1,
+            )
+            .iloc[0]
+            .to_dict(),
+        ]
+    )
+    breach = _v2_breach(
+        daily_pnl_basis="legacy_gross_closed_losses",
+        trade_event_count=1,
+        session_id=2,
+    )
+
+    result = reconcile_account_state_trace(trace, events, breach_events=[breach])
+
+    assert reason in result["incomplete_reasons"]
+
+
+def test_fill_cost_provenance_reports_invalid_when_no_fill_has_supported_evidence() -> None:
+    trace = pd.DataFrame(
+        [
+            _trace_row(
+                balance=99_996.0,
+                equity=99_996.0,
+                total_economic_value=99_996.0,
+                loss_from_initial_usd=4.0,
+                max_drawdown_usd=4.0,
+                max_drawdown_from_reference_usd=4.0,
+                peak_equity=100_000.0,
+                peak_eod_drawdown_usd=4.0,
+                max_peak_eod_drawdown_usd=4.0,
+                trailing_drawdown_usd=4.0,
+                position_direction=1,
+                position_size=1.0,
+                position_entry_price=100.0,
+                position_mark_price=100.0,
+                trade_event_count=1,
+            )
+        ]
+    )
+    event = _open_event()
+    event["fill_cost_provenance_schema_version"] = "unknown-fill-cost-schema"
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame([event]), breach_events=[])
+
+    assert result["fill_cost_provenance"]["fill_rows"] == 1
+    assert result["fill_cost_provenance"]["verified_rows"] == 0
+    assert result["fill_cost_provenance"]["missing_rows"] == 0
+    assert result["fill_cost_provenance"]["status"] == "invalid"
+    assert "unsupported_fill_cost_provenance_schema" in result["incomplete_reasons"]
+
+
+@pytest.mark.parametrize(
+    ("overrides", "reason"),
+    [
+        ({"valuation_time": "not-a-time"}, "valuation_time_is_invalid"),
+        ({"session_start_equity": None}, "daily_risk_fields_missing"),
+        ({"balance": None}, "non_finite_account_amount"),
+        ({"max_drawdown_usd": None}, "maximum_drawdown_is_not_finite"),
+        ({"peak_equity": None}, "peak_equity_is_not_finite"),
+        (
+            {
+                "position_direction": 1,
+                "position_size": 1.0,
+                "position_entry_price": None,
+                "position_mark_price": 100.0,
+            },
+            "open_position_mark_price_missing",
+        ),
+        ({"peak_eod_equity": None}, "eod_drawdown_fields_are_not_finite"),
+        ({"daily_floor_equity": None}, "daily_risk_fields_missing"),
+        ({"daily_pnl_basis": "unknown_basis"}, "unknown_daily_pnl_basis"),
+        ({"max_loss_limit_usd": None}, "maximum_loss_fields_missing"),
+        ({"max_drawdown_mode": "rolling"}, "unknown_max_drawdown_mode"),
+    ],
+)
+def test_account_trace_fails_closed_on_invalid_snapshot_risk_fields(
+    overrides: dict[str, object], reason: str
+) -> None:
+    trace = pd.DataFrame([_trace_row(trade_event_count=0, **overrides)])
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame(), breach_events=[])
+
+    assert reason in result["incomplete_reasons"]
+
+
+def test_account_trace_marks_malformed_slippage_provenance_incomplete() -> None:
+    trace = pd.DataFrame([_trace_row(trade_event_count=1)])
+    event = _open_event()
+    event.update(
+        {
+            "fill_cost_provenance_schema_version": FILL_COST_PROVENANCE_SCHEMA_VERSION,
+            "pre_execution_quote_bid": 99.0,
+            "pre_execution_quote_ask": 101.0,
+            "broker_execution_quote_bid": 99.0,
+            "broker_execution_quote_ask": 101.0,
+            "slippage_points_applied_here": 0.0,
+            "slippage_applied_here": False,
+            "slippage_application_mode": "unrecognized_mode",
+        }
+    )
+
+    result = reconcile_account_state_trace(trace, pd.DataFrame([event]), breach_events=[])
+
+    assert "invalid_fill_cost_provenance_fields" in result["incomplete_reasons"]

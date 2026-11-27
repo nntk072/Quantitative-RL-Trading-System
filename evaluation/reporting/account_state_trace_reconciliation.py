@@ -1496,10 +1496,13 @@ def reconcile_account_state_trace(
         result["incomplete_reasons"].append("trade_fill_cashflow_replay_missing_fields")
     if not payout_replay_complete:
         result["incomplete_reasons"].append("payout_event_replay_missing_fields")
-    if result["failure_count"]:
-        result["status"] = "mismatch"
-    elif result["incomplete_reasons"]:
+    missing_breach_trace_reason = (
+        "hard_breach_trace_reason_is_missing" in result["incomplete_reasons"]
+    )
+    if result["incomplete_reasons"] and (not failures or missing_breach_trace_reason):
         result["status"] = "incomplete"
+    elif result["failure_count"]:
+        result["status"] = "mismatch"
     else:
         result["status"] = "matched"
     return result

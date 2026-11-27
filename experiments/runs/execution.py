@@ -1010,6 +1010,7 @@ def main() -> int:
             "worker_gpus_per_node": args.worker_gpus_per_node if worker_nodes else None,
             "gpu_binding": "least-loaded-map_gpu" if worker_nodes else None,
             "evaluation": evaluation,
+            "config_overrides": config_overrides,
             "variant_family": family_selections[0] if len(family_selections) == 1 else None,
             "comparison_families": family_selections,
             "initial_checkpoint_lineage": identity["initial_checkpoint_lineage"],

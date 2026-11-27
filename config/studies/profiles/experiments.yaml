@@ -23,6 +23,9 @@ caller_paths:
 - scripts/maintenance/migrations/migrate_preflight_experiment_run.py
 - tests/integration/test_ablation_oos_smoke.py
 - tests/unit/experiments/test_command_boundaries.py
+- tests/unit/experiments/test_execution_additional_runtime_contracts.py
+- tests/unit/experiments/test_execution_checkpoint_map_dry_run.py
+- tests/unit/experiments/test_execution_lifecycle_contracts.py
 - tests/unit/experiments/test_experiment_run_artifacts.py
 - tests/unit/experiments/test_experiment_run_policy_overrides.py
 - tests/unit/experiments/test_experiment_run_results_summary.py

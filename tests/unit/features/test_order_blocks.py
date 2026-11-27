@@ -124,6 +124,40 @@ def test_order_block_event_ledger_preserves_overlapping_zone_retests() -> None:
     )
 
 
+def test_order_block_event_ledger_preserves_overlapping_bearish_zone_retests() -> None:
+    bars = _bars(40)
+    for i in range(21, 28):
+        bars.iloc[i] = [104.0, 104.5, 103.8, 104.1]
+    bars.iloc[22] = [104.0, 104.8, 103.9, 104.6]
+    bars.iloc[27] = [104.5, 105.0, 103.5, 104.0]
+    bars.iloc[28] = [104.0, 113.0, 103.5, 112.0]
+    bars.iloc[29] = [111.0, 112.0, 103.8, 111.0]
+    bars.iloc[30] = [112.0, 113.0, 103.8, 112.5]
+    mirrored = pd.DataFrame(
+        {
+            "open": 210.0 - bars["open"],
+            "high": 210.0 - bars["low"],
+            "low": 210.0 - bars["high"],
+            "close": 210.0 - bars["close"],
+        },
+        index=bars.index,
+    )
+
+    scalar, ledger = build_order_block_features_with_event_ledger(
+        mirrored, swing_period=3, impulse_atr=0.5
+    )
+
+    same_bar = ledger.loc[ledger["confirmation_bar"].eq(30) & ledger["side"].eq("bear")]
+    assert len(same_bar) == 2
+    assert same_bar["zone_id"].nunique() == 2
+    assert int(same_bar["selected_by_scalar"].sum()) == 1
+    assert scalar.iloc[30]["ob_bear_retest"] == 1.0
+    pd.testing.assert_frame_equal(
+        scalar,
+        build_order_block_features(mirrored, swing_period=3, impulse_atr=0.5),
+    )
+
+
 def test_order_block_event_ledger_is_prefix_causal() -> None:
     bars = _bars(180)
     full_features, full_ledger = build_order_block_features_with_event_ledger(

@@ -13,11 +13,13 @@ from features.technical.indicators import (
     adx,
     ema_features,
     macd,
+    ny_session_clock,
     returns,
     rsi,
     sweep_velocity,
     time_features,
     volume_spike,
+    vwap_level,
     wick_ratio,
 )
 
@@ -43,6 +45,13 @@ def test_adx_matches_wilder_reference_and_has_talib_warmup() -> None:
     assert result.iloc[79] == pytest.approx(41.324054589864645)
     prefix = adx(bars.iloc[:41], period=14)["adx"]
     pd.testing.assert_series_equal(result.iloc[:41], prefix)
+
+
+def test_adx_rejects_nonpositive_period() -> None:
+    bars = pd.DataFrame({"high": [2.0], "low": [1.0], "close": [1.5]})
+
+    with pytest.raises(ValueError, match="period must be positive"):
+        adx(bars, period=0)
 
 
 def test_time_features_use_the_supplied_index_and_are_prefix_invariant() -> None:
@@ -168,6 +177,51 @@ def test_sweep_velocity_is_prefix_invariant(m1_bars):
     )
 
     pd.testing.assert_frame_equal(full.iloc[:200], prefix, check_names=False)
+
+
+def test_sweep_velocity_keeps_missing_level_fallbacks_unavailable() -> None:
+    index = pd.date_range("2025-01-06 10:00", periods=3, freq="1min")
+    close = pd.Series([100.0, 101.0, 102.0], index=index)
+    bars = pd.DataFrame(
+        {"open": close, "high": close + 1.0, "low": close - 1.0, "close": close},
+        index=index,
+    )
+
+    missing = sweep_velocity(bars, atr_period=1)
+    assert missing.isna().all().all()
+
+    bars["london_high"] = pd.Series([101.0, 101.0, 101.0], index=index)
+    partial = sweep_velocity(bars, atr_period=1)
+    assert partial["sweep_velocity_bullish"].notna().all()
+    assert partial["sweep_velocity_bearish"].isna().all()
+
+
+def test_vwap_requires_a_usable_activity_column() -> None:
+    bars = pd.DataFrame(
+        {
+            "high": [101.0, 102.0],
+            "low": [99.0, 100.0],
+            "close": [100.0, 101.0],
+            "session_id": [1, 1],
+        }
+    )
+
+    with pytest.raises(ValueError, match="tickvol/tick_count activity"):
+        vwap_level(bars)
+
+
+def test_ny_session_clock_wraps_overnight_and_equal_boundaries() -> None:
+    overnight_index = pd.DatetimeIndex(
+        ["2025-01-06 22:00", "2025-01-06 23:00", "2025-01-07 00:00", "2025-01-07 02:00"]
+    )
+    overnight = ny_session_clock(overnight_index, "22:00", "02:00")
+    assert overnight["ny_minutes_to_close"].tolist() == [1.0, 0.75, 0.5, 0.0]
+
+    full_day_index = pd.DatetimeIndex(["2025-01-06 08:00", "2025-01-06 20:00", "2025-01-07 08:00"])
+    full_day = ny_session_clock(full_day_index, "08:00", "08:00")
+    # Equal boundaries describe a full-day session; the next day's boundary is
+    # the inclusive start of the next session.
+    assert full_day["ny_minutes_to_close"].tolist() == [1.0, 0.5, 1.0]
 
 
 def test_wick_ratio_measures_upper_wick_only() -> None:

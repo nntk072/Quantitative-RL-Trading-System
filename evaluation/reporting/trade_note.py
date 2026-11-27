@@ -199,7 +199,8 @@ def entry_reason(open_row: Any) -> str:
         if supporting:
             parts.append("Supporting context: " + "; ".join(supporting))
     raw_ideas = open_row.get("entry_ideas")
-    if _text(raw_ideas) and not primary_idea:
+    candidate_types = [str(value) for value in _sequence_value(open_row.get("entry_setup_types"))]
+    if (_text(raw_ideas) or candidate_types) and not primary_idea:
         idea_names = [str(value) for value in _sequence_value(raw_ideas)]
         timeframe_map = _mapping_value(open_row.get("entry_idea_timeframes"))
         gap_reactions = _mapping_value(open_row.get("entry_idea_gap_reactions"))
@@ -233,9 +234,6 @@ def entry_reason(open_row: Any) -> str:
             if len(idea_names) > 1:
                 parts.append(f"{len(idea_names)} entry ideas overlap at the signal")
         else:
-            candidate_types = [
-                str(value) for value in _sequence_value(open_row.get("entry_setup_types"))
-            ]
             candidate_parts = [
                 _ENTRY_SETUP_LABELS.get(value, value.replace("_", " ")) for value in candidate_types
             ]

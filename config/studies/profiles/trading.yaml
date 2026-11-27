@@ -145,6 +145,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_trading_env_decomposition.py
 - tests/unit/simulation/test_environment/test_trailing_stop_causality.py
 - tests/unit/simulation/test_environment/test_year_episode_survival.py
+- tests/unit/simulation/test_policy_action_coverage.py
 - tests/unit/trading/test_account_state_snapshots.py
 - tests/unit/trading/test_cash_hold.py
 - tests/unit/trading/test_classical_baselines.py
@@ -155,6 +156,7 @@ caller_paths:
 - tests/unit/trading/test_guardrails.py
 - tests/unit/trading/test_macd_baseline.py
 - tests/unit/trading/test_multi_tp.py
+- tests/unit/trading/test_policy_config_compatibility.py
 - tests/unit/trading/test_repeated_payout_policy.py
 - tests/unit/trading/test_risk.py
 - tests/unit/trading/test_risk_policy_contract.py
@@ -163,6 +165,7 @@ caller_paths:
 - tests/unit/trading/test_signal_series_strategy.py
 - tests/unit/trading/test_step_indexed_strategy.py
 - tests/unit/trading/test_stop_management.py
+- tests/unit/trading/test_strategy_coverage_contracts.py
 - tests/unit/training/test_backtest_runner_policy.py
 - training/configuration/survival_gate.py
 - training/runner/backtest.py

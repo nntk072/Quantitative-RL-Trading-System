@@ -147,11 +147,13 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_env_step_tick_golden_trace.py
 - tests/unit/simulation/test_environment/test_news_spike_guard_env.py
 - tests/unit/simulation/test_environment/test_ny_steps_eod.py
+- tests/unit/simulation/test_environment/test_protective_level_runtime.py
 - tests/unit/simulation/test_environment/test_sl_tp_fill.py
 - tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
 - tests/unit/simulation/test_environment/test_tp_execution.py
 - tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
 - tests/unit/simulation/test_environment/test_year_episode_survival.py
+- tests/unit/simulation/test_policy_action_coverage.py
 - tests/unit/training/test_tick_execution_preflight.py
 - training/runner/backtest.py
 - training/runner/baselines.py

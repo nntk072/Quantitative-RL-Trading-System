@@ -119,9 +119,11 @@ caller_paths:
 - tests/unit/evaluation/test_metrics.py
 - tests/unit/evaluation/test_order_chart.py
 - tests/unit/evaluation/test_order_chart_regeneration.py
+- tests/unit/evaluation/test_performance_metric_remaining_contracts.py
 - tests/unit/evaluation/test_plots_export.py
 - tests/unit/evaluation/test_po3_plots.py
 - tests/unit/evaluation/test_policy_decision_reconciliation.py
+- tests/unit/evaluation/test_policy_decision_reconciliation_remaining_contracts.py
 - tests/unit/evaluation/test_random_eligible_setup.py
 - tests/unit/evaluation/test_reward_attribution.py
 - tests/unit/evaluation/test_rollout.py
