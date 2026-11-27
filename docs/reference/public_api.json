@@ -8611,6 +8611,18 @@
       "documented": false,
       "exported_from": "evaluation.reporting.policy_decision_reconciliation",
       "kind": "value",
+      "name": "_INCOMPLETE_STATUS_REASONS",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 52,
+      "source_module": "evaluation.reporting.policy_decision_reconciliation",
+      "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "evaluation.reporting.policy_decision_reconciliation",
+      "kind": "value",
       "name": "_OPEN_TYPES",
       "numpy_style": false,
       "package": "evaluation",
@@ -8650,7 +8662,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 1349,
+      "source_line": 1364,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8662,7 +8674,7 @@
       "name": "_boolean",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 162,
+      "source_line": 176,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8674,7 +8686,7 @@
       "name": "_first_timestamp",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 114,
+      "source_line": 128,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8686,7 +8698,7 @@
       "name": "_integer",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 54,
+      "source_line": 68,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8698,7 +8710,7 @@
       "name": "_is_missing",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 145,
+      "source_line": 159,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8710,7 +8722,7 @@
       "name": "_number",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 76,
+      "source_line": 90,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8722,7 +8734,7 @@
       "name": "_position_complete",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 190,
+      "source_line": 204,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8734,7 +8746,7 @@
       "name": "_records",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 131,
+      "source_line": 145,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8746,7 +8758,7 @@
       "name": "_timestamp",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 96,
+      "source_line": 110,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8758,7 +8770,7 @@
       "name": "_truth",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 178,
+      "source_line": 192,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
@@ -8770,7 +8782,7 @@
       "name": "reconcile_policy_decisions",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 205,
+      "source_line": 219,
       "source_module": "evaluation.reporting.policy_decision_reconciliation",
       "source_path": "evaluation/reporting/policy_decision_reconciliation.py"
     },
