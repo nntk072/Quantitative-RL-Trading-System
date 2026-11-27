@@ -1337,10 +1337,10 @@ def reconcile_policy_decisions(
     report["unclosed_position_ids"] = sorted(active_positions)
     if active_positions:
         report["incomplete_reasons"].append("position_ledger_ends_with_open_positions")
-    if report["incomplete_reasons"]:
-        report["status"] = "incomplete"
-    elif failures:
+    if failures:
         report["status"] = "mismatch"
+    elif report["incomplete_reasons"]:
+        report["status"] = "incomplete"
     else:
         report["status"] = "matched"
     return report
