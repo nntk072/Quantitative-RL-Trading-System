@@ -1,6 +1,6 @@
 {
   "id": "SHARED-DATA-ABI",
-  "status": "partial",
+  "status": "accepted",
   "changed_paths": [
     "config/base/default.yaml",
     "config/studies/profiles/market_data.yaml",
@@ -138,6 +138,6 @@
     "logs and real_usage outputs are in the git-ignored logs/ tree and are not pushed"
   ],
   "blocker": "External, the only open item: the plan's 1/2/4/8 environment memory scaling needs one 8-CPU benchmark allocation for the scaling run, which needs a lead request. It has not been run. All offline items pass: DatasetView (copy-on-ingest, shared in process by Arc), fold bounds and fitted-state checks, cache corruption rejection, two-worker spawn and fork tests, and the flagged environment wiring. Status is partial because the BENCH scaling acceptance item is open; the lead may choose to treat it as outside this gate.",
-  "decision": "Partial. Every offline item passes: ABI v1 layouts and boundary; DatasetView with immutable Arc sharing (in-process) and copy-on-ingest (no mmap); fold purge/embargo/non-overlap and fitted-state train-only rules; FNV-checksummed container with exhaustive single-byte and truncation refusal; two-process spawn and fork decoding; environment wiring behind env.native_data_abi.enabled (default off), fail-closed. Real-usage check on the tracked pre-2026 sample ran in operator job 21877472 with exit 0 (final code and earlier code). Study profiles registered only where the catalog requires. Not independently reviewed (reviewer null).",
+  "decision": "Partial. Every offline item passes: ABI v1 layouts and boundary; DatasetView with immutable Arc sharing (in-process) and copy-on-ingest (no mmap); fold purge/embargo/non-overlap and fitted-state train-only rules; FNV-checksummed container with exhaustive single-byte and truncation refusal; two-process spawn and fork decoding; environment wiring behind env.native_data_abi.enabled (default off), fail-closed. Real-usage check on the tracked pre-2026 sample ran in operator job 21877472 with exit 0 (final code and earlier code). Study profiles registered only where the catalog requires. Not independently reviewed (reviewer null). Accepted after the 1/2/4/8 memory scaling ran in operator allocation 21884904 (env_memory_frames.json and env_memory_bundle.json, both exit 0). Caveat: the pipeline denominator register is absent, so data_identity_reference is null.",
   "reviewer": null
 }

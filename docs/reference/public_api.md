@@ -13,8 +13,8 @@ Compatibility names and experimental exports remain labeled explicitly.
 | stable | 723 |
 | experimental | 0 |
 | compatibility-only | 10 |
-| cross-package internal | 513 |
-| private implementation | 1117 |
+| cross-package internal | 528 |
+| private implementation | 1125 |
 
 ## Public package exports
 
@@ -562,7 +562,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | Exported name | Kind | Source | Status |
 |---|---|---|---|
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
-| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L34) | stable |
+| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L35) | stable |
 | `run_backtest` | function | [simulation.backtest.event_driven_backtest](../../simulation/backtest/event_driven_backtest.py#L406) | stable |
 | `CrossOverStrategy` | class | [simulation.backtest.cross_validation.strategies.cross_over](../../simulation/backtest/cross_validation/strategies/cross_over.py#L4) | stable |
 | `EMAMACDStrategy` | class | [simulation.backtest.cross_validation.strategies.macd_strategy](../../simulation/backtest/cross_validation/strategies/macd_strategy.py#L130) | stable |
@@ -586,7 +586,7 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `SignalFollowingStrategy.notify_order` | method | [simulation.backtest.cross_validation.strategies.signal_following](../../simulation/backtest/cross_validation/strategies/signal_following.py#L42) | stable |
 | `SimulationTransition` | class | [simulation.contracts.transition](../../simulation/contracts/transition.py#L13) | stable |
 | `SimulationTransition.as_gymnasium` | method | [simulation.contracts.transition](../../simulation/contracts/transition.py#L22) | stable |
-| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L34) | stable |
+| `TradingEnv` | class | [simulation.environment.env](../../simulation/environment/env.py#L35) | stable |
 | `build_eval_common` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L218) | stable |
 | `cost_model` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L525) | stable |
 | `eval_guardrail_kwargs` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L113) | stable |
@@ -603,9 +603,9 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `strategy_from_cfg` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L145) | stable |
 | `strategy_risk_ranges` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L25) | stable |
 | `tick_execution_required` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L423) | stable |
-| `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L439) | stable |
-| `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L471) | stable |
-| `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L485) | stable |
+| `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L447) | stable |
+| `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L479) | stable |
+| `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L493) | stable |
 
 ### `trading`
 
