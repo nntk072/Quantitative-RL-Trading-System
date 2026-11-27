@@ -80,7 +80,7 @@ def test_uninitialized_terminal_is_initialized_before_requested_account_login(
         (
             "login",
             {"login": 222, "password": "secret", "server": "demo"},  # pragma: allowlist secret
-        ),  # pragma: allowlist secret
+        ),
     ]
 
 
@@ -125,8 +125,8 @@ def test_login_failure_reports_runtime_error(monkeypatch: pytest.MonkeyPatch) ->
         )
 
     assert calls == [
-        {"login": 456, "password": "secret", "server": "demo"}
-    ]  # pragma: allowlist secret
+        {"login": 456, "password": "secret", "server": "demo"},  # pragma: allowlist secret
+    ]
 
 
 def test_non_numeric_login_is_rejected_before_account_lookup(
