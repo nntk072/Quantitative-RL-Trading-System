@@ -14,8 +14,8 @@ def test_script_migration_audit_checks_all_legacy_wrappers_without_mutation() ->
     )
 
     assert report["diagnostic_status"] == "passed"
-    assert report["manifest_count"] == 162
-    assert report["completed_count"] == 162
+    assert report["manifest_count"] == 163
+    assert report["completed_count"] == 163
     assert report["errors"] == []
     assert report["unregistered_sources"] == []
     assert report["stale_manifest_sources"] == []

@@ -36,9 +36,9 @@ def test_repository_study_catalog_covers_owned_modules_and_configures_only_regis
         for module in plan["modules"]
         for path in (ROOT / value for value in module["api_paths"] + module["caller_paths"])
     )
-    assert len(plan["catalog_study_ids"]) == 93
+    assert len(plan["catalog_study_ids"]) == 94
     assert Counter(study["type"] for module in plan["modules"] for study in module["studies"]) == {
-        "code_check": 80,
+        "code_check": 81,
         "audit": 8,
         "empirical": 5,
     }
@@ -60,7 +60,7 @@ def test_repository_study_catalog_covers_owned_modules_and_configures_only_regis
         for study in module["studies"]
     )
     migrations = plan["script_migrations"]
-    assert migrations["count"] == 162
+    assert migrations["count"] == 163
     assert migrations["completed_count"] == migrations["count"]
     assert all(
         len(digest) == 64
@@ -163,7 +163,7 @@ def test_script_migration_manifest_covers_every_research_module_and_script() -> 
     registered = [row["path"] for row in rows]
 
     assert manifest["schema_version"] == 1
-    assert len(rows) == 162
+    assert len(rows) == 163
     assert len(registered) == len(set(registered))
     assert set(registered) == expected
     assert all(row["owner_module"] and row["target"] and row["tests"] for row in rows)

@@ -1,0 +1,106 @@
+{
+  "id": "PERFORMANCE-POLICY",
+  "scope": "Offline part only: signed-off promotion matrix, a pure promotion checker over trial summaries, a CLI wrapper, known-answer tests and study-catalog registration. No candidate was measured. No srun, sbatch, salloc or scancel was run. No heavy compute ran on the login host.",
+  "gate": "BENCH (offline part accepted; measurements are open, see blocker)",
+  "depends_on": [
+    "PERFORMANCE-BASELINE"
+  ],
+  "status": "accepted",
+  "base_sha": "86ccb84e3ce24e6a0888b3043e0e3abf0f1ca788",
+  "implementation_sha_or_diff_hash": null,
+  "worktree": "/scratch/work/nguyenl37/worktrees/perfpolicy-stream (detached, removed after this entry was committed)",
+  "decision": "Lead sign-off recorded in planning/native_modernization/performance_policy/promotion_matrix.md section 1, dated 2026-11-27. Owner approval is not claimed.",
+  "changed_paths": [
+    "research_tools/compute/benchmarks/performance_promotion.py",
+    "scripts/research/benchmarks/check_performance_promotion.py",
+    "tests/unit/research_tools/test_performance_promotion.py",
+    "tests/unit/research_tools/test_study_catalog.py",
+    "tests/unit/tooling/test_research_tool_audit.py",
+    "config/studies/profiles/compute.yaml",
+    "config/studies/script_migrations.yaml",
+    "planning/native_modernization/performance_policy/promotion_matrix.md",
+    "planning/native_modernization/ledger_entries/PERFORMANCE-POLICY.json"
+  ],
+  "tests_executed": [
+    {
+      "command": "cd /scratch/work/nguyenl37/worktrees/perfpolicy-stream && PYTHONPATH=/scratch/work/nguyenl37/worktrees/perfpolicy-stream OMP_NUM_THREADS=2 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python -m pytest tests/unit/research_tools/test_performance_promotion.py tests/unit/research_tools/test_study_catalog.py tests/unit/tooling -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "163 passed"
+    },
+    {
+      "command": "cd /scratch/work/nguyenl37/worktrees/perfpolicy-stream && PYTHONPATH=/scratch/work/nguyenl37/worktrees/perfpolicy-stream OMP_NUM_THREADS=2 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python -m pytest tests/unit/research_tools tests/unit/tooling tests/architecture -q -p no:cacheprovider",
+      "exit_code": 0,
+      "result": "272 passed"
+    },
+    {
+      "command": "cd /scratch/work/nguyenl37/worktrees/perfpolicy-stream && PYTHONPATH=/scratch/work/nguyenl37/worktrees/perfpolicy-stream OMP_NUM_THREADS=2 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python -m pytest tests/unit/research_tools/test_performance_promotion.py -q -p no:cacheprovider -k 'markdown or every_threshold or every_class or initial_matrix'",
+      "exit_code": 0,
+      "result": "10 passed (markdown matrix mirror re-checked after regeneration)"
+    },
+    {
+      "command": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python -m ruff format --check research_tools/compute/benchmarks/performance_promotion.py scripts/research/benchmarks/check_performance_promotion.py tests/unit/research_tools/test_performance_promotion.py tests/unit/research_tools/test_study_catalog.py tests/unit/tooling/test_research_tool_audit.py",
+      "exit_code": 0,
+      "result": "5 files already formatted"
+    },
+    {
+      "command": "/scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python -m ruff check research_tools/compute/benchmarks/performance_promotion.py scripts/research/benchmarks/check_performance_promotion.py tests/unit/research_tools/test_performance_promotion.py tests/unit/research_tools/test_study_catalog.py tests/unit/tooling/test_research_tool_audit.py",
+      "exit_code": 0,
+      "result": "All checks passed"
+    },
+    {
+      "command": "cd /scratch/work/nguyenl37/worktrees/perfpolicy-stream && PYTHONPATH=/scratch/work/nguyenl37/worktrees/perfpolicy-stream OMP_NUM_THREADS=2 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python -m mypy research_tools/compute/benchmarks/performance_promotion.py scripts/research/benchmarks/check_performance_promotion.py tests/unit/research_tools/test_performance_promotion.py tests/unit/research_tools/test_study_catalog.py tests/unit/tooling/test_research_tool_audit.py",
+      "exit_code": 0,
+      "result": "Success: no issues found in 5 source files"
+    },
+    {
+      "command": "cd /scratch/work/nguyenl37/worktrees/perfpolicy-stream && PYTHONPATH=/scratch/work/nguyenl37/worktrees/perfpolicy-stream OMP_NUM_THREADS=2 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python scripts/research/benchmarks/check_performance_promotion.py <scratch trial fixture>",
+      "exit_code": 0,
+      "result": "outcome promote on a valid fixture"
+    },
+    {
+      "command": "cd /scratch/work/nguyenl37/worktrees/perfpolicy-stream && PYTHONPATH=/scratch/work/nguyenl37/worktrees/perfpolicy-stream OMP_NUM_THREADS=2 /scratch/work/nguyenl37/Quantitative-RL-Trading-System/.venv-x86/bin/python scripts/research/benchmarks/check_performance_promotion.py <scratch malformed fixture>",
+      "exit_code": 2,
+      "result": "invalid trial summary, as designed"
+    }
+  ],
+  "tooling_notes": [
+    "The .venv-x86/bin/mypy script has a broken shebang that points at another checkout's interpreter. mypy was run as `.venv-x86/bin/python -m mypy`.",
+    "ruff format was run once over research_tools/ to check drift. Only the new module and its test changed, and the test file was later restored to the reviewed form."
+  ],
+  "evidence_refs": [
+    "planning/native_modernization/ARCHITECTURE_MODERNIZATION_PLAN.md (PERFORMANCE-POLICY, lines 100-102)",
+    "planning/native_modernization/performance_policy/promotion_matrix.md",
+    "research_tools/compute/benchmarks/performance_promotion.py",
+    "tests/unit/research_tools/test_performance_promotion.py",
+    "scripts/research/benchmarks/check_performance_promotion.py",
+    "config/studies/profiles/compute.yaml (compute.performance_promotion_policy)",
+    "config/studies/script_migrations.yaml (row check_performance_promotion.py)",
+    "registration pattern: commit 22efee0b (script migration row, count 162 to 163) and commit 86ccb84e (profile sync to the catalog inventory)"
+  ],
+  "behaviour_changes": [
+    "No runtime or production code changed. research_tools/compute gains one pure module. The study catalog gains one code_check study (93 to 94) and one migration row (163 to 164)."
+  ],
+  "blocker": [
+    {
+      "item": "O1: PERFORMANCE-BASELINE workloads are not measured. Every candidate class is therefore undecided. The matrix thresholds are not calibrated against any baseline.",
+      "reason": "PERFORMANCE-BASELINE is blocked in work_package_ledger.json. Its blocker is 'Needs a benchmark allocation (GPU for learner workloads) and a frozen train-only workload'. Repeats, noise floor and stage fractions only exist after a real run.",
+      "allocation": "One GH200 allocation, GPUS=gh200:1 CPUS=48 MEM=512G, created with scripts/compute/slurm/attach_or_alloc.sh under .agents/rules/triton-slurm.md. Explicit user authorization is required. The same allocation as RESOURCE-RUNTIME O1 can be reused if it is still open. Run the frozen train-only benchmark inside it. No srun or sbatch from this stream. Not performed here."
+    },
+    {
+      "item": "O2: lead_default placeholders not calibrated: max_relative_spread 0.15, min_reliability_attempts 20, reliability gain 0.05, Amdahl minimum 1.05. Each one needs an amendment in the matrix log (section 8) before a class decision.",
+      "reason": "The plan gives no number for these. Calibrating them needs baseline repeats and a measured failure rate from O1.",
+      "allocation": "Same allocation as O1. Read-only analysis of the O1 raw repeats needs no new allocation."
+    },
+    {
+      "item": "O3: baseline stage fractions f for the Amdahl gate, for each stage class's primary workload.",
+      "reason": "Stage shares of end-to-end wall time are measured only by a profiled baseline run on the frozen workload.",
+      "allocation": "Same allocation as O1, with the profiler capture the PERFORMANCE-BASELINE workload defines."
+    },
+    {
+      "item": "O4: candidate-class trials (feature_kernel, native_environment, learner_backend, data_storage, resource_runtime, integrated_pipeline). None of the candidates exists yet, so none can be decided.",
+      "reason": "Each class needs its candidate implementation and repeated candidate and baseline measurements on identical hardware, plus the correctness gates named in the matrix.",
+      "allocation": "Each trial names its own allocation when its work package is active. CPU-only for feature_kernel and data_storage. GPU for learner_backend and integrated_pipeline. Each needs explicit authorization under triton-slurm.md. No allocation is claimed here."
+    }
+  ],
+  "owner_approval": "Not obtained and not claimed. The recorded sign-off is the lead decision. It is not an owner approval."
+}
