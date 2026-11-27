@@ -56,7 +56,7 @@ def artifact_id(kind: str, semantic_inputs: Any) -> ArtifactId:
 
 **Observed usage:**
 
-1. [test fixture: `test_artifact_id_is_stable_for_mapping_order`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L19)
+1. [test fixture: `test_artifact_id_is_stable_for_mapping_order`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L21)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -153,7 +153,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L36)
+2. [test fixture: `test_file_sha256_matches_standard_digest_for_empty_and_nonempty_files`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

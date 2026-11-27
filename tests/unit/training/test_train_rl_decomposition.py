@@ -312,6 +312,80 @@ def test_training_data_stage_clips_sentinel_rows_before_feature_build(
     assert len(prepared.test_feat) == 0
 
 
+def test_tick_only_preflight_stops_before_feature_construction(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    cfg = load_config(config_path="config/research/survival_qualification.yaml")
+    cfg.evaluation.development_only = False
+    cfg.data.cache_dir = str(tmp_path / "cache")
+    bars = pd.DataFrame(
+        {"open": [100.0], "high": [101.0], "low": [99.0], "close": [100.5]},
+        index=pd.DatetimeIndex(["2025-01-02 14:30:00Z"]),
+    )
+    primary_ticks = object()
+    observed: dict[str, Any] = {}
+    monkeypatch.setattr(
+        "training.runner.data_stage.run_pipeline",
+        lambda *_args, **_kwargs: {str(cfg.data.primary): {"M1": bars}},
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.build_tick_books",
+        lambda *_args, **_kwargs: {str(cfg.data.primary): primary_ticks},
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.get_split_config", lambda _cfg: ("2025-06-30", "2025-07-01")
+    )
+    monkeypatch.setattr("training.runner.data_stage.get_train_start_config", lambda _cfg: None)
+    monkeypatch.setattr(
+        "training.runner.data_stage.make_train_mask", lambda *_args: np.ones(1, dtype=bool)
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.resolve_tick_execution_required", lambda _cfg: True
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.resolve_randomized_fill_latency_ms", lambda _cfg: 0.0
+    )
+    monkeypatch.setattr("training.runner.data_stage.scheduled_session_close_map", lambda _cfg: {})
+    monkeypatch.setattr("training.runner.data_stage.max_tick_quote_wait_ms", lambda _cfg: 0)
+
+    def coverage(ticks: object, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        observed["ticks"] = ticks
+        return {
+            "train": {
+                "covered_count": 0,
+                "order_count": 1,
+                "coverage_fraction": 0.0,
+                "unavailable_count": 1,
+                "unavailable_order_times_utc": ["2025-01-02T14:30:00Z"],
+            }
+        }
+
+    monkeypatch.setattr("training.runner.data_stage.tick_execution_split_coverage", coverage)
+    monkeypatch.setattr(
+        "training.runner.data_stage.registered_no_fill_quote_anchors", lambda *_args: []
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.validate_registered_no_fill_anchors",
+        lambda *_args: (_ for _ in ()).throw(ValueError("unregistered unavailable order")),
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.build_features",
+        lambda *_args, **_kwargs: pytest.fail("feature construction must follow tick preflight"),
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.feature_cache_path",
+        lambda *_args, **_kwargs: pytest.fail("cache setup must follow tick preflight"),
+    )
+    stage = TrainingConfigurationStage(
+        args=SimpleNamespace(force=False), cfg=cfg, device="cpu", lagrangian_cb=None
+    )
+
+    with pytest.raises(SystemExit, match="Tick-only execution preflight failed for train"):
+        _prepare_training_data(stage)
+
+    assert observed["ticks"] is primary_ticks
+
+
 def test_training_aggregation_requires_explicit_boolean_gate_passes() -> None:
     metrics = SimpleNamespace(
         sharpe=0.0,
@@ -601,11 +675,13 @@ def test_evaluation_artifacts_separate_train_and_report_only_test(tmp_path: Path
         ("2026-11-12", "2026-11-12"),
     ],
 )
+@pytest.mark.parametrize("use_bundle", [False, True])
 def test_evaluate_train_split_persists_json_safe_fail_time(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     fail_time: object,
     expected_fail_time: str | None,
+    use_bundle: bool,
 ) -> None:
     metrics = SimpleNamespace(
         n_trades=0,
@@ -634,10 +710,10 @@ def test_evaluate_train_split_persists_json_safe_fail_time(
     )
     preparation = SimpleNamespace(
         configuration=SimpleNamespace(cfg=cfg),
-        run_assets=SimpleNamespace(train_eval_spec=None),
+        run_assets=SimpleNamespace(train_eval_spec=object() if use_bundle else None),
         data=SimpleNamespace(
-            train_bars=pd.DataFrame(),
-            train_feat=pd.DataFrame(),
+            train_bars=pd.DataFrame({"close": [100.0]}),
+            train_feat=pd.DataFrame({"atr": [1.0]}),
             primary_ticks=None,
         ),
     )
@@ -654,13 +730,23 @@ def test_evaluate_train_split_persists_json_safe_fail_time(
     runner.test_m = None
 
     monkeypatch.setattr("training.runner.seed_runtime._setup_rngs", lambda _seed: None)
+    from simulation.environment import worker
+
+    monkeypatch.setattr(worker, "make_bundle_env", lambda _spec: "bundle-train-eval-env")
     monkeypatch.setattr(
         "training.runner.seed_runtime.ticks_covering",
         lambda _ticks, _bars, **_kwargs: None,
     )
+
+    evaluation_inputs: dict[str, Any] = {}
+
+    def evaluate(_provider: object, **kwargs: Any) -> dict[str, Any]:
+        evaluation_inputs.update(kwargs)
+        return train_result
+
     monkeypatch.setattr(
         "training.runner.seed_runtime._evaluate_final_split",
-        lambda *_args, **_kwargs: train_result,
+        evaluate,
     )
     monkeypatch.setattr(
         "training.runner.seed_runtime.calculate_metrics", lambda *_args, **_kwargs: metrics
@@ -684,6 +770,13 @@ def test_evaluate_train_split_persists_json_safe_fail_time(
 
     runner.evaluate_train_split()
 
+    assert evaluation_inputs["env"] == ("bundle-train-eval-env" if use_bundle else None)
+    if use_bundle:
+        assert evaluation_inputs["bars"].empty
+        assert evaluation_inputs["features"].empty
+    else:
+        assert evaluation_inputs["bars"]["close"].tolist() == [100.0]
+        assert evaluation_inputs["features"]["atr"].tolist() == [1.0]
     persisted = json.loads((tmp_path / "train_path_outcome.json").read_text())
     assert persisted["fail_time"] == expected_fail_time
 
@@ -1203,6 +1296,78 @@ class TestParseTrainArgs:
             args = parse_train_args()
         assert args.reward == "sweep"
 
+    def test_confirmatory_metadata_requires_confirmatory_flag(self) -> None:
+        with (
+            patch("sys.argv", ["train_rl", "--confirmatory-arm", "q0_control"]),
+            pytest.raises(SystemExit),
+        ):
+            parse_train_args()
+
+    def test_confirmatory_launch_rejects_non_protocol_seed_list(self) -> None:
+        with (
+            patch("sys.argv", ["train_rl", "--confirmatory", "--seeds", "42"]),
+            pytest.raises(SystemExit),
+        ):
+            parse_train_args()
+
+    def test_confirmatory_launch_requires_frozen_arm_identity(self) -> None:
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "train_rl",
+                    "--confirmatory",
+                    "--seeds",
+                    "42",
+                    "43",
+                    "44",
+                    "45",
+                    "46",
+                    "47",
+                ],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            parse_train_args()
+
+    def test_survival_campaign_directory_and_phase_are_a_pair(self, capsys) -> None:
+        with (
+            patch("sys.argv", ["train_rl", "--survival-campaign-dir", "runs/campaign"]),
+            pytest.raises(SystemExit),
+        ):
+            parse_train_args()
+        assert "--survival-campaign-dir and --survival-campaign-phase must be used together" in (
+            capsys.readouterr().err
+        )
+
+    def test_survival_campaign_seed_requires_a_seed_or_fold_phase(self, capsys) -> None:
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "train_rl",
+                    "--survival-campaign-dir",
+                    "runs/campaign",
+                    "--survival-campaign-phase",
+                    "finalize",
+                    "--seeds",
+                    "42",
+                    "43",
+                    "44",
+                    "45",
+                    "46",
+                    "47",
+                    "--survival-campaign-seed",
+                    "42",
+                ],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            parse_train_args()
+        assert "--survival-campaign-seed is only valid for a seed or fold phase" in (
+            capsys.readouterr().err
+        )
+
 
 class TestSetupRngs:
     """Tests for _setup_rngs()."""
@@ -1462,3 +1627,146 @@ class TestCostModel:
         assert model.spread_points == float(cfg.costs.spread_us100)
         assert float(cfg.risk.min_sl_points) == 0.0
         assert float(cfg.risk.min_sl_atr_mult) > 0.0
+
+
+def _stub_training_data_inputs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> tuple[Any, SimpleNamespace, dict[str, Any]]:
+    cfg = load_config(config_path="config/research/survival_qualification.yaml")
+    cfg.evaluation.development_only = False
+    cfg.costs.use_tick_execution = False
+    cfg.data.cache_dir = str(tmp_path / "feature-cache")
+    primary_symbol = str(cfg.data.primary)
+    bars = pd.DataFrame(
+        {
+            "open": [100.0, 101.0],
+            "high": [102.0, 103.0],
+            "low": [99.0, 100.0],
+            "close": [101.0, 102.0],
+        },
+        index=pd.DatetimeIndex(["2025-01-02 14:30:00Z", "2025-01-02 14:31:00Z"]),
+    )
+    features = pd.DataFrame({"feature": [0.1, 0.2]}, index=bars.index)
+    observations: dict[str, Any] = {}
+
+    def run_pipeline(_cfg: Any, *, force: bool, **kwargs: Any) -> dict[str, Any]:
+        observations["pipeline_call"] = (force, kwargs)
+        return {primary_symbol: {"M1": bars}}
+
+    def build_features(_bars: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
+        observations["feature_inputs"] = kwargs
+        return features
+
+    def choose_cache(*args: Any, **kwargs: Any) -> Path:
+        observations["cache_identity"] = (args, kwargs)
+        return tmp_path / "generated-features.parquet"
+
+    monkeypatch.setattr("training.runner.data_stage.run_pipeline", run_pipeline)
+    monkeypatch.setattr(
+        "training.runner.data_stage.build_tick_books",
+        lambda _cfg, **kwargs: observations.setdefault("tick_call", kwargs) or {},
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.get_split_config", lambda _cfg: ("2025-01-02", "2025-01-03")
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.get_train_start_config", lambda _cfg: "2025-01-02"
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.make_train_mask",
+        lambda index, *_args: np.ones(len(index), bool),
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.resolve_randomized_fill_latency_ms", lambda _cfg: 0.0
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.resolve_tick_execution_required", lambda _cfg: False
+    )
+    monkeypatch.setattr("training.runner.data_stage.feature_cache_path", choose_cache)
+    monkeypatch.setattr("training.runner.data_stage.build_features", build_features)
+    monkeypatch.setattr(
+        "training.runner.data_stage.attach_policy_market_context",
+        lambda _bars, frame, *_args, **_kwargs: frame,
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.split_train_test",
+        lambda bar_frame, feature_frame, *_args: (
+            bar_frame.iloc[:1],
+            bar_frame.iloc[1:],
+            feature_frame.iloc[:1],
+            feature_frame.iloc[1:],
+        ),
+    )
+    monkeypatch.setattr(
+        "training.runner.data_stage.validate_portfolio_gate", lambda **_kwargs: None
+    )
+    stage = TrainingConfigurationStage(
+        args=SimpleNamespace(force=False, mvp=False, use_vae=False),
+        cfg=cfg,
+        device="cpu",
+        lagrangian_cb=None,
+    )
+    return stage, SimpleNamespace(bars=bars, features=features), observations
+
+
+def test_training_data_stage_selects_dynamic_cache_and_records_missing_optional_inputs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    stage, frames, observed = _stub_training_data_inputs(monkeypatch, tmp_path)
+
+    prepared = _prepare_training_data(stage)
+
+    assert observed["pipeline_call"] == (False, {})
+    assert observed["tick_call"] == {}
+    assert observed["cache_identity"][1]["secondary"] is None
+    assert observed["cache_identity"][1]["timeframe_bars"] == {"M1": frames.bars}
+    assert observed["feature_inputs"]["cache_path"] == tmp_path / "generated-features.parquet"
+    assert observed["feature_inputs"]["secondary"] is None
+    assert prepared.primary_ticks is None
+    assert prepared.train_sec is None
+    assert prepared.test_sec is None
+    assert set(prepared.dataset_records) == {
+        "train_bars",
+        "test_bars",
+        "train_features",
+        "test_features",
+    }
+    assert prepared.dataset_records["train_bars"]["rows"] == 1
+    assert prepared.dataset_records["train_bars"]["sha256"]
+
+
+@pytest.mark.parametrize(
+    ("cache_exists", "sidecar_value", "error_type", "message"),
+    [
+        (False, None, FileNotFoundError, "cache or its .hash sidecar is missing"),
+        (True, "stale-hash", ValueError, "does not match the effective data/config hash"),
+    ],
+)
+def test_prebuilt_feature_cache_fails_closed_when_missing_or_stale(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    cache_exists: bool,
+    sidecar_value: str | None,
+    error_type: type[Exception],
+    message: str,
+) -> None:
+    stage, _frames, _observed = _stub_training_data_inputs(monkeypatch, tmp_path)
+    cache = tmp_path / "prebuilt-features.parquet"
+    stage.cfg.data.prebuilt_feature_cache = str(cache)
+    monkeypatch.setattr(
+        "training.runner.data_stage.feature_cache_content_hash",
+        lambda *_args, **_kwargs: "current-hash",
+    )
+    if cache_exists:
+        cache.write_bytes(b"prebuilt feature payload")
+    if sidecar_value is not None:
+        Path(str(cache) + ".hash").write_text(sidecar_value, encoding="utf-8")
+    monkeypatch.setattr(
+        "training.runner.data_stage.build_features",
+        lambda *_args, **_kwargs: pytest.fail(
+            "invalid prebuilt cache must fail before feature loading"
+        ),
+    )
+
+    with pytest.raises(error_type, match=message):
+        _prepare_training_data(stage)

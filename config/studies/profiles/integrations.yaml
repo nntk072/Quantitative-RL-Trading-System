@@ -5,15 +5,37 @@ api_paths:
 - integrations/mt5/adapters/data.py
 - integrations/mt5/cli/__init__.py
 - integrations/mt5/domain/__init__.py
+- integrations/mt5/domain/data_sources/mt5_data.py
 - integrations/mt5/domain/risk_manager.py
+- integrations/mt5/domain/symbol_rules.py
 - integrations/mt5/domain/signal.py
+- integrations/mt5/domain/strategies/__init__.py
+- integrations/mt5/domain/strategies/combined_strategy.py
+- integrations/mt5/domain/strategies/cross_over_strategy.py
+- integrations/mt5/domain/strategies/smc_strategy.py
+- integrations/mt5/domain/strategies/trend_breakout_strategy.py
 - integrations/mt5/domain/trader.py
 - integrations/mt5/robot/__init__.py
 - integrations/mt5/robot/cross_over_robot.py
 - integrations/mt5/robot/multi_symbol_robot.py
 - integrations/mt5/robot/rl_robot.py
+- integrations/mt5/__init__.py
 caller_paths:
+- tests/unit/integrations/test_mt5_connection.py
+- tests/unit/integrations/test_mt5_data_source.py
+- tests/unit/integrations/test_mt5_robot_paper_cycle.py
+- tests/unit/integrations/test_mt5_risk_manager_edges.py
+- tests/unit/integrations/test_mt5_trader_management.py
+- tests/unit/integrations/test_multi_symbol_robot_status.py
+- tests/unit/integrations/test_multi_symbol_trading.py
+- tests/unit/integrations/test_mt5_strategies.py
+- tests/unit/integrations/test_mt5_strategy_signal_contracts.py
+- tests/unit/integrations/test_symbol_rules.py
 - tests/unit/integrations/test_volatility_analyzer.py
+- tests/unit/integrations/test_mt5_multi_symbol_risk_contracts.py
+- tests/unit/integrations/test_mt5_manager_robot_coverage.py
+- tests/unit/integrations/test_rl_robot_coverage.py
+- tests/unit/integrations/test_multi_symbol_robot_coverage.py
 - tests/unit/live/test_crossover_robot.py
 - tests/unit/live/test_mt5_cli_applications.py
 - tests/unit/live/test_mt5_trader_quotes.py
@@ -25,7 +47,7 @@ source_scopes:
   - {path: integrations/mt5, study_ids: [integrations.broker_contract_conversion, integrations.symbol_and_order_constraints]}
   - {path: integrations/__init__.py, study_ids: [integrations.broker_contract_conversion]}
 config_paths: [config/base/default.yaml]
-test_paths: [tests/unit/integrations/test_volatility_analyzer.py, tests/unit/live]
+test_paths: [tests/unit/integrations/test_mt5_connection.py, tests/unit/integrations/test_mt5_data_source.py, tests/unit/integrations/test_mt5_robot_paper_cycle.py, tests/unit/integrations/test_mt5_risk_manager_edges.py, tests/unit/integrations/test_mt5_trader_management.py, tests/unit/integrations/test_multi_symbol_robot_status.py, tests/unit/integrations/test_multi_symbol_trading.py, tests/unit/integrations/test_mt5_strategies.py, tests/unit/integrations/test_mt5_strategy_signal_contracts.py, tests/unit/integrations/test_symbol_rules.py, tests/unit/integrations/test_volatility_analyzer.py, tests/unit/integrations/test_mt5_multi_symbol_risk_contracts.py, tests/unit/integrations/test_multi_symbol_robot_coverage.py, tests/unit/live]
 studies:
   - id: integrations.broker_contract_conversion
     type: code_check
@@ -36,6 +58,6 @@ studies:
   - id: integrations.symbol_and_order_constraints
     type: code_check
     question: Are broker symbol, volume step, price precision, order rules, and monetary limits checked before requests?
-    source_paths: [integrations/mt5/domain/risk_manager.py, integrations/mt5/risk_configuration.py]
+    source_paths: [integrations/mt5/domain/multi_symbol_manager.py, integrations/mt5/domain/risk_manager.py, integrations/mt5/risk_configuration.py]
     checks: [tests/unit/live/test_risk_manager.py, tests/unit/live/test_multi_symbol_risk_stops.py]
     outputs: [broker_constraint_check]

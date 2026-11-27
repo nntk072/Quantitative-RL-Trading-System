@@ -386,7 +386,9 @@ def scan_csv(
                     {"flag": flag_values.to_numpy(), "quote_side": quote_side}
                 ).value_counts(sort=False)
                 for group_key, count in cross_tab.items():
-                    if not isinstance(group_key, tuple) or len(group_key) != 2:
+                    if (
+                        not isinstance(group_key, tuple) or len(group_key) != 2
+                    ):  # pragma: no cover - value_counts keys are 2-tuples
                         raise ValueError("unexpected tick flag cross-tab key")
                     flag, side = group_key
                     flag_quote_side_counts[(str(flag), str(side))] += int(count)

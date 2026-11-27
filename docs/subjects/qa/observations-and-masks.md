@@ -11,9 +11,9 @@
 |---|---|---|
 | Sequence retains latest rows and left-pads short input | `decisioning/observations.py::pad_observation_window` | PASS |
 | Sequence mask distinguishes real rows and empty input from padding | `decisioning/observations.py::pad_observation_window` | PASS |
-| Non-finite values become zero with optional per-cell validity | `simulation/environment/observations.py::prepare_observation_feature_channels` | PASS |
-| Runtime has `seq`, `seq_mask`, `account`, and configured branches | `simulation/environment/observation_runtime.py` | PASS |
-| Disabled completed HTF history zeros branch and mask; candidate slot zero is eligible | `simulation/environment/observation_runtime.py`; `simulation/environment/candidate_geometry_observation.py` | PASS |
+| Non-finite values become zero with optional per-cell validity | `simulation/environment/observations/schema.py::prepare_observation_feature_channels` | PASS |
+| Runtime has `seq`, `seq_mask`, `account`, and configured branches | `simulation/environment/observations/runtime.py` | PASS |
+| Disabled completed HTF history zeros branch and mask; candidate slot zero is eligible | `simulation/environment/observations/runtime.py`; `simulation/environment/candidate_geometry_observation.py` | PASS |
 
 ## Artifact and structure
 

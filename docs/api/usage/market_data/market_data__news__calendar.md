@@ -12,7 +12,23 @@ This page contains 5 public callable records owned by `market_data.news.calendar
 
 **Observed usage:**
 
-1. [production caller: `events_from_ics`](../../../../market_data/news/calendar.py#L194)
+1. [test fixture: `_event`](../../../../tests/unit/market_data/test_news_calendar_cli_contract.py#L15)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def _event(category: str, source: str) -> CalendarEvent:
+    minute_offset = {"NFP": 3, "CPI": 2, "PCE": 1, "FOMC": 0}[category]
+    return CalendarEvent(
+        utc_time=datetime(2026, 1, 5, 13, 30, tzinfo=UTC) + timedelta(minutes=minute_offset),
+        category=category,
+        summary=f"{category} release",
+        source=source,
+        source_sha256=hashlib.sha256(category.encode("utf-8")).hexdigest(),
+    )
+```
+
+2. [production caller: `events_from_ics`](../../../../market_data/news/calendar.py#L194)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -24,28 +40,6 @@ def events_from_ics(path: Path, source: str) -> list[CalendarEvent]:
         category = classify(summary)
         if category is not None:
             rows.append(CalendarEvent(start, category, summary, source, digest))
-    return rows
-```
-
-2. [production caller: `fomc_events`](../../../../market_data/news/calendar.py#L212)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def fomc_events(statement_time: str = FOMC_STATEMENT_TIME) -> list[CalendarEvent]:
-    hour, minute = (int(part) for part in statement_time.split(":"))
-    rows: list[CalendarEvent] = []
-    for day in FOMC_STATEMENT_DATES:
-        local = datetime(day.year, day.month, day.day, hour, minute, tzinfo=ET)
-        rows.append(
-            CalendarEvent(
-                local.astimezone(UTC),
-                "FOMC",
-                f"FOMC statement (time assumed {statement_time} ET)",
-                FOMC_SOURCE,
-                "",
-            )
-        )
     return rows
 ```
 
@@ -81,7 +75,7 @@ def fomc_events(statement_time: str = FOMC_STATEMENT_TIME) -> list[CalendarEvent
 
 **Observed usage:**
 
-1. [test fixture: `test_blackout_window_is_inclusive_and_uses_bar_start`](../../../../tests/unit/market_data/test_news_calendar.py#L84)
+1. [test fixture: `test_blackout_window_is_inclusive_and_uses_bar_start`](../../../../tests/unit/market_data/test_news_calendar.py#L94)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -132,7 +126,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_classify_keeps_headline_releases_only`](../../../../tests/unit/market_data/test_news_calendar.py#L44)
+1. [test fixture: `test_classify_keeps_headline_releases_only`](../../../../tests/unit/market_data/test_news_calendar.py#L54)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -197,7 +191,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_events_from_ics_records_source_hash`](../../../../tests/unit/market_data/test_news_calendar.py#L60)
+1. [test fixture: `test_events_from_ics_records_source_hash`](../../../../tests/unit/market_data/test_news_calendar.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -263,7 +257,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_fomc_statement_time_follows_daylight_saving`](../../../../tests/unit/market_data/test_news_calendar.py#L67)
+1. [test fixture: `test_fomc_statement_time_follows_daylight_saving`](../../../../tests/unit/market_data/test_news_calendar.py#L77)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -276,7 +270,7 @@ def test_fomc_statement_time_follows_daylight_saving() -> None:
     assert rows[datetime(2025, 6, 18).date()] == datetime(2025, 6, 18, 18, tzinfo=UTC)
 ```
 
-2. [test fixture: `test_write_calendar_sorts_rows_and_records_provenance`](../../../../tests/unit/market_data/test_news_calendar.py#L90)
+2. [test fixture: `test_write_calendar_sorts_rows_and_records_provenance`](../../../../tests/unit/market_data/test_news_calendar.py#L100)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

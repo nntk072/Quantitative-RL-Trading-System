@@ -50,62 +50,23 @@ class CrossOverRobot:
             total_buy, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
             if total_buy == 0:
                 logger.info(f"Buying signal detected for {symbol}")
-                if self.paper_trading:
-                    logger.info(
-                        f"[PAPER] Would open buy position for {symbol}: Volume: {self.volume}"
-                    )
-                else:
-                    result = self.trader.open_position(
-                        symbol,
-                        self.volume,
-                        mt5.ORDER_TYPE_BUY,
-                        "CrossOver buy position",
-                        self.magic_number,
-                    )
-                if not self.paper_trading:
-                    if result is None:
-                        return  # Exit if AutoTrading is disabled
-                    logger.info(
-                        f"Buy position opened: Order #{result.order}, Volume: {result.volume}, Price: {result.price}"
-                    )
+                logger.info(f"[PAPER] Would open buy position for {symbol}: Volume: {self.volume}")
 
             total, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
             if total > 0:
                 logger.info(f"Closing existing sell positions for {symbol}")
-                if not self.paper_trading:
-                    self.trader.close_positions(self.name, symbol, mt5.ORDER_TYPE_BUY)
-                else:
-                    logger.info(f"[PAPER] Would close existing sell positions for {symbol}")
+                logger.info(f"[PAPER] Would close existing sell positions for {symbol}")
 
         elif signal == signal.SELL:
             total_sell, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_SELL)
             if total_sell == 0:
                 logger.info(f"Selling signal detected for {symbol}")
-                if self.paper_trading:
-                    logger.info(
-                        f"[PAPER] Would open sell position for {symbol}: Volume: {self.volume}"
-                    )
-                else:
-                    result = self.trader.open_position(
-                        symbol,
-                        self.volume,
-                        mt5.ORDER_TYPE_SELL,
-                        "CrossOver sell position",
-                        self.magic_number,
-                    )
-                    if result is None:
-                        return  # Exit if AutoTrading is disabled
-                    logger.info(
-                        f"Sell position opened: Order #{result.order}, Volume: {result.volume}, Price: {result.price}"
-                    )
+                logger.info(f"[PAPER] Would open sell position for {symbol}: Volume: {self.volume}")
 
             total, _ = self.trader.get_opened_positions(symbol, mt5.ORDER_TYPE_BUY)
             if total > 0:
                 logger.info(f"Closing existing buy positions for {symbol}")
-                if not self.paper_trading:
-                    self.trader.close_positions(self.name, symbol, mt5.ORDER_TYPE_BUY)
-                else:
-                    logger.info(f"[PAPER] Would close existing buy positions for {symbol}")
+                logger.info(f"[PAPER] Would close existing buy positions for {symbol}")
 
         elif signal == signal.NONE:
             logger.info("No trading signal found.")

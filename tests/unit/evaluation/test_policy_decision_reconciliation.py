@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 import pandas as pd
+import pytest
 
 from decisioning.trade_setup import TRADE_SETUP_CATEGORY_COUNT
 from evaluation.reporting.policy_decision_reconciliation import (
@@ -144,6 +145,38 @@ def test_policy_reconciliation_rejects_boolean_action_as_integer_one() -> None:
     assert "decision_action_is_valid" in {failure["check"] for failure in result["failures"]}
 
 
+@pytest.mark.parametrize(
+    ("decisions", "events", "reason"),
+    [
+        (pd.DataFrame(), pd.DataFrame(), "policy_decisions_are_empty"),
+        (
+            pd.DataFrame([{"schema_version": "event_backtest_policy_decision.v2", "action": 1}]),
+            pd.DataFrame(),
+            "policy_decision_columns_missing",
+        ),
+        (
+            _decision().assign(schema_version="unregistered.policy.v9"),
+            pd.DataFrame(),
+            "unsupported_or_mixed_decision_schema",
+        ),
+        (
+            _decision(),
+            pd.DataFrame([{"type": "open", "position_id": "p1"}]),
+            "trade_event_decision_columns_missing",
+        ),
+    ],
+)
+def test_policy_reconciliation_fails_closed_before_lifecycle_checks_for_bad_schemas(
+    decisions: pd.DataFrame, events: pd.DataFrame, reason: str
+) -> None:
+    result = reconcile_policy_decisions(decisions, events, [])
+
+    assert result["status"] == "incomplete"
+    assert reason in result["incomplete_reasons"]
+    assert result["checks"] == {}
+    assert result["failure_count"] == 0
+
+
 def test_policy_reconciliation_rejects_boolean_numeric_values() -> None:
     assert _number(False) is None
     assert _number(True) is None
@@ -185,6 +218,25 @@ def test_policy_reconciliation_links_eligible_decision_through_completed_positio
     assert result["checks"]["submitted_source_event_matches_decision"] == 1
     assert result["checks"]["open_source_event_matches_decision"] == 1
     assert result["checks"]["filled_event_source_matches_submission"] == 2
+
+
+def test_policy_reconciliation_marks_fill_without_direction_incomplete() -> None:
+    events = _events()
+    events.loc[1, "direction"] = pd.NA
+
+    result = reconcile_policy_decisions(_decision(), events, [])
+
+    assert result["status"] == "incomplete"
+    assert "filled_event_direction_missing" in result["incomplete_reasons"]
+
+
+def test_legacy_close_without_completion_marker_remains_a_terminal_event() -> None:
+    events = _events().drop(columns="position_complete")
+
+    result = reconcile_policy_decisions(_decision(), events, [])
+
+    assert result["status"] == "matched", result
+    assert result["unclosed_position_ids"] == []
 
 
 def test_environment_policy_reconciliation_accepts_immediate_market_open() -> None:
@@ -469,6 +521,19 @@ def test_policy_reconciliation_marks_unknown_cash_events_incomplete() -> None:
 
     assert result["status"] == "incomplete", result
     assert "unsupported_trade_event_type_for_policy_replay" in result["incomplete_reasons"]
+
+
+def test_duplicate_decision_and_order_ids_are_reported_as_identity_failures() -> None:
+    decisions = pd.concat([_decision(), _decision()], ignore_index=True)
+    submitted = _events(include_open=False)
+    events = pd.concat([submitted, submitted], ignore_index=True)
+
+    result = reconcile_policy_decisions(decisions, events, [])
+
+    failed_checks = {failure["check"] for failure in result["failures"]}
+    assert result["status"] == "mismatch"
+    assert "decision_id_is_unique_and_nonempty" in failed_checks
+    assert "order_id_is_unique_and_nonempty" in failed_checks
 
 
 def test_policy_reconciliation_marks_submitted_but_unresolved_order_incomplete() -> None:
@@ -837,6 +902,28 @@ def test_policy_reconciliation_requires_exact_breach_detection_metadata() -> Non
     assert "rollout_breach_event_prefix_missing_or_invalid" in result["incomplete_reasons"]
 
 
+@pytest.mark.parametrize(
+    ("breach", "reason"),
+    [
+        (
+            {"schema_version": "unknown", "reason": "daily_loss"},
+            "unsupported_or_missing_rollout_breach_event_schema",
+        ),
+        (
+            {"schema_version": "risk-breach-event-v1", "reason": "operator_note"},
+            "invalid_rollout_breach_record",
+        ),
+    ],
+)
+def test_policy_reconciliation_rejects_unsupported_breach_schema_and_reason(
+    breach: dict[str, str], reason: str
+) -> None:
+    result = reconcile_policy_decisions(_decision(), _events(), [breach])
+
+    assert result["status"] == "incomplete"
+    assert reason in result["incomplete_reasons"]
+
+
 def test_policy_reconciliation_rejects_submitted_direction_mismatch() -> None:
     events = _events(include_open=False)
     events.loc[0, "direction"] = -1
@@ -1009,6 +1096,16 @@ def test_policy_reconciliation_marks_missing_source_identity_incomplete() -> Non
 
     assert result["status"] == "incomplete"
     assert "eligible_setup_source_identity_missing" in result["incomplete_reasons"]
+
+
+def test_policy_reconciliation_marks_malformed_decision_position_direction_incomplete() -> None:
+    decision = _decision().astype({"position_direction_at_decision": object})
+    decision.at[0, "position_direction_at_decision"] = "flat"
+
+    result = reconcile_policy_decisions(decision, _events(), [])
+
+    assert result["status"] == "incomplete"
+    assert "decision_position_direction_is_invalid" in result["incomplete_reasons"]
 
 
 def test_policy_reconciliation_accepts_same_direction_position_hold() -> None:

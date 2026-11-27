@@ -213,24 +213,21 @@ def test_tightened_breakeven_stop_only_returns_a_tighter_level(
         assert result == pytest.approx(expected)
 ```
 
-2. [production caller: `breakeven_stop_price`](../../../../trading/risk/stop_management.py#L196)
+2. [test fixture: `test_tightened_breakeven_stop_can_initialize_an_unset_stop`](../../../../tests/unit/trading/test_stop_management.py#L143)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    if not math.isfinite(risk_points) or not math.isfinite(trigger_points):
-        raise ValueError("initial risk and breakeven trigger distance must remain finite")
-    if risk_points <= 0.0 or favorable < trigger_points:
-        return None
-
-    return tightened_breakeven_stop_price(
-        direction=direction,
-        entry_price=entry,
-        current_stop_price=normalized.get("current_stop_price"),
-        buffer_points=buffer,
-    )
+def test_tightened_breakeven_stop_can_initialize_an_unset_stop() -> None:
+    assert tightened_breakeven_stop_price(
+        direction=-1,
+        entry_price=100.0,
+        current_stop_price=None,
+        buffer_points=0.25,
+    ) == pytest.approx(99.75)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

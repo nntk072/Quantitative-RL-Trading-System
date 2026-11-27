@@ -37,6 +37,22 @@ def test_fit_uses_the_tighter_of_max_loss_and_daily_loss() -> None:
 
 
 @pytest.mark.unit
+def test_fit_rejects_empty_post_warmup_data_and_paths_without_adverse_move() -> None:
+    one_bar = _bars([("2025-01-06 16:30", 100.0, 99.0)])
+    with pytest.raises(ValueError, match="after the observation window"):
+        fit_hold_lots(one_bar, obs_window=1)
+
+    rising = _bars(
+        [
+            ("2025-01-06 16:30", 100.0, 100.0),
+            ("2025-01-06 16:31", 110.0, 101.0),
+        ]
+    )
+    with pytest.raises(ValueError, match="no adverse move"):
+        fit_hold_lots(rising, swap_per_lot=0.0, spread=0.0, obs_window=0)
+
+
+@pytest.mark.unit
 def test_hold_closes_when_the_max_loss_is_reached() -> None:
     bars = _bars(
         [
@@ -56,3 +72,42 @@ def test_hold_closes_when_the_max_loss_is_reached() -> None:
     assert out["reason"] == "max_loss"
     assert out["total_pnl"] == pytest.approx(-10.0)
     assert out["margin_ok"] is True
+
+
+@pytest.mark.unit
+def test_hold_closes_on_daily_loss_and_counts_wednesday_swap_three_times() -> None:
+    daily_loss_bars = _bars(
+        [
+            ("2025-01-06 16:30", 100.0, 100.0),
+            ("2025-01-06 16:31", 99.0, 98.0),
+        ]
+    )
+    daily_loss = simulate_hold(
+        daily_loss_bars,
+        lots=1.0,
+        max_loss_usd=1_000.0,
+        daily_loss_usd=1.0,
+        swap_per_lot=0.0,
+        spread=0.0,
+        obs_window=0,
+    )
+    assert daily_loss["reason"] == "daily_loss"
+    assert daily_loss["total_pnl"] == pytest.approx(-1.0)
+
+    overnight_bars = _bars(
+        [
+            ("2025-01-08 16:30", 100.0, 100.0),
+            ("2025-01-09 16:30", 100.0, 99.0),
+        ]
+    )
+    overnight = simulate_hold(
+        overnight_bars,
+        lots=1.0,
+        max_loss_usd=1_000.0,
+        daily_loss_usd=1_000.0,
+        swap_per_lot=-1.0,
+        spread=0.0,
+        obs_window=0,
+    )
+    assert overnight["reason"] == "held_to_end"
+    assert overnight["swap_pnl"] == pytest.approx(-3.0)

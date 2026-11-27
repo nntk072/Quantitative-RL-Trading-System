@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data.loading.bars import load_bars
+from market_data.loading.bars import load_bars, load_ticks
 from market_data.transforms.cleaning import clean
 
 
@@ -126,3 +126,45 @@ def test_load_bars_validates_only_rows_in_requested_window(tmp_path: Path) -> No
     )
 
     assert bars.index.tolist() == [pd.Timestamp("2025-01-02 09:31:00")]
+
+
+def test_load_bars_rejects_unrecognized_source_layout(tmp_path: Path) -> None:
+    path = tmp_path / "unsupported.tsv"
+    path.write_text("timestamp\tclose\n2025-01-02\t100\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unsupported bar CSV header"):
+        load_bars(path)
+
+
+def test_load_bars_aware_bounds_filter_source_wall_clock(tmp_path: Path) -> None:
+    path = tmp_path / "bounded_aware.tsv"
+    path.write_text(
+        "<DATE>\t<TIME>\t<OPEN>\t<HIGH>\t<LOW>\t<CLOSE>\t<TICKVOL>\t<VOL>\t<SPREAD>\n"
+        "2025.01.01\t23:59:00\t10\t12\t9\t11\t100\t0\t2\n"
+        "2025.01.02\t00:00:00\t10\t12\t9\t11\t100\t0\t2\n"
+        "2025.01.02\t00:01:00\t10\t12\t9\t11\t100\t0\t2\n",
+        encoding="utf-8",
+    )
+
+    bars = load_bars(
+        path,
+        start_inclusive=pd.Timestamp("2025-01-02", tz="UTC"),
+        end_exclusive=pd.Timestamp("2025-01-02 00:01", tz="UTC"),
+    )
+
+    assert bars.index.tolist() == [pd.Timestamp("2025-01-02 00:00:00")]
+
+
+def test_load_ticks_sorts_source_rows_by_timestamp(tmp_path: Path) -> None:
+    path = tmp_path / "ticks.tsv"
+    path.write_text(
+        "<DATE>\t<TIME>\t<BID>\t<ASK>\t<LAST>\t<VOLUME>\t<FLAGS>\n"
+        "2025.01.02\t10:00:00.002\t101\t101.5\t\t\t6\n"
+        "2025.01.02\t10:00:00.001\t100\t100.5\t\t\t6\n",
+        encoding="utf-8",
+    )
+
+    ticks = load_ticks(path)
+
+    assert ticks.index.is_monotonic_increasing
+    assert ticks["bid"].tolist() == [100.0, 101.0]

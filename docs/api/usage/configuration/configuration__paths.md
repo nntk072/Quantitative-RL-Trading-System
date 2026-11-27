@@ -55,7 +55,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_configuration_serialization_and_repository_path_helpers`](../../../../tests/unit/configuration/test_configuration_helpers.py#L17)
+1. [test fixture: `test_configuration_serialization_and_repository_path_helpers`](../../../../tests/unit/configuration/test_configuration_helpers.py#L21)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

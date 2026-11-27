@@ -87,6 +87,73 @@ def test_swings_only_visible_after_confirmation() -> None:
     assert swings["swing_high_extreme"].iloc[6] == pytest.approx(102.0)
 
 
+def test_detect_swings_uses_supplied_atr_aligned_by_index() -> None:
+    index = pd.date_range("2025-01-06 16:30", periods=3, freq="1min", tz="UTC")
+    bars = pd.DataFrame(
+        {
+            "high": [101.0, 111.0, 105.0],
+            "low": [99.0, 107.0, 103.0],
+            "close": [100.0, 108.0, 104.0],
+        },
+        index=index,
+    )
+    pivots = pd.DataFrame(
+        {
+            "pivot_high_event": [False, True, False],
+            "pivot_low_event": [False, False, False],
+            "pivot_high_price": [np.nan, 110.0, np.nan],
+            "pivot_low_price": [np.nan, np.nan, np.nan],
+            "pivot_high_extreme": [np.nan, 111.0, np.nan],
+            "pivot_low_extreme": [np.nan, np.nan, np.nan],
+            "pivot_high_location": [np.nan, 0.0, np.nan],
+            "pivot_low_location": [np.nan, np.nan, np.nan],
+        },
+        index=index,
+    )
+    supplied_atr = pd.Series([1.0, 10.0, 1.0], index=index[::-1])
+
+    result = detect_swings(bars, pivots, atr=supplied_atr, atr_mult=0.5)
+
+    assert result["swing_high_event"].tolist() == [False, False, True]
+    assert result["swing_high_extreme"].iloc[2] == pytest.approx(111.0)
+
+
+@pytest.mark.parametrize(
+    ("count", "price_increment", "confirmation_delay_ms", "message"),
+    (
+        (0, None, 0, "count must be at least one"),
+        (1, 0.0, 0, "price_increment must be finite and positive"),
+        (1, float("inf"), 0, "price_increment must be finite and positive"),
+        (1, None, -1, "confirmation_delay_ms must be nonnegative"),
+    ),
+)
+def test_recent_swing_candidates_reject_invalid_limits(
+    count: int,
+    price_increment: float | None,
+    confirmation_delay_ms: int,
+    message: str,
+) -> None:
+    bars = _pivot_bars()
+    swings = pd.DataFrame(index=bars.index)
+
+    with pytest.raises(ValueError, match=message):
+        recent_unswept_swing_candidates(
+            swings,
+            bars,
+            count=count,
+            price_increment=price_increment,
+            confirmation_delay_ms=confirmation_delay_ms,
+        )
+
+
+def test_recent_swing_candidates_reject_different_bar_indexes() -> None:
+    bars = _pivot_bars()
+    swings = pd.DataFrame(index=bars.index[1:])
+
+    with pytest.raises(ValueError, match="identical indexes"):
+        recent_unswept_swing_candidates(swings, bars)
+
+
 def test_structure_levels_wrapper_columns() -> None:
     bars = _pivot_bars()
     result = structure_levels(bars, swing_period=2)

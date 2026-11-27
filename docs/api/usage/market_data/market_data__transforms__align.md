@@ -127,7 +127,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_timeframe_close_times_clip_a_short_session_final_bar`](../../../../tests/unit/features/test_alignment_properties.py#L80)
+2. [test fixture: `test_timeframe_close_times_clip_a_short_session_final_bar`](../../../../tests/unit/features/test_alignment_properties.py#L92)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

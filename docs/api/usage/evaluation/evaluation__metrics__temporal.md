@@ -26,7 +26,7 @@ This page contains 4 public callable records owned by `evaluation.metrics.tempor
 
 **Observed usage:**
 
-1. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/distribution_plots.py#L202)
+1. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/diagnostics/distributions.py#L201)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -85,7 +85,7 @@ def conditional_pnl_distributions(
     return {name: compute_distribution_metrics(vals) for name, vals in groups.items()}
 ```
 
-2. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/distribution_plots.py#L201)
+2. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/diagnostics/distributions.py#L200)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -132,7 +132,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/distribution_plots.py#L204)
+1. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/diagnostics/distributions.py#L203)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -181,7 +181,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/distribution_plots.py#L205)
+1. [production caller: `write_distribution_artifacts`](../../../../evaluation/plotting/diagnostics/distributions.py#L204)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

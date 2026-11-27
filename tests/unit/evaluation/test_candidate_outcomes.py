@@ -165,3 +165,17 @@ def test_resolved_outcome_requires_chronological_complete_execution() -> None:
             fill_time="2025-01-02T10:03:00Z",
             exit_time="2025-01-02T10:04:00Z",
         )
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"exit_reason": None},
+        {"unresolved_reason": "missing source quote"},
+    ],
+)
+def test_resolved_outcome_requires_one_supported_exit_reason(
+    overrides: dict[str, str | None],
+) -> None:
+    with pytest.raises(ValueError, match="requires only an exit reason"):
+        _outcome(**overrides)

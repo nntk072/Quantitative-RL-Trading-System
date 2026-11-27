@@ -30,3 +30,11 @@ def test_scheduled_session_close_map_rejects_missing_required_columns(tmp_path) 
 
     with pytest.raises(ValueError, match="scheduled_ny_close_broker_time"):
         scheduled_session_close_map(cfg)
+
+
+def test_scheduled_session_close_map_rejects_configured_missing_file(tmp_path) -> None:
+    missing_path = tmp_path / "missing.csv"
+    cfg = OmegaConf.create({"data": {"session_schedule_file": str(missing_path)}})
+
+    with pytest.raises(FileNotFoundError, match="configured session schedule is missing"):
+        scheduled_session_close_map(cfg)

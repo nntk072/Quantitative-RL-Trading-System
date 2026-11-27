@@ -192,3 +192,81 @@ def test_limit_sensitivity_does_not_treat_string_position_completion_as_true() -
     assert (
         report_without_flag["paired_limit_outcomes"][0]["exact_touch"]["position_complete"] is None
     )
+
+
+def test_limit_sensitivity_counts_unsubmitted_and_unresolved_limit_orders() -> None:
+    exact = _result(trade_through=False, events=[])
+    strict = _result(
+        trade_through=True,
+        events=[
+            {
+                "type": "order_submit",
+                "order_id": "pending",
+                "decision_id": "d1",
+                "order_type": "limit",
+            }
+        ],
+    )
+
+    report = compare_limit_execution_sensitivity(exact, strict)
+
+    assert report["limit_order_counts"]["outcomes"]["exact_touch"]["no_order_submitted"] == 1
+    assert report["limit_order_counts"]["outcomes"]["trade_through"]["unresolved"] == 1
+    assert report["paired_limit_outcomes"][0]["exact_touch"]["status"] == "no_order_submitted"
+
+
+def test_limit_sensitivity_reports_common_divergences_and_arm_only_decisions() -> None:
+    exact = _result(trade_through=False, events=[])
+    strict = _result(trade_through=True, events=[])
+    exact["policy_decisions"].loc[0, "selected_risk_frac"] = 0.01
+    exact["policy_decisions"]["selected_geometry_action"] = exact["policy_decisions"][
+        "selected_geometry_action"
+    ].astype(object)
+    exact["policy_decisions"].at[0, "selected_geometry_action"] = {"stop": float("nan")}
+    strict["policy_decisions"].loc[0, "selected_risk_frac"] = 0.02
+    strict["policy_decisions"]["selected_geometry_action"] = strict["policy_decisions"][
+        "selected_geometry_action"
+    ].astype(object)
+    strict["policy_decisions"].at[0, "selected_geometry_action"] = {"stop": float("nan")}
+    exact_only = exact["policy_decisions"].iloc[0].copy()
+    exact_only["decision_id"] = "exact-only"
+    strict_only = strict["policy_decisions"].iloc[0].copy()
+    strict_only["decision_id"] = "strict-only"
+    exact["policy_decisions"] = pd.concat(
+        [exact["policy_decisions"], exact_only.to_frame().T], ignore_index=True
+    )
+    strict["policy_decisions"] = pd.concat(
+        [strict["policy_decisions"], strict_only.to_frame().T], ignore_index=True
+    )
+
+    report = compare_limit_execution_sensitivity(exact, strict)
+
+    assert report["decision_counts"]["exact_only"] == 1
+    assert report["decision_counts"]["trade_through_only"] == 1
+    assert report["decision_counts"]["policy_divergent_common"] == 1
+    assert report["decision_divergences"][0]["fields"] == ["selected_risk_frac"]
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (lambda result: result.pop("execution_contract"), "missing its execution_contract"),
+        (
+            lambda result: result["execution_contract"].pop("limit_order"),
+            "missing limit_order settings",
+        ),
+        (
+            lambda result: result["execution_contract"]["limit_order"].update(
+                require_trade_through="false"
+            ),
+            "explicitly recorded as a boolean",
+        ),
+    ],
+)
+def test_limit_sensitivity_rejects_incomplete_fill_contract(mutate, message: str) -> None:
+    exact = _result(trade_through=False, events=[])
+    strict = _result(trade_through=True, events=[])
+    mutate(exact)
+
+    with pytest.raises(ValueError, match=message):
+        compare_limit_execution_sensitivity(exact, strict)

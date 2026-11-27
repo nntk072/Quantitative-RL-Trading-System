@@ -48,6 +48,35 @@ def test_device_capabilities_are_backend_neutral() -> None:
     assert capabilities.architecture
 
 
+def test_device_capabilities_reject_invalid_hint_without_touching_accelerator() -> None:
+    with pytest.raises(ValueError, match="Invalid device value"):
+        discover_device_capabilities("not-a-device")
+
+
+def test_cuda_capabilities_allow_runtime_without_compute_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import torch
+
+    class RuntimeProperties:
+        name = "test accelerator"
+        total_memory = 8 * 1024**3
+
+    monkeypatch.setattr(torch.version, "hip", None)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
+    monkeypatch.setattr(torch.cuda, "get_device_properties", lambda _index: RuntimeProperties())
+    monkeypatch.setattr(torch.cuda, "is_bf16_supported", lambda: False)
+
+    capabilities = discover_device_capabilities("cuda:0")
+
+    assert capabilities.accelerator_backend == "cuda"
+    assert capabilities.device_name == "test accelerator"
+    assert capabilities.accelerator_memory_bytes == 8 * 1024**3
+    assert capabilities.compute_capability is None
+    assert capabilities.supports_bfloat16 is False
+
+
 def test_device_capabilities_identify_rocm_backend(monkeypatch: pytest.MonkeyPatch) -> None:
     import torch
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import runpy
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from gymnasium import spaces
 from omegaconf import OmegaConf
 from stable_baselines3 import PPO
 
+import models.architecture_ids as architecture_ids
 from decisioning.trade_setup import (
     TRADE_SETUP_CATEGORY_COUNT,
     build_trade_setup_action_schema,
@@ -136,6 +138,22 @@ def test_encoder_registry_maps_new_ids_and_rejects_unknown() -> None:
         assert encoder_for(arch) is encoder
     with pytest.raises(ValueError, match="unknown encoder architecture"):
         encoder_for("mtf_reasoning_typo")
+
+
+def test_encoder_registry_fails_when_architecture_ids_have_no_implementation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        architecture_ids,
+        "ENCODER_ARCHITECTURE_IDS",
+        (*architecture_ids.ENCODER_ARCHITECTURE_IDS, "unimplemented"),
+    )
+
+    with pytest.raises(RuntimeError, match="registry differs from architecture identifiers"):
+        runpy.run_path(
+            str(Path(__file__).resolve().parents[3] / "models/factory/encoder_registry.py"),
+            run_name="__main__",
+        )
 
 
 @pytest.mark.parametrize("arch,encoder_class", _VARIANTS)

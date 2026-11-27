@@ -1,6 +1,11 @@
 module_id: simulation
 source_roots: [simulation, research_tools/simulation, research_tools/studies/handlers/simulation.py]
 api_paths:
+- simulation/backtest/cross_validation/__init__.py
+- simulation/backtest/cross_validation/strategies/__init__.py
+- simulation/backtest/cross_validation/utils/__init__.py
+- simulation/entry_state.py
+- simulation/entry_evidence.py
 - simulation/backtest/__init__.py
 - simulation/backtest/accounting.py
 - simulation/backtest/cross_validation/backtrader_runner.py
@@ -15,7 +20,9 @@ api_paths:
 - simulation/environment/action_diagnostics.py
 - simulation/environment/bundles.py
 - simulation/environment/candidate_geometry_observation.py
-- simulation/environment/diagnostics.py
+- simulation/environment/diagnostics/__init__.py
+- simulation/environment/diagnostics/errors.py
+- simulation/environment/diagnostics/runtime.py
 - simulation/environment/distribution_reward.py
 - simulation/environment/entry_diagnostics.py
 - simulation/environment/entry_state.py
@@ -23,7 +30,10 @@ api_paths:
 - simulation/environment/episode_equity.py
 - simulation/environment/market_view.py
 - simulation/environment/market_access.py
-- simulation/environment/observations.py
+- simulation/environment/entries/__init__.py
+- simulation/environment/entries/lifecycle.py
+- simulation/environment/observations/__init__.py
+- simulation/environment/observations/schema.py
 - simulation/environment/po3_reward.py
 - simulation/environment/rewards.py
 - simulation/environment/shared_bundle.py
@@ -35,8 +45,16 @@ api_paths:
 caller_paths:
 - tests/unit/simulation/test_environment/test_candidate_geometry_observation_remaining_contracts.py
 - tests/unit/simulation/test_policy_action_coverage.py
+- tests/unit/simulation/test_timebase_contract.py
+- tests/unit/simulation/test_entry_evidence_contracts.py
+- tests/unit/simulation/test_take_profit_level_ordering.py
+- tests/unit/simulation/test_backtest_execution_contracts.py
+- tests/unit/simulation/test_protective_events_coverage.py
+- tests/unit/simulation/test_event_driven_backtest_coverage.py
+- tests/unit/simulation/test_environment/test_diagnostics_coverage.py
 - tests/unit/training/test_observation_memmap.py
 - tests/unit/training/test_debug_trace.py
+- tests/unit/training/test_seed_runtime_additional_coverage.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
 - tests/integration/backtest/test_market_entry_fill_event_parity.py
 - tests/integration/backtest/test_market_order_quote_wait_contract.py
@@ -78,6 +96,9 @@ caller_paths:
 - tests/unit/models/test_ppo_log_std.py
 - tests/unit/models/test_sac_agent.py
 - tests/unit/simulation/test_backtest_management_modes.py
+- tests/unit/simulation/test_backtrader_cross_validation_support.py
+- tests/unit/simulation/test_cross_validation_cli_coverage.py
+- tests/unit/simulation/test_macd_cross_validation_strategy.py
 - tests/unit/simulation/test_environment/_tp_mode_fixtures.py
 - tests/unit/simulation/test_environment/test_account_normalization.py
 - tests/unit/simulation/test_environment/test_baseline_regression.py
@@ -85,6 +106,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_bundle_eval.py
 - tests/unit/simulation/test_environment/test_bundle_worker.py
 - tests/unit/simulation/test_environment/test_candidate_geometry_observation.py
+- tests/unit/simulation/test_environment/test_candidate_geometry_observation_remaining_contracts.py
 - tests/unit/simulation/test_environment/test_continuous_actions.py
 - tests/unit/simulation/test_environment/test_decision_correlation.py
 - tests/unit/simulation/test_environment/test_distribution_reward.py
@@ -115,6 +137,7 @@ caller_paths:
 - tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py
 - tests/unit/simulation/test_environment/test_tp_action_decode.py
 - tests/unit/simulation/test_environment/test_tp_execution.py
+- tests/unit/simulation/test_environment/test_market_view_contract.py
 - tests/unit/simulation/test_environment/test_tp_mode_state.py
 - tests/unit/simulation/test_environment/test_trade_setup_factory_config.py
 - tests/unit/simulation/test_environment/test_trade_setup_observation.py
@@ -150,6 +173,7 @@ caller_paths:
 - tests/unit/learning/test_overlap_collect.py
 - tests/unit/learning/test_update_graph.py
 - tests/unit/simulation/test_environment/test_news_spike_guard_env.py
+- tests/unit/training/test_seed_runtime_bundle_export_contract.py
 source_scopes:
   - {path: simulation/environment, study_ids: [simulation.transition_and_episode_contract, simulation.tick_fills_and_protective_orders, simulation.accounting_reward_and_telemetry, simulation.bar_decisions_with_tick_fills, simulation.limit_entry_price_bound_and_expiry, simulation.accounting_reward_and_cost_attribution, simulation.episode_end_and_session_liquidation, simulation.vectorized_environment_parity, simulation.protective_order_priority_and_ties]}
   - {path: simulation/contracts, study_ids: [simulation.transition_and_episode_contract]}
@@ -165,19 +189,19 @@ studies:
   - id: simulation.transition_and_episode_contract
     type: code_check
     question: Do action, observation, account, reward, episode, truncation, and breach transitions follow one explicit order?
-    source_paths: [simulation/environment/env.py, simulation/contracts/transition.py, simulation/environment/step_runtime.py, simulation/environment/step_end_runtime.py]
+    source_paths: [simulation/environment/env.py, simulation/contracts/transition.py, simulation/environment/episode/step.py, simulation/environment/episode/end.py]
     checks: [tests/unit/simulation/test_environment/test_simulation_transition_contract.py, tests/unit/simulation/test_environment/test_trading_env_golden_traces.py]
     outputs: [transition_and_episode_check]
   - id: simulation.tick_fills_and_protective_orders
     type: code_check
     question: Do tick fills resolve executable quotes, intrabar crossings, stop-target collisions, and missing-tick behavior as configured?
-    source_paths: [simulation/environment/tick_quote_runtime.py, simulation/environment/fill_quote_runtime.py, simulation/environment/protective_level_runtime.py]
+    source_paths: [simulation/environment/quotes/ticks.py, simulation/environment/quotes/fills.py, simulation/environment/exits/protective_levels.py]
     checks: [tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py, tests/unit/simulation/test_environment/test_sl_tp_fill.py, tests/unit/simulation/test_environment/test_tp_execution.py]
     outputs: [tick_execution_check]
   - id: simulation.accounting_reward_and_telemetry
     type: code_check
     question: Do realized PnL, reward attribution, guardrail state, and transition telemetry reconstruct from the same events?
-    source_paths: [simulation/environment/step_accounting_runtime.py, simulation/environment/trade_accounting_runtime.py, simulation/environment/step_info_runtime.py]
+    source_paths: [simulation/environment/accounting/step.py, simulation/environment/accounting/trades.py, simulation/environment/episode/info.py]
     checks: [tests/unit/simulation/test_reward.py, tests/unit/simulation/test_environment/test_sweep_reward.py, tests/unit/simulation/test_environment/test_account_normalization.py]
     outputs: [accounting_reward_and_telemetry_check]
   - id: simulation.backtest_and_cross_validation_parity
@@ -199,31 +223,31 @@ studies:
   - id: simulation.bar_decisions_with_tick_fills
     type: code_check
     question: Can a policy decide on completed bars while every entry and protective fill is resolved from source-ordered ticks available after that decision?
-    source_paths: [simulation/environment/market_access.py, simulation/environment/tick_quote_runtime.py, simulation/environment/step_action_execution.py]
+    source_paths: [simulation/environment/market_access.py, simulation/environment/quotes/ticks.py, simulation/environment/step_action_execution.py]
     checks: [tests/integration/backtest/test_local_tick_action_trace.py, tests/unit/simulation/test_environment/test_tick_fill_reconciliation.py]
     outputs: [bar_decision_tick_fill_contract_check]
   - id: simulation.protective_order_priority_and_ties
     type: code_check
     question: When stop, target, and terminal events are reachable in one interval, is the fill chosen by the declared source-order and tie policy?
-    source_paths: [simulation/backtest/protective_events.py, simulation/backtest/protective_management.py, simulation/backtest/protective_liquidation.py, simulation/environment/protective_level_runtime.py, simulation/environment/fill_quote_runtime.py]
-    checks: [tests/unit/simulation/test_environment/test_sl_tp_fill.py, tests/integration/backtest/test_multi_target_protective_lifecycle.py, tests/unit/simulation/test_environment/test_take_profit_level_ordering.py]
+    source_paths: [simulation/backtest/protective_events.py, simulation/backtest/protective_management.py, simulation/backtest/protective_liquidation.py, simulation/environment/exits/protective_levels.py, simulation/environment/quotes/fills.py]
+    checks: [tests/unit/simulation/test_environment/test_sl_tp_fill.py, tests/integration/backtest/test_multi_target_protective_lifecycle.py, tests/unit/simulation/test_environment/test_take_profit_level_ordering.py, tests/unit/simulation/test_take_profit_level_ordering.py]
     outputs: [protective_order_priority_and_tie_check]
   - id: simulation.limit_entry_price_bound_and_expiry
     type: code_check
     question: Do limit entries respect their submitted price bound, expiry, fill delay, and equal-touch versus trade-through configuration?
-    source_paths: [simulation/environment/entry_order_runtime.py, simulation/environment/entry_execution_runtime.py, trading/orders/entry_execution.py]
+    source_paths: [simulation/environment/entries/orders.py, simulation/environment/entries/execution.py, trading/orders/entry_execution.py]
     checks: [tests/unit/simulation/test_environment/test_entry_state_machine.py, tests/integration/backtest/test_agent_selected_entry_execution.py, tests/unit/trading/test_entry_execution_orders.py]
     outputs: [limit_entry_bound_and_expiry_check]
   - id: simulation.accounting_reward_and_cost_attribution
     type: code_check
     question: Do fill cashflows, realized equity, reward values, and cost telemetry reconcile exactly once for open, partial, closed, and rejected positions?
-    source_paths: [simulation/environment/step_accounting_runtime.py, simulation/environment/trade_accounting_runtime.py, simulation/environment/rewards.py, simulation/backtest/accounting.py]
+    source_paths: [simulation/environment/accounting/step.py, simulation/environment/accounting/trades.py, simulation/environment/rewards.py, simulation/backtest/accounting.py]
     checks: [tests/unit/simulation/test_environment/test_equity_delta_reward.py, tests/unit/simulation/test_reward.py, tests/unit/evaluation/test_reward_attribution.py, tests/integration/backtest/test_broker_fill_accounting.py]
     outputs: [accounting_reward_and_cost_attribution_check]
   - id: simulation.episode_end_and_session_liquidation
     type: code_check
     question: Are termination, truncation, session close, forced liquidation, and overnight blocking distinguishable and applied at the configured boundary?
-    source_paths: [simulation/environment/episode_runtime.py, simulation/environment/step_end_runtime.py, simulation/backtest/event_driven_backtest.py]
+    source_paths: [simulation/environment/episode/lifecycle.py, simulation/environment/episode/end.py, simulation/backtest/event_driven_backtest.py]
     checks: [tests/unit/simulation/test_environment/test_ny_steps_eod.py, tests/unit/simulation/test_environment/test_year_episode_survival.py, tests/integration/backtest/test_engine_execution_contract.py]
     outputs: [episode_end_and_session_liquidation_check]
   - id: simulation.vectorized_environment_parity

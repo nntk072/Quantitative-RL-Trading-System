@@ -85,7 +85,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_account_state_snapshot_records_position_and_limit_order_lifecycle`](../../../../tests/unit/trading/test_account_state_snapshots.py#L20)
+2. [test fixture: `test_account_state_snapshot_records_position_and_limit_order_lifecycle`](../../../../tests/unit/trading/test_account_state_snapshots.py#L50)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -90,5 +90,5 @@ adapters to validate action meaning without importing PPO internals.
 The action contract is defined in `decisioning/actions.py` and
 `decisioning/trade_setup.py`.
 Backend-neutral decision values are in `decisioning/contracts.py`. Environment interpretation is composed in
-`simulation/environment/action_runtime.py` and related entry/position
+`simulation/environment/actions/decoding.py` and related entry/position
 components.

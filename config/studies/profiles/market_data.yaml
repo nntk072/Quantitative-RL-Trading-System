@@ -4,6 +4,7 @@ source_roots:
 - research_tools/market_data
 - research_tools/studies/handlers/market_data.py
 api_paths:
+- market_data/cli.py
 - market_data/__init__.py
 - market_data/arrow_schemas.py
 - market_data/cache/__init__.py
@@ -31,6 +32,12 @@ api_paths:
 - market_data/transforms/session_schedule.py
 - market_data/transforms/sessions.py
 caller_paths:
+- tests/unit/market_data/test_bars_coverage_contracts.py
+- tests/unit/simulation/test_environment/test_candidate_geometry_observation.py
+- tests/unit/simulation/test_take_profit_level_ordering.py
+- tests/unit/simulation/test_backtest_execution_contracts.py
+- tests/unit/simulation/test_event_driven_backtest_coverage.py
+- tests/unit/simulation/test_protective_events_coverage.py
 - tests/unit/market_data/test_discover.py
 - tests/unit/market_data/test_arrow_schemas.py
 - tests/unit/market_data/test_mt5_export_to_bars.py
@@ -38,13 +45,6 @@ caller_paths:
 - evaluation/__init__.py
 - evaluation/candidate_execution.py
 - evaluation/contracts.py
-- evaluation/plotting/chart_indicators.py
-- evaluation/plotting/chart_overlays.py
-- evaluation/plotting/data_plots.py
-- evaluation/plotting/defense_plots.py
-- evaluation/plotting/order_chart_data.py
-- evaluation/plotting/order_window.py
-- evaluation/plotting/po3_plots.py
 - evaluation/reanalysis/checkpoint_reanalysis.py
 - evaluation/reanalysis/datasets.py
 - evaluation/reanalysis/provenance.py
@@ -77,18 +77,19 @@ caller_paths:
 - simulation/backtest/runtime.py
 - simulation/environment/bundles.py
 - simulation/environment/candidate_geometry_observation.py
-- simulation/environment/entry_execution_runtime.py
-- simulation/environment/entry_runtime.py
+- simulation/environment/entries/execution.py
+- simulation/environment/entries/lifecycle.py
 - simulation/environment/env.py
-- simulation/environment/episode_runtime.py
+- simulation/environment/episode/lifecycle.py
 - simulation/environment/execution_controls_initialization.py
 - simulation/environment/market_source_initialization.py
 - simulation/environment/observation_arrays_initialization.py
 - simulation/environment/observations.py
-- simulation/environment/protective_level_runtime.py
-- simulation/environment/step_accounting_runtime.py
+- simulation/environment/observations/schema.py
+- simulation/environment/exits/protective_levels.py
+- simulation/environment/accounting/step.py
 - simulation/environment/step_action_execution.py
-- simulation/environment/tick_quote_runtime.py
+- simulation/environment/quotes/ticks.py
 - simulation/environment/trading_environment_factory.py
 - simulation/environment/worker.py
 - tests/architecture/test_functional_filename_contracts.py
@@ -130,10 +131,14 @@ caller_paths:
 - tests/unit/learning/test_learning_contracts.py
 - tests/unit/learning/test_learning_supervised_reference.py
 - tests/unit/market_data/test_data_split.py
+- tests/unit/market_data/test_bars_coverage_contracts.py
+- tests/unit/market_data/test_cache_storage_contract.py
+- tests/unit/market_data/test_ingestion_selection_contract.py
 - tests/unit/market_data/test_dataset_source_contract.py
 - tests/unit/market_data/test_helsinki_ny_sessions.py
 - tests/unit/market_data/test_market_data_ingestion.py
 - tests/unit/market_data/test_mt5_server_protective_fills.py
+- tests/unit/market_data/test_news_calendar_cli_contract.py
 - tests/unit/market_data/test_news_calendar.py
 - tests/unit/market_data/test_news_fred.py
 - tests/unit/market_data/test_news_guard.py
@@ -165,6 +170,15 @@ caller_paths:
 - training/runner/walk_forward_validation.py
 - training/setup/learner.py
 - training/setup/tick_execution_preflight.py
+- evaluation/plotting/data/defense.py
+- evaluation/plotting/data/exploration.py
+- evaluation/plotting/data/po3.py
+- evaluation/plotting/orders/geometry.py
+- evaluation/plotting/orders/overlays.py
+- evaluation/plotting/orders/window.py
+- evaluation/plotting/shared/indicators.py
+- tests/unit/simulation/test_environment/test_protective_level_runtime.py
+- tests/unit/simulation/test_policy_action_coverage.py
 source_scopes:
 - path: market_data/arrow_schemas.py
   study_ids:

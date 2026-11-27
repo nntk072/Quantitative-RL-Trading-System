@@ -82,7 +82,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `calculate_volatility_metrics`](../../../../integrations/mt5/domain/volatility_analyzer.py#L126)
+1. [production caller: `calculate_volatility_metrics`](../../../../integrations/mt5/domain/volatility_analyzer.py#L120)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -113,7 +113,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Calculate volatility metrics for a symbol.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.calculate_volatility_metrics` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:94](../../../../integrations/mt5/domain/volatility_analyzer.py#L94)
+**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.calculate_volatility_metrics` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:88](../../../../integrations/mt5/domain/volatility_analyzer.py#L88)
 
 **Inputs and outputs:**
 
@@ -132,7 +132,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `update_volatility_metrics`](../../../../integrations/mt5/domain/multi_symbol_manager.py#L102)
+1. [production caller: `update_volatility_metrics`](../../../../integrations/mt5/domain/multi_symbol_manager.py#L101)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -147,7 +147,7 @@ def update_volatility_metrics(self, analyzer: VolatilityAnalyzer) -> None:
             logger.error(f"Error updating volatility metrics for {symbol}: {e}")
 ```
 
-2. [production caller: `rank_symbols_by_volatility`](../../../../integrations/mt5/domain/volatility_analyzer.py#L170)
+2. [production caller: `rank_symbols_by_volatility`](../../../../integrations/mt5/domain/volatility_analyzer.py#L164)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -179,7 +179,7 @@ def rank_symbols_by_volatility(
 
 **Purpose:** Get basic information about a symbol.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.get_symbol_info` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:212](../../../../integrations/mt5/domain/volatility_analyzer.py#L212)
+**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.get_symbol_info` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:206](../../../../integrations/mt5/domain/volatility_analyzer.py#L206)
 
 **Inputs and outputs:**
 
@@ -221,7 +221,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Rank symbols by volatility (highest first).
 
-**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.rank_symbols_by_volatility` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:155](../../../../integrations/mt5/domain/volatility_analyzer.py#L155)
+**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.rank_symbols_by_volatility` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:149](../../../../integrations/mt5/domain/volatility_analyzer.py#L149)
 
 **Inputs and outputs:**
 
@@ -240,7 +240,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `select_top_volatile_symbols`](../../../../integrations/mt5/domain/volatility_analyzer.py#L197)
+1. [production caller: `select_top_volatile_symbols`](../../../../integrations/mt5/domain/volatility_analyzer.py#L191)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -279,7 +279,7 @@ def select_top_volatile_symbols(
 
 **Purpose:** Select top N most volatile symbols.
 
-**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.select_top_volatile_symbols` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:179](../../../../integrations/mt5/domain/volatility_analyzer.py#L179)
+**Exact API:** {py:obj}`integrations.mt5.domain.volatility_analyzer.VolatilityAnalyzer.select_top_volatile_symbols` · **Source:** [integrations/mt5/domain/volatility_analyzer.py:173](../../../../integrations/mt5/domain/volatility_analyzer.py#L173)
 
 **Inputs and outputs:**
 

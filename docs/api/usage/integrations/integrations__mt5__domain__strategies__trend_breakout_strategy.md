@@ -12,38 +12,41 @@ This page contains 8 public callable records owned by `integrations.mt5.domain.s
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L143)
+1. [test fixture: `test_trend_breakout_limits_short_history_and_confirms_breakouts`](../../../../tests/unit/integrations/test_mt5_strategies.py#L197)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_trend_breakout_limits_short_history_and_confirms_breakouts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()), lookback_period=3)
+    short = _bars([1.0, 1.0])
+    assert strategy.identify_support_resistance(short) == (0.0, 0.0)
+    assert not strategy.identify_consolidation(short)
+    assert strategy.calculate_trend_strength(short) == 0.0
+
+# … caller assertions omitted …
 ```
 
-2. [production caller: `__init__`](../../../../integrations/mt5/domain/strategies/combined_strategy.py#L49)
+2. [test fixture: `test_trend_breakout_volume_profile_uses_available_volume_or_price_proxy`](../../../../tests/unit/integrations/test_mt5_strategies.py#L220)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
+def test_trend_breakout_volume_profile_uses_available_volume_or_price_proxy() -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()))
+    frame = pd.DataFrame({"high": [12.0, 14.0], "low": [8.0, 10.0], "close": [10.0, 12.0]})
+    typical = (frame["high"] + frame["low"] + frame["close"]) / 3
 
-        if "smc" in strategies:
-            self.strategies["smc"] = SMCStrategy(trading_data)
-
-        if "trend_breakout" in strategies:
-            self.strategies["trend_breakout"] = TrendBreakoutStrategy(trading_data)
+    expected_proxy = (typical * typical).cumsum() / typical.cumsum()
+    pd.testing.assert_series_equal(strategy.calculate_volume_profile(frame), expected_proxy)
+    frame["real_volume"] = [2.0, 1.0]
+    expected_real = (typical * frame["real_volume"]).cumsum() / frame["real_volume"].cumsum()
+    pd.testing.assert_series_equal(strategy.calculate_volume_profile(frame), expected_real)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -60,38 +63,41 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L143)
+1. [test fixture: `test_trend_breakout_limits_short_history_and_confirms_breakouts`](../../../../tests/unit/integrations/test_mt5_strategies.py#L197)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_trend_breakout_limits_short_history_and_confirms_breakouts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()), lookback_period=3)
+    short = _bars([1.0, 1.0])
+    assert strategy.identify_support_resistance(short) == (0.0, 0.0)
+    assert not strategy.identify_consolidation(short)
+    assert strategy.calculate_trend_strength(short) == 0.0
+
+# … caller assertions omitted …
 ```
 
-2. [production caller: `__init__`](../../../../integrations/mt5/domain/strategies/combined_strategy.py#L49)
+2. [test fixture: `test_trend_breakout_volume_profile_uses_available_volume_or_price_proxy`](../../../../tests/unit/integrations/test_mt5_strategies.py#L220)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
+def test_trend_breakout_volume_profile_uses_available_volume_or_price_proxy() -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()))
+    frame = pd.DataFrame({"high": [12.0, 14.0], "low": [8.0, 10.0], "close": [10.0, 12.0]})
+    typical = (frame["high"] + frame["low"] + frame["close"]) / 3
 
-        if "smc" in strategies:
-            self.strategies["smc"] = SMCStrategy(trading_data)
-
-        if "trend_breakout" in strategies:
-            self.strategies["trend_breakout"] = TrendBreakoutStrategy(trading_data)
+    expected_proxy = (typical * typical).cumsum() / typical.cumsum()
+    pd.testing.assert_series_equal(strategy.calculate_volume_profile(frame), expected_proxy)
+    frame["real_volume"] = [2.0, 1.0]
+    expected_real = (typical * frame["real_volume"]).cumsum() / frame["real_volume"].cumsum()
+    pd.testing.assert_series_equal(strategy.calculate_volume_profile(frame), expected_real)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -122,25 +128,45 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L181)
+1. [test fixture: `test_trend_breakout_limits_short_history_and_confirms_breakouts`](../../../../tests/unit/integrations/test_mt5_strategies.py#L201)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
+) -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()), lookback_period=3)
+    short = _bars([1.0, 1.0])
+    assert strategy.identify_support_resistance(short) == (0.0, 0.0)
+    assert not strategy.identify_consolidation(short)
+    assert strategy.calculate_trend_strength(short) == 0.0
 
-            # Detect breakout
-        is_breakout, direction = self.detect_breakout(df, support, resistance)
-
-        # Calculate trend strength
-        trend_strength = self.calculate_trend_strength(df)
-
-        # Calculate moving averages for confirmation
-        sma_fast = df["close"].rolling(window=9).mean()
-        sma_slow = df["close"].rolling(window=21).mean()
-
+    frame = pd.DataFrame({"high": [10.0, 10.0], "low": [9.0, 8.8], "close": [9.5, 9.0]})
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (False, "")
+    frame.loc[1, "high"] = 10.1
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (True, "bullish")
 # … caller assertions omitted …
 ```
+
+2. [test fixture: `test_trend_breakout_levels_consolidation_and_adx_result_paths`](../../../../tests/unit/integrations/test_mt5_strategies.py#L257)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert not strategy.identify_consolidation(frame)
+
+    monkeypatch.setattr(
+        trend_module, "calculate_adx", lambda *_args, **_kwargs: pd.DataFrame({"adx": [31.0]})
+    )
+    assert strategy.calculate_trend_strength(_bars([float(i + 1) for i in range(27)])) == 31.0
+    monkeypatch.setattr(
+        trend_module, "calculate_adx", lambda *_args, **_kwargs: pd.DataFrame({"adx": [np.nan]})
+    )
+    assert strategy.calculate_trend_strength(_bars([float(i + 1) for i in range(27)])) == 0.0
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -171,7 +197,24 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L192)
+1. [test fixture: `test_trend_breakout_volume_profile_uses_available_volume_or_price_proxy`](../../../../tests/unit/integrations/test_mt5_strategies.py#L225)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_trend_breakout_volume_profile_uses_available_volume_or_price_proxy() -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()))
+    frame = pd.DataFrame({"high": [12.0, 14.0], "low": [8.0, 10.0], "close": [10.0, 12.0]})
+    typical = (frame["high"] + frame["low"] + frame["close"]) / 3
+
+    expected_proxy = (typical * typical).cumsum() / typical.cumsum()
+    pd.testing.assert_series_equal(strategy.calculate_volume_profile(frame), expected_proxy)
+    frame["real_volume"] = [2.0, 1.0]
+    expected_real = (typical * frame["real_volume"]).cumsum() / frame["real_volume"].cumsum()
+    pd.testing.assert_series_equal(strategy.calculate_volume_profile(frame), expected_real)
+```
+
+2. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L192)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -190,6 +233,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         # Bullish breakout signal
 # … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -222,7 +267,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L178)
+1. [test fixture: `test_trend_breakout_limits_short_history_and_confirms_breakouts`](../../../../tests/unit/integrations/test_mt5_strategies.py#L204)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    assert strategy.identify_support_resistance(short) == (0.0, 0.0)
+    assert not strategy.identify_consolidation(short)
+    assert strategy.calculate_trend_strength(short) == 0.0
+
+    frame = pd.DataFrame({"high": [10.0, 10.0], "low": [9.0, 8.8], "close": [9.5, 9.0]})
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (False, "")
+    frame.loc[1, "high"] = 10.1
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (True, "bullish")
+    frame.loc[1, "high"] = 10.0
+    frame.loc[1, "low"] = 8.0
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (True, "bearish")
+# … caller assertions omitted …
+```
+
+2. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L178)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -241,6 +306,8 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         # Calculate moving averages for confirmation
 # … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -269,20 +336,49 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   True if market is consolidating, False otherwise
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_trend_breakout_limits_short_history_and_confirms_breakouts`](../../../../tests/unit/integrations/test_mt5_strategies.py#L200)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = TrendBreakoutStrategy(...)
-result = instance.identify_consolidation(df=...)
+# … caller setup omitted …
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()), lookback_period=3)
+    short = _bars([1.0, 1.0])
+    assert strategy.identify_support_resistance(short) == (0.0, 0.0)
+    assert not strategy.identify_consolidation(short)
+    assert strategy.calculate_trend_strength(short) == 0.0
+
+    frame = pd.DataFrame({"high": [10.0, 10.0], "low": [9.0, 8.8], "close": [9.5, 9.0]})
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (False, "")
+    frame.loc[1, "high"] = 10.1
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This callable participates in `TrendBreakoutStrategy`: Trend Breakout Strategy. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.identify_support_resistance`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.identify_consolidation`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.calculate_volume_profile`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.detect_breakout`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.calculate_trend_strength`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.signal`
+2. [test fixture: `test_trend_breakout_levels_consolidation_and_adx_result_paths`](../../../../tests/unit/integrations/test_mt5_strategies.py#L250)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+            "close": [10.0, 10.01, 9.99],
+        }
+    )
+
+    assert strategy.identify_support_resistance(frame) == (9.97, 10.03)
+    assert strategy.identify_consolidation(frame)
+    frame.loc[:, "high"] = [12.0, 13.0, 14.0]
+    assert not strategy.identify_consolidation(frame)
+
+    monkeypatch.setattr(
+        trend_module, "calculate_adx", lambda *_args, **_kwargs: pd.DataFrame({"adx": [31.0]})
+# … caller assertions omitted …
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -313,25 +409,46 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `signal`](../../../../integrations/mt5/domain/strategies/trend_breakout_strategy.py#L171)
+1. [test fixture: `test_trend_breakout_limits_short_history_and_confirms_breakouts`](../../../../tests/unit/integrations/test_mt5_strategies.py#L199)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_trend_breakout_limits_short_history_and_confirms_breakouts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    strategy = TrendBreakoutStrategy(PriceData(pd.DataFrame()), lookback_period=3)
+    short = _bars([1.0, 1.0])
+    assert strategy.identify_support_resistance(short) == (0.0, 0.0)
+    assert not strategy.identify_consolidation(short)
+    assert strategy.calculate_trend_strength(short) == 0.0
+
+    frame = pd.DataFrame({"high": [10.0, 10.0], "low": [9.0, 8.8], "close": [9.5, 9.0]})
+    assert strategy.detect_breakout(frame, support=8.5, resistance=10.0) == (False, "")
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_trend_breakout_levels_consolidation_and_adx_result_paths`](../../../../tests/unit/integrations/test_mt5_strategies.py#L249)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        if len(df) < self.lookback_period + 5:
-            symbol = self.data.get_symbol()
-            return symbol, Signal.NONE
+            "low": [9.98, 9.99, 9.97],
+            "close": [10.0, 10.01, 9.99],
+        }
+    )
 
-            # Identify support and resistance
-        support, resistance = self.identify_support_resistance(df)
+    assert strategy.identify_support_resistance(frame) == (9.97, 10.03)
+    assert strategy.identify_consolidation(frame)
+    frame.loc[:, "high"] = [12.0, 13.0, 14.0]
+    assert not strategy.identify_consolidation(frame)
 
-        if support == 0.0 or resistance == 0.0:
-            symbol = self.data.get_symbol()
-            return symbol, Signal.NONE
-
+    monkeypatch.setattr(
 # … caller assertions omitted …
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -354,20 +471,31 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Tuple of (symbol, signal)
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_smc_signal_is_neutral_before_its_minimum_history`](../../../../tests/unit/integrations/test_mt5_strategies.py#L139)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = TrendBreakoutStrategy(...)
-result = instance.signal()
+def test_smc_signal_is_neutral_before_its_minimum_history() -> None:
+    strategy = SMCStrategy(PriceData(_bars([1.0] * 24)))
+
+    assert strategy.signal() == ("US100", Signal.NONE)
 ```
 
-**Lifecycle context:** This callable participates in `TrendBreakoutStrategy`: Trend Breakout Strategy. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.identify_support_resistance`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.identify_consolidation`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.calculate_volume_profile`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.detect_breakout`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.calculate_trend_strength`, {py:obj}`integrations.mt5.domain.strategies.trend_breakout_strategy.TrendBreakoutStrategy.signal`
+2. [test fixture: `test_trend_breakout_signal_is_neutral_before_minimum_history`](../../../../tests/unit/integrations/test_mt5_strategies.py#L234)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_trend_breakout_signal_is_neutral_before_minimum_history() -> None:
+    strategy = TrendBreakoutStrategy(PriceData(_bars([1.0] * 24)), lookback_period=20)
+
+    assert strategy.signal() == ("US100", Signal.NONE)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

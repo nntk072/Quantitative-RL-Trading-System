@@ -14,7 +14,7 @@ This page contains 2 public callable records owned by `features.contracts`. Stat
 
 **Observed usage:**
 
-1. [test fixture: `test_distinct_input_representations_share_one_schema_contract`](../../../../tests/unit/market_data/test_input_view_contract.py#L13)
+1. [test fixture: `test_distinct_input_representations_share_one_schema_contract`](../../../../tests/unit/market_data/test_input_view_contract.py#L15)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -28,7 +28,7 @@ def test_distinct_input_representations_share_one_schema_contract(kind: InputKin
     assert len(view.values) == 2
 ```
 
-2. [test fixture: `test_input_view_rejects_width_schema_mismatch`](../../../../tests/unit/market_data/test_input_view_contract.py#L22)
+2. [test fixture: `test_input_view_rejects_width_schema_mismatch`](../../../../tests/unit/market_data/test_input_view_contract.py#L24)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -58,7 +58,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_distinct_input_representations_share_one_schema_contract`](../../../../tests/unit/market_data/test_input_view_contract.py#L15)
+1. [test fixture: `test_distinct_input_representations_share_one_schema_contract`](../../../../tests/unit/market_data/test_input_view_contract.py#L17)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -72,7 +72,7 @@ def test_distinct_input_representations_share_one_schema_contract(kind: InputKin
     assert len(view.values) == 2
 ```
 
-2. [test fixture: `test_input_view_rejects_width_schema_mismatch`](../../../../tests/unit/market_data/test_input_view_contract.py#L24)
+2. [test fixture: `test_input_view_rejects_width_schema_mismatch`](../../../../tests/unit/market_data/test_input_view_contract.py#L26)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

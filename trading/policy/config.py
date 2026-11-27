@@ -143,7 +143,9 @@ class TradingPolicyConfig:
             raise ValueError("unsupported trading policy risk-state schema")
         if not 0.0 <= self.daily_loss_limit_pct <= 1.0:
             raise ValueError("daily-loss percentage must be in [0, 1]")
-        if self.max_loss_limit_initial_pct is None:
+        if (
+            self.max_loss_limit_initial_pct is None
+        ):  # pragma: no cover - __post_init__ normalizes it
             raise ValueError("maximum-loss percentage is required")
         max_loss_pct = float(self.max_loss_limit_initial_pct)
         if not 0.0 < max_loss_pct < 1.0:

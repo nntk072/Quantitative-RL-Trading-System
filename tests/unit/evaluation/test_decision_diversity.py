@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from evaluation.metrics.decision_diversity import (
     candidate_rank,
+    choice_rank_median,
     diversity_report,
+    reference_family,
     shannon_entropy,
 )
 from evaluation.reporting.diversity_artifacts import write_decision_artifacts
@@ -104,6 +107,44 @@ def test_rank_endpoints() -> None:
     assert candidate_rank(0, 1) == 0.0
     assert candidate_rank(3, 4) == 1.0
     assert np.isnan(candidate_rank(-1, 4))
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        (None, ""),
+        ("ema_21", ""),
+        ("H1_swing_high", "htf"),
+        ("M15_swing_low|M5_swing_low", "htf"),
+        ("sweep_low_level", "sweep"),
+        ("IFVG_bear_low", "fvg"),
+        ("dev_0.5", "deviation"),
+        ("prev_week_high", "prev_week"),
+        ("prev_day_low", "prev_day"),
+        ("london_high", "session"),
+        ("last_swing_low", "swing"),
+        ("custom_level", "custom_level"),
+    ],
+)
+def test_reference_families_preserve_higher_timeframe_and_level_semantics(
+    name: object, expected: str
+) -> None:
+    assert reference_family(name) == expected
+
+
+def test_choice_rank_median_uses_only_real_menus_and_structural_targets() -> None:
+    trades = pd.DataFrame(
+        [
+            _open(sl_index=0, n_sl=3, tp_index=0, n_tp=3, exit_mode="structural"),
+            _open(sl_index=2, n_sl=3, tp_index=2, n_tp=3, exit_mode="structural"),
+            _open(sl_index=0, n_sl=1, tp_index=0, n_tp=1, exit_mode="structural"),
+            _open(sl_index=2, n_sl=3, tp_index=2, n_tp=3, exit_mode="ema_21"),
+        ]
+    )
+
+    assert choice_rank_median(trades, "sl") == 1.0
+    assert choice_rank_median(trades, "tp") == 0.5
+    assert np.isnan(choice_rank_median(trades.iloc[:0], "sl"))
 
 
 def test_ema_exits_skip_planned_rr_and_stay_in_the_exit_share() -> None:

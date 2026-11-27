@@ -72,19 +72,13 @@ class VolatilityAnalyzer:
             tr = max(tr1, tr2, tr3)
             tr_list.append(tr)
 
-        if len(tr_list) < self.atr_period:
-            return 0.0
-
-            # Calculate ATR as simple moving average of TR
+        # Calculate ATR as simple moving average of TR
         atr_values = []
         for i in range(self.atr_period - 1, len(tr_list)):
             atr = np.mean(tr_list[i - self.atr_period + 1 : i + 1])
             atr_values.append(atr)
 
             # Return average ATR over lookback period
-        if len(atr_values) == 0:
-            return 0.0
-
         return float(
             np.mean(atr_values[-self.lookback_period :])
             if len(atr_values) >= self.lookback_period

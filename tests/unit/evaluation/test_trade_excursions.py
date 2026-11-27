@@ -79,3 +79,42 @@ def test_trade_excursion_rejects_invalid_inputs(
     }
     with pytest.raises(ValueError, match=message):
         trade_excursion_bounds(timestamps, prices, **parameters)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    ("timestamps", "prices", "overrides", "message"),
+    [
+        (np.asarray([[10, 20]], dtype=np.int64), np.asarray([[99.0, 101.0]]), {}, "1D arrays"),
+        (np.asarray([10, 20], dtype=np.int64), np.asarray([99.0]), {}, "aligned"),
+        (np.asarray([10, 20], dtype=object), np.asarray([99.0, 101.0]), {}, "integer UTC"),
+        (
+            np.asarray([10, 20], dtype=np.int64),
+            np.asarray([99.0, 101.0]),
+            {"entry_time_ns": 21},
+            "after exit",
+        ),
+        (
+            np.asarray([10, 20], dtype=np.int64),
+            np.asarray([99.0, 101.0]),
+            {"entry_price": 0.0},
+            "finite and positive",
+        ),
+    ],
+)
+def test_trade_excursion_rejects_misaligned_or_invalid_timestamp_and_price_inputs(
+    timestamps: NDArray[np.int64],
+    prices: NDArray[np.float64],
+    overrides: dict[str, int | float],
+    message: str,
+) -> None:
+    parameters = {
+        "entry_time_ns": 10,
+        "exit_time_ns": 20,
+        "direction": 1,
+        "entry_price": 100.0,
+        "entry_liquidation_price": 99.0,
+        "exit_liquidation_price": 99.0,
+        **overrides,
+    }
+    with pytest.raises(ValueError, match=message):
+        trade_excursion_bounds(timestamps, prices, **parameters)  # type: ignore[arg-type]

@@ -51,6 +51,26 @@ def test_fit_uses_the_tighter_of_max_loss_and_daily_loss() -> None:
     assert fitted["lots"] == pytest.approx(5_000 / 50)
 ```
 
+2. [test fixture: `test_fit_rejects_empty_post_warmup_data_and_paths_without_adverse_move`](../../../../tests/unit/trading/test_cash_hold.py#L43)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_fit_rejects_empty_post_warmup_data_and_paths_without_adverse_move() -> None:
+    one_bar = _bars([("2025-01-06 16:30", 100.0, 99.0)])
+    with pytest.raises(ValueError, match="after the observation window"):
+        fit_hold_lots(one_bar, obs_window=1)
+
+    rising = _bars(
+        [
+            ("2025-01-06 16:30", 100.0, 100.0),
+            ("2025-01-06 16:31", 110.0, 101.0),
+        ]
+    )
+    with pytest.raises(ValueError, match="no adverse move"):
+        fit_hold_lots(rising, swap_per_lot=0.0, spread=0.0, obs_window=0)
+```
+
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
@@ -91,7 +111,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_hold_closes_when_the_max_loss_is_reached`](../../../../tests/unit/trading/test_cash_hold.py#L47)
+1. [test fixture: `test_hold_closes_when_the_max_loss_is_reached`](../../../../tests/unit/trading/test_cash_hold.py#L63)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -114,6 +134,34 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert out["reason"] == "max_loss"
     assert out["total_pnl"] == pytest.approx(-10.0)
     assert out["margin_ok"] is True
+```
+
+2. [test fixture: `test_hold_closes_on_daily_loss_and_counts_wednesday_swap_three_times`](../../../../tests/unit/trading/test_cash_hold.py#L85)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        [
+            ("2025-01-06 16:30", 100.0, 100.0),
+            ("2025-01-06 16:31", 99.0, 98.0),
+        ]
+    )
+    daily_loss = simulate_hold(
+        daily_loss_bars,
+        lots=1.0,
+        max_loss_usd=1_000.0,
+        daily_loss_usd=1.0,
+        swap_per_lot=0.0,
+        spread=0.0,
+        obs_window=0,
+    )
+    assert daily_loss["reason"] == "daily_loss"
+    assert daily_loss["total_pnl"] == pytest.approx(-1.0)
+
+    overnight_bars = _bars(
+        [
+# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

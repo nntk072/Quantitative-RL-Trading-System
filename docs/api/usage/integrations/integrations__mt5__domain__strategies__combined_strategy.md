@@ -12,24 +12,41 @@ This page contains 3 public callable records owned by `integrations.mt5.domain.s
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L145)
+1. [test fixture: `test_combined_strategy_handles_empty_and_failed_consensus`](../../../../tests/unit/integrations/test_mt5_strategies.py#L144)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_combined_strategy_handles_empty_and_failed_consensus() -> None:
+    data = PriceData(_bars([1.0]))
+    no_strategies = CombinedStrategy(data, strategies=[])
+    assert no_strategies.signal() == ("US100", Signal.NONE)
+
+    combined = CombinedStrategy(data, strategies=[])
+    combined.strategies = cast(
+        Any,
+# … caller assertions omitted …
 ```
+
+2. [test fixture: `test_combined_strategy_skips_failed_children`](../../../../tests/unit/integrations/test_mt5_strategies.py#L163)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_combined_strategy_skips_failed_children() -> None:
+    combined = CombinedStrategy(PriceData(_bars([1.0])), strategies=[])
+    combined.strategies = cast(
+        Any,
+        {
+            "failed": SimpleNamespace(signal=lambda: (_ for _ in ()).throw(RuntimeError("failed"))),
+            "buy": SimpleNamespace(signal=lambda: ("US100", Signal.BUY)),
+        },
+    )
+
+    assert combined.signal() == ("US100", Signal.BUY)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -46,24 +63,41 @@ def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L145)
+1. [test fixture: `test_combined_strategy_handles_empty_and_failed_consensus`](../../../../tests/unit/integrations/test_mt5_strategies.py#L144)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_combined_strategy_handles_empty_and_failed_consensus() -> None:
+    data = PriceData(_bars([1.0]))
+    no_strategies = CombinedStrategy(data, strategies=[])
+    assert no_strategies.signal() == ("US100", Signal.NONE)
+
+    combined = CombinedStrategy(data, strategies=[])
+    combined.strategies = cast(
+        Any,
+# … caller assertions omitted …
 ```
+
+2. [test fixture: `test_combined_strategy_skips_failed_children`](../../../../tests/unit/integrations/test_mt5_strategies.py#L163)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_combined_strategy_skips_failed_children() -> None:
+    combined = CombinedStrategy(PriceData(_bars([1.0])), strategies=[])
+    combined.strategies = cast(
+        Any,
+        {
+            "failed": SimpleNamespace(signal=lambda: (_ for _ in ()).throw(RuntimeError("failed"))),
+            "buy": SimpleNamespace(signal=lambda: ("US100", Signal.BUY)),
+        },
+    )
+
+    assert combined.signal() == ("US100", Signal.BUY)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -86,20 +120,44 @@ def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy
   Tuple of (symbol, signal)
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_combined_strategy_handles_empty_and_failed_consensus`](../../../../tests/unit/integrations/test_mt5_strategies.py#L145)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = CombinedStrategy(...)
-result = instance.signal()
+def test_combined_strategy_handles_empty_and_failed_consensus() -> None:
+    data = PriceData(_bars([1.0]))
+    no_strategies = CombinedStrategy(data, strategies=[])
+    assert no_strategies.signal() == ("US100", Signal.NONE)
+
+    combined = CombinedStrategy(data, strategies=[])
+    combined.strategies = cast(
+        Any,
+        {
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This callable participates in `CombinedStrategy`: Combined Strategy that uses multiple strategies and requires consensus. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.strategies.combined_strategy.CombinedStrategy.signal`
+2. [test fixture: `test_combined_strategy_skips_failed_children`](../../../../tests/unit/integrations/test_mt5_strategies.py#L172)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_combined_strategy_skips_failed_children() -> None:
+    combined = CombinedStrategy(PriceData(_bars([1.0])), strategies=[])
+    combined.strategies = cast(
+        Any,
+        {
+            "failed": SimpleNamespace(signal=lambda: (_ for _ in ()).throw(RuntimeError("failed"))),
+            "buy": SimpleNamespace(signal=lambda: ("US100", Signal.BUY)),
+        },
+    )
+
+    assert combined.signal() == ("US100", Signal.BUY)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

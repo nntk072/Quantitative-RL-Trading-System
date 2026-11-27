@@ -4,9 +4,9 @@ from __future__ import annotations
 
 VAE_NO_GO_REASON = (
     "VAE training and policy use are blocked by the current evidence contract: "
-    "the configured sequence file has no session dates, leading padding has no "
-    "validity mask, and its random split does not establish chronological "
-    "train-only fitting. See evidence/research/vae_input_validity/README.md. "
+    "the configured sequence file has no session dates or verified chronological "
+    "order, and leading padding has no validity mask. See "
+    "evidence/research/vae_input_validity/README.md. "
     "Reopen this path only after dated sequence provenance, validity-masked "
     "reconstruction, and chronological fitting are implemented and verified."
 )

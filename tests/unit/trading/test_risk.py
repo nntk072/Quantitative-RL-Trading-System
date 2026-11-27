@@ -137,6 +137,67 @@ def test_compute_lots_with_cap() -> None:
     assert lots == 10.0
 
 
+def test_explicit_dollar_risk_is_not_clamped_by_fractional_loss_cap() -> None:
+    lots = compute_lots(
+        equity=100_000.0,
+        risk_frac=0.0,
+        entry_price=100.0,
+        sl_price=90.0,
+        min_lot=0.01,
+        max_lot=100.0,
+        max_loss_cap=50.0,
+        risk_usd=500.0,
+    )
+
+    assert lots == 50.0
+
+
+@pytest.mark.parametrize("lot_step", [0.0, -0.01, float("nan")])
+def test_execution_reserved_sizing_rejects_invalid_lot_steps(lot_step: float) -> None:
+    with pytest.raises(ValueError, match="lot_step must be finite and positive"):
+        compute_lots_with_execution_reserve(
+            total_risk_budget_usd=100.0,
+            equity=100_000.0,
+            risk_frac=0.01,
+            entry_price=100.0,
+            sl_price=90.0,
+            contract_size=1.0,
+            execution_reserve_per_lot=1.0,
+            lot_step=lot_step,
+        )
+
+
+def test_execution_reserved_sizing_returns_zero_when_budget_or_risk_is_unusable() -> None:
+    common = {
+        "equity": 100_000.0,
+        "risk_frac": 0.01,
+        "entry_price": 100.0,
+        "sl_price": 90.0,
+        "contract_size": 1.0,
+        "execution_reserve_per_lot": 1.0,
+    }
+    assert compute_lots_with_execution_reserve(total_risk_budget_usd=0.0, **common) == 0.0
+    assert (
+        compute_lots_with_execution_reserve(
+            total_risk_budget_usd=100.0,
+            **{**common, "sl_price": 100.0},
+        )
+        == 0.0
+    )
+
+
+def test_rr_target_rejects_a_stop_on_the_nonprotective_side() -> None:
+    with pytest.raises(ValueError, match="invalid RR geometry"):
+        resolve_tp_target(
+            direction=1,
+            entry_price=105.0,
+            sl_price=106.0,
+            rr_ratio=2.0,
+            target_mode="rr",
+            row=_row(),
+        )
+
+
 def test_compute_lots_respects_min_max() -> None:
     """Test that min/max lot bounds are respected."""
     # Very wide SL → natural lots within bounds

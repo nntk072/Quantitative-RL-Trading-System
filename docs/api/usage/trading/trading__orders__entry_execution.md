@@ -28,7 +28,7 @@ This page contains 2 public callable records owned by `trading.orders.entry_exec
 
 **Observed usage:**
 
-1. [test fixture: `test_limit_order_expiry_uses_inclusive_bar_ttl`](../../../../tests/unit/trading/test_entry_execution_orders.py#L49)
+1. [test fixture: `test_limit_order_expiry_uses_inclusive_bar_ttl`](../../../../tests/unit/trading/test_entry_execution_orders.py#L52)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -41,7 +41,7 @@ def test_limit_order_expiry_uses_inclusive_bar_ttl() -> None:
     assert expiry == submitted + pd.Timedelta(minutes=5)
 ```
 
-2. [test fixture: `test_limit_order_expiry_rejects_invalid_ttl_or_bar_duration`](../../../../tests/unit/trading/test_entry_execution_orders.py#L62)
+2. [test fixture: `test_limit_order_expiry_rejects_invalid_ttl_or_bar_duration`](../../../../tests/unit/trading/test_entry_execution_orders.py#L65)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -88,7 +88,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_limit_price_uses_directional_atr_offset_and_tick_rounding`](../../../../tests/unit/trading/test_entry_execution_orders.py#L16)
+1. [test fixture: `test_limit_price_uses_directional_atr_offset_and_tick_rounding`](../../../../tests/unit/trading/test_entry_execution_orders.py#L19)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -107,7 +107,7 @@ def test_limit_price_uses_directional_atr_offset_and_tick_rounding(
     assert price == pytest.approx(expected)
 ```
 
-2. [test fixture: `test_limit_price_rounds_long_down_and_short_up`](../../../../tests/unit/trading/test_entry_execution_orders.py#L35)
+2. [test fixture: `test_limit_price_rounds_long_down_and_short_up`](../../../../tests/unit/trading/test_entry_execution_orders.py#L38)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

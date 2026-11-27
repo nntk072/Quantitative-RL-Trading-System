@@ -141,8 +141,8 @@ run_graph_quality() {
     rm -f -- "$graph_index"
     return "$status"
   fi
-  if GIT_INDEX_FILE="$graph_index" ./tools/crgraph verify-critical \
-    --min-resolution 0.80 --min-critical-resolution 0.70; then
+  if QRL_PYTHON="${PYTHON_BIN:-python3}" GIT_INDEX_FILE="$graph_index" \
+    ./tools/crgraph verify-critical --min-resolution 0.80 --min-critical-resolution 0.70; then
     :
   else
     status=$?

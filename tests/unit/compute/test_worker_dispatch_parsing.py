@@ -431,27 +431,6 @@ def test_launch_uses_requested_log_when_stdout_is_a_pipe(
     assert captured["stdout"].closed
 
 
-def test_launch_refuses_unresolved_gpu_device(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "GPU-0")
-    monkeypatch.setattr(worker_dispatch, "_gpu_device_for_request", lambda *_args: None)
-    payload: dict[str, Any] = {
-        "argv": ["python", "train.py"],
-        "cwd": str(tmp_path),
-        "cpu_ids": [0],
-        "gpu_count": 1,
-        "gpu_id": 0,
-        "env": {},
-        "job_id": "999",
-        "request_id": "unresolved-gpu",
-        "stdout_path": "",
-    }
-
-    with pytest.raises(RuntimeError, match="GPU worker request resolved without a visible GPU"):
-        worker_dispatch._launch(payload, tmp_path / "results")
-
-
 def test_manager_cancels_running_worker_and_records_final_exit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -123,6 +123,16 @@ class TestJointEntropyLoss:
         total = joint(rl_loss)
         assert torch.allclose(total, rl_loss)
 
+    def test_discrete_log_probability_path_subtracts_entropy_bonus(self) -> None:
+        joint = JointEntropyLoss(EntropyBonus(action_dim=2, entropy_coef=0.1))
+        rl_loss = torch.ones(3)
+        log_probs = torch.log(torch.full((3, 2), 0.5))
+
+        total = joint(rl_loss, log_probs=log_probs)
+
+        assert total.shape == (3,)
+        assert torch.all(total < rl_loss)
+
 
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__])

@@ -85,6 +85,42 @@ def test_adverse_position_loss_limit_rejects_non_finite_values() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("configured", "planned", "multiplier"),
+    [(-1.0, 0.0, 1.0), (500.0, -1.0, 1.0), (500.0, 1_000.0, -0.1)],
+)
+def test_adverse_position_loss_limit_rejects_negative_inputs(
+    configured: float,
+    planned: float,
+    multiplier: float,
+) -> None:
+    with pytest.raises(ValueError, match="must be nonnegative"):
+        adverse_position_loss_limit_usd(
+            configured,
+            planned,
+            respect_planned_risk=True,
+            planned_risk_multiplier=multiplier,
+        )
+
+
+def test_ftmo_guardrails_reject_unsupported_modes() -> None:
+    with pytest.raises(ValueError, match="ftmo.limit_value_mode"):
+        FTMOGuardrails(limit_value_mode="unknown")
+    with pytest.raises(ValueError, match="ftmo.max_drawdown_mode"):
+        FTMOGuardrails(max_drawdown_mode="peak_to_peak")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("value", [-0.01, float("nan"), float("inf")])
+def test_ftmo_guardrails_reject_non_finite_or_negative_percentages(value: float) -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        FTMOGuardrails(daily_loss_limit_pct=value)
+
+
+def test_ftmo_guardrails_reject_percentage_values_above_one() -> None:
+    with pytest.raises(ValueError, match="fractions in \\[0, 1\\]"):
+        FTMOGuardrails(max_loss_limit_initial_pct=1.01)
+
+
 def test_daily_loss_equality_is_allowed_and_breach_occurs_below_floor():
     g = FTMOGuardrails()
     acc = _make(daily_loss=5000.0)

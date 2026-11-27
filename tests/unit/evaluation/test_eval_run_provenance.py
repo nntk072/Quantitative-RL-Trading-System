@@ -4,6 +4,7 @@ import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -1184,3 +1185,282 @@ def test_eval_feature_scope_honors_and_hash_validates_prebuilt_cache(
     (tmp_path / "prebuilt.parquet.hash").write_text("stale\n")
     with pytest.raises(ValueError, match="does not match the saved config/data hash"):
         _feature_build_scope(bars, cfg, tmp_path, "US100", "2025-01-03")
+
+
+def test_replay_eod_risk_copies_settings_and_disables_only_peak_limit() -> None:
+    configured = {"daily_loss_limit_usd": 100.0, "peak_trailing_dd_limit_usd": 250.0}
+
+    preserved = eval_run.resolve_replay_eod_risk(configured, disable_peak_eod_dd_policy=False)
+    disabled = eval_run.resolve_replay_eod_risk(configured, disable_peak_eod_dd_policy=True)
+
+    assert preserved == configured
+    assert disabled == {"daily_loss_limit_usd": 100.0, "peak_trailing_dd_limit_usd": 0.0}
+    assert configured["peak_trailing_dd_limit_usd"] == 250.0
+
+
+def test_checkpoint_split_dispatches_provider_and_legacy_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, bool]] = []
+
+    def evaluate_provider(provider: Any, *, deterministic: bool, **_kwargs: Any) -> dict[str, Any]:
+        calls.append(("provider", deterministic))
+        return {"result": provider}
+
+    def evaluate_model(model: Any, *, deterministic: bool, **_kwargs: Any) -> dict[str, Any]:
+        calls.append(("model", deterministic))
+        return {"result": model}
+
+    monkeypatch.setattr(
+        eval_run,
+        "evaluate_provider",
+        evaluate_provider,
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "evaluate_model",
+        evaluate_model,
+    )
+    provider = SimpleNamespace(metadata={}, predict=lambda *_args: None)
+
+    assert eval_run.evaluate_checkpoint_split(provider, stochastic=True) == {"result": provider}
+    assert eval_run.evaluate_checkpoint_split("legacy-model", stochastic=False) == {
+        "result": "legacy-model"
+    }
+    assert calls == [("provider", False), ("model", True)]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [pd.DataFrame({"equity": [1.0]}), pd.Series([1.0], name="equity"), [{"equity": 1.0}]],
+)
+def test_replay_ledger_frame_normalizes_pandas_and_record_inputs(value) -> None:
+    frame = eval_run._replay_ledger_frame("equity", value)
+
+    assert isinstance(frame, pd.DataFrame)
+    if isinstance(value, pd.DataFrame):
+        assert frame is not value
+    if isinstance(value, pd.Series):
+        assert frame.columns.tolist() == ["time", "value"]
+
+
+@pytest.mark.parametrize(
+    "report,expected",
+    [
+        ({"status": "matched", "failure_count": 0}, True),
+        ({"status": "matched", "failure_count": False}, False),
+        ({"status": "matched", "failure_count": 1}, False),
+        ({"status": "mismatch", "failure_count": 0}, False),
+        (None, False),
+    ],
+)
+def test_reconciliation_clean_requires_typed_zero(report, expected: bool) -> None:
+    assert eval_run._reconciliation_is_clean(report) is expected
+
+
+def _complete_train_replay_result() -> dict[str, object]:
+    return {
+        "policy_decisions_complete": True,
+        "account_state_trace_complete": True,
+        "n_steps": 1,
+        "equity": pd.Series([100.0], name="equity"),
+        "trades": pd.DataFrame(columns=["pnl"]),
+        "policy_decisions": pd.DataFrame([{"action": 0}]),
+        "account_state_trace": pd.DataFrame([{"equity": 100.0}]),
+        "breaches": [],
+        "breach_events": [],
+        "cycle_events": [],
+        "payout_events": [],
+    }
+
+
+def test_train_only_replay_ledger_exports_a_complete_trace_and_hashes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clean = {"status": "matched", "failure_count": 0, "failures": []}
+    monkeypatch.setattr(eval_run, "reconcile_account_state_trace", lambda *_args, **_kwargs: clean)
+    monkeypatch.setattr(eval_run, "reconcile_policy_decisions", lambda *_args, **_kwargs: clean)
+
+    ledger = eval_run._write_train_only_replay_ledger(tmp_path, _complete_train_replay_result())
+
+    assert ledger["complete"] is True
+    assert ledger["test_split_evaluated"] is False
+    assert set(ledger["artifacts"]) == {
+        "equity",
+        "trades",
+        "policy_decisions",
+        "account_state_trace",
+        "breaches",
+        "breach_events",
+        "cycle_events",
+        "payout_events",
+    }
+    assert (tmp_path / "replay_equity.csv").is_file()
+
+
+def test_train_only_replay_ledger_preserves_diagnostics_on_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    matched = {"status": "matched", "failure_count": 0, "failures": []}
+    failed = {"status": "mismatch", "failure_count": 1, "failures": ["action drift"]}
+    monkeypatch.setattr(
+        eval_run, "reconcile_account_state_trace", lambda *_args, **_kwargs: matched
+    )
+    monkeypatch.setattr(eval_run, "reconcile_policy_decisions", lambda *_args, **_kwargs: failed)
+
+    with pytest.raises(ValueError, match="Diagnostic traces were preserved"):
+        eval_run._write_train_only_replay_ledger(tmp_path, _complete_train_replay_result())
+
+    assert (tmp_path / "replay_ledger_diagnostic.json").is_file()
+    assert (tmp_path / "diagnostic_replay_equity.csv").is_file()
+
+
+def test_write_train_only_screen_report_is_exclusive_and_provenanced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(eval_run, "repository_root", lambda _path: tmp_path)
+    monkeypatch.setattr(eval_run, "build_evaluation_provenance", lambda _root: {"revision": "abc"})
+    report = {"artifact_role": "candidate_screen_train_only", "test_split_evaluated": False}
+
+    path = eval_run.write_train_only_screen_report(tmp_path / "screen", report)
+
+    assert path.name == "train_only_screen.json"
+    assert json.loads(path.read_text())["evaluation_provenance"] == {"revision": "abc"}
+    with pytest.raises(FileExistsError):
+        eval_run.write_train_only_screen_report(tmp_path / "screen", {})
+
+
+def _reanalysis_args(run: Path, output: Path, **overrides: object) -> SimpleNamespace:
+    values: dict[str, object] = {
+        "export_replay_ledger": False,
+        "train_only_screen": False,
+        "use_recorded_sequence_schema": False,
+        "allow_legacy_sequence_schema": False,
+        "source_feature_cache": None,
+        "train_only_feature_snapshot": None,
+        "run": str(run),
+        "stochastic": None,
+        "seed": None,
+        "allow_historical": True,
+        "output": str(output),
+    }
+    values.update(overrides)
+    return SimpleNamespace(**values)
+
+
+@pytest.mark.parametrize(
+    "overrides,match",
+    [
+        ({"export_replay_ledger": True}, "requires --train-only-screen"),
+        (
+            {"use_recorded_sequence_schema": True, "allow_legacy_sequence_schema": True},
+            "cannot be combined",
+        ),
+    ],
+)
+def test_reanalysis_cli_rejects_incompatible_modes_before_reading_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, overrides: dict[str, object], match: str
+) -> None:
+    args = _reanalysis_args(tmp_path / "missing", tmp_path / "out", **overrides)
+    monkeypatch.setattr(
+        eval_run,
+        "build_reanalysis_parser",
+        lambda: SimpleNamespace(parse_args=lambda: args),
+    )
+
+    with pytest.raises(SystemExit, match=match):
+        eval_run.main()
+
+
+def test_reanalysis_cli_converts_invalid_snapshot_request_to_system_exit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    args = _reanalysis_args(tmp_path / "missing", tmp_path / "out")
+    monkeypatch.setattr(
+        eval_run,
+        "build_reanalysis_parser",
+        lambda: SimpleNamespace(parse_args=lambda: args),
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "validate_train_only_feature_snapshot_request",
+        lambda **_kwargs: (_ for _ in ()).throw(ValueError("snapshot identity mismatch")),
+    )
+
+    with pytest.raises(SystemExit, match="snapshot identity mismatch"):
+        eval_run.main()
+
+
+def test_reanalysis_cli_rejects_missing_run_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    args = _reanalysis_args(tmp_path / "missing", tmp_path / "out")
+    monkeypatch.setattr(
+        eval_run,
+        "build_reanalysis_parser",
+        lambda: SimpleNamespace(parse_args=lambda: args),
+    )
+
+    with pytest.raises(SystemExit, match="Run directory not found"):
+        eval_run.main()
+
+
+def test_reanalysis_cli_enforces_historical_access_before_loading_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir = tmp_path / "historical"
+    run_dir.mkdir()
+    args = _reanalysis_args(run_dir, tmp_path / "out", allow_historical=False)
+    monkeypatch.setattr(
+        eval_run,
+        "build_reanalysis_parser",
+        lambda: SimpleNamespace(parse_args=lambda: args),
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "_load_run_config",
+        lambda *_args: pytest.fail("historical-access gate must run before source config load"),
+    )
+
+    with pytest.raises(ValueError, match="historical"):
+        eval_run.main()
+
+
+def test_train_only_stochastic_reanalysis_requires_seed_before_loading_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_dir = tmp_path / "source"
+    run_dir.mkdir()
+    args = _reanalysis_args(
+        run_dir,
+        tmp_path / "out",
+        train_only_screen=True,
+        stochastic=True,
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "build_reanalysis_parser",
+        lambda: SimpleNamespace(parse_args=lambda: args),
+    )
+    monkeypatch.setattr(
+        eval_run,
+        "_load_run_config",
+        lambda *_args: pytest.fail("seed gate must run before source configuration loading"),
+    )
+
+    with pytest.raises(SystemExit, match="requires a recorded or explicit seed"):
+        eval_run.main()
+
+
+def test_lazy_reanalysis_package_entrypoint_delegates_to_cli(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import evaluation.reanalysis as package
+    from evaluation.reanalysis import checkpoint_reanalysis
+
+    calls: list[str] = []
+    monkeypatch.setattr(checkpoint_reanalysis, "main", lambda: calls.append("main"))
+
+    package.main()
+
+    assert calls == ["main"]

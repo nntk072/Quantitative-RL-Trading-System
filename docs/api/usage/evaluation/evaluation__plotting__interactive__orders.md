@@ -1,14 +1,14 @@
-# Evaluation · `plotting.interactive_orders`
+# Evaluation · `plotting.interactive.orders`
 
-This page contains 1 public callable records owned by `evaluation.plotting.interactive_orders`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 1 public callable records owned by `evaluation.plotting.interactive.orders`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `plot_per_trade_orders_html`
 
-**Kind:** function · **Status:** stable · **Owner:** `evaluation.plotting.interactive_orders`
+**Kind:** function · **Status:** stable · **Owner:** `evaluation.plotting.interactive.orders`
 
 **Purpose:** Generate one M1 candlestick HTML per trade in *orders_dir* with MT5-style overlays.
 
-**Exact API:** {py:obj}`evaluation.plotting.interactive_orders.plot_per_trade_orders` · **Source:** [evaluation/plotting/interactive_orders.py:217](../../../../evaluation/plotting/interactive_orders.py#L217)
+**Exact API:** {py:obj}`evaluation.plotting.interactive.orders.plot_per_trade_orders` · **Source:** [evaluation/plotting/interactive/orders.py:217](../../../../evaluation/plotting/interactive/orders.py#L217)
 
 **Inputs and outputs:**
 

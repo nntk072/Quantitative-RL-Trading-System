@@ -233,7 +233,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L209)
+1. [test fixture: `test_daily_loss_threshold_uses_percentage_even_in_fixed_other_limits_mode`](../../../../tests/unit/trading/test_guardrails.py#L245)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -247,7 +247,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert account.daily_floor(guardrails.daily_limit_for(account)) == pytest.approx(97_000.0)
 ```
 
-2. [test fixture: `test_daily_percentage_floor_reanchors_to_each_session_opening_equity`](../../../../tests/unit/trading/test_guardrails.py#L244)
+2. [test fixture: `test_daily_percentage_floor_reanchors_to_each_session_opening_equity`](../../../../tests/unit/trading/test_guardrails.py#L280)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -440,7 +440,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_account_state_records_drawdown_from_prior_eod_peak_once`](../../../../tests/unit/trading/test_guardrails.py#L334)
+1. [test fixture: `test_account_state_records_drawdown_from_prior_eod_peak_once`](../../../../tests/unit/trading/test_guardrails.py#L370)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -498,7 +498,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_account_state_records_drawdown_from_prior_eod_peak_once`](../../../../tests/unit/trading/test_guardrails.py#L335)
+1. [test fixture: `test_account_state_records_drawdown_from_prior_eod_peak_once`](../../../../tests/unit/trading/test_guardrails.py#L371)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -672,7 +672,7 @@ print(
 
 **Observed usage:**
 
-1. [test fixture: `test_daily_percentage_floor_reanchors_to_each_session_opening_equity`](../../../../tests/unit/trading/test_guardrails.py#L251)
+1. [test fixture: `test_daily_percentage_floor_reanchors_to_each_session_opening_equity`](../../../../tests/unit/trading/test_guardrails.py#L287)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -737,7 +737,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L288)
+1. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L324)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -757,7 +757,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_partial_payout_preserves_trade_buffer_above_locked_floor`](../../../../tests/unit/trading/test_guardrails.py#L316)
+2. [test fixture: `test_partial_payout_preserves_trade_buffer_above_locked_floor`](../../../../tests/unit/trading/test_guardrails.py#L352)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -944,7 +944,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_max_loss_not_trailing_hwm`](../../../../tests/unit/trading/test_guardrails.py#L114)
+1. [test fixture: `test_max_loss_not_trailing_hwm`](../../../../tests/unit/trading/test_guardrails.py#L150)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -964,7 +964,7 @@ def test_max_loss_not_trailing_hwm():
     assert g.check_max_drawdown(acc)
 ```
 
-2. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L285)
+2. [test fixture: `test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`](../../../../tests/unit/trading/test_guardrails.py#L321)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -130,3 +130,31 @@ def test_suggest_batch_size_without_vram_keeps_current() -> None:
         )
         == 256
     )
+
+
+@pytest.mark.parametrize(
+    ("vram_gib", "arch", "expected"),
+    [
+        (80, "mlp", 4096),
+        (40, "mlp", 2048),
+        (20, "mlp", 1024),
+        (10, "mlp", 512),
+        (6, "mlp", 1024),
+    ],
+)
+def test_suggest_batch_size_tracks_memory_class_and_divides_rollout(
+    vram_gib: int, arch: str, expected: int
+) -> None:
+    rollout_steps = 8192
+    n_envs = 8
+
+    batch_size = device.suggest_batch_size(
+        current=256,
+        n_steps=rollout_steps,
+        n_envs=n_envs,
+        vram_bytes=vram_gib * GiB,
+        arch=arch,
+    )
+
+    assert batch_size == expected
+    assert (rollout_steps // n_envs * n_envs) % batch_size == 0

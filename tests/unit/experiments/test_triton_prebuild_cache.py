@@ -151,3 +151,101 @@ def test_experiment_run_prebuild_uses_shared_variant_price_grid(
     assert "data.price_discretization.increment=0.25" in overrides
     assert "data.price_discretization.rounding=nearest_half_away_from_zero" in overrides
     assert "data.cache_dir=cache/train_test_2025_2026_qgrid025" in overrides
+
+
+def test_data_override_flattener_rejects_non_scalar_profile_values() -> None:
+    with pytest.raises(ValueError, match="unsupported experiment run data setting"):
+        prebuild_experiment_run_bar_cache._flatten_data(
+            {"symbols": ["US100.cash"], "enabled": True}
+        )
+
+    with pytest.raises(ValueError, match="unsupported experiment run data setting"):
+        prebuild_experiment_run_bar_cache._flatten_data({"symbols": ["US100.cash"]})
+
+
+def test_experiment_run_profile_overrides_accept_only_in_repo_data_mode_yaml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = prebuild_experiment_run_bar_cache
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    profile = tmp_path / "config" / "data_modes" / "test.yaml"
+    profile.parent.mkdir(parents=True)
+    profile.write_text("data:\n  cache_dir: cache/test\n  enabled: true\n", encoding="utf-8")
+
+    assert module._experiment_run_profile_overrides(None) == {}
+    assert module._experiment_run_profile_overrides("config/data_modes/test.yaml") == {
+        "data.cache_dir": "cache/test",
+        "data.enabled": True,
+    }
+    with pytest.raises(ValueError, match="relative YAML path"):
+        module._experiment_run_profile_overrides(3)
+    with pytest.raises(ValueError, match="inside this repository"):
+        module._experiment_run_profile_overrides("../../outside.yaml")
+    with pytest.raises(ValueError, match="under config/data_modes"):
+        module._experiment_run_profile_overrides("config/experiments.yaml")
+    profile.write_text("- not-a-mapping\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="contain a mapping"):
+        module._experiment_run_profile_overrides("config/data_modes/test.yaml")
+
+
+def test_experiment_run_spec_must_exist_and_have_variant_list(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = prebuild_experiment_run_bar_cache
+    missing = tmp_path / "missing.yaml"
+    monkeypatch.setenv("EXPERIMENT_RUN_SPEC", str(missing))
+    with pytest.raises(FileNotFoundError, match="experiment run spec is missing"):
+        module._experiment_run_data_overrides()
+    missing.write_text("experiment_run_id: missing-variants\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="must contain a variants list"):
+        module._experiment_run_data_overrides()
+
+
+def test_variant_data_overrides_rejects_unsafe_cache_and_malformed_entries() -> None:
+    module = prebuild_experiment_run_bar_cache
+    with pytest.raises(ValueError, match="price-grid variant"):
+        module._variant_data_overrides(
+            "bad",
+            {
+                "variants": [
+                    {
+                        "name": "bad",
+                        "price_grid_increment": 0.25,
+                        "price_grid_cache_dir": "../cache",
+                    }
+                ]
+            },
+        )
+    with pytest.raises(ValueError, match="config_overrides must be a list"):
+        module._variant_data_overrides(
+            "bad", {"variants": [{"name": "bad", "config_overrides": "data.tz=UTC"}]}
+        )
+    with pytest.raises(ValueError, match="invalid data override"):
+        module._variant_data_overrides(
+            "bad", {"variants": [{"name": "bad", "config_overrides": ["data.tz="]}]}
+        )
+
+
+def test_experiment_run_prebuild_fails_when_a_bar_cache_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cache_dir = tmp_path / "cache"
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "cache_dir": str(cache_dir),
+                "symbols": ["US100.cash"],
+                "timeframes": ["M1"],
+            }
+        }
+    )
+    monkeypatch.setattr(prebuild_experiment_run_bar_cache, "load_config", lambda **_kwargs: cfg)
+    monkeypatch.setattr(
+        prebuild_experiment_run_bar_cache, "run_pipeline", lambda *_args, **_kwargs: {}
+    )
+    monkeypatch.setattr(
+        prebuild_experiment_run_bar_cache, "bar_cache_is_complete", lambda _path: False
+    )
+
+    with pytest.raises(RuntimeError, match="bar cache build left missing/empty outputs"):
+        prebuild_experiment_run_bar_cache.main()

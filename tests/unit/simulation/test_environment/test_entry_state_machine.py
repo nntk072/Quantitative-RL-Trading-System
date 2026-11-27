@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any, cast
 
 import numpy as np
@@ -14,6 +15,7 @@ from decisioning.observation_state import (
     ENTRY_STATES,
     entry_state_one_hot,
 )
+from simulation.environment.entries.lifecycle import EntryRuntimeMixin
 from simulation.environment.entry_state import EntryEvidence, EntryStateMachine
 from simulation.environment.env import TradingEnv
 from trading.strategies import BaselineStrategy, PO3IFVGStrategy
@@ -118,6 +120,90 @@ def test_later_invalidation_does_not_rewrite_prior_trigger_request() -> None:
     machine.observe(_evidence(102, detected=True, direction=-1))
     assert machine.state == "FLAT"
     assert requested.direction == 1
+
+
+@pytest.mark.parametrize("bundle_backed", [False, True])
+def test_entry_volatility_label_uses_only_finite_rows_seen_so_far(bundle_backed: bool) -> None:
+    runtime = cast(Any, object.__new__(EntryRuntimeMixin))
+    values = np.asarray([1.0, 1.0, 2.0, 10_000.0])
+    runtime.step_idx = 2
+    runtime._bundle_arrays = {"atr_5": values} if bundle_backed else None
+    runtime._features_col_to_idx = {"atr_5": 0}
+    runtime._features_arr = values.reshape(-1, 1)
+
+    assert runtime._volatility_regime() == "high"
+
+    runtime.step_idx = 1
+    assert runtime._volatility_regime() == ""
+
+
+@pytest.mark.parametrize(
+    ("bias", "expected"),
+    [(1.0, "up"), (-1.0, "down"), (0.0, "flat"), (float("nan"), "")],
+)
+def test_entry_trend_label_handles_direction_flatness_and_missing_bias(
+    bias: float, expected: str
+) -> None:
+    runtime = object.__new__(EntryRuntimeMixin)
+
+    assert runtime._trend_regime(pd.Series({"htf_day_bias": bias})) == expected
+    assert runtime._trend_regime(pd.Series(dtype=float)) == ""
+
+
+@pytest.mark.parametrize("session_source", ["bundle", "bars"])
+def test_entry_decision_record_uses_active_session_and_preserves_tp_legs(
+    session_source: str,
+) -> None:
+    runtime = cast(Any, object.__new__(EntryRuntimeMixin))
+    runtime.step_idx = 0
+    runtime._decision_action = {"trade_setup_candidate_id": 3}
+    runtime.position = SimpleNamespace(direction=1)
+    runtime._features_col_to_idx = {"atr_5": 0}
+    runtime._features_arr = np.asarray([[1.0], [2.0], [3.0]])
+    runtime._bundle_arrays = None
+    runtime._bundle_has_session = False
+    runtime._session_labels = ()
+    runtime.bars = None
+    if session_source == "bundle":
+        runtime._bundle_arrays = {
+            "bar_session": np.asarray([0]),
+            "atr_5": np.asarray([1.0, 2.0, 3.0]),
+        }
+        runtime._bundle_has_session = True
+        runtime._session_labels = ("ny",)
+    else:
+        runtime.bars = pd.DataFrame({"session": ["london"]})
+
+    placed = SimpleNamespace(
+        tp_price=110.0,
+        sl_price=95.0,
+        tp1_price=105.0,
+        tp1_ref="H1_last_swing_high",
+        tp2_price=None,
+        tp2_ref="",
+        tp3_price=110.0,
+        tp3_ref="target",
+        tp_ref="EMA_21",
+        tp_lot_fractions=(0.6, 0.4),
+        tp_references=[],
+        sl_ref="M5_last_swing_low",
+        sl_index=2,
+        tp_index=-1,
+        ema_runner_fraction=0.0,
+    )
+    fields = runtime._decision_fields(
+        placed,
+        entry_price=100.0,
+        risk_frac=0.02,
+        entry_equity=10_000.0,
+        feat_row=pd.Series({"atr_5": 2.0, "htf_day_bias": 1.0}),
+        bar_time=pd.Timestamp("2025-01-06T15:00:00Z"),
+    )
+
+    assert fields["session"] == ("ny" if session_source == "bundle" else "london")
+    assert [leg["leg"] for leg in fields["tp_legs"]] == [1, 3]
+    assert [leg["lot_fraction"] for leg in fields["tp_legs"]] == [0.6, 0.4]
+    assert fields["tp_timeframe"] == ""
 
 
 def _market_fixture(

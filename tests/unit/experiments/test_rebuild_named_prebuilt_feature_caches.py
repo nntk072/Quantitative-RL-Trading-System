@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -276,3 +277,136 @@ def test_rebuild_rejects_cache_directory_symlink_before_staging(
     assert linked_cache_dir.is_symlink()
     assert not (root / "backup").exists()
     assert not (root / "rebuild.json").exists()
+
+
+@pytest.mark.unit
+def test_rebuild_refuses_missing_raw_source_before_staging_or_backup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    cache_dir = root / "data" / "prebuilt_feature_cache"
+    _install_minimal_rebuild_plan(monkeypatch, root, cache_dir)
+
+    def load_variant(_name: str) -> tuple[dict[str, str], DictConfig]:
+        return {"variant": "fixture"}, OmegaConf.create(
+            {
+                "data": {
+                    "raw_dir": "data/raw",
+                    "primary": "ES",
+                    "secondary": "NQ",
+                    "m1_files": {"ES": "ES.csv", "NQ": "NQ.csv"},
+                    "prebuilt_feature_cache": str(cache_dir / "cache.parquet"),
+                    "split": {"train_end": "2025-12-31", "test_start": "2026-01-01"},
+                }
+            }
+        )
+
+    monkeypatch.setattr(cache_builder, "load_variant", load_variant)
+    monkeypatch.setattr(
+        cache_builder,
+        "_load_fresh_market",
+        lambda *_args, **_kwargs: pytest.fail("raw source absence must be detected first"),
+    )
+    report = root / "reports" / "rebuild.json"
+    backup = root / "backup"
+
+    with pytest.raises(FileNotFoundError, match="raw M1 input missing for ES"):
+        cache_builder.rebuild(backup, report)
+
+    assert not backup.exists()
+    assert not report.exists()
+    assert list(cache_dir.iterdir()) == []
+
+
+@pytest.mark.unit
+def test_rebuild_rejects_raw_source_changed_during_staging_without_publishing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repository"
+    cache_dir = root / "data" / "prebuilt_feature_cache"
+    raw_dir = root / "data" / "raw"
+    cache_dir.mkdir(parents=True)
+    raw_dir.mkdir(parents=True)
+    raw_primary = raw_dir / "ES.csv"
+    raw_secondary = raw_dir / "NQ.csv"
+    raw_primary.write_bytes(b"original primary bars")
+    raw_secondary.write_bytes(b"original secondary bars")
+    cache_names = (
+        "baseline.parquet",
+        "baseline_strategy_actions.parquet",
+        "idea1_po3_ifvg.parquet",
+        "idea2_distribution.parquet",
+    )
+    for name in cache_names:
+        (cache_dir / name).write_bytes(f"old:{name}".encode())
+        Path(f"{cache_dir / name}.hash").write_text("old-cache-hash\n", encoding="utf-8")
+    monkeypatch.setattr(cache_builder, "ROOT", root)
+    rows = [
+        {
+            "variant": name,
+            "cache_path": str(cache_dir / cache_name),
+            "experiment_run_variant_cache_bindings": {"fixture": str(cache_name)},
+        }
+        for name, cache_name in zip(cache_builder.VARIANTS, cache_names, strict=True)
+    ]
+    monkeypatch.setattr(cache_builder, "plan", lambda: rows)
+    cfgs = [
+        OmegaConf.create(
+            {
+                "data": {
+                    "raw_dir": "data/raw",
+                    "primary": "ES",
+                    "secondary": "NQ",
+                    "m1_files": {"ES": "ES.csv", "NQ": "NQ.csv"},
+                    "prebuilt_feature_cache": str(cache_dir / cache_name),
+                    "split": {"train_end": "2025-12-31", "test_start": "2026-01-01"},
+                }
+            }
+        )
+        for cache_name in cache_names
+    ]
+    cfg_by_name = dict(zip(cache_builder.VARIANTS, cfgs, strict=True))
+    monkeypatch.setattr(
+        cache_builder,
+        "load_variant",
+        lambda name: ({"variant": name}, cfg_by_name[name]),
+    )
+    index = pd.date_range("2025-12-29", periods=2, freq="D")
+    bars = pd.DataFrame({"close": [100.0, 101.0]}, index=index)
+    monkeypatch.setattr(
+        cache_builder,
+        "_load_fresh_market",
+        lambda _cfg: {"ES": {"M1": bars}, "NQ": {"M1": bars.copy()}},
+    )
+    monkeypatch.setattr(
+        cache_builder,
+        "feature_cache_content_hash",
+        lambda *_args, **_kwargs: "verified-feature-hash",
+    )
+    features = pd.DataFrame({"feature": [0.25, 0.5]}, index=index)
+    changed_source = False
+
+    def build_features(_bars: pd.DataFrame, *, cache_path: Path, **_kwargs: Any) -> pd.DataFrame:
+        nonlocal changed_source
+        cache_path.write_bytes(b"new staged parquet")
+        Path(f"{cache_path}.hash").write_text("verified-feature-hash\n", encoding="utf-8")
+        if not changed_source:
+            raw_primary.write_bytes(b"primary source changed during rebuild")
+            changed_source = True
+        return features.copy()
+
+    monkeypatch.setattr(cache_builder, "build_features", build_features)
+    monkeypatch.setattr(pd, "read_parquet", lambda _path: features.copy())
+    report = root / "reports" / "rebuild.json"
+    backup = root / "backups" / "rebuild"
+
+    with pytest.raises(RuntimeError, match="raw market inputs changed during cache rebuild"):
+        cache_builder.rebuild(backup, report)
+
+    assert not backup.exists()
+    assert not report.exists()
+    for name in cache_names:
+        assert (cache_dir / name).read_bytes() == f"old:{name}".encode()
+        assert Path(f"{cache_dir / name}.hash").read_text(encoding="utf-8") == "old-cache-hash\n"
+    assert not list(cache_dir.glob("named-feature-cache-stage-*"))

@@ -18,7 +18,7 @@ from features.context.premium_discount import (
 )
 from features.technical.structure import structure_levels
 from market_data.transforms.sessions import add_session_labels
-from simulation.environment.observations import prepare_observation_feature_channels
+from simulation.environment.observations.schema import prepare_observation_feature_channels
 
 
 def _index_dates(idx: pd.Index) -> np.ndarray[Any, Any]:

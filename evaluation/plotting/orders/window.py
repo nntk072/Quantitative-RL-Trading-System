@@ -1,0 +1,448 @@
+"""Which candles an order chart includes.
+
+The position box (which prices, the fill, the marks) stays in ``order_chart``.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+from evaluation.metrics.trades import TradeChartMetrics, compute_trade_metrics
+from evaluation.plotting.shared.indicators import slice_overlays
+
+from .events import OverlayEvents, confirmed_pivots
+from .geometry import OrderLevels, order_levels
+
+
+@dataclass
+class PreparedOrderChart:
+    """One trade ready to draw. ``events`` are clipped to ``window``."""
+
+    window: pd.DataFrame
+    metrics: TradeChartMetrics
+    events: OverlayEvents
+    overlays: dict[str, pd.Series]
+    levels: OrderLevels
+    t_open: pd.Timestamp
+    t_close: pd.Timestamp
+
+
+def _align_ts(ts: pd.Timestamp, index: pd.DatetimeIndex) -> pd.Timestamp:
+    """Localize/convert ``ts`` to match ``index`` timezone.
+
+    Args:
+        ts: Ts used by the operation described above.
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of localize/convert ``ts`` to match ``index`` timezone.
+    """
+    out = pd.Timestamp(ts)
+    if pd.isna(out):
+        raise ValueError("cannot align a missing timestamp to a bar index")
+    if index.tz is None:
+        return out.tz_localize(None) if out.tzinfo is not None else out
+    if out.tzinfo is None:
+        return out.tz_localize(index.tz)
+    return out.tz_convert(index.tz)
+
+
+def _event_timestamp(row: pd.Series, index: pd.DatetimeIndex) -> pd.Timestamp | None:
+    """Resolve an event time from its timestamps, then its recorded bar.
+
+    Some replay ledgers preserve a valid event bar while leaving ``time``
+    empty. Recovering from that bar keeps the chart anchored to observed data.
+
+    Args:
+        row: Row index or record being processed.
+        index: Position or label identifying the requested item.
+
+    Returns:
+        Result of resolve an event time from its timestamps, then its recorded bar.
+    """
+    for column in ("time", "actual_tick_time", "fill_time", "effective_time"):
+        value = row.get(column)
+        if value is None or pd.isna(value):
+            continue
+        try:
+            timestamp = pd.Timestamp(value)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not pd.isna(timestamp):
+            return timestamp
+
+    bar = row.get("bar")
+    if pd.notna(bar):
+        try:
+            position = int(bar)
+        except (TypeError, ValueError, OverflowError):
+            position = -1
+        if 0 <= position < len(index):
+            return pd.Timestamp(index[position])
+    return None
+
+
+def _ny_session_positions(
+    index: pd.DatetimeIndex,
+    t_open: pd.Timestamp,
+    t_close: pd.Timestamp,
+) -> np.ndarray[Any, Any]:
+    """Integer positions of NY bars on calendar days spanned by the trade.
+
+    Args:
+        index: Position or label identifying the requested item.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+
+    Returns:
+        Array returned by ``_ny_session_positions``.
+    """
+    from market_data.transforms.sessions import ny_session_mask
+
+    t0 = _align_ts(t_open, index)
+    t1 = _align_ts(t_close, index)
+    day0 = t0.normalize()
+    day1 = t1.normalize()
+    ny = ny_session_mask(index).to_numpy()
+    norms = pd.DatetimeIndex(index).normalize()
+    same_days = (norms == day0) | (norms == day1)
+    return np.flatnonzero(ny & np.asarray(same_days))
+
+
+def _session_end_pos(idx: pd.DatetimeIndex, i: int) -> int:
+    """Last NY bar position on the same calendar day as ``idx[i]``.
+
+    The market is closed between the NY close and the next open, so a window
+    that counts those dead overnight candles pushes the exit marker away from
+    the axis edge for no information gain. Returns ``i`` when ``i`` is not
+    itself an NY bar, so callers fall back to their own bounds.
+
+    Args:
+        idx: Idx used by the operation described above.
+        i: Numeric value used for the i.
+
+    Returns:
+        Numeric result returned by ``_session_end_pos``.
+    """
+    from market_data.transforms.sessions import ny_session_mask
+
+    if i < 0 or i >= len(idx):
+        return i
+    ny = ny_session_mask(idx).to_numpy()
+    if not ny[i]:
+        return i
+    day = pd.Timestamp(idx[i]).normalize()
+    n = len(idx)
+    j = i
+    while j + 1 < n and ny[j + 1] and pd.Timestamp(idx[j + 1]).normalize() == day:
+        j += 1
+    return j
+
+
+def _session_end_positions(idx: pd.DatetimeIndex) -> np.ndarray[Any, Any]:
+    """Map each NY-session bar to its session end, scanning the index once.
+
+    Args:
+        idx: Idx used by the operation described above.
+
+    Returns:
+        Array returned by ``_session_end_positions``.
+    """
+    from market_data.transforms.sessions import ny_session_mask
+
+    n = len(idx)
+    ends = np.arange(n, dtype=int)
+    if n == 0:
+        return ends
+    ny = ny_session_mask(idx).to_numpy()
+    days = idx.normalize().view("i8")
+    i = 0
+    while i < n:
+        if not ny[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < n and ny[j + 1] and days[j + 1] == days[i]:
+            j += 1
+        ends[i : j + 1] = j
+        i = j + 1
+    return ends
+
+
+def _extract_window(
+    bars: pd.DataFrame,
+    t_open: pd.Timestamp,
+    t_close: pd.Timestamp,
+    context: int,
+    session_end_positions: np.ndarray[Any, Any] | None = None,
+) -> pd.DataFrame:
+    """Return M1 bars around a trade, with the order away from the axis edge.
+
+    ``context`` bars before the entry and after the exit. A trade that opens
+    at 16:30 still gets earlier candles that same day, so the order sits in
+    the middle. The slice does not cross into the previous or next calendar
+    day, and trailing context stops at the session close so an eod_close does
+    not drag in the overnight gap.
+
+    Args:
+        bars: Market bars to process.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+        context: Context values required to resolve the operation.
+        session_end_positions: Session end positions used by the operation described above.
+
+    Returns:
+        DataFrame returned by ``_extract_window``.
+    """
+    idx = pd.DatetimeIndex(bars.index)
+    i_o = int(idx.get_indexer(pd.Index([_align_ts(t_open, idx)]), method="nearest")[0])
+    i_c = int(idx.get_indexer(pd.Index([_align_ts(t_close, idx)]), method="nearest")[0])
+    if i_o < 0 or i_c < 0:
+        return pd.DataFrame(columns=bars.columns)
+
+    i_s = max(0, min(i_o, i_c) - context)
+    i_e = min(len(bars) - 1, max(i_o, i_c) + context)
+    t0 = _align_ts(t_open, idx)
+    t1 = _align_ts(t_close, idx)
+    day_start = t0.normalize()
+    day_end = t1.normalize() + pd.Timedelta(days=1)
+    while i_s < i_e and pd.Timestamp(idx[i_s]) < day_start:
+        i_s += 1
+    while i_e > i_s and pd.Timestamp(idx[i_e]) >= day_end:
+        i_e -= 1
+        # Trailing context is measured in tradable bars, so cap it at the session
+        # close. ``max(..., i_c)`` keeps the exit itself inside the window when the
+        # trade runs past the session (overnight hold).
+    exit_pos = max(i_o, i_c)
+    session_end = (
+        int(session_end_positions[exit_pos])
+        if session_end_positions is not None
+        else _session_end_pos(idx, exit_pos)
+    )
+    i_e = min(i_e, max(session_end, exit_pos))
+    return bars.iloc[i_s : i_e + 1]
+
+
+def _structure_anchors(
+    events: OverlayEvents,
+    t_open: pd.Timestamp,
+    t_close: pd.Timestamp,
+) -> list[pd.Timestamp]:
+    """Pivot times of swings, sweeps, and SMT that touch the trade.
+
+    Args:
+        events: Events used by the operation described above.
+        t_open: T open used by the operation described above.
+        t_close: T close used by the operation described above.
+
+    Returns:
+        Values returned by ``_structure_anchors``, in the declared order.
+    """
+    anchors: list[pd.Timestamp] = []
+    for ray in events.swings:
+        origin = ray.pivot_time()
+        if ray.t1 >= t_open and origin <= t_close:
+            anchors.append(origin)
+    for sweep in events.sweeps:
+        if sweep.t1 >= t_open and sweep.t0 <= t_close:
+            anchors.append(sweep.t0)
+    for seg in events.smt:
+        # A segment that runs to a later week must not set the chart axis.
+        # Both pivots have to sit on this session or the previous day.
+        if not (seg.t1 >= t_open and seg.t0 <= t_close):
+            continue
+        if _on_trade_or_previous_day(seg.t0, t_open) and _on_trade_or_previous_day(seg.t1, t_open):
+            anchors.extend([seg.t0, seg.t1])
+    return anchors
+
+
+def _on_trade_or_previous_day(ts: pd.Timestamp, t_open: pd.Timestamp) -> bool:
+    """True when ``ts`` is on the trade's calendar day or the day before.
+
+    Args:
+        ts: Ts used by the operation described above.
+        t_open: T open used by the operation described above.
+
+    Returns:
+        Whether on trade or previous day meets the requested condition.
+    """
+    ref = pd.Timestamp(t_open)
+    cur = pd.Timestamp(ts)
+    if ref.tzinfo is not None:
+        cur = cur.tz_localize(ref.tzinfo) if cur.tzinfo is None else cur.tz_convert(ref.tzinfo)
+    day = cur.normalize()
+    trade_day = ref.normalize()
+    return bool(day == trade_day or day == trade_day - pd.Timedelta(days=1))
+
+
+def _extend_trade_window(
+    bars: pd.DataFrame,
+    window: pd.DataFrame,
+    anchors: list[pd.Timestamp],
+    t_open: pd.Timestamp,
+    pad: int = 15,
+) -> pd.DataFrame:
+    """Include candles that structure lines are drawn from.
+
+    Same trading day from Asia 01:05 is continuous. An anchor on the previous
+    calendar day is a short pad. Older pivots are left off the chart.
+
+    Args:
+        bars: Market bars to process.
+        window: Tabular data used for the window.
+        anchors: Items supplied for the anchors, in input order.
+        t_open: T open used by the operation described above.
+        pad: Numeric value used for the pad.
+
+    Returns:
+        DataFrame returned by ``_extend_trade_window``.
+    """
+    if window.empty or not anchors:
+        return window
+    idx = pd.DatetimeIndex(bars.index)
+    trade_day = _align_ts(t_open, idx).normalize()
+    asia = trade_day + pd.Timedelta(hours=1, minutes=5)
+    prev_day = trade_day - pd.Timedelta(days=1)
+    i_end = int(idx.get_indexer(pd.Index([window.index[-1]]), method="nearest")[0])
+    i_start = int(idx.get_indexer(pd.Index([window.index[0]]), method="nearest")[0])
+    extra: list[pd.DataFrame] = []
+    for raw in anchors:
+        ts = _align_ts(raw, idx)
+        loc = int(idx.get_indexer(pd.Index([ts]))[0])
+        if loc < 0:
+            loc = int(idx.get_indexer(pd.Index([ts]), method="nearest")[0])
+            if loc < 0 or abs(pd.Timestamp(idx[loc]) - ts) > pd.Timedelta("1min"):
+                continue
+        matched = pd.Timestamp(idx[loc])
+        day = matched.normalize()
+        if day == trade_day and matched >= asia:
+            if loc < i_start:
+                i_start = loc
+        elif day == prev_day or (day == trade_day and matched < asia):
+            a = max(0, loc - pad)
+            b = min(len(bars) - 1, loc + pad)
+            extra.append(bars.iloc[a : b + 1])
+    parts = [bars.iloc[i_start : i_end + 1], *extra]
+    out = pd.concat(parts).sort_index()
+    return out.loc[~out.index.duplicated(keep="first")]
+
+
+def prepare_order_chart(
+    bars: pd.DataFrame,
+    open_row: pd.Series,
+    close_row: pd.Series,
+    *,
+    overlay_events: OverlayEvents,
+    full_overlays: dict[str, pd.Series],
+    context_bars: int,
+    max_loss_per_trade_usd: float | None = None,
+    take_profit_per_trade_usd: float | None = None,
+    lots: float = 1.0,
+    contract_size: float = 1.0,
+    show_mae_mfe: bool = True,
+    show_sl_tp: bool = True,
+    features: pd.DataFrame | None = None,
+    order_block_timeframes: tuple[str, ...] = (),
+    fvg_timeframes: tuple[str, ...] = (),
+    ifvg_timeframes: tuple[str, ...] = (),
+    swing_timeframes: tuple[str, ...] = ("M1",),
+    entry_idea_plot_config: dict[str, Any] | None = None,
+    confirmed_events: OverlayEvents | None = None,
+    session_end_positions: np.ndarray[Any, Any] | None = None,
+) -> PreparedOrderChart | None:
+    """Build the window, metrics, clipped events, and position box for one trade.
+
+    The window is the trade's NY session plus ``context_bars`` before the
+    entry and after the exit. Structure pivots and SL/TP/MAE/MFE times stay
+    as levels on those candles. They do not pull earlier sessions onto the axis.
+    ``_extend_trade_window`` is left in place for that older behaviour.
+
+    Returns ``None`` when fewer than three bars remain. Does not draw.
+
+    Args:
+        bars: Market bars to process.
+        open_row: Tabular data used for the open row.
+        close_row: Tabular data used for the close row.
+        overlay_events: Overlay events used by the operation described above.
+        full_overlays: Tabular data used for the full overlays.
+        context_bars: Market bar or price data used for build the window, metrics, clipped events, and position box for one trade.
+        max_loss_per_trade_usd: Max loss per trade usd used by the operation described above.
+        take_profit_per_trade_usd: Take profit per trade usd used by the operation described above.
+        lots: Numeric value used for the lots.
+        contract_size: Number specifying the contract size for this operation.
+        show_mae_mfe: Whether to enable or require the show mae mfe.
+        show_sl_tp: Whether to enable or require the show sl tp.
+        features: Feature values supplied to the operation.
+        order_block_timeframes: Items supplied for the order block timeframes, in input order.
+        fvg_timeframes: Items supplied for the fvg timeframes, in input order.
+        ifvg_timeframes: Items supplied for the ifvg timeframes, in input order.
+        swing_timeframes: Items supplied for the swing timeframes, in input order.
+        entry_idea_plot_config: Key-value data used for the entry idea plot config.
+        confirmed_events: Confirmed events used by the operation described above.
+        session_end_positions: Session end positions used by the operation described above.
+
+    Returns:
+        Result of build the window, metrics, clipped events, and position box for one trade.
+    """
+    entry_time = open_row.get("actual_tick_time")
+    if pd.isna(entry_time) or not str(entry_time).strip():
+        entry_time = open_row["time"]
+    t_open = pd.Timestamp(entry_time)
+    resolved_close = _event_timestamp(close_row, pd.DatetimeIndex(bars.index))
+    if resolved_close is None:
+        return None
+    t_close = resolved_close
+    metric_close_row = close_row.copy()
+    metric_close_row["time"] = t_close
+    window = _extract_window(
+        bars,
+        t_open,
+        t_close,
+        context_bars,
+        session_end_positions=session_end_positions,
+    )
+    if len(window) < 3:
+        return None
+    metrics = compute_trade_metrics(
+        bars,
+        open_row,
+        metric_close_row,
+        max_loss_per_trade_usd=max_loss_per_trade_usd,
+        take_profit_per_trade_usd=take_profit_per_trade_usd,
+        lots=lots,
+        contract_size=contract_size,
+    )
+    marked = (
+        confirmed_events if confirmed_events is not None else confirmed_pivots(overlay_events, bars)
+    )
+    levels = order_levels(
+        window,
+        metrics,
+        marked,
+        bars,
+        t_open,
+        t_close,
+        open_row,
+        show_mae_mfe=show_mae_mfe,
+        show_sl_tp=show_sl_tp,
+        features=features,
+        order_block_timeframes=order_block_timeframes,
+        fvg_timeframes=fvg_timeframes,
+        ifvg_timeframes=ifvg_timeframes,
+        swing_timeframes=swing_timeframes,
+        entry_idea_plot_config=entry_idea_plot_config,
+    )
+    events = marked.clip(pd.Timestamp(window.index[0]), pd.Timestamp(window.index[-1]))
+    return PreparedOrderChart(
+        window=window,
+        metrics=metrics,
+        events=events,
+        overlays=slice_overlays(full_overlays, window.index),
+        levels=levels,
+        t_open=t_open,
+        t_close=t_close,
+    )

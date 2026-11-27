@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -148,6 +149,142 @@ def test_catalog_rejects_duplicate_labels_within_a_family() -> None:
             architecture_ids=("tcn",),
             algorithms=("ppo",),
         )
+
+
+def test_catalog_index_rejects_malformed_metadata_at_each_boundary(tmp_path: Path) -> None:
+    unset = object()
+
+    def invalid_case(
+        *,
+        metadata: dict[str, Any] | None = None,
+        variants: object = unset,
+        message: str,
+    ) -> tuple[dict[str, Any], dict[str, Any], str]:
+        catalog_metadata = _minimal_index() if metadata is None else metadata
+        experiment_rows = [{"name": "current"}] if variants is unset else variants
+        return catalog_metadata, {"variants": experiment_rows}, message
+
+    cases: list[tuple[dict[str, Any], dict[str, Any], str]] = []
+    metadata = _minimal_index()
+    metadata["schema_version"] = 2
+    cases.append(invalid_case(metadata=metadata, message="schema_version"))
+    cases.append(invalid_case(variants=None, message="variants list"))
+    cases.append(invalid_case(variants=[None], message="variant must be a mapping"))
+    cases.append(invalid_case(variants=[{"name": " "}], message="non-empty string"))
+    cases.append(
+        invalid_case(
+            variants=[{"name": "current"}, {"name": "current"}], message="declared more than once"
+        )
+    )
+
+    metadata = _minimal_index()
+    metadata["algorithms"] = {"other": {"title": "Other", "description": "Other."}}
+    cases.append(invalid_case(metadata=metadata, message="supported algorithm IDs"))
+    metadata = _minimal_index()
+    metadata["algorithms"]["ppo"] = None
+    cases.append(invalid_case(metadata=metadata, message="algorithm metadata must be a mapping"))
+    metadata = _minimal_index()
+    metadata["architectures"] = None
+    cases.append(invalid_case(metadata=metadata, message="architectures must be a list"))
+    metadata = _minimal_index()
+    metadata["architectures"] = [None]
+    cases.append(invalid_case(metadata=metadata, message="architecture metadata entry"))
+    metadata = _minimal_index()
+    metadata["architectures"].append(dict(metadata["architectures"][0]))
+    cases.append(invalid_case(metadata=metadata, message="architecture IDs must be unique"))
+    metadata = _minimal_index()
+    metadata["architectures"][0]["id"] = "other"
+    cases.append(invalid_case(metadata=metadata, message="lightweight encoder registry"))
+    metadata = _minimal_index()
+    metadata["families"] = []
+    cases.append(invalid_case(metadata=metadata, message="at least one research family"))
+    metadata = _minimal_index()
+    metadata["families"] = [None]
+    cases.append(invalid_case(metadata=metadata, message="family must be a mapping"))
+    metadata = _minimal_index()
+    metadata["families"][0]["comparison_type"] = "descriptive"
+    metadata["families"].append(dict(metadata["families"][0]))
+    cases.append(invalid_case(metadata=metadata, message="duplicate family ID"))
+    metadata = _minimal_index()
+    metadata["families"][0]["entries"][0]["role"] = "observer"
+    cases.append(invalid_case(metadata=metadata, message="invalid role"))
+    metadata = _minimal_index()
+    metadata["families"][0]["entries"][0]["changed_factors"] = None
+    cases.append(invalid_case(metadata=metadata, message="changed_factors"))
+    metadata = _minimal_index()
+    metadata["families"][0]["entries"][0]["historical_sources"] = "bad-path"
+    cases.append(invalid_case(metadata=metadata, message="historical_sources"))
+    metadata = _minimal_index()
+    metadata["families"][0]["entries"] = []
+    cases.append(invalid_case(metadata=metadata, message="must contain entries"))
+    metadata = _minimal_index()
+    metadata["families"][0]["entries"] = [None]
+    cases.append(invalid_case(metadata=metadata, message="every entry"))
+    metadata = _minimal_index()
+    metadata["families"][0]["comparison_type"] = "unregistered"
+    cases.append(invalid_case(metadata=metadata, message="unsupported comparison type"))
+
+    for metadata, experiments, message in cases:
+        with pytest.raises(catalog.CatalogError, match=message):
+            catalog.validate_catalog_index(
+                metadata,
+                experiments,
+                root=tmp_path,
+                architecture_ids=("tcn",),
+                algorithms=("ppo",),
+            )
+
+
+def test_catalog_reports_selectable_variants_missing_from_a_valid_historical_family(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "frozen.yaml"
+    source.write_text("experiment_run_id: frozen\n", encoding="utf-8")
+    metadata = _minimal_index(historical_source="frozen.yaml")
+    metadata["families"][0]["comparison_type"] = "descriptive"
+    metadata["families"][0]["entries"] = metadata["families"][0]["entries"][1:]
+
+    with pytest.raises(catalog.CatalogError, match="selectable variants missing"):
+        catalog.validate_catalog_index(
+            metadata,
+            {"variants": [{"name": "current"}]},
+            root=tmp_path,
+            architecture_ids=("tcn",),
+            algorithms=("ppo",),
+        )
+
+
+def test_catalog_builder_reports_unreadable_and_non_mapping_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "catalog.yaml"
+    monkeypatch.setattr(catalog, "CATALOG_PATH", path)
+
+    with pytest.raises(catalog.CatalogError, match="cannot read catalog metadata"):
+        catalog.build_catalog()
+    path.write_text("- not-a-mapping\n", encoding="utf-8")
+    with pytest.raises(catalog.CatalogError, match="metadata must be a mapping"):
+        catalog.build_catalog()
+    with pytest.raises(catalog.CatalogError, match="metadata must be a mapping"):
+        catalog.resolve_family("test_pair")
+
+
+def test_catalog_module_entrypoint_runs_check_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    expected_page = catalog.render_catalog(catalog.build_catalog())
+    read_text = Path.read_text
+
+    def read_catalog_page(path: Path, *args: Any, **kwargs: Any) -> str:
+        if path == catalog.CATALOG_PAGE_PATH:
+            return expected_page
+        return read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read_catalog_page)
+    monkeypatch.setattr(sys, "argv", ["catalog.py", "--check"])
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(str(Path(catalog.__file__)), run_name="__main__")
+
+    assert exit_info.value.code == 0
 
 
 def test_historical_variant_requires_an_existing_frozen_source(tmp_path: Path) -> None:

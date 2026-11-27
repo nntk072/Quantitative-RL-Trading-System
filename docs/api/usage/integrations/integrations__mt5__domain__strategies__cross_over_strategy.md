@@ -12,44 +12,27 @@ This page contains 3 public callable records owned by `integrations.mt5.domain.s
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L139)
+1. [test fixture: `test_crossover_signal_tracks_latest_moving_average_order`](../../../../tests/unit/integrations/test_mt5_strategies.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_crossover_signal_tracks_latest_moving_average_order(
+    prices: list[float], expected: Signal
+) -> None:
+    assert CrossOverStrategy(PriceData(_bars(prices))).signal() == ("US100", expected)
 ```
 
-2. [production caller: `__init__`](../../../../integrations/mt5/domain/strategies/combined_strategy.py#L43)
+2. [test fixture: `test_crossover_signal_is_neutral_without_bars`](../../../../tests/unit/integrations/test_mt5_strategies.py#L74)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-
-        if strategies is None:
-            strategies = ["crossover", "smc", "trend_breakout"]
-
-        if "crossover" in strategies:
-            self.strategies["crossover"] = CrossOverStrategy(trading_data)
-
-        if "smc" in strategies:
-            self.strategies["smc"] = SMCStrategy(trading_data)
-
-        if "trend_breakout" in strategies:
-# … caller assertions omitted …
+def test_crossover_signal_is_neutral_without_bars() -> None:
+    assert CrossOverStrategy(PriceData(pd.DataFrame())).signal() == ("US100", Signal.NONE)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -66,44 +49,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `create_strategy`](../../../../integrations/mt5/cli/multi_symbol_trading.py#L139)
+1. [test fixture: `test_crossover_signal_tracks_latest_moving_average_order`](../../../../tests/unit/integrations/test_mt5_strategies.py#L70)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def create_strategy(data_source: MT5Data, strategy_type: str) -> TradingStrategy:
-    if strategy_type == "crossover":
-        return CrossOverStrategy(data_source)
-    elif strategy_type == "smc":
-        return SMCStrategy(data_source)
-    elif strategy_type == "trend_breakout":
-        return TrendBreakoutStrategy(data_source)
-    elif strategy_type == "combined":
-        return CombinedStrategy(data_source)
-    else:
-        logger.warning(f"Unknown strategy type: {strategy_type}, using combined")
-        return CombinedStrategy(data_source)
+def test_crossover_signal_tracks_latest_moving_average_order(
+    prices: list[float], expected: Signal
+) -> None:
+    assert CrossOverStrategy(PriceData(_bars(prices))).signal() == ("US100", expected)
 ```
 
-2. [production caller: `__init__`](../../../../integrations/mt5/domain/strategies/combined_strategy.py#L43)
+2. [test fixture: `test_crossover_signal_is_neutral_without_bars`](../../../../tests/unit/integrations/test_mt5_strategies.py#L74)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-
-        if strategies is None:
-            strategies = ["crossover", "smc", "trend_breakout"]
-
-        if "crossover" in strategies:
-            self.strategies["crossover"] = CrossOverStrategy(trading_data)
-
-        if "smc" in strategies:
-            self.strategies["smc"] = SMCStrategy(trading_data)
-
-        if "trend_breakout" in strategies:
-# … caller assertions omitted …
+def test_crossover_signal_is_neutral_without_bars() -> None:
+    assert CrossOverStrategy(PriceData(pd.DataFrame())).signal() == ("US100", Signal.NONE)
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -126,20 +92,29 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Pair of broker symbol and long, short, or neutral signal.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_crossover_signal_tracks_latest_moving_average_order`](../../../../tests/unit/integrations/test_mt5_strategies.py#L70)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = CrossOverStrategy(...)
-result = instance.signal()
+def test_crossover_signal_tracks_latest_moving_average_order(
+    prices: list[float], expected: Signal
+) -> None:
+    assert CrossOverStrategy(PriceData(_bars(prices))).signal() == ("US100", expected)
 ```
 
-**Lifecycle context:** This callable participates in `CrossOverStrategy`: Moving-average crossover strategy for broker-neutral execution. Related public lifecycle methods: {py:obj}`integrations.mt5.domain.strategies.cross_over_strategy.CrossOverStrategy.signal`
+2. [test fixture: `test_crossover_signal_is_neutral_without_bars`](../../../../tests/unit/integrations/test_mt5_strategies.py#L74)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_crossover_signal_is_neutral_without_bars() -> None:
+    assert CrossOverStrategy(PriceData(pd.DataFrame())).signal() == ("US100", Signal.NONE)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

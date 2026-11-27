@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import runpy
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -218,3 +220,12 @@ def test_main_prints_target_spec_and_source(
     assert continuation.main() == 0
     lines = capsys.readouterr().out.splitlines()
     assert lines == [TARGET_ID, "specs/target_run.yaml", str(paths["source"].resolve())]
+
+
+def test_module_entrypoint_handles_help_before_handoff_resolution(monkeypatch) -> None:
+    monkeypatch.setattr(sys, "argv", ["continuation.py", "--help"])
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(str(Path(continuation.__file__)), run_name="__main__")
+
+    assert exit_info.value.code == 0

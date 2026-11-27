@@ -84,25 +84,39 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `metrics_with_ci`](../../../../evaluation/metrics/bootstrap.py#L311)
+1. [test fixture: `test_bootstrap_rejects_invalid_resampling_parameters`](../../../../tests/unit/evaluation/test_bootstrap_edge_cases.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        path = np.empty(sample.size + 1, dtype=np.float64)
-        path[0] = eq[0]
-        path[1:] = eq[0] * np.cumprod(1.0 + sample)
-        return max_drawdown_stat(path)
-
-    mdd_ci = bootstrap_ci(rets, reconstructed_drawdown, n_boot, level, rng_seed)
-    # Bootstrap estimate should describe the observed path, including the
-    # initial-capital observation and its first loss.
-    mdd_ci = CI(max_drawdown_stat(eq), mdd_ci.lower, mdd_ci.upper, mdd_ci.level)
-    return {
-        "sharpe": bootstrap_ci(
-# … caller assertions omitted …
+def test_bootstrap_rejects_invalid_resampling_parameters(
+    n_boot: int, level: float, block_len: int, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        bootstrap_ci(np.asarray([1.0, 2.0]), np.mean, n_boot, level, block_len=block_len)
 ```
+
+2. [test fixture: `test_bootstrap_short_empty_and_nonfinite_statistic_paths`](../../../../tests/unit/evaluation/test_bootstrap_edge_cases.py#L38)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_bootstrap_short_empty_and_nonfinite_statistic_paths() -> None:
+    empty = bootstrap_ci(np.asarray([]), np.mean, n_boot=4)
+    assert math.isnan(empty.estimate) and math.isnan(empty.lower) and math.isnan(empty.upper)
+
+    one = bootstrap_ci(np.asarray([3.0]), np.mean, n_boot=4)
+    assert one.as_tuple() == (3.0, 3.0, 3.0)
+    no_resamples = bootstrap_ci(np.asarray([1.0, 3.0]), np.mean, n_boot=0)
+    assert no_resamples.as_tuple() == (2.0, 2.0, 2.0)
+
+    short_blocks = bootstrap_ci(np.asarray([1.0, 3.0]), np.mean, n_boot=5, block_len=8)
+    assert short_blocks.estimate == pytest.approx(2.0)
+    all_nan = bootstrap_ci(np.asarray([1.0, 2.0]), lambda _values: float("nan"), n_boot=3)
+    assert math.isnan(all_nan.lower) and math.isnan(all_nan.upper)
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -134,7 +148,23 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_bootstrap_statistics_match_canonical_metric_definitions`](../../../../tests/unit/evaluation/test_metrics.py#L190)
+1. [test fixture: `test_bootstrap_metric_wrappers_validate_inputs_and_initial_balance`](../../../../tests/unit/evaluation/test_bootstrap_edge_cases.py#L75)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_bootstrap_metric_wrappers_validate_inputs_and_initial_balance() -> None:
+    with pytest.raises(ValueError, match="periods_per_year"):
+        sharpe_stat(np.asarray([1.0]), periods_per_year=0)
+    with pytest.raises(ValueError, match="periods_per_year"):
+        sortino_stat(np.asarray([1.0]), periods_per_year=0)
+    with pytest.raises(ValueError, match="one-dimensional"):
+        sharpe_stat(np.asarray([[1.0, 2.0]]))
+    with pytest.raises(ValueError, match="finite"):
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_bootstrap_statistics_match_canonical_metric_definitions`](../../../../tests/unit/evaluation/test_metrics.py#L230)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -151,20 +181,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         assert win_rate_stat(np.asarray(trade_pnls, dtype=np.float64)) == pytest.approx(
             canonical.win_rate
         )
-```
-
-2. [test fixture: `test_bootstrap_statistics_keep_empty_sample_conventions`](../../../../tests/unit/evaluation/test_metrics.py#L200)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_bootstrap_statistics_keep_empty_sample_conventions(self) -> None:
-    empty = np.asarray([], dtype=np.float64)
-
-    assert sharpe_stat(empty) == 0.0
-    assert sortino_stat(empty) == 0.0
-    assert math.isnan(max_drawdown_stat(empty))
-    assert math.isnan(win_rate_stat(empty))
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -192,46 +208,47 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [tutorial example: `evaluation-metrics-inference · code cell 2`](../../../../docs/subjects/E_evaluation_research/examples/evaluation-metrics-inference.ipynb)
+1. [test fixture: `test_bootstrap_short_empty_and_nonfinite_statistic_paths`](../../../../tests/unit/evaluation/test_bootstrap_edge_cases.py#L42)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-from math import isclose
+def test_bootstrap_short_empty_and_nonfinite_statistic_paths() -> None:
+    empty = bootstrap_ci(np.asarray([]), np.mean, n_boot=4)
+    assert math.isnan(empty.estimate) and math.isnan(empty.lower) and math.isnan(empty.upper)
 
-import numpy as np
+    one = bootstrap_ci(np.asarray([3.0]), np.mean, n_boot=4)
+    assert one.as_tuple() == (3.0, 3.0, 3.0)
+    no_resamples = bootstrap_ci(np.asarray([1.0, 3.0]), np.mean, n_boot=0)
+    assert no_resamples.as_tuple() == (2.0, 2.0, 2.0)
 
-from evaluation.metrics.bootstrap import paired_metric_difference_ci
-from evaluation.metrics.performance import completed_position_trade_pnls, max_drawdown
-
-legs = [
-    {"position_id": "A", "type": "tp_partial_close", "net_pnl": 4, "position_complete": False},
-    {"position_id": "A", "type": "close", "net_pnl": 6, "position_complete": True},
-    {"position_id": "B", "type": "tp_partial_close", "net_pnl": -2, "position_complete": False},
-]
-pnls, realized_fills, open_positions = completed_position_trade_pnls(legs)
-assert (pnls, realized_fills, open_positions) == ([10], 3, 1)
-
-equity = [100, 120, 90, 110]
-drawdown = max_drawdown(equity)
-payout = 5
-economic_return = (equity[-1] + payout - equity[0]) / equity[0]
-assert isclose(drawdown, 0.25)
-assert isclose(economic_return, 0.15)
-
-treatment = np.array([0.03, 0.00, 0.04, 0.01])
-control = np.array([0.02, -0.01, 0.03, 0.00])
-interval = paired_metric_difference_ci(
-    treatment, control, np.mean, n_boot=32, rng_seed=42, block_len=2
-)
-assert all(isclose(value, 0.01) for value in interval.as_tuple())
-
-print(
-    f"Synthetic counts: {len(pnls)} completed, {realized_fills} realized fills, {open_positions} open"
-)
-print(f"Synthetic drawdown: {drawdown:.0%}, payout-aware return: {economic_return:.0%}")
-print(f"Synthetic paired return difference: {interval.estimate:.2%}")
+    short_blocks = bootstrap_ci(np.asarray([1.0, 3.0]), np.mean, n_boot=5, block_len=8)
+    assert short_blocks.estimate == pytest.approx(2.0)
+    all_nan = bootstrap_ci(np.asarray([1.0, 2.0]), lambda _values: float("nan"), n_boot=3)
+    assert math.isnan(all_nan.lower) and math.isnan(all_nan.upper)
 ```
+
+2. [test fixture: `test_paired_bootstrap_uses_aligned_series_and_short_sample_conventions`](../../../../tests/unit/evaluation/test_bootstrap_edge_cases.py#L59)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        return float(np.mean(values))
+
+    empty = paired_metric_difference_ci(np.asarray([]), np.asarray([]), stat)
+    assert math.isnan(empty.estimate)
+    exact = paired_metric_difference_ci(np.asarray([3.0]), np.asarray([1.0]), stat, n_boot=4)
+    assert exact.as_tuple() == (2.0, 2.0, 2.0)
+    no_resamples = paired_metric_difference_ci(
+        np.asarray([2.0, 4.0]), np.asarray([1.0, 1.0]), stat, n_boot=0
+    )
+    assert no_resamples.as_tuple() == (2.0, 2.0, 2.0)
+    sampled = paired_metric_difference_ci(
+# … caller assertions omitted …
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

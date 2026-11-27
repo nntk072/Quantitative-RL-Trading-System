@@ -114,6 +114,17 @@ def test_finalized_setup_lifecycle_is_prefix_invariant() -> None:
     assert_series_equal(full_first, prefix_first, check_names=False)
 
 
+def test_ledger_reports_distribution_before_ifvg_confirmation() -> None:
+    state = _state_frame()
+    state.loc[state.index[4:7], "po3_distribution_after_ifvg"] = 0.0
+    state.loc[state.index[4:7], "po3_ifvg_confirmed"] = 0.0
+
+    setups = build_po3_setup_lifecycle_ledger(state).query("event_kind == 'po3_setup_sequence'")
+
+    assert setups.iloc[0]["phase_at_end"] == "distribution"
+    assert pd.isna(setups.iloc[0]["ifvg_confirmation_index"])
+
+
 def test_ledger_extracts_reclaim_and_conflict_from_producer_output() -> None:
     index = pd.date_range("2025-01-06 16:30", periods=5, freq="1min", tz="UTC")
     bars = pd.DataFrame(
@@ -185,4 +196,12 @@ def test_ledger_rejects_ambiguous_state(mutation: str) -> None:
         state = state.drop(columns=["po3_ifvg_time_ns"])
 
     with pytest.raises(ValueError):
+        build_po3_setup_lifecycle_ledger(state)
+
+
+def test_ledger_rejects_ifvg_origin_bar_outside_producer_history() -> None:
+    state = _state_frame()
+    state.loc[state.index[4], "po3_ifvg_fvg_origin_bar"] = float(len(state))
+
+    with pytest.raises(ValueError, match="origin bar must be an in-range integer"):
         build_po3_setup_lifecycle_ledger(state)

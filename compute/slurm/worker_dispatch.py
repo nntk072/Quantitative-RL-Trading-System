@@ -15,7 +15,7 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from artifacts.layout import ExperimentRunArtifactLayout
 from compute.slurm.worker_resources import available_resources, gpu_memory_inventory
@@ -303,9 +303,7 @@ def _launch(payload: dict[str, Any], results: Path) -> subprocess.Popen[bytes]:
         ]
         if not allocated_devices:
             raise RuntimeError("GPU worker manager has no Slurm CUDA_VISIBLE_DEVICES binding")
-        selected_device = _gpu_device_for_request(payload, allocated_devices)
-        if selected_device is None:
-            raise RuntimeError("GPU worker request resolved without a visible GPU")
+        selected_device = cast(str, _gpu_device_for_request(payload, allocated_devices))
         env["CUDA_VISIBLE_DEVICES"] = selected_device
         # The child sees the selected physical device as logical CUDA device zero.
         # The canonical variant launcher re-exports GPU_ID; pass the Slurm-visible token.

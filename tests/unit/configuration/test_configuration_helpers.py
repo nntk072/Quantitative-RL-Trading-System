@@ -3,7 +3,11 @@ from __future__ import annotations
 import pytest
 from omegaconf import OmegaConf
 
-from configuration.configuration_loader import load_config_overlay, merge_config_overlay
+from configuration.configuration_loader import (
+    apply_overrides,
+    load_config_overlay,
+    merge_config_overlay,
+)
 from configuration.hashing import canonical_config_bytes, config_sha256
 from configuration.paths import RepositoryPaths, repository_root
 from configuration.schema import ConfigSchemaError, _resolve_schema_reference, reject_unknown_keys
@@ -42,6 +46,16 @@ def test_configuration_override_rejects_malformed_list() -> None:
 
     with pytest.raises(ValueError, match="invalid list override"):
         load_config(["features.ema_periods=[9,"])
+
+
+def test_configuration_override_rejects_non_mapping_default_schema(monkeypatch) -> None:
+    import configuration.configuration_loader as loader
+
+    monkeypatch.setattr(loader, "_load_default_config", lambda: OmegaConf.create([]))
+    config = OmegaConf.create({"ppo": {"learning_rate": 0.001}})
+
+    with pytest.raises(ValueError, match="schema and effective config roots must be mappings"):
+        apply_overrides(config, ["ppo.learning_rate=0.01"])
 
 
 def test_schema_reference_resolution_handles_literals_missing_paths_and_cycles() -> None:

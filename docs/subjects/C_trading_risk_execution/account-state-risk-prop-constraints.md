@@ -5,7 +5,7 @@
 
 ## Summary and use this when
 
-The account ledger holds balance, equity, session anchors, and loss measures. Risk policy converts that state into a permitted dollar amount. Hard account floors can breach a rollout; soft bands shape reward or block an entry without becoming hard breaches. Sources: `trading/account/account_state.py`, `trading/risk/contracts.py`, `trading/risk/budget.py`, `trading/risk/guardrails.py`, `simulation/environment/risk_runtime.py`.
+The account ledger holds balance, equity, session anchors, and loss measures. Risk policy converts that state into a permitted dollar amount. Hard account floors can breach a rollout; soft bands shape reward or block an entry without becoming hard breaches. Sources: `trading/account/account_state.py`, `trading/risk/contracts.py`, `trading/risk/budget.py`, `trading/risk/guardrails.py`, `simulation/environment/risk/runtime.py`.
 
 - Use this guide to distinguish realized balance from marked equity.
 - Use it to audit a rejected risk request or a loss-floor event.
@@ -43,13 +43,13 @@ The pinned `RiskState` wire contract carries equity, daily PnL, open risk, daily
 
 `FTMOGuardrails` uses configured percentages of initial equity for hard daily and maximum-loss amounts. The daily amount applies to each session-start anchor. `max_drawdown_mode` distinguishes static, end-of-day, and intraday-trailing account floors. Source: `trading/risk/guardrails.py::FTMOGuardrails`; test: `tests/unit/trading/test_guardrails.py`.
 
-A hard daily-loss, maximum-drawdown, or trailing-drawdown reason maps to rollout breach scope. The environment latches hard breaches across later sessions. Soft thresholds are separate entry/reward pressure and do not by themselves force-close a position or end the rollout. Source: `trading/risk/guardrails.py::guardrail_breach_scope`; `simulation/environment/risk_runtime.py::_check_guardrails`; tests: `tests/unit/trading/test_guardrails.py`.
+A hard daily-loss, maximum-drawdown, or trailing-drawdown reason maps to rollout breach scope. The environment latches hard breaches across later sessions. Soft thresholds are separate entry/reward pressure and do not by themselves force-close a position or end the rollout. Source: `trading/risk/guardrails.py::guardrail_breach_scope`; `simulation/environment/risk/runtime.py::_check_guardrails`; tests: `tests/unit/trading/test_guardrails.py`.
 
 Payout handling can reanchor the daily session and preserve a locked floor. It must be assessed using the selected mode and actual account snapshots; a payout is not a way to erase a prior hard breach. Source: `trading/account/account_state.py::reset_operating_balance`; `trading/risk/guardrails.py::max_loss_floor_for`; test: `tests/unit/trading/test_guardrails.py::test_payout_reanchors_daily_loss_and_locks_trailing_floor_at_initial`.
 
 ### Why the sequence matters
 
-The account first records the after-cost equity path; the policy then checks risk and floors using that path. Using a trade's planned stop loss as if it were the only possible loss would ignore execution gaps and costs. The execution reserve and capacity checks keep the request below modeled account limits; they cannot guarantee actual broker loss is capped. Sources: `trading/account/account_state.py`, `trading/risk/budget.py`, `simulation/environment/risk_runtime.py`.
+The account first records the after-cost equity path; the policy then checks risk and floors using that path. Using a trade's planned stop loss as if it were the only possible loss would ignore execution gaps and costs. The execution reserve and capacity checks keep the request below modeled account limits; they cannot guarantee actual broker loss is capped. Sources: `trading/account/account_state.py`, `trading/risk/budget.py`, `simulation/environment/risk/runtime.py`.
 
 ## Worked example
 

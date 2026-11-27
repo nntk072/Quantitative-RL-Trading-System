@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import pytest
 from tools.quality.coverage_report import (
     aggregate_coverage,
     compare_baseline,
+    main,
     require_main_baseline,
 )
 
@@ -119,3 +121,38 @@ def test_main_coverage_gate_rejects_a_non_main_baseline() -> None:
 
     with pytest.raises(ValueError, match="captured from main"):
         require_main_baseline({"source_branch": "feature/refactor"})
+
+
+def test_coverage_report_main_accepts_existing_product_gaps_at_main_baseline(
+    tmp_path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    coverage_path = tmp_path / "coverage.json"
+    coverage_path.write_text(json.dumps(_report()), encoding="utf-8")
+    matching_baseline = aggregate_coverage(_report())
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text(
+        json.dumps(
+            {
+                "source_branch": "main",
+                "source_commit": "0123456789abcdef",
+                "overall": matching_baseline["overall"],
+                "packages": matching_baseline["packages"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    status = main(
+        [
+            "--coverage-json",
+            str(coverage_path),
+            "--baseline",
+            str(baseline_path),
+            "--branch",
+            "coverage-test",
+        ]
+    )
+
+    assert status == 0
+    output = capsys.readouterr().out
+    assert "Coverage meets the main baseline." in output

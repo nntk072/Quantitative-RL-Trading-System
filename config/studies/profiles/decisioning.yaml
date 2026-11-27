@@ -10,6 +10,12 @@ api_paths:
 - decisioning/regime_observations.py
 - decisioning/trade_setup.py
 caller_paths:
+- tests/unit/learning/test_action_schema_validation_contracts.py
+- tests/unit/evaluation/test_matched_baseline_validation_contracts.py
+- tests/unit/evaluation/test_matched_setup_baseline_control_rollout.py
+- tests/unit/simulation/test_policy_action_coverage.py
+- tests/unit/simulation/test_backtest_execution_contracts.py
+- tests/unit/simulation/test_event_driven_backtest_coverage.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
 - tests/integration/backtest/test_market_entry_fill_event_parity.py
 - tests/integration/backtest/test_market_order_rejection_parity.py
@@ -33,6 +39,9 @@ caller_paths:
 - learning/rl/callbacks.py
 - learning/rl/candidate_geometry.py
 - learning/rl/candidate_geometry_policy.py
+- tests/unit/learning/test_hybrid_agent_boundary_contracts.py
+- tests/unit/learning/test_learning_callbacks_coverage.py
+- tests/unit/learning/test_rl_edge_contracts.py
 - learning/rl/hybrid.py
 - learning/rl/ppo.py
 - learning/supervised/reference.py
@@ -44,16 +53,17 @@ caller_paths:
 - simulation/entry_state.py
 - simulation/environment/action_diagnostics.py
 - simulation/environment/action_episode_initialization.py
-- simulation/environment/action_runtime.py
+- simulation/environment/actions/decoding.py
 - simulation/environment/candidate_geometry_observation.py
 - simulation/environment/env.py
-- simulation/environment/episode_runtime.py
+- simulation/environment/episode/lifecycle.py
 - simulation/environment/episode_spaces_initialization.py
 - simulation/environment/observation_arrays_initialization.py
-- simulation/environment/observation_runtime.py
 - simulation/environment/observations.py
+- simulation/environment/observations/runtime.py
+- simulation/environment/observations/schema.py
 - simulation/environment/risk_entry_initialization.py
-- simulation/environment/step_end_runtime.py
+- simulation/environment/episode/end.py
 - simulation/environment/strategy_initialization.py
 - simulation/environment/trading_environment_factory.py
 - simulation/environment/worker.py
@@ -130,6 +140,9 @@ caller_paths:
 - training/configuration/survival_gate.py
 - training/runner/seed_runtime.py
 - training/setup/environments.py
+- tests/unit/learning/test_rl_agent_additional_runtime_contracts.py
+- tests/unit/simulation/test_environment/test_candidate_geometry_observation_remaining_contracts.py
+- tests/unit/training/test_survival_gate_remaining_runtime_contracts.py
 source_scopes:
   - {path: decisioning/observations.py, study_ids: [decisioning.observation_contract]}
   - {path: decisioning/observation_state.py, study_ids: [decisioning.observation_contract]}

@@ -123,7 +123,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L983)
+1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L1139)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -242,7 +242,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L986)
+1. [test fixture: `test_rr_cap_scales_with_atr_not_a_fixed_point_distance`](../../../../tests/unit/evaluation/test_order_chart.py#L1142)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -262,15 +262,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_rr_fits`](../../../../simulation/environment/entry_runtime.py#L310)
+2. [test fixture: `test_reachability_allows_trade_before_any_session_range_is_known`](../../../../tests/unit/features/test_stage_a_observation.py#L327)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def _rr_fits(self, entry_price: float, sl_price: float, rr_ratio: float) -> bool:
-    from features.context.reachability import rr_reaches
-
-    return rr_reaches(entry_price, sl_price, rr_ratio, self._max_tp_here())
+def test_reachability_allows_trade_before_any_session_range_is_known() -> None:
+    assert rr_reaches(100.0, 98.0, 10.0, float("nan"))
+    assert rr_reaches(100.0, 98.0, 10.0, float("inf"))
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

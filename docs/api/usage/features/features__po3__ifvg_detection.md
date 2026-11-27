@@ -14,7 +14,7 @@ This page contains 2 public callable records owned by `features.po3.ifvg_detecti
 
 **Observed usage:**
 
-1. [test fixture: `test_ifvg_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L103)
+1. [test fixture: `test_ifvg_with_custom_config`](../../../../tests/unit/features/test_po3_config.py#L104)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -26,7 +26,7 @@ def test_ifvg_with_custom_config(self, sample_bars: pd.DataFrame) -> None:
     assert isinstance(ifvg_result, pd.DataFrame)
 ```
 
-2. [test fixture: `test_optional_buffer_can_be_enabled_or_disabled`](../../../../tests/unit/features/test_po3_config.py#L121)
+2. [test fixture: `test_optional_buffer_can_be_enabled_or_disabled`](../../../../tests/unit/features/test_po3_config.py#L122)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -96,7 +96,7 @@ def test_zone_ledger_reconciles_scalar_selection_and_monthly_suppression() -> No
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_ifvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L84)
+2. [test fixture: `test_ifvg_returns_expected_columns`](../../../../tests/unit/features/test_po3_config.py#L85)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

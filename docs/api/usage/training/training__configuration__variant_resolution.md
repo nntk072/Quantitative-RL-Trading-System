@@ -94,7 +94,27 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_strategy_rungs_use_strategy_flag_not_name_override`](../../../../tests/unit/training/test_variant_resolver.py#L246)
+1. [test fixture: `test_resolution_formats_booleans_and_applies_data_grid_and_run_overrides`](../../../../tests/unit/training/test_variant_resolution.py#L78)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+        "probe",
+        experiments_path=path,
+        vae_path="/tmp/model.pth",
+        config_overrides=[" env.seed = 9 "],
+    )
+    args = train_args(resolved, 7)
+
+    assert _fmt(True) == "true"
+    assert _fmt(False) == "false"
+    assert resolved["steps"] == 50
+    assert resolved["seeds"] == [5, 7]
+# … caller assertions omitted …
+```
+
+2. [test fixture: `test_strategy_rungs_use_strategy_flag_not_name_override`](../../../../tests/unit/training/test_variant_resolver.py#L246)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -105,21 +125,6 @@ def test_strategy_rungs_use_strategy_flag_not_name_override() -> None:
     assert "strategy.name" not in _overrides_by_key(resolved)
     args = train_args(resolved, 42)
     assert args[args.index("--strategy") + 1] == "distribution"
-```
-
-2. [test fixture: `test_controls_run_declared_algo_and_arch`](../../../../tests/unit/training/test_variant_resolver.py#L255)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_controls_run_declared_algo_and_arch() -> None:
-    sac = resolve_variant("ablation_sac_agent")
-    assert (sac["algo"], sac["arch"]) == ("sac", "gru")
-    transformer = resolve_variant("ablation_transformer_encoder")
-    assert transformer["arch"] == "transformer"
-    args = train_args(sac, 42)
-    assert args[args.index("--algo") + 1] == "sac"
-    assert args[args.index("--arch") + 1] == "gru"
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

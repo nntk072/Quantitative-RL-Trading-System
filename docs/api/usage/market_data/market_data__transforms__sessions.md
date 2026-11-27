@@ -175,7 +175,7 @@ def test_trading_mask_separate_from_features(sample_bars):
     assert labeled.loc[mask, "session"].eq("ny").all()
 ```
 
-2. [test fixture: `test_ny_mask_converts_helsinki_wall_time_before_classifying`](../../../../tests/unit/market_data/test_helsinki_ny_sessions.py#L36)
+2. [test fixture: `test_ny_mask_converts_helsinki_wall_time_before_classifying`](../../../../tests/unit/market_data/test_helsinki_ny_sessions.py#L41)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 from research_tools.trading.evaluation import run_matched_setup_baselines as matched_baselines
@@ -13,7 +15,15 @@ from research_tools.trading.evaluation.run_matched_setup_baselines import (
 )
 
 from configuration.configuration_loader import load_config
-from decisioning.trade_setup import TRADE_SETUP_IDEAS, TRADE_SETUP_TIMEFRAMES
+from decisioning.trade_setup import (
+    NO_TRADE_ID,
+    TRADE_SETUP_CATEGORY_COUNT,
+    TRADE_SETUP_IDEAS,
+    TRADE_SETUP_TIMEFRAMES,
+    TradeSetupActionSchema,
+    trade_setup_center,
+)
+from evaluation.rollout import matched_setup_baselines as baseline_rollout
 from evaluation.rollout.matched_setup_baselines import RuleSetupBaselineArm
 from evaluation.rollout.structure_priority_setup import StructurePrioritySetupRolloutModel
 
@@ -58,7 +68,7 @@ def test_development_baseline_input_path_clips_sentinel_before_features(
     index = pd.DatetimeIndex(["2025-12-31 14:30", "2026-01-01 14:30"])
     bars = pd.DataFrame({"close": [100.0, 900_001.0]}, index=index)
     observed: dict[str, Any] = {}
-    tickbook = object()
+    tickbook = SimpleNamespace(content_sha256=lambda: "synthetic-tickbook-hash")
 
     def fake_run_pipeline(
         _cfg, *, datasets: list[str], end_inclusive: str | None
@@ -231,3 +241,151 @@ def test_structure_priority_cli_flag_is_opt_in() -> None:
 
     assert parse_args(base).include_structure_priority is False
     assert parse_args([*base, "--include-structure-priority"]).include_structure_priority is True
+
+
+def test_tier0_rollout_returns_synthetic_trade_equity_and_seeded_policy_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = load_config(
+        [
+            "env.strategy_actions=true",
+            "env.trade_setup_actions=true",
+            "ppo.policy_distribution=trade_setup_hybrid_v1",
+        ]
+    )
+    index = pd.date_range("2025-01-02 15:00", periods=3, freq="min", tz="UTC")
+    bars = pd.DataFrame({"close": [100.0, 101.0, 102.0]}, index=index)
+    features = pd.DataFrame({"synthetic_feature": [0.0, 0.5, 1.0]}, index=index)
+    tickbook = SimpleNamespace(content_sha256=lambda: "synthetic-tickbook-hash")
+    action_schema = TradeSetupActionSchema(
+        names=("trade_setup", "risk"),
+        has_sl_mode=False,
+        has_tp_mode=False,
+        has_multi_tp=False,
+        has_simplex=False,
+    )
+    construction: dict[str, Any] = {}
+
+    class SyntheticEnvironment:
+        def __init__(
+            self,
+            bars: pd.DataFrame,
+            features: pd.DataFrame,
+            *,
+            episodic: bool,
+            tickbook: Any,
+        ) -> None:
+            construction.update(
+                bars=bars,
+                features=features,
+                episodic=episodic,
+                tickbook=tickbook,
+            )
+            self.action_schema = action_schema
+
+    raw_trades = pd.DataFrame(
+        [
+            {"type": "open", "time": index[1], "direction": 1, "price": 101.0},
+            {"type": "close", "time": index[2], "direction": 1, "price": 102.0, "pnl": 1.0},
+        ]
+    )
+    raw_equity = pd.Series([100.0, 100.5, 101.0], index=index, name="equity")
+    rollout_observed: dict[str, Any] = {}
+
+    def evaluate_model(
+        model: Any,
+        received_bars: pd.DataFrame,
+        received_features: pd.DataFrame,
+        *,
+        env: Any,
+        tickbook: Any,
+        execution_seed: int,
+        strategy_actions: bool,
+        trade_setup_actions: bool,
+        deterministic: bool,
+    ) -> dict[str, Any]:
+        action, _state = model.predict(
+            {"trade_setup_mask": np.ones(TRADE_SETUP_CATEGORY_COUNT)},
+            deterministic=deterministic,
+        )
+        rollout_observed.update(
+            model=model,
+            action=action,
+            bars=received_bars,
+            features=received_features,
+            env=env,
+            tickbook=tickbook,
+            execution_seed=execution_seed,
+            strategy_actions=strategy_actions,
+            trade_setup_actions=trade_setup_actions,
+        )
+        return {
+            "equity": raw_equity,
+            "trades": raw_trades,
+            "n_sessions": 1,
+            "n_breach_sessions": 0,
+            "n_steps": 2,
+            "exposure_bars": 1,
+            "exposure_fraction": 0.5,
+            "breach_events": [],
+            "completed_data_split": True,
+            "episode_end_reason": "data_end",
+        }
+
+    metric = SimpleNamespace(n_trades=1, total_return_pct=1.0)
+    interval = SimpleNamespace(estimate=1.0, lower=0.5, upper=1.5, level=0.95)
+    monkeypatch.setattr(baseline_rollout, "TradingEnv", SyntheticEnvironment)
+    monkeypatch.setattr(
+        baseline_rollout,
+        "build_eval_common",
+        lambda *_args, **_kwargs: ({"initial_balance": 100.0}, None, None, None, None),
+    )
+    monkeypatch.setattr(baseline_rollout, "evaluate_model", evaluate_model)
+    monkeypatch.setattr(baseline_rollout, "calculate_metrics", lambda *_args, **_kwargs: metric)
+    monkeypatch.setattr(baseline_rollout, "account_path_metric_inputs", lambda _raw: {})
+    monkeypatch.setattr(baseline_rollout, "_periods_per_year", lambda _cfg: 252)
+    monkeypatch.setattr(
+        baseline_rollout,
+        "pair_trades",
+        lambda _trades: [({"type": "open"}, {"type": "close", "pnl": 1.0})],
+    )
+    monkeypatch.setattr(
+        baseline_rollout,
+        "metrics_with_ci",
+        lambda *_args, **_kwargs: {"total_return_pct": interval},
+    )
+
+    outputs = baseline_rollout.evaluate_tier0_setup_baselines(
+        cfg,
+        bars,
+        features,
+        tickbook,
+        execution_seed=17,
+        random_policy_seed=23,
+        period_role="synthetic",
+        bootstrap_samples=4,
+        baseline_names=("random_eligible_setup",),
+    )
+
+    result = outputs["random_eligible_setup"]
+    assert result["equity"] is raw_equity
+    assert result["trade_fill_event_ledger"] is raw_trades
+    assert result["decisions"].empty
+    assert result["metrics"] is metric
+    assert result["confidence_intervals"]["metrics"]["total_return_pct"]["estimate"] == 1.0
+    assert result["policy_metadata"]["random_policy_seed"] == 23
+    assert result["policy_metadata"]["execution_seed"] == 17
+    assert result["policy_metadata"]["action_schema"] == action_schema.to_dict()
+    assert result["evaluation"]["n_steps"] == 2
+    assert construction["bars"] is bars
+    assert construction["features"] is features
+    assert construction["episodic"] is False
+    assert construction["tickbook"] is tickbook
+    assert rollout_observed["bars"] is bars
+    assert rollout_observed["features"] is features
+    assert rollout_observed["tickbook"] is tickbook
+    assert rollout_observed["execution_seed"] == 17
+    assert rollout_observed["strategy_actions"] is True
+    assert rollout_observed["trade_setup_actions"] is True
+    assert rollout_observed["action"].shape == (action_schema.width,)
+    assert rollout_observed["action"][0] != trade_setup_center(NO_TRADE_ID)

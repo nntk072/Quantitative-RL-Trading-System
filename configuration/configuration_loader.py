@@ -108,6 +108,8 @@ def apply_overrides(cfg: DictConfig, overrides: list[str] | None) -> DictConfig:
     Returns:
         Result of apply ``key=value`` string overrides on top of an already-merged ``cfg``.
     """
+    if not isinstance(cfg, DictConfig):
+        raise ValueError("configuration roots must be mappings")
     if not overrides:
         _validate_optimizer_values(cfg)
         return cfg

@@ -9,6 +9,7 @@ import pytest
 import yaml
 from research_tools.studies.study_catalog import (
     StudyCatalogError,
+    _module_import_inventories,
     _read_yaml,
     _validate_evidence_index,
     build_study_plan,
@@ -17,6 +18,33 @@ from research_tools.studies.study_catalog import (
 from research_tools.studies.study_cli import main
 
 ROOT = Path(__file__).resolve().parents[3]
+
+
+def test_import_inventory_resolves_package_before_shadowed_module(tmp_path: Path) -> None:
+    (tmp_path / "features/candidate").mkdir(parents=True)
+    (tmp_path / "simulation").mkdir()
+    (tmp_path / "features/candidate.py").write_text("value = 'module'\n", encoding="utf-8")
+    (tmp_path / "features/candidate/__init__.py").write_text(
+        "value = 'package'\n", encoding="utf-8"
+    )
+    (tmp_path / "simulation/caller.py").write_text(
+        "from features.candidate import value\n", encoding="utf-8"
+    )
+    profiles = {
+        "features": {"source_roots": ["features"]},
+        "simulation": {"source_roots": ["simulation"]},
+    }
+
+    inventories = _module_import_inventories(
+        tmp_path,
+        profiles,
+        ["features", "simulation"],
+    )
+
+    assert inventories["features"] == (
+        ["features/candidate/__init__.py"],
+        ["simulation/caller.py"],
+    )
 
 
 def test_repository_study_catalog_covers_owned_modules_and_configures_only_registered_studies() -> (
@@ -36,9 +64,9 @@ def test_repository_study_catalog_covers_owned_modules_and_configures_only_regis
         for module in plan["modules"]
         for path in (ROOT / value for value in module["api_paths"] + module["caller_paths"])
     )
-    assert len(plan["catalog_study_ids"]) == 91
+    assert len(plan["catalog_study_ids"]) == 92
     assert Counter(study["type"] for module in plan["modules"] for study in module["studies"]) == {
-        "code_check": 78,
+        "code_check": 79,
         "audit": 8,
         "empirical": 5,
     }

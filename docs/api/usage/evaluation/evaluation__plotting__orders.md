@@ -39,19 +39,31 @@ This page contains 2 public callable records owned by `evaluation.plotting.order
   entry_idea_plot_config: Optional per-idea overlay configuration.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_trade_chart_recovers_origin_and_normalizes_fill_times_before_preparing_the_window`](../../../../tests/unit/evaluation/test_order_plot_origin_contract.py#L82)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = plot_per_trade_orders(bars=..., trades=..., orders_dir=..., context_bars=..., max_charts=..., dpi=..., max_loss_per_trade_usd=..., take_profit_per_trade_usd=..., lots=..., contract_size=..., show_mae_mfe=..., show_sl_tp=..., show_vwap=..., secondary_bars=..., features=..., breakeven_buffer_pts=..., order_block_timeframes=..., fvg_timeframes=..., ifvg_timeframes=..., ema_timeframes=..., swing_timeframes=..., entry_idea_plot_config=...)
+# … caller setup omitted …
+        observed.append((open_row.copy(), close_row.copy()))
+        return prepare_order_chart(bars, open_row, close_row, **kwargs)
+
+    monkeypatch.setattr(order_window, "prepare_order_chart", capture_open_row)
+
+    plot_per_trade_orders(
+        bars, trades, orders_dir=tmp_path, max_charts=1, show_vwap=show_vwap, ema_timeframes=()
+    )
+
+    assert len(list(tmp_path.glob("*.png"))) == 1
+    assert len(observed) == 1
+    open_row, close_row = observed[0]
+    assert open_row["entry_origin_time"] == bars_index[1]
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

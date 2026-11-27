@@ -112,6 +112,27 @@ def test_d1_source_normalization_flag_has_distinct_cache_identity() -> None:
     )
 
 
+def test_session_schedule_content_invalidates_feature_cache_identity(tmp_path: Path) -> None:
+    bars = _bars(8)
+    schedule_path = tmp_path / "sessions.csv"
+    cfg = _cfg()
+    OmegaConf.update(
+        cfg,
+        "data.session_schedule_file",
+        str(schedule_path),
+        force_add=True,
+    )
+
+    missing_hash = feature_cache_content_hash(cfg, bars)
+    schedule_path.write_text("date,start,end\n2025-01-06,08:30,15:00\n", encoding="utf-8")
+    first_content_hash = feature_cache_content_hash(cfg, bars)
+    schedule_path.write_text("date,start,end\n2025-01-06,09:00,15:30\n", encoding="utf-8")
+    changed_content_hash = feature_cache_content_hash(cfg, bars)
+
+    assert first_content_hash != missing_hash
+    assert changed_content_hash != first_content_hash
+
+
 def test_d1_technical_features_are_normalized_before_m1_alignment() -> None:
     day_starts = pd.date_range("2025-01-06 16:30", periods=12, freq="D", tz="Etc/GMT-3")
     m1_index = pd.DatetimeIndex(
@@ -220,14 +241,25 @@ def test_live_feature_rebuild_reuses_both_training_normalization_stages(
     )
     train_mask = pd.Series(np.arange(len(primary)) < 160, index=primary.index)
     state_path = tmp_path / "feature_normalization_state.json"
+    cache_path = tmp_path / "features.parquet"
     training_features = build_features(
         primary,
         cfg=cfg,
         train_mask=train_mask,
         timeframe_bars={"D1": daily},
+        cache_path=cache_path,
         fit_state_path=state_path,
         force=True,
     )
+    cached_features = build_features(
+        primary,
+        cfg=cfg,
+        train_mask=train_mask,
+        timeframe_bars={"D1": daily},
+        cache_path=cache_path,
+        fit_state_path=state_path,
+    )
+    pd.testing.assert_frame_equal(training_features, cached_features, check_freq=False)
     state = json.loads(state_path.read_text(encoding="utf-8"))
     mismatched_stage_state = json.loads(json.dumps(state))
     mismatched_stage_state["stages"]["matrix"]["window"] += 1
@@ -239,6 +271,16 @@ def test_live_feature_rebuild_reuses_both_training_normalization_stages(
             fitted_normalization_state=mismatched_stage_state,
             force=True,
         )
+    missing_source_state = json.loads(json.dumps(state))
+    del missing_source_state["stages"]["source:D1"]
+    with pytest.raises(ValueError, match="missing source:D1 fit"):
+        build_features(
+            primary,
+            cfg=cfg,
+            timeframe_bars={"D1": daily},
+            fitted_normalization_state=missing_source_state,
+            force=True,
+        )
     live_features = build_features(
         primary,
         cfg=cfg,
@@ -248,6 +290,16 @@ def test_live_feature_rebuild_reuses_both_training_normalization_stages(
     )
 
     assert "source:D1" in state["stages"]
+    missing_matrix_state = json.loads(json.dumps(state))
+    del missing_matrix_state["stages"]["matrix"]
+    with pytest.raises(ValueError, match="missing matrix fit"):
+        build_features(
+            primary,
+            cfg=cfg,
+            timeframe_bars={"D1": daily},
+            fitted_normalization_state=missing_matrix_state,
+            force=True,
+        )
     validation_index = training_features.index[
         training_features.index.isin(primary.index[~train_mask])
     ]
@@ -256,6 +308,176 @@ def test_live_feature_rebuild_reuses_both_training_normalization_stages(
         training_features.loc[validation_index],
         check_freq=False,
     )
+
+
+def test_fitted_matrix_state_reuses_train_only_statistics_without_d1_source_fit(
+    tmp_path: Path,
+) -> None:
+    bars = _bars(180)
+    train_mask = pd.Series(np.arange(len(bars)) < 120, index=bars.index)
+    cfg = _cfg()
+    state_path = tmp_path / "fit-state.json"
+    training_features = build_features(
+        bars,
+        cfg=cfg,
+        train_mask=train_mask,
+        fit_state_path=state_path,
+        force=True,
+    )
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    live_features = build_features(
+        bars,
+        cfg=cfg,
+        fitted_normalization_state=state,
+        force=True,
+    )
+    validation_index = training_features.index[
+        train_mask.reindex(training_features.index).eq(False)
+    ]
+
+    pd.testing.assert_frame_equal(
+        live_features.loc[validation_index],
+        training_features.loc[validation_index],
+        check_freq=False,
+    )
+
+
+def test_mtf_builder_skips_empty_optional_timeframe_blocks() -> None:
+    primary = _bars(80)
+    empty_m5 = pd.DataFrame(
+        columns=["open", "high", "low", "close"],
+        index=pd.DatetimeIndex([], tz="Etc/GMT-3"),
+        dtype=float,
+    )
+    cfg = _cfg(
+        htf_timeframes=["M5"],
+        include_pd_context=True,
+        order_blocks={"enabled": True, "timeframes": ["M5"]},
+        liquidity={"enabled": True, "timeframes": ["M5"]},
+        entry_ideas={"enabled": True, "timeframes": ["M5"]},
+    )
+
+    features = build_features(
+        primary,
+        cfg=cfg,
+        timeframe_bars={"M5": empty_m5},
+        force=True,
+    )
+
+    assert len(features) == len(primary)
+    assert "atr_5" in features
+    assert "M5_ob_bull_active" not in features
+    assert "M5_sweep_high" not in features
+    assert "M5_pd_swing_high_dist_atr" not in features
+    assert "M5_swing_retracement_valid" not in features
+    assert features.columns.is_unique
+
+
+def test_mtf_builder_keeps_native_m1_blocks_and_aligns_configured_higher_timeframes() -> None:
+    primary = _bars(240)
+    secondary = _bars(240)
+    cfg = _cfg(
+        smt={"enabled": True, "timeframes": ["M1", "M5"]},
+        liquidity={"enabled": True, "timeframes": ["M1", "M5"]},
+    )
+
+    features = build_features(primary, secondary=secondary, cfg=cfg, force=True)
+
+    assert {"smt_corr", "M5_smt_corr", "M5_sweep_high", "M5_sweep_low"} <= set(
+        map(str, features.columns)
+    )
+    assert not any(str(column).startswith("M1_") for column in features.columns)
+    assert features.columns.is_unique
+
+
+def test_feature_builder_requires_train_mask_when_persisting_fit_state(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="requires a training mask"):
+        build_features(
+            _bars(40),
+            cfg=_cfg(),
+            fit_state_path=tmp_path / "fit-state.json",
+            force=True,
+        )
+
+
+def test_feature_builder_rejects_simultaneous_fit_state_input_and_output(tmp_path: Path) -> None:
+    bars = _bars(40)
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        build_features(
+            bars,
+            cfg=_cfg(),
+            train_mask=pd.Series([True] * len(bars), index=bars.index),
+            fit_state_path=tmp_path / "fit-state.json",
+            fitted_normalization_state={},
+            force=True,
+        )
+
+
+def test_feature_builder_rejects_duplicate_produced_column_names(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars = _bars(40)
+    cfg = _cfg(entry_ideas={"enabled": True, "timeframes": ["M1"]})
+
+    def duplicate_idea_columns(features: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            np.zeros((len(features), 2)), index=features.index, columns=["duplicate", "duplicate"]
+        )
+
+    monkeypatch.setattr(feature_matrix_builder, "build_entry_idea_features", duplicate_idea_columns)
+
+    with pytest.raises(ValueError, match="feature builder produced duplicate column names"):
+        build_features(bars, cfg=cfg, force=True)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        ("schema", "unsupported feature normalization state"),
+        ("configuration", "does not match the effective configuration"),
+        ("mode", "mode differs from the requested mode"),
+        ("window", "window differs from the effective config"),
+        ("stages", "must contain stage fits"),
+        ("stage_shape", "stage 'matrix' is malformed"),
+        ("stage_contract", "stage 'matrix' differs from the run fit contract"),
+    ],
+)
+def test_feature_builder_rejects_incompatible_fitted_state_contracts(
+    mutation: str, message: str
+) -> None:
+    cfg = _cfg()
+    window = int(cfg.features.zscore_window)
+    state: dict[str, Any] = {
+        "schema": "feature-normalization-v1",
+        "configuration_sha256": feature_matrix_builder._normalization_configuration_sha256(
+            cfg, mode="legacy_masked_window", window=window
+        ),
+        "mode": "legacy_masked_window",
+        "window": window,
+        "stages": {"matrix": {"mode": "legacy_masked_window", "window": window}},
+    }
+    if mutation == "schema":
+        state["schema"] = "unsupported"
+    elif mutation == "configuration":
+        state["configuration_sha256"] = "different"
+    elif mutation == "mode":
+        state["mode"] = "frozen_fold"
+    elif mutation == "window":
+        state["window"] = window + 1
+    elif mutation == "stages":
+        state["stages"] = []
+    elif mutation == "stage_shape":
+        state["stages"]["matrix"] = None
+    else:
+        state["stages"]["matrix"]["mode"] = "frozen_fold"
+
+    with pytest.raises(ValueError, match=message):
+        build_features(
+            _bars(40),
+            cfg=cfg,
+            fitted_normalization_state=state,
+            force=True,
+        )
 
 
 def test_feature_cache_hit_and_miss(tmp_path: Path) -> None:
@@ -426,6 +648,33 @@ def test_fold_cache_separates_normalization_conventions() -> None:
         _cfg(), bars, train_mask=mask, normalization_mode="frozen_fold"
     )
     assert frozen != legacy
+
+
+def test_walkforward_feature_builder_rejects_empty_or_overlapping_fold_inputs(
+    tmp_path: Path,
+) -> None:
+    primary = _bars(40)
+    with pytest.raises(ValueError, match="nonempty, unique, ordered bars"):
+        build_walkforward_fold_features(
+            primary.iloc[:0],
+            None,
+            _cfg(),
+            primary.iloc[:20],
+            primary.iloc[20:30],
+            tmp_path,
+            "US100.cash",
+        )
+
+    with pytest.raises(ValueError, match="ordered and disjoint"):
+        build_walkforward_fold_features(
+            primary,
+            None,
+            _cfg(),
+            primary.iloc[:20],
+            primary.iloc[19:30],
+            tmp_path,
+            "US100.cash",
+        )
 
 
 def test_walkforward_fold_rebuilds_using_only_fold_train_fit(tmp_path: Path) -> None:

@@ -17,4 +17,4 @@ class TradingStrategy(ABC):
         Returns:
             Values returned by ``signal``, in the declared order.
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover - abstract interface method body

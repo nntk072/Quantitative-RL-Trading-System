@@ -35,7 +35,7 @@ This page contains 5 public callable records owned by `market_data.cache.ticks`.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1222)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1243)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -96,7 +96,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1234)
+1. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1255)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -145,7 +145,20 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `main`](../../../../market_data/commands/prebuild_experiment_run_cache.py#L206)
+1. [test fixture: `test_tick_cache_requires_complete_manifest_and_quote_columns`](../../../../tests/unit/market_data/test_ticks.py#L1747)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_tick_cache_requires_complete_manifest_and_quote_columns(tmp_path: Path) -> None:
+    cache_path = tmp_path / "ticks.parquet"
+
+    assert not tick_cache_is_complete(cache_path)
+    with pytest.raises(ValueError, match="missing columns"):
+        write_tick_cache(cache_path, pd.DataFrame({"bid": [100.0]}), {"cache_id": "x"})
+```
+
+2. [production caller: `main`](../../../../market_data/commands/prebuild_experiment_run_cache.py#L205)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -240,7 +253,7 @@ def tick_cache_is_complete(cache_path: str | Path) -> bool:
 
 **Observed usage:**
 
-1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1421)
+1. [test fixture: `test_tick_cache_writer_rejects_empty_cache`](../../../../tests/unit/market_data/test_ticks.py#L1739)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -261,26 +274,20 @@ def test_tick_cache_writer_rejects_empty_cache(tmp_path: Path) -> None:
     assert not cache_path.exists()
 ```
 
-2. [production caller: `build_tick_book`](../../../../market_data/loading/ticks.py#L1381)
+2. [test fixture: `test_tick_cache_requires_complete_manifest_and_quote_columns`](../../../../tests/unit/market_data/test_ticks.py#L1749)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-        # source-row order when several ticks share a millisecond timestamp.
-        order = np.argsort(ts_ns, kind="stable")
-        ts_ns, bid, ask = ts_ns[order], bid[order], ask[order]
+def test_tick_cache_requires_complete_manifest_and_quote_columns(tmp_path: Path) -> None:
+    cache_path = tmp_path / "ticks.parquet"
 
-    if cache_path and cache_identity is not None and len(ts_ns):
-        write_tick_cache(
-            cache_path,
-            pd.DataFrame({"ts_ns": ts_ns, "bid": bid, "ask": ask}),
-            cache_identity,
-        )
-        log.info("Tick cache written: %s (%d ticks)", cache_path, len(ts_ns))
-
-    return TickBook(ts_ns, bid, ask)
+    assert not tick_cache_is_complete(cache_path)
+    with pytest.raises(ValueError, match="missing columns"):
+        write_tick_cache(cache_path, pd.DataFrame({"bid": [100.0]}), {"cache_id": "x"})
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

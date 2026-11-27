@@ -4,6 +4,9 @@ source_roots:
 - research_tools/trading
 api_paths:
 - trading/account/limits.py
+- trading/baselines/breakout.py
+- trading/baselines/buy_and_hold.py
+- trading/baselines/lstm_classifier.py
 - trading/__init__.py
 - trading/account/__init__.py
 - trading/account/account_state.py
@@ -38,12 +41,25 @@ api_paths:
 - trading/strategies/feature_row_contract.py
 - trading/strategies/po3_ifvg.py
 - trading/strategies/strategy_contract.py
+- trading/orders/levels.py
 caller_paths:
 - tests/unit/trading/test_semantic_oracle_limits_sizing.py
 - tests/unit/trading/test_semantic_oracle_costs.py
+- tests/unit/trading/test_order_level_geometry.py
+- tests/unit/simulation/test_policy_action_coverage.py
+- tests/unit/simulation/test_protective_events_coverage.py
+- tests/unit/trading/test_policy_config_compatibility.py
+- tests/unit/trading/test_entry_order_boundary_coverage.py
+- tests/unit/live/test_rl_bridge.py
+- tests/unit/simulation/test_backtest_execution_contracts.py
+- tests/unit/simulation/test_event_driven_backtest_coverage.py
+- tests/unit/trading/test_account_limits_contract.py
+- tests/unit/trading/test_strategy_coverage_contracts.py
+- tests/unit/trading/test_stop_menu_contracts.py
+- tests/unit/trading/test_order_selection_contracts.py
+- tests/unit/trading/test_breakout_simulation_contract.py
+- tests/unit/trading/test_quote_execution_contracts.py
 - evaluation/candidate_execution.py
-- evaluation/plotting/chart_levels.py
-- evaluation/plotting/order_chart_data.py
 - evaluation/reanalysis/checkpoint_reanalysis.py
 - evaluation/reporting/account_state_trace_reconciliation.py
 - evaluation/reporting/cost_decomposition.py
@@ -62,27 +78,27 @@ caller_paths:
 - simulation/backtest/runtime.py
 - simulation/entry_evidence.py
 - simulation/environment/account_policy_initialization.py
-- simulation/environment/action_runtime.py
+- simulation/environment/actions/decoding.py
 - simulation/environment/candidate_geometry_observation.py
-- simulation/environment/diagnostics_runtime.py
-- simulation/environment/ema_exit_runtime.py
-- simulation/environment/entry_execution_runtime.py
-- simulation/environment/entry_order_runtime.py
-- simulation/environment/entry_runtime.py
+- simulation/environment/diagnostics/runtime.py
+- simulation/environment/exits/ema.py
+- simulation/environment/entries/execution.py
+- simulation/environment/entries/orders.py
+- simulation/environment/entries/lifecycle.py
 - simulation/environment/env.py
-- simulation/environment/episode_runtime.py
-- simulation/environment/fill_quote_runtime.py
+- simulation/environment/episode/lifecycle.py
+- simulation/environment/quotes/fills.py
 - simulation/environment/market_access.py
-- simulation/environment/position_open_runtime.py
-- simulation/environment/position_runtime.py
-- simulation/environment/protective_level_runtime.py
-- simulation/environment/risk_runtime.py
-- simulation/environment/step_accounting_runtime.py
+- simulation/environment/positions/opening.py
+- simulation/environment/positions/lifecycle.py
+- simulation/environment/exits/protective_levels.py
+- simulation/environment/risk/runtime.py
+- simulation/environment/accounting/step.py
 - simulation/environment/step_action_execution.py
-- simulation/environment/step_info_runtime.py
+- simulation/environment/episode/info.py
 - simulation/environment/strategy_initialization.py
-- simulation/environment/trade_accounting_runtime.py
-- simulation/environment/trade_entry_record_runtime.py
+- simulation/environment/accounting/trades.py
+- simulation/environment/positions/entry_record.py
 - simulation/environment/trading_environment_factory.py
 - simulation/environment/worker.py
 - tests/architecture/test_public_imports.py
@@ -163,6 +179,8 @@ caller_paths:
 - tests/unit/trading/test_risk_properties.py
 - tests/unit/trading/test_rule_based_baselines_causality.py
 - tests/unit/trading/test_signal_series_strategy.py
+- tests/unit/trading/test_buy_and_hold_baseline.py
+- tests/unit/trading/test_lstm_classifier_contracts.py
 - tests/unit/trading/test_step_indexed_strategy.py
 - tests/unit/trading/test_stop_management.py
 - tests/unit/trading/test_strategy_coverage_contracts.py
@@ -173,6 +191,9 @@ caller_paths:
 - training/runner/lstm_baseline.py
 - training/runner/seed_runtime.py
 - training/setup/environments.py
+- evaluation/plotting/orders/geometry.py
+- evaluation/plotting/shared/levels.py
+- tests/unit/evaluation/test_account_state_trace_reconciliation_remaining_contracts.py
 source_scopes:
 - path: trading/account
   study_ids:

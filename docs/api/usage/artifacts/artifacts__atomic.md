@@ -29,7 +29,7 @@ This page contains 2 public callable records owned by `artifacts.atomic`. Status
 
 **Observed usage:**
 
-1. [test fixture: `test_atomic_writers_create_parent_and_replace_content`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L160)
+1. [test fixture: `test_atomic_writers_create_parent_and_replace_content`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L174)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -44,7 +44,7 @@ def test_atomic_writers_create_parent_and_replace_content(tmp_path: Path) -> Non
     assert json.loads(json_path.read_text(encoding="utf-8")) == {"a": 1, "b": 2}
 ```
 
-2. [test fixture: `test_atomic_json_replacement_preserves_existing_permissions`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L170)
+2. [test fixture: `test_atomic_json_replacement_preserves_existing_permissions`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L184)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -94,7 +94,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_atomic_writers_create_parent_and_replace_content`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L159)
+1. [test fixture: `test_atomic_writers_create_parent_and_replace_content`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L173)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

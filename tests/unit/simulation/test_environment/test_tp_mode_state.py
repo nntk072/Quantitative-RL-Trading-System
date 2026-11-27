@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from simulation.environment.env import TradingEnv
+from simulation.environment.market_view import BarView
 from tests.unit.simulation.test_environment._tp_mode_fixtures import (
     _make_deterministic_bars,
     _make_features,
@@ -60,6 +62,118 @@ class TestTPModeStateMachine:
 
         result = env._default_tp_mode(pos)
         assert result == "fixed"
+
+    def test_position_age_guard_closes_and_reconciles_the_account_once(self) -> None:
+        env = _make_tp_env()
+        env.reset(seed=42)
+        bar_time = env._bar_time(env.step_idx)
+        fill_time = bar_time + pd.Timedelta(seconds=5)
+        position = env.broker.open_position(env.account, (20_000.0, 20_000.0), 0.1, 1)
+        assert position is not None
+        position.entry_price = 20_000.0
+        position.entry_timestamp = bar_time - pd.Timedelta(hours=env._eod_max_age_hours + 1.0)
+        position.position_id = "age-guard-position"
+        env.position = position
+        balance_before = env.account.balance
+        bar = BarView(open=20_000.0, high=20_001.0, low=19_999.0, close=20_000.0, spread=0.0)
+
+        env._apply_position_guards(
+            bar,
+            bar_time,
+            fill_bid=19_998.0,
+            fill_ask=19_998.0,
+            eod=False,
+            feat_row=pd.Series({"close": 20_000.0}),
+            bar_idx=env.step_idx,
+            fill_time=fill_time,
+        )
+
+        closes = [event for event in env.trade_log if event.get("type") == "eod_close"]
+        assert env.position is None
+        assert len(closes) == 1
+        assert closes[0]["reason"] == "max_age"
+        assert closes[0]["time"] == bar_time
+        assert closes[0]["fill_time"] == fill_time
+        assert env.account.balance == pytest.approx(balance_before + closes[0]["pnl"])
+        assert env.account.equity == pytest.approx(env.account.balance)
+        assert env.account.open_pnl == 0.0
+
+    def test_force_close_guard_without_a_position_is_a_noop(self) -> None:
+        env = _make_tp_env()
+        balance_before = env.account.balance
+        equity_before = env.account.equity
+        bar_time = env._bar_time(env.step_idx)
+
+        env._force_close_guard(19_000.0, 19_000.0, "stale", bar_time)
+
+        assert env.position is None
+        assert env.trade_log == []
+        assert env.account.balance == balance_before
+        assert env.account.equity == equity_before
+
+    @pytest.mark.parametrize(
+        (
+            "direction",
+            "stop_reference",
+            "mae",
+            "swing_column",
+            "entry_swing",
+            "current_swing",
+            "expected",
+        ),
+        [
+            (1, 19_990.0, 10.0, "last_swing_high", None, 20_010.0, "breakeven"),
+            (-1, 20_010.0, 10.0, "last_swing_low", None, 19_990.0, "breakeven"),
+            (1, None, 0.0, "last_swing_high", 20_000.0, 20_001.0, "trailing"),
+            (-1, None, 0.0, "last_swing_low", 20_000.0, 19_999.0, "trailing"),
+        ],
+    )
+    def test_sl_mode_advances_for_touched_reference_and_confirmed_swing(
+        self,
+        direction: int,
+        stop_reference: float | None,
+        mae: float,
+        swing_column: str,
+        entry_swing: float | None,
+        current_swing: float,
+        expected: str,
+    ) -> None:
+        env = _make_tp_env()
+        position = Position(
+            direction=direction,
+            size=1.0,
+            entry_price=20_000.0,
+            margin_used=2_000.0,
+            sl_price=19_990.0 if direction == 1 else 20_010.0,
+            entry_sl_ref_price=stop_reference,
+            mae=mae,
+            entry_last_swing_high=entry_swing if swing_column == "last_swing_high" else None,
+            entry_last_swing_low=entry_swing if swing_column == "last_swing_low" else None,
+        )
+        feature_row = pd.Series({swing_column: current_swing})
+
+        with mock.patch.object(env, "_feature_row_at", return_value=feature_row):
+            assert env._default_sl_mode(position) == expected
+
+    def test_short_tp_mode_trails_on_a_new_lower_swing(self) -> None:
+        env = _make_tp_env()
+        position = Position(
+            direction=-1,
+            size=1.0,
+            entry_price=20_000.0,
+            margin_used=2_000.0,
+            sl_price=20_010.0,
+            sl_initial_price=20_010.0,
+            best_favorable=6.0,
+            entry_last_swing_low=20_000.0,
+        )
+
+        with mock.patch.object(
+            env,
+            "_feature_row_at",
+            return_value=pd.Series({"last_swing_high": 20_010.0, "last_swing_low": 19_999.0}),
+        ):
+            assert env._default_tp_mode(position) == "trailing"
 
     def test_tp_mode_breakeven_tightens_tp(self) -> None:
         """After 50% favorable, mode advances to breakeven and _apply_tp_breakeven moves nearest TP."""
@@ -475,3 +589,46 @@ class TestTPModeStateMachine:
 
         assert (pos.tp1_price, pos.tp2_price, pos.tp3_price) == before
         assert not any(row.get("type") == "tp_update" for row in env.trade_log)
+
+
+def test_prior_open_payload_rejects_non_open_rows_and_normalizes_bad_fields() -> None:
+    env = _make_tp_env()
+    env._opened_this_step = False
+    assert env._prior_open_payload() is None
+
+    env._opened_this_step = True
+    env.trade_log = [{"type": "open", "planned_rr": "bad", "exit_mode": None}]
+    payload = env._prior_open_payload()
+
+    assert payload is not None
+    assert np.isnan(payload["planned_rr"])
+    assert payload["exit_mode"] == ""
+    assert payload["sl_ref"] == ""
+
+
+def test_entry_runtime_sl_filter_and_reachable_rr_boundaries() -> None:
+    env = _make_tp_env()
+    assert env._filter_sl_candidates(
+        direction=1,
+        entry_price=100.0,
+        candidates=[("wrong-side", 101.0), ("too-close", 99.5), ("valid", 99.0)],
+        min_dist=1.0,
+    ) == [("valid", 99.0)]
+
+    env._max_tp_dist = None
+    assert np.isnan(env._max_tp_here())
+    env._max_tp_dist = np.asarray([3.0])
+    env.step_idx = -1
+    assert np.isnan(env._max_tp_here())
+    env.step_idx = 1
+    assert np.isnan(env._max_tp_here())
+    env.step_idx = 0
+    assert env._max_tp_here() == pytest.approx(3.0)
+    assert env._rr_fits(100.0, 99.0, 3.0)
+    assert not env._rr_fits(100.0, 99.0, 3.1)
+
+
+def test_trend_regime_handles_malformed_and_negative_bias() -> None:
+    env = _make_tp_env()
+    assert env._trend_regime(pd.Series({"htf_day_bias": "invalid"})) == ""
+    assert env._trend_regime(pd.Series({"htf_day_bias": -0.2})) == "down"

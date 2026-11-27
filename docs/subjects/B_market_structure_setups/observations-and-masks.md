@@ -32,7 +32,7 @@ left-padding rows have value 0. If the sequence is longer than the window, only
 the latest rows are retained. An empty input becomes an all-zero array with an
 all-zero mask.
 
-`simulation.environment.observations.prepare_observation_feature_channels`
+`simulation.environment.observations.schema.prepare_observation_feature_channels`
 sanitizes NaN and infinite feature values to zero. When
 `env.feature_validity_channels` is enabled, it appends one finite-value flag
 per feature to each row. This feature mask is different from `seq_mask`: it
@@ -110,12 +110,12 @@ for coordinate tables.
 |---|---|---|
 | Sequence | Float32 fixed window; latest rows retained and short histories left-padded | `decisioning/observations.py::pad_observation_window` |
 | Sequence mask | One for real rows, zero for left-padding rows | `pad_observation_window` |
-| Feature validity | Optional per-cell finite-value channel; non-finite values are zero-filled | `simulation/environment/observations.py::prepare_observation_feature_channels` |
+| Feature validity | Optional per-cell finite-value channel; non-finite values are zero-filled | `simulation/environment/observations/schema.py::prepare_observation_feature_channels` |
 | Account branch | Named version and ordered coordinates; optional entry-state one-hot extension | `decisioning/observations.py::build_observation_schema` |
 | Checkpoint validation | Saved version, width, coordinates, and visibility must match | `validate_observation_schema` |
 | Setup eligibility | `trade_setup_mask`; no-trade ID remains eligible | `decisioning/trade_setup.py::trade_setup_observation_schema` |
 | Candidate geometry | `candidate_ids`, `candidate_features`, `candidate_mask`; no-trade slot remains eligible | `candidate_geometry_observation_schema` |
-| MTF masks | A per-timeframe mask marks real rows; disabled completed history is zero-masked | `simulation/environment/observation_runtime.py` |
+| MTF masks | A per-timeframe mask marks real rows; disabled completed history is zero-masked | `simulation/environment/observations/runtime.py` |
 | Configuration | `env.feature_validity_channels`, `env.regime_observation`, `env.trade_setup_actions`, `env.candidate_geometry_actions`, `env.mtf` | `config/base/default.yaml` |
 
 ## Verify

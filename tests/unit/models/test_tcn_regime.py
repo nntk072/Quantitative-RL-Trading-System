@@ -110,6 +110,16 @@ def test_tcn_regime_is_registered_and_has_gradients() -> None:
     assert torch.isfinite(gradient).all()
 
 
+def test_tcn_regime_rejects_wrong_d1_shape() -> None:
+    observation_space = _observation_space()
+    observation_space.spaces["regime"] = spaces.Box(
+        -np.inf, np.inf, shape=(len(REGIME_FEATURES) + 1,), dtype=np.float32
+    )
+
+    with pytest.raises(ValueError, match="expects D1 regime and mask shape"):
+        TCNRegimeEncoder(observation_space)
+
+
 def test_masked_regime_branch_is_neutral_and_valid_regime_changes_output() -> None:
     encoder = TCNRegimeEncoder(
         _observation_space(),

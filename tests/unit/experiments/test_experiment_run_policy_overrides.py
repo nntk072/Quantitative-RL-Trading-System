@@ -36,6 +36,10 @@ def test_experiment_run_policy_overrides_are_sorted_and_shell_safe() -> None:
     ]
 
 
+def test_missing_config_override_mapping_means_no_overrides() -> None:
+    assert normalize_experiment_run_config_overrides(None) == {}
+
+
 def test_experiment_run_accepts_a_repository_relative_prebuilt_feature_cache() -> None:
     values = normalize_experiment_run_config_overrides(
         {"data.prebuilt_feature_cache": "cache/normal/US100_features.parquet"}
@@ -76,6 +80,7 @@ def test_list_override_round_trips_through_the_canonical_config_loader() -> None
         {"ftmo.trailing_dd_limit": "0"},
         {"data.prebuilt_feature_cache": "/tmp/features.parquet"},
         {"data.prebuilt_feature_cache": "cache/../outside.parquet"},
+        {"data.price_discretization.rounding": "  "},
         {"features.ema_periods": [[9, 21], 50]},
         {"features.ema_periods": [9, float("inf")]},
     ],

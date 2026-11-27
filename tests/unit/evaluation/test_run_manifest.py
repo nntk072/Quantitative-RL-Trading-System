@@ -451,6 +451,31 @@ def test_stop_candidate_schema_tracks_explicit_execution_target_timeframes() -> 
     assert schema["stop_menu_timeframes"] == ["M3", "M15", "H4"]
 
 
+def test_stop_candidate_schema_validates_candidate_count_and_target_menu() -> None:
+    cfg = _expanded_stop_schema_config()
+    cfg.features.structure.swing_candidate_count = 4
+    with pytest.raises(ValueError, match="between 1 and 3"):
+        build_stop_candidate_schema(cfg)
+
+    cfg = _expanded_stop_schema_config()
+    cfg.risk.target_timeframes = ["M5", "m5"]
+    with pytest.raises(ValueError, match="non-empty and contain no duplicates"):
+        build_stop_candidate_schema(cfg)
+
+
+def test_stop_candidate_schema_normalizes_single_and_empty_timeframe_settings() -> None:
+    cfg = _expanded_stop_schema_config()
+    cfg.features.structure.timeframes = "m15"
+    assert build_stop_candidate_schema(cfg)["timeframes"] == ["M15"]
+
+    cfg.features.structure.timeframes = []
+    assert build_stop_candidate_schema(cfg)["timeframes"] == [
+        "M5",
+        "M15",
+        "H1",
+    ]
+
+
 class _SchemaRoundTripEnv(Env[npt.NDArray[np.float32], np.int64]):
     observation_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
     action_space: spaces.Discrete[np.int64] = spaces.Discrete(2)

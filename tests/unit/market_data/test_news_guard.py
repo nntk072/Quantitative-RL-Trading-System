@@ -10,6 +10,7 @@ from market_data.news.guard import (
     NewsGuardConfig,
     load_release_times,
     news_block_mask,
+    news_guard_config,
     session_baseline_atr,
 )
 
@@ -151,3 +152,31 @@ def test_load_release_times_reads_utc_column(tmp_path: Path) -> None:
     )
 
     assert load_release_times(path) == [datetime(2025, 2, 7, 13, 30, tzinfo=UTC)]
+
+
+def test_news_guard_config_is_optional_and_resolves_relative_calendar_path() -> None:
+    assert news_guard_config(None) is None
+    assert news_guard_config({"enabled": False}) is None
+
+    config = news_guard_config(
+        {
+            "enabled": True,
+            "calendar_path": "config/calendar.csv",
+            "blackout_minutes_before": 4,
+            "blackout_minutes_after": 6,
+            "spike_window_bars": 3,
+            "spike_atr_multiple": 2.5,
+            "baseline_lookback_sessions": 8,
+            "exempt_open_manipulation": False,
+        }
+    )
+
+    assert config is not None
+    assert config.calendar_path.name == "calendar.csv"
+    assert config.calendar_path.is_absolute()
+    assert config.blackout_minutes_before == 4
+    assert config.blackout_minutes_after == 6
+    assert config.spike_window_bars == 3
+    assert config.spike_atr_multiple == 2.5
+    assert config.baseline_lookback_sessions == 8
+    assert config.exempt_open_manipulation is False

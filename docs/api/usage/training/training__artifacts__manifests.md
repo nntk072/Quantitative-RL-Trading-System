@@ -73,19 +73,29 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   Result of return the action space width for logging.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_manifest_serializes_gym_observation_and_action_dimensions_with_fallbacks`](../../../../tests/unit/training/test_training_reporting_contracts.py#L99)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = action_space_width(env=...)
+# … caller setup omitted …
+        "seq_mask": [12],
+        "account": [5],
+        "trade_setup_mask": [109],
+        "candidate_mask": [217],
+    }
+    assert action_space_width(env) == 6
+    assert (
+        action_space_width(type("DiscreteEnv", (), {"action_space": spaces.Discrete(20)})()) == 20
+    )
+
+    no_account = type(
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -248,19 +258,29 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
   Numeric result returned by ``observation_account_dim``.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_manifest_serializes_gym_observation_and_action_dimensions_with_fallbacks`](../../../../tests/unit/training/test_training_reporting_contracts.py#L91)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = observation_account_dim(env=...)
+# … caller setup omitted …
+            ),
+            "action_space": spaces.Box(-1.0, 1.0, (6,)),
+        },
+    )()
+
+    assert observation_account_dim(env) == 5
+    assert observation_space_shapes(env) == {
+        "seq": [12, 7],
+        "seq_mask": [12],
+        "account": [5],
+        "trade_setup_mask": [109],
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -359,19 +379,29 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
   Mapping from ``str`` keys to ``list[int]`` values.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_manifest_serializes_gym_observation_and_action_dimensions_with_fallbacks`](../../../../tests/unit/training/test_training_reporting_contracts.py#L92)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = observation_space_shapes(env=...)
+# … caller setup omitted …
+            "action_space": spaces.Box(-1.0, 1.0, (6,)),
+        },
+    )()
+
+    assert observation_account_dim(env) == 5
+    assert observation_space_shapes(env) == {
+        "seq": [12, 7],
+        "seq_mask": [12],
+        "account": [5],
+        "trade_setup_mask": [109],
+        "candidate_mask": [217],
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

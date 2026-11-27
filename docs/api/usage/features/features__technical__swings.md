@@ -41,7 +41,7 @@ def test_classify_structure_labels_new_highs_and_lows_against_prior_events() -> 
     assert result["ll"].tolist() == [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
 ```
 
-2. [test fixture: `test_swing_features_are_causal`](../../../../tests/unit/features/test_pivots_swings.py#L101)
+2. [test fixture: `test_swing_features_are_causal`](../../../../tests/unit/features/test_pivots_swings.py#L168)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

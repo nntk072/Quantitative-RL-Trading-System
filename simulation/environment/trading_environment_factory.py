@@ -485,7 +485,7 @@ def mtf_settings(cfg: Any, arch: str | None) -> tuple[bool, dict[str, int]]:
     Returns:
         Whether mtf settings meets the requested condition.
     """
-    from simulation.environment.observations import DEFAULT_HTF_WINDOWS
+    from simulation.environment.observations.schema import DEFAULT_HTF_WINDOWS
 
     chosen = arch
     if chosen is None:

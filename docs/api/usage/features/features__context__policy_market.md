@@ -33,7 +33,7 @@ This page contains 1 public callable records owned by `features.context.policy_m
 
 **Observed usage:**
 
-1. [test fixture: `test_attach_policy_market_context_preserves_features_and_appends_context`](../../../../tests/unit/features/test_policy_market_context.py#L109)
+1. [test fixture: `test_attach_policy_market_context_preserves_features_and_appends_context`](../../../../tests/unit/features/test_policy_market_context.py#L136)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -56,7 +56,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert result["tick_quote_available"].eq(1.0).all()
 ```
 
-2. [test fixture: `test_attach_policy_market_context_rejects_duplicate_context_columns`](../../../../tests/unit/features/test_policy_market_context.py#L132)
+2. [test fixture: `test_attach_policy_market_context_rejects_duplicate_context_columns`](../../../../tests/unit/features/test_policy_market_context.py#L159)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

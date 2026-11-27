@@ -1,7 +1,7 @@
-"""Replay-cache logic of the CUDA-graph forward caches, exercised on CPU with a fake capture.
+"""Exercise CUDA-graph capture orchestration and replay-cache logic on CPU with fake CUDA APIs.
 
-The capture itself needs a CUDA device and is covered by the GPU runs; these tests cover the
-cache keying, the input copy into static buffers, and the cloned outputs.
+These unit tests cover capture warmups, stream ordering, static input copies, cache keying, and
+cloned outputs. Actual CUDA replay parity still requires a GPU.
 """
 
 from __future__ import annotations
@@ -26,6 +26,42 @@ class _FakeGraph:
     def replay(self) -> None:
         self.replays += 1
         self.transform()
+
+
+class _CaptureGraph:
+    def __init__(self) -> None:
+        self.replays = 0
+
+    def replay(self) -> None:
+        self.replays += 1
+
+
+class _FakeStream:
+    def __init__(self) -> None:
+        self.waited_for: list[Any] = []
+
+    def wait_stream(self, stream: Any) -> None:
+        self.waited_for.append(stream)
+
+
+def _fake_cuda_capture(
+    monkeypatch: pytest.MonkeyPatch,
+) -> tuple[Any, Any, _CaptureGraph, list[None]]:
+    side_stream = _FakeStream()
+    current_stream = _FakeStream()
+    graph = _CaptureGraph()
+    synchronizations: list[None] = []
+    monkeypatch.setattr(torch.cuda, "Stream", lambda: side_stream)
+    monkeypatch.setattr(torch.cuda, "current_stream", lambda: current_stream)
+    monkeypatch.setattr(torch.cuda, "stream", lambda _stream: nullcontext())
+    monkeypatch.setattr(
+        torch.cuda,
+        "graph",
+        lambda _graph, **_kwargs: nullcontext(),
+    )
+    monkeypatch.setattr(torch.cuda, "CUDAGraph", lambda: graph)
+    monkeypatch.setattr(torch.cuda, "synchronize", lambda: synchronizations.append(None))
+    return side_stream, current_stream, graph, synchronizations
 
 
 def _feature_capture_factory(captures: list[tuple[Any, ...]]) -> Any:
@@ -130,3 +166,65 @@ def test_graphed_forward_cache_keys_on_extra_arguments_and_returns_all_outputs(
     assert torch.equal(stochastic[0], torch.tensor([8.0]))
     assert torch.equal(again[0], torch.tensor([10.0]))
     assert captures == [(True,), (False,)]
+
+
+def test_feature_graph_capture_runs_warmup_and_capture_with_fake_cuda(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    side_stream, current_stream, graph, synchronizations = _fake_cuda_capture(monkeypatch)
+    calls: list[bool] = []
+
+    def run(obs: dict[str, torch.Tensor], _extractor: Any) -> torch.Tensor:
+        calls.append(torch.is_grad_enabled())
+        return obs["x"] * 2.0
+
+    cache = FeatureGraphCache(run)
+    obs = {"x": torch.tensor([2.0, 3.0])}
+    extractor = object()
+
+    captured = cache._capture(obs, extractor)
+
+    assert calls == [False] * 4
+    assert torch.equal(captured.output, torch.tensor([4.0, 6.0]))
+    assert captured.inputs["x"].data_ptr() != obs["x"].data_ptr()
+    assert cast(Any, captured.graph) is graph
+    assert side_stream.waited_for == [current_stream]
+    assert current_stream.waited_for == [side_stream]
+    assert synchronizations == []
+
+
+def test_graphed_forward_capture_runs_warmup_and_capture_with_fake_cuda(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    side_stream, current_stream, graph, synchronizations = _fake_cuda_capture(monkeypatch)
+    events: list[tuple[Any, ...]] = []
+
+    def run(obs: dict[str, torch.Tensor], *extra: Any) -> tuple[torch.Tensor, ...]:
+        events.append(("run", extra, torch.is_grad_enabled()))
+        return (obs["x"] + float(extra[0]), obs["x"] * 3.0)
+
+    class _CaptureContext:
+        def __enter__(self) -> None:
+            events.append(("enter",))
+
+        def __exit__(self, *_args: Any) -> None:
+            events.append(("exit",))
+
+    def capture_context() -> _CaptureContext:
+        return _CaptureContext()
+
+    cache = GraphedForwardCache(run, capture_context)
+    obs = {"x": torch.tensor([2.0, 3.0])}
+
+    captured = cache._capture(obs, (1.0,))
+
+    assert events[0] == ("enter",)
+    assert events[1:-1] == [("run", (1.0,), False)] * 4
+    assert events[-1] == ("exit",)
+    assert torch.equal(captured.outputs[0], torch.tensor([3.0, 4.0]))
+    assert torch.equal(captured.outputs[1], torch.tensor([6.0, 9.0]))
+    assert captured.inputs["x"].data_ptr() != obs["x"].data_ptr()
+    assert cast(Any, captured.graph) is graph
+    assert side_stream.waited_for == [current_stream]
+    assert current_stream.waited_for == [side_stream]
+    assert synchronizations == [None]

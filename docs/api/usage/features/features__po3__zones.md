@@ -106,7 +106,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_zone_from_htf_fvg`](../../../../tests/unit/features/test_po3_config.py#L700)
+1. [test fixture: `test_zone_from_htf_fvg`](../../../../tests/unit/features/test_po3_config.py#L730)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -124,7 +124,7 @@ def test_zone_from_htf_fvg(self, fvg_bars: pd.DataFrame) -> None:
     assert z.start_ts < z.end_ts
 ```
 
-2. [test fixture: `test_zone_edge_dedup`](../../../../tests/unit/features/test_po3_config.py#L713)
+2. [test fixture: `test_zone_edge_dedup`](../../../../tests/unit/features/test_po3_config.py#L743)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -172,7 +172,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_ltf_plot_zone_starts_two_candles_before_confirmation`](../../../../tests/unit/features/test_po3_config.py#L1072)
+1. [test fixture: `test_ltf_plot_zone_starts_two_candles_before_confirmation`](../../../../tests/unit/features/test_po3_config.py#L1102)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -189,7 +189,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         assert bull[0].start_ts == pd.Timestamp("2025-01-02 10:05", tz="Etc/GMT-3")
 ```
 
-2. [test fixture: `test_plot_zone_starts_at_bar2_open`](../../../../tests/unit/features/test_po3_config.py#L1079)
+2. [test fixture: `test_plot_zone_starts_at_bar2_open`](../../../../tests/unit/features/test_po3_config.py#L1109)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

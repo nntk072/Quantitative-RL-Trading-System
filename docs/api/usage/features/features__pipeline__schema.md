@@ -95,7 +95,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_source_times_do_not_change_candidate_mask_or_model_observation`](../../../../tests/unit/features/test_trade_setup_candidate_events.py#L411)
+2. [test fixture: `test_source_times_do_not_change_candidate_mask_or_model_observation`](../../../../tests/unit/features/test_trade_setup_candidate_events.py#L446)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -214,7 +214,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_source_times_do_not_change_candidate_mask_or_model_observation`](../../../../tests/unit/features/test_trade_setup_candidate_events.py#L411)
+2. [test fixture: `test_source_times_do_not_change_candidate_mask_or_model_observation`](../../../../tests/unit/features/test_trade_setup_candidate_events.py#L446)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

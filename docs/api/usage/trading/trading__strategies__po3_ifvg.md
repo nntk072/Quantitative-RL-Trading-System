@@ -12,7 +12,7 @@ This page contains 10 public callable records owned by `trading.strategies.po3_i
 
 **Observed usage:**
 
-1. [test fixture: `test_dynamic_rr_scales_with_reachable_reward`](../../../../tests/unit/evaluation/test_order_chart.py#L1028)
+1. [test fixture: `test_dynamic_rr_scales_with_reachable_reward`](../../../../tests/unit/evaluation/test_order_chart.py#L1184)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -272,7 +272,7 @@ def validate_entry(self, *, direction: int, row: pd.Series) -> bool:
 
 **Purpose:** Structural SL ladder for trader ``sl_anchor`` selection.
 
-**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_candidates` · **Source:** [trading/strategies/po3_ifvg.py:407](../../../../trading/strategies/po3_ifvg.py#L407)
+**Exact API:** {py:obj}`trading.strategies.po3_ifvg.PO3IFVGStrategy.sl_candidates` · **Source:** [trading/strategies/po3_ifvg.py:393](../../../../trading/strategies/po3_ifvg.py#L393)
 
 **Inputs and outputs:**
 

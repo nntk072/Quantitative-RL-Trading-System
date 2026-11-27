@@ -17,7 +17,15 @@ api_paths:
 - experiments/runs/variant_worker.py
 - experiments/variants/__init__.py
 - experiments/variants/variant_ablation_runner.py
+- experiments/runs/artifact_validation.py
 caller_paths:
+- tests/unit/experiments/test_baseline_cache_rebuild_contracts.py
+- tests/unit/experiments/test_execution_checkpoint_map_dry_run.py
+- tests/unit/experiments/test_artifact_validation_manifest_paths.py
+- tests/unit/experiments/test_artifact_validation_provenance_edges.py
+- tests/unit/experiments/test_named_cache_dependency_versions.py
+- tests/unit/experiments/test_run_admission_edge_contracts.py
+- tests/unit/experiments/test_run_validation_coverage.py
 - scripts/maintenance/data-and-cache/rebuild_named_prebuilt_feature_caches.py
 - scripts/maintenance/data-and-cache/rebuild_prebuilt_baseline_cache.py
 - scripts/maintenance/migrations/migrate_preflight_experiment_run.py
@@ -27,14 +35,23 @@ caller_paths:
 - tests/unit/experiments/test_execution_checkpoint_map_dry_run.py
 - tests/unit/experiments/test_execution_lifecycle_contracts.py
 - tests/unit/experiments/test_experiment_run_artifacts.py
+- tests/unit/experiments/test_execution_coverage.py
+- tests/unit/experiments/test_execution_runtime_coverage.py
+- tests/unit/experiments/test_execution_remaining_coverage.py
+- tests/unit/experiments/test_execution_lifecycle_followup_coverage.py
+- tests/unit/experiments/test_execution_allocation_contracts.py
+- tests/unit/experiments/test_execution_lifecycle_contracts.py
+- tests/unit/experiments/test_execution_additional_runtime_contracts.py
 - tests/unit/experiments/test_experiment_run_policy_overrides.py
 - tests/unit/experiments/test_experiment_run_results_summary.py
 - tests/unit/experiments/test_experiment_run_state_store.py
 - tests/unit/experiments/test_matrix_experiment_run_controller.py
 - tests/unit/experiments/test_model_variant_catalog.py
+- tests/unit/experiments/test_named_cache_provenance_contracts.py
 - tests/unit/experiments/test_orchestration_weekly.py
 - tests/unit/experiments/test_preflight_migration.py
 - tests/unit/experiments/test_rebuild_named_prebuilt_feature_caches.py
+- tests/unit/experiments/test_source_snapshot_integrity_contracts.py
 - tests/unit/experiments/test_triton_experiment_run_recovery.py
 - tests/unit/experiments/test_triton_report_experiment_run_status.py
 - tests/unit/experiments/test_weekly_orchestration_cli.py
@@ -67,14 +84,14 @@ studies:
   - id: experiments.run_identity_retry_and_resume
     type: code_check
     question: Are run creation, retry, cache recovery, and resume idempotent and bound to source and config identity?
-    source_paths: [experiments/runs/execution.py, experiments/runs/state_store.py, experiments/runs/cache_failure_recovery.py]
-    checks: [tests/unit/experiments/test_experiment_run_state_store.py, tests/unit/experiments/test_triton_experiment_run_recovery.py]
+    source_paths: [experiments/runs/execution.py, experiments/runs/state_store.py, experiments/runs/cache_failure_recovery.py, experiments/runs/named_cache_rebuild.py]
+    checks: [tests/unit/experiments/test_experiment_run_state_store.py, tests/unit/experiments/test_triton_experiment_run_recovery.py, tests/unit/experiments/test_execution_lifecycle_contracts.py, tests/unit/experiments/test_execution_runtime_coverage.py, tests/unit/experiments/test_named_cache_provenance_contracts.py, tests/unit/experiments/test_run_admission_edge_contracts.py, tests/unit/experiments/test_execution_additional_runtime_contracts.py]
     outputs: [run_lifecycle_check]
   - id: experiments.checkpoint_and_artifact_completion
     type: code_check
     question: Are source snapshots, checkpoint lineage, and output bytes verified before a run is called complete?
     source_paths: [experiments/runs/source_snapshot.py, experiments/runs/checkpoint_lineage.py, experiments/runs/artifact_validation.py]
-    checks: [tests/unit/experiments/test_experiment_run_artifacts.py]
+    checks: [tests/unit/experiments/test_experiment_run_artifacts.py, tests/unit/experiments/test_source_snapshot_integrity_contracts.py]
     outputs: [run_provenance_and_completion_check]
   - id: experiments.registered_research_configs
     type: audit

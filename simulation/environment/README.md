@@ -43,20 +43,20 @@ action. A new order then uses its configured fill point and quote source. This
 ordering prevents a newly opened position from being stopped by price movement
 that occurred before its entry fill.
 
-## Runtime groups
+## Concept groups
 
 | Concern | Runtime components | Responsibility |
 |---|---|---|
 | Environment boundary | `env.py`, `spec.py`, `market_view.py` | Public constructor, transition adapter, typed market views |
-| Initialization | `initialization_runtime.py` and `*_initialization.py` | Load market arrays, account/risk settings, strategies, reward, action and observation spaces |
-| Market advancement | `market_access.py`, `episode_runtime.py`, `tick_quote_runtime.py` | Select bars, advance sessions, resolve tick quotes, mark equity |
-| Decision | `action_runtime.py`, `action_intent_runtime.py`, `entry_state.py` | Decode discrete/continuous/structured actions and track optional entry candidates |
-| Entry lifecycle | `entry_runtime.py`, `entry_order_runtime.py`, `entry_execution_runtime.py`, `position_open_runtime.py` | Select entry levels, size, execute, and log opening decisions |
-| Guardrails | `risk_runtime.py`, `step_constraints_runtime.py` | Enforce daily, maximum, and optional trailing constraints; reject or terminate safely |
-| Open position | `position_runtime.py`, `protective_level_runtime.py`, `ema_exit_runtime.py` | Update stops, evaluate targets, take partial exits, and close positions |
-| Accounting and reward | `trade_accounting_runtime.py`, `step_accounting_runtime.py`, `rewards.py`, reward modules | Reconcile fills, account equity, reward, and reward parts |
-| Observation and evidence | `observation_runtime.py`, `observations.py`, `step_info_runtime.py`, diagnostics modules | Build model inputs and per-step/episode diagnostics |
-| Step completion | `step_end_runtime.py`, `episode_runtime.py` | Advance decision index and set termination or truncation reason |
+| Initialization | `episode/initialization.py` and `*_initialization.py` | Load market arrays, account/risk settings, strategies, reward, action and observation spaces |
+| Market advancement | `market_access.py`, `episode/lifecycle.py`, `quotes/ticks.py` | Select bars, advance sessions, resolve tick quotes, mark equity |
+| Decision | `actions/decoding.py`, `entries/action_intent.py`, `entry_state.py` | Decode discrete/continuous/structured actions and track optional entry candidates |
+| Entry lifecycle | `entries/lifecycle.py`, `entries/orders.py`, `entries/execution.py`, `entries/funnel.py`, `positions/opening.py` | Select entry levels, size, execute, and log opening decisions |
+| Guardrails | `risk/runtime.py`, `episode/constraints.py` | Enforce daily, maximum, and optional trailing constraints; reject or terminate safely |
+| Open position | `positions/lifecycle.py`, `exits/protective_levels.py`, `exits/ema.py` | Update stops, evaluate targets, take partial exits, and close positions |
+| Accounting and reward | `accounting/trades.py`, `accounting/step.py`, `rewards.py`, reward modules | Reconcile fills, account equity, reward, and reward parts |
+| Observation and evidence | `observations/runtime.py`, `observations/schema.py`, `episode/info.py`, `diagnostics/` | Build model inputs and per-step/episode diagnostics |
+| Episode transition | `episode/step.py`, `episode/end.py`, `episode/lifecycle.py` | Compose step stages and set termination or truncation reason |
 | Shared data bundles | `bundles.py`, `shared_bundle.py`, `worker.py` | Reusable immutable input arrays for parallel environment workers |
 
 Names are grouped by runtime responsibility rather than alphabetically. The

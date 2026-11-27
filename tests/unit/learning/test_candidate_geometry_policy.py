@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+from typing import Any, cast
+
+import pytest
 import torch
 
 from decisioning.trade_setup import (
@@ -12,6 +16,7 @@ from decisioning.trade_setup import (
     trade_setup_id_from_box,
 )
 from learning.rl.candidate_geometry_policy import (
+    CandidateGeometryClampedStdMultiInputPolicy,
     CandidateGeometryConditionedActorHeads,
     CandidateGeometryHybridBoxDistribution,
 )
@@ -157,3 +162,109 @@ def test_no_trade_only_has_zero_joint_entropy_and_no_inactive_log_prob() -> None
     assert distribution._slot_ids_from_actions(action).tolist() == [0]
     assert torch.allclose(distribution.log_prob(action), torch.zeros(1), atol=1e-6)
     assert torch.allclose(distribution.entropy(), torch.zeros(1), atol=1e-6)
+
+
+def test_candidate_distribution_rejects_inputs_outside_the_fixed_geometry_contract() -> None:
+    actor, distribution = _distribution()
+    slot_count = candidate_geometry_slot_count()
+    ids = _candidate_ids()
+    features = torch.zeros((1, slot_count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)))
+    mask = torch.zeros((1, slot_count), dtype=torch.bool)
+    mask[0, 0] = True
+    latent = torch.zeros((1, 8))
+    log_std = torch.zeros(len(actor.continuous_indices))
+
+    with pytest.raises(ValueError, match="versioned \\[batch, 217\\] layout"):
+        distribution.proba_distribution(latent, log_std, ids[:, :-1], features, mask)
+    with pytest.raises(ValueError, match="integer tensor dtype"):
+        distribution.proba_distribution(latent, log_std, ids.float(), features, mask)
+    wrong_ids = ids.clone()
+    wrong_ids[0, 1] = 0
+    with pytest.raises(ValueError, match="fixed slot semantics"):
+        distribution.proba_distribution(latent, log_std, wrong_ids, features, mask)
+    with pytest.raises(ValueError, match="boolean eligibility"):
+        distribution.proba_distribution(latent, log_std, ids, features, mask.float())
+    with pytest.raises(ValueError, match="versioned geometry schema"):
+        distribution.proba_distribution(latent, log_std, ids, features[:, :, :-1], mask)
+    nonfinite_features = features.clone()
+    nonfinite_features[0, 0, 0] = float("nan")
+    with pytest.raises(ValueError, match="must be finite"):
+        distribution.proba_distribution(latent, log_std, ids, nonfinite_features, mask)
+    with pytest.raises(ValueError, match="mask must match candidate logits"):
+        distribution.proba_distribution(latent, log_std, ids, features, mask[:, :-1])
+    with pytest.raises(ValueError, match="leave at least one slot"):
+        distribution.proba_distribution(latent, log_std, ids, features, torch.zeros_like(mask))
+
+
+def test_candidate_policy_rejects_missing_stochastic_coordinates_and_invalid_bounds() -> None:
+    coordinates = ("trade_setup", "entry_execution", "limit_offset_atr", "limit_ttl_bars")
+    with pytest.raises(ValueError, match="stochastic continuous execution controls"):
+        CandidateGeometryConditionedActorHeads(8, coordinates, {})
+    with pytest.raises(ValueError, match="requires setup and entry-execution"):
+        CandidateGeometryConditionedActorHeads(8, ("risk",), {})
+
+    actor, _ = _distribution()
+    with pytest.raises(ValueError, match="max_limit_offset_atr must be positive"):
+        CandidateGeometryHybridBoxDistribution(
+            actor, 6, max_limit_offset_atr=0.0, max_limit_ttl_bars=60
+        )
+    with pytest.raises(ValueError, match="max_limit_ttl_bars must be positive"):
+        CandidateGeometryHybridBoxDistribution(
+            actor, 6, max_limit_offset_atr=1.0, max_limit_ttl_bars=0
+        )
+
+
+def test_candidate_entry_execution_entropy_is_conditional_on_trade_selection() -> None:
+    actor, distribution = _distribution()
+    slot_count = candidate_geometry_slot_count()
+    ids = _candidate_ids()
+    features = torch.zeros((1, slot_count, len(CANDIDATE_GEOMETRY_FEATURE_NAMES)))
+    mask = torch.zeros((1, slot_count), dtype=torch.bool)
+    market_slot = candidate_geometry_slot(1, "market")
+    limit_slot = candidate_geometry_slot(1, "limit")
+    mask[0, [0, market_slot, limit_slot]] = True
+    with torch.no_grad():
+        actor.selector.score.weight.zero_()
+        actor.selector.score.bias.zero_()
+
+    assert distribution.categorical_coordinate_entropy("entry_execution") is None
+    distribution.proba_distribution(
+        torch.zeros((1, 8)),
+        torch.zeros(len(actor.continuous_indices)),
+        ids,
+        features,
+        mask,
+    )
+
+    entry_entropy = distribution.categorical_coordinate_entropy("entry_execution")
+    assert entry_entropy is not None
+    assert torch.allclose(entry_entropy, torch.log(torch.tensor(2.0)).expand_as(entry_entropy))
+    assert distribution.categorical_coordinate_entropy("unknown") is None
+
+
+def test_candidate_policy_binds_configured_observation_keys_and_rejects_missing_keys() -> None:
+    policy = SimpleNamespace(
+        candidate_ids_key="ids",
+        candidate_features_key="geometry",
+        candidate_mask_key="eligible",
+        _distribution_masks=None,
+    )
+    observations = {
+        "ids": torch.zeros((1, 2), dtype=torch.long),
+        "geometry": torch.zeros((1, 2, 3)),
+        "eligible": torch.ones((1, 2), dtype=torch.bool),
+    }
+
+    CandidateGeometryClampedStdMultiInputPolicy._set_distribution_mask(
+        cast(Any, policy), observations
+    )
+
+    assert policy._distribution_masks["candidate_ids"] is observations["ids"]
+    assert policy._distribution_masks["candidate_features"] is observations["geometry"]
+    assert policy._distribution_masks["candidate_mask"] is observations["eligible"]
+    with pytest.raises(ValueError, match="requires Dict observations"):
+        CandidateGeometryClampedStdMultiInputPolicy._set_distribution_mask(cast(Any, policy), [])
+    with pytest.raises(ValueError, match="missing observation keys"):
+        CandidateGeometryClampedStdMultiInputPolicy._set_distribution_mask(
+            cast(Any, policy), {"ids": 1}
+        )

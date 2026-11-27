@@ -85,7 +85,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_configured_backtest_runner_resolves_static_daily_loss_semantics`](../../../../tests/unit/training/test_backtest_runner_policy.py#L16)
+1. [test fixture: `test_configured_backtest_runner_resolves_static_daily_loss_semantics`](../../../../tests/unit/training/test_backtest_runner_policy.py#L32)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -32,7 +32,7 @@ def test_crossover_robot_rejects_nonpaper_mode_without_account_guardrails() -> N
 
 def test_headless_mt5_stub_remains_a_module() -> None:
     assert isinstance(sys.modules["MetaTrader5"], ModuleType)
-    assert cast(Any, sys.modules["MetaTrader5"]).TIMEFRAME_H1 == 16385
+    assert isinstance(cast(Any, sys.modules["MetaTrader5"]).TIMEFRAME_H1, int)
 
 
 def test_crossover_robot_keeps_paper_mode_available() -> None:

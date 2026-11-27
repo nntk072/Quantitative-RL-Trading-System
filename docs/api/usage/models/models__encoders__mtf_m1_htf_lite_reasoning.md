@@ -12,7 +12,7 @@ This page contains 3 public callable records owned by `models.encoders.mtf_m1_ht
 
 **Observed usage:**
 
-1. [test fixture: `_encoder_factories`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L68)
+1. [test fixture: `_encoder_factories`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L75)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -77,7 +77,7 @@ from market_data.news.guard import (
 )
 from simulation.entry_evidence import build_entry_evidence
 from simulation.entry_state import EntryStateMachine
-from simulation.environment.observations import (
+from simulation.environment.observations.schema import (
     DEFAULT_HTF_WINDOWS,
     HTF_BRANCHES,
     closed_window,

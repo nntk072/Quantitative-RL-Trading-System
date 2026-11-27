@@ -1,6 +1,8 @@
 module_id: models
 source_roots: [models, research_tools/models]
 api_paths:
+- models/encoders/lite_tcn.py
+- models/encoders/mtf_efficiency_components.py
 - models/architecture_ids.py
 - models/auxiliary/heads.py
 - models/auxiliary/vae.py
@@ -10,6 +12,7 @@ api_paths:
 - models/encoders/mtf_m1_htf_snapshot_reasoning.py
 - models/encoders/mtf_reasoning.py
 - models/encoders/mtf_shared_tcn_reasoning.py
+- models/encoders/sequence_encoder_components.py
 - models/factory/__init__.py
 - models/factory/encoder_registry.py
 - models/runtime/__init__.py
@@ -45,6 +48,7 @@ caller_paths:
 - tests/unit/training/test_training_smoke.py
 - training/configuration/variant_resolution.py
 - training/runner/vae.py
+- tests/unit/learning/test_checkpoint_resume.py
 source_scopes:
   - {path: models/encoders, study_ids: [models.registered_architecture_inputs, models.sequence_masks_and_timeframe_alignment]}
   - {path: models/factory, study_ids: [models.registered_architecture_inputs]}

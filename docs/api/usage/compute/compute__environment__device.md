@@ -30,7 +30,7 @@ This page contains 2 public callable records owned by `compute.environment.devic
 
 **Observed usage:**
 
-1. [test fixture: `test_explicit_cpu`](../../../../tests/integration/test_device.py#L31)
+1. [test fixture: `test_explicit_cpu`](../../../../tests/integration/test_device.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -39,7 +39,7 @@ def test_explicit_cpu(self) -> None:
     assert get_device("cpu").type == "cpu"
 ```
 
-2. [test fixture: `test_invalid_raises`](../../../../tests/integration/test_device.py#L35)
+2. [test fixture: `test_invalid_raises`](../../../../tests/integration/test_device.py#L37)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -77,7 +77,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_scale_training_cfg_cpu_keeps_n_envs`](../../../../tests/integration/test_device.py#L341)
+1. [test fixture: `test_scale_training_cfg_cpu_keeps_n_envs`](../../../../tests/integration/test_device.py#L406)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -94,7 +94,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert int(cfg.ppo.n_epochs) == 10
 ```
 
-2. [test fixture: `test_scale_training_cfg_preserves_configured_sac_batch_size`](../../../../tests/integration/test_device.py#L374)
+2. [test fixture: `test_scale_training_cfg_preserves_configured_sac_batch_size`](../../../../tests/integration/test_device.py#L439)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

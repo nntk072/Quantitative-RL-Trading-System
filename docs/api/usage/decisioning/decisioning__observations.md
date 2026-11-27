@@ -144,7 +144,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_normalized_account_vector_preserves_valid_legacy_coordinates`](../../../../tests/unit/decisioning/test_observations.py#L42)
+1. [test fixture: `test_normalized_account_vector_preserves_valid_legacy_coordinates`](../../../../tests/unit/decisioning/test_observations.py#L44)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -168,7 +168,7 @@ def test_normalized_account_vector_preserves_valid_legacy_coordinates() -> None:
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_normalized_account_vector_rejects_nonfinite_inputs`](../../../../tests/unit/decisioning/test_observations.py#L78)
+2. [test fixture: `test_normalized_account_vector_rejects_nonfinite_inputs`](../../../../tests/unit/decisioning/test_observations.py#L80)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -223,7 +223,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_pad_observation_window_left_pads_two_dimensional_values_and_mask`](../../../../tests/unit/decisioning/test_observations.py#L117)
+1. [test fixture: `test_pad_observation_window_left_pads_two_dimensional_values_and_mask`](../../../../tests/unit/decisioning/test_observations.py#L119)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -236,7 +236,7 @@ def test_pad_observation_window_left_pads_two_dimensional_values_and_mask() -> N
     assert values.dtype == np.float32
 ```
 
-2. [test fixture: `test_pad_observation_window_keeps_only_the_latest_rows_when_sequence_is_long`](../../../../tests/unit/decisioning/test_observations.py#L125)
+2. [test fixture: `test_pad_observation_window_keeps_only_the_latest_rows_when_sequence_is_long`](../../../../tests/unit/decisioning/test_observations.py#L127)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -279,7 +279,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L33)
+1. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L35)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -361,7 +361,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L22)
+2. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L24)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -402,7 +402,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L32)
+1. [test fixture: `test_repeated_payout_schema_uses_domain_name_and_accepts_legacy_checkpoint`](../../../../tests/unit/decisioning/test_observations.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -422,15 +422,21 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_v2_schema_has_exact_named_width`](../../../../tests/unit/simulation/test_environment/test_observation_schema.py#L61)
+2. [test fixture: `test_legacy_action_checkpoint_requires_opt_in_and_explicit_layout`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L33)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_v2_schema_has_exact_named_width() -> None:
-    schema = build_observation_schema(OBSERVATION_SCHEMA_V2)
-    assert schema.width == len(V2_COORDINATES) == 28
-    assert schema.coordinates == V2_COORDINATES
+def test_legacy_action_checkpoint_requires_opt_in_and_explicit_layout() -> None:
+    schema = build_action_schema()
+    model = _continuous_model(schema.width)
+
+    with pytest.raises(ValueError, match="explicit legacy opt-in"):
+        validate_model_action_schema(model, schema)
+    with pytest.raises(ValueError, match="explicit legacy layout key"):
+        validate_model_action_schema(model, schema, allow_legacy=True)
+    with pytest.raises(ValueError, match="differs from expected"):
+        validate_model_action_schema(model, schema, allow_legacy=True, legacy_layout_key="6_dir")
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

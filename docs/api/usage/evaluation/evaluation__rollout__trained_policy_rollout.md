@@ -55,27 +55,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_supervised_provider_runs_through_shared_evaluation_path`](../../../../tests/unit/learning/test_learning_supervised_reference.py#L104)
+2. [test fixture: `test_evaluate_provider_rejects_object_without_provider_metadata`](../../../../tests/unit/evaluation/test_rollout.py#L824)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    )
-    features = pd.DataFrame(0.0, index=index, columns=["f0"])
-    features["last_swing_low"] = close - 5.0
-    features["last_swing_high"] = close + 5.0
-
-    result = evaluate_provider(
-        provider,
-        bars,
-        features,
-        obs_window=10,
-        observation_schema_version="account-state-v1",
-        block_overnight=False,
-    )
-
-    assert result["n_steps"] > 0
+def test_evaluate_provider_rejects_object_without_provider_metadata() -> None:
+    with pytest.raises(TypeError, match="requires a DecisionProvider implementation"):
+        evaluate_provider(object(), pd.DataFrame(), pd.DataFrame())
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -331,27 +318,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_supervised_provider_runs_through_shared_evaluation_path`](../../../../tests/unit/learning/test_learning_supervised_reference.py#L104)
+2. [test fixture: `test_evaluate_provider_rejects_object_without_provider_metadata`](../../../../tests/unit/evaluation/test_rollout.py#L824)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    )
-    features = pd.DataFrame(0.0, index=index, columns=["f0"])
-    features["last_swing_low"] = close - 5.0
-    features["last_swing_high"] = close + 5.0
-
-    result = evaluate_provider(
-        provider,
-        bars,
-        features,
-        obs_window=10,
-        observation_schema_version="account-state-v1",
-        block_overnight=False,
-    )
-
-    assert result["n_steps"] > 0
+def test_evaluate_provider_rejects_object_without_provider_metadata() -> None:
+    with pytest.raises(TypeError, match="requires a DecisionProvider implementation"):
+        evaluate_provider(object(), pd.DataFrame(), pd.DataFrame())
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

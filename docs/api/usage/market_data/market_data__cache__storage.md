@@ -24,19 +24,23 @@ This page contains 6 public callable records owned by `market_data.cache.storage
   Whether cache is complete meets the requested condition.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_directory_completion_marker_is_written_atomically`](../../../../tests/unit/market_data/test_cache_storage_contract.py#L36)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = cache_is_complete(entry=...)
+def test_directory_completion_marker_is_written_atomically(tmp_path: Path) -> None:
+    entry = tmp_path / "cache-entry"
+
+    assert mark_cache_complete(entry, {"identity": "fixture"}) == entry
+
+    assert cache_is_complete(entry)
+    assert cache_metadata_path(entry).read_text(encoding="utf-8").find("fixture") >= 0
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -70,31 +74,43 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `load_bar_cache`](../../../../market_data/cache/bars.py#L142)
+1. [test fixture: `test_parquet_cache_rejects_duplicate_order_when_requested`](../../../../tests/integration/test_bar_cache_manifest.py#L136)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def load_bar_cache(
-    cache_path: str | Path, expected_identity: dict[str, Any]
-) -> pd.DataFrame | None:
-    return load_parquet_cache(cache_path, expected_identity, unique_order=True)
-```
+def test_parquet_cache_rejects_duplicate_order_when_requested(tmp_path: Path) -> None:
+    cache_path = tmp_path / "ordered.parquet"
+    identity = {"cache_id": "ordered"}
+    frame = pd.DataFrame({"ts_ns": [1, 1, 2], "bid": [100.0, 100.1, 100.2]})
+    write_parquet_cache(cache_path, frame, identity, index=False, ordered_column="ts_ns")
 
-2. [production caller: `load_tick_cache`](../../../../market_data/cache/ticks.py#L121)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def load_tick_cache(
-    cache_path: str | Path, expected_identity: dict[str, Any]
-) -> pd.DataFrame | None:
-    return load_parquet_cache(
-        cache_path,
-        expected_identity,
-        ordered_column="ts_ns",
+    assert (
+        load_parquet_cache(cache_path, identity, ordered_column="ts_ns", unique_order=True) is None
     )
 ```
+
+2. [test fixture: `test_parquet_cache_treats_corrupt_manifest_and_unordered_rows_as_misses`](../../../../tests/integration/test_bar_cache_manifest.py#L158)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_parquet_cache_treats_corrupt_manifest_and_unordered_rows_as_misses(
+    tmp_path: Path,
+) -> None:
+    identity = {"cache_id": "ordering"}
+    unordered_path = tmp_path / "unordered.parquet"
+    frame = pd.DataFrame({"ts_ns": [2, 1], "bid": [101.0, 100.0]})
+    write_parquet_cache(unordered_path, frame, identity, index=False, ordered_column="ts_ns")
+
+    assert load_parquet_cache(unordered_path, identity, ordered_column="ts_ns") is None
+
+    manifest_path = parquet_cache_manifest_path(unordered_path)
+    manifest_path.write_text("{invalid-json", encoding="utf-8")
+    assert load_parquet_cache(unordered_path, identity, ordered_column="ts_ns") is None
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -124,19 +140,23 @@ def load_tick_cache(
   Path returned by ``mark_cache_complete``.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_directory_completion_marker_is_written_atomically`](../../../../tests/unit/market_data/test_cache_storage_contract.py#L34)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = mark_cache_complete(entry=..., metadata=...)
+def test_directory_completion_marker_is_written_atomically(tmp_path: Path) -> None:
+    entry = tmp_path / "cache-entry"
+
+    assert mark_cache_complete(entry, {"identity": "fixture"}) == entry
+
+    assert cache_is_complete(entry)
+    assert cache_metadata_path(entry).read_text(encoding="utf-8").find("fixture") >= 0
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -167,41 +187,42 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Observed usage:**
 
-1. [production caller: `bar_cache_is_complete`](../../../../market_data/cache/bars.py#L59)
+1. [test fixture: `test_parquet_cache_load_requires_matching_identity_and_ordering`](../../../../tests/unit/market_data/test_cache_storage_contract.py#L48)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def bar_cache_is_complete(cache_path: str | Path) -> bool:
-    if not parquet_cache_is_complete(cache_path):
-        return False
-    manifest = json.loads(bar_cache_manifest_path(cache_path).read_text(encoding="utf-8"))
-    return bool(
-        manifest["identity"].get("schema_version") == BAR_CACHE_MANIFEST_SCHEMA_VERSION
-        and manifest["identity"].get("transform") == BAR_CACHE_TRANSFORM_ID
-        and manifest["row_count"] > 0
-    )
+def test_parquet_cache_load_requires_matching_identity_and_ordering(
+    tmp_path: Path, pickle_backed_parquet: None
+) -> None:
+    path = tmp_path / "nested" / "bars.parquet"
+    identity = {"cache_id": "fixture-v1", "feature_version": "v3"}
+    frame = pd.DataFrame({"timestamp": [10, 20, 30], "close": [1.0, 2.0, 3.0]})
+    write_parquet_cache(path, frame, identity, index=False, ordered_column="timestamp")
+
+    assert parquet_cache_is_complete(path)
+    cached = load_parquet_cache(path, identity, ordered_column="timestamp", unique_order=True)
+    assert cached is not None
+    pd.testing.assert_frame_equal(cached, frame)
+    assert load_parquet_cache(path, {"cache_id": "other"}, ordered_column="timestamp") is None
 ```
 
-2. [production caller: `load_parquet_cache`](../../../../market_data/cache/storage.py#L156)
+2. [test fixture: `test_parquet_cache_reader_rejects_malformed_manifest_payloads`](../../../../tests/unit/market_data/test_cache_storage_contract.py#L114)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-        return None
-    manifest = _read_parquet_cache_manifest(path)
-    if (
-        manifest is None
-        or manifest.get("identity") != expected_identity
-        or not parquet_cache_is_complete(path)
-    ):
-        return None
-    try:
-        frame = pd.read_parquet(path)
-    except (OSError, ValueError):
-# … caller assertions omitted …
+        index=False,
+        ordered_column="timestamp",
+    )
+    Path(f"{path}.manifest.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    assert not parquet_cache_is_complete(path)
+    assert load_parquet_cache(path, {"cache_id": "fixture"}, ordered_column="timestamp") is None
 ```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -232,7 +253,27 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `fake_build_tick_books`](../../../../tests/unit/experiments/test_triton_prebuild_cache.py#L88)
+1. [test fixture: `test_parquet_cache_treats_corrupt_manifest_and_unordered_rows_as_misses`](../../../../tests/integration/test_bar_cache_manifest.py#L160)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_parquet_cache_treats_corrupt_manifest_and_unordered_rows_as_misses(
+    tmp_path: Path,
+) -> None:
+    identity = {"cache_id": "ordering"}
+    unordered_path = tmp_path / "unordered.parquet"
+    frame = pd.DataFrame({"ts_ns": [2, 1], "bid": [101.0, 100.0]})
+    write_parquet_cache(unordered_path, frame, identity, index=False, ordered_column="ts_ns")
+
+    assert load_parquet_cache(unordered_path, identity, ordered_column="ts_ns") is None
+
+    manifest_path = parquet_cache_manifest_path(unordered_path)
+    manifest_path.write_text("{invalid-json", encoding="utf-8")
+    assert load_parquet_cache(unordered_path, identity, ordered_column="ts_ns") is None
+```
+
+2. [test fixture: `fake_build_tick_books`](../../../../tests/unit/experiments/test_triton_prebuild_cache.py#L88)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -252,14 +293,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `bar_cache_manifest_path`](../../../../market_data/cache/bars.py#L47)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def bar_cache_manifest_path(cache_path: str | Path) -> Path:
-    return parquet_cache_manifest_path(cache_path)
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -294,45 +328,38 @@ def bar_cache_manifest_path(cache_path: str | Path) -> Path:
 
 **Observed usage:**
 
-1. [production caller: `write_bar_cache`](../../../../market_data/cache/bars.py#L162)
+1. [test fixture: `test_parquet_cache_rejects_duplicate_order_when_requested`](../../../../tests/integration/test_bar_cache_manifest.py#L133)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def write_bar_cache(
-    cache_path: str | Path,
-    frame: pd.DataFrame,
-    identity: dict[str, Any],
-) -> Path:
-    if frame.empty:
-        raise ValueError("cannot publish an empty bar cache")
-    return write_parquet_cache(cache_path, frame, identity)
-```
+def test_parquet_cache_rejects_duplicate_order_when_requested(tmp_path: Path) -> None:
+    cache_path = tmp_path / "ordered.parquet"
+    identity = {"cache_id": "ordered"}
+    frame = pd.DataFrame({"ts_ns": [1, 1, 2], "bid": [100.0, 100.1, 100.2]})
+    write_parquet_cache(cache_path, frame, identity, index=False, ordered_column="ts_ns")
 
-2. [production caller: `write_tick_cache`](../../../../market_data/cache/ticks.py#L149)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def write_tick_cache(
-    cache_path: str | Path,
-    frame: pd.DataFrame,
-    identity: dict[str, Any],
-) -> Path:
-    required_columns = {"ts_ns", "bid", "ask"}
-    missing = required_columns.difference(frame.columns)
-    if missing:
-        raise ValueError(f"tick cache frame is missing columns: {sorted(missing)}")
-    if frame.empty:
-        raise ValueError("cannot publish an empty tick cache")
-    return write_parquet_cache(
-        cache_path,
-        frame,
-        identity,
-        index=False,
-        ordered_column="ts_ns",
+    assert (
+        load_parquet_cache(cache_path, identity, ordered_column="ts_ns", unique_order=True) is None
     )
 ```
+
+2. [test fixture: `test_parquet_cache_writer_requires_order_column_when_configured`](../../../../tests/integration/test_bar_cache_manifest.py#L142)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_parquet_cache_writer_requires_order_column_when_configured(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="missing ordering column"):
+        write_parquet_cache(
+            tmp_path / "missing.parquet",
+            pd.DataFrame({"close": [100.0]}),
+            {"cache_id": "missing-order"},
+            ordered_column="ts_ns",
+        )
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

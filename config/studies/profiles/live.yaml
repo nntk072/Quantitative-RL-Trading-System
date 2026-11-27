@@ -8,6 +8,7 @@ caller_paths:
 - tests/unit/features/test_stage_a_observation.py
 - tests/unit/live/test_rl_bridge.py
 - tests/unit/live/test_rl_robot.py
+- tests/unit/integrations/test_rl_robot_coverage.py
 source_scopes:
   - {path: live/runtime, study_ids: [live.provider_and_execution_boundary, live.risk_authorization_and_state]}
   - {path: live/paper, study_ids: [live.risk_authorization_and_state]}

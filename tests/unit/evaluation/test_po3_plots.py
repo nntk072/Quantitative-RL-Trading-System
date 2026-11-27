@@ -164,3 +164,81 @@ def test_plot_window_keeps_lookback_for_zones(signal_bars: pd.DataFrame, tmp_pat
         dpi=80,
     )
     assert len(fig.axes) == 1
+
+
+def test_interactive_plot_rejects_empty_bars_and_empty_selected_window() -> None:
+    pytest.importorskip("plotly")
+    empty_bars = pd.DataFrame(
+        columns=["open", "high", "low", "close"],
+        index=pd.DatetimeIndex([], name="time"),
+    )
+    with pytest.raises(ValueError, match="No bars to plot after applying window"):
+        plot_fvg_signals_interactive(empty_bars, pd.DataFrame(index=empty_bars.index))
+
+    bars = pd.DataFrame(
+        {"open": [10.0, 11.0], "high": [11.0, 12.0], "low": [9.0, 10.0], "close": [10.5, 11.5]},
+        index=pd.date_range("2025-01-01", periods=2, freq="min"),
+    )
+    with pytest.raises(ValueError, match="No bars to plot after applying window"):
+        plot_fvg_signals_interactive(
+            bars,
+            pd.DataFrame(index=bars.index),
+            window=(
+                bars.index[-1] + pd.Timedelta(minutes=1),
+                bars.index[-1] + pd.Timedelta(minutes=2),
+            ),
+        )
+
+
+def test_interactive_plot_caps_candles_to_the_most_recent_points(
+    signal_bars: pd.DataFrame,
+) -> None:
+    pytest.importorskip("plotly")
+    signals = pd.DataFrame(index=signal_bars.index)
+
+    figure = plot_fvg_signals_interactive(signal_bars, signals, candle_tf="1min", max_points=7)
+
+    candles = figure.data[0]
+    assert candles.name == "Price"
+    assert list(candles.x) == list(signal_bars.index[-7:])
+    assert list(candles.close) == signal_bars["close"].iloc[-7:].tolist()
+
+
+def test_interactive_entry_markers_follow_visible_signal_rows_and_option(
+    signal_bars: pd.DataFrame,
+) -> None:
+    pytest.importorskip("plotly")
+    signals = pd.DataFrame(0, index=signal_bars.index, columns=["entry_long", "entry_short"])
+    signals.loc[signal_bars.index[0], "entry_long"] = 1
+    signals.loc[signal_bars.index[40], "entry_long"] = 1
+    signals.loc[signal_bars.index[70], "entry_short"] = 1
+    visible_window = (signal_bars.index[30], signal_bars.index[50])
+
+    visible = plot_fvg_signals_interactive(
+        signal_bars, signals, window=visible_window, candle_tf="1min"
+    )
+    without_entries = plot_fvg_signals_interactive(
+        signal_bars, signals, window=visible_window, candle_tf="1min", show_entries=False
+    )
+
+    assert [trace.name for trace in visible.data] == ["Price", "entry_long"]
+    assert list(visible.data[1].x) == [signal_bars.index[40]]
+    assert list(visible.data[1].y) == [signal_bars.loc[signal_bars.index[40], "close"]]
+    assert [trace.name for trace in without_entries.data] == ["Price"]
+
+
+def test_interactive_plot_rejects_bars_that_resample_to_no_candles() -> None:
+    pytest.importorskip("plotly")
+    index = pd.date_range("2025-01-01", periods=2, freq="min")
+    bars = pd.DataFrame(
+        {
+            "open": [np.nan, np.nan],
+            "high": [np.nan, np.nan],
+            "low": [np.nan, np.nan],
+            "close": [np.nan, np.nan],
+        },
+        index=index,
+    )
+
+    with pytest.raises(ValueError, match="No candles to plot after resampling"):
+        plot_fvg_signals_interactive(bars, pd.DataFrame(index=index), candle_tf="1min")

@@ -27,7 +27,22 @@ This page contains 1 public callable records owned by `artifacts.config_snapshot
 
 **Observed usage:**
 
-1. [production caller: `save_run`](../../../../evaluation/reporting/run_artifact_writer.py#L918)
+1. [test fixture: `test_config_snapshot_normalizes_mapping_and_keeps_existing_identical_content`](../../../../tests/unit/artifacts/test_artifact_lifecycle.py#L89)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_config_snapshot_normalizes_mapping_and_keeps_existing_identical_content(
+    tmp_path: Path,
+) -> None:
+    first = write_config_snapshot(tmp_path, {"seed": 42, "algorithm": "ppo"})
+
+    assert first == tmp_path / "config.yaml"
+    assert "seed: 42" in first.read_text(encoding="utf-8")
+    assert write_config_snapshot(tmp_path, {"seed": 42, "algorithm": "ppo"}) == first
+```
+
+2. [production caller: `save_run`](../../../../evaluation/reporting/run_artifact_writer.py#L918)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -47,14 +62,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `write_run_config_snapshot`](../../../../training/artifacts/snapshots.py#L19)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def write_run_config_snapshot(run_dir: str | Path, config: Any) -> Path:
-    return write_config_snapshot(run_dir, config)
-```
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

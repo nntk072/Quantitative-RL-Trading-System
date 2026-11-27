@@ -78,6 +78,51 @@ def test_market_entry_replays_to_first_target_with_real_tick_sides() -> None:
     assert outcome.exit_reason == "tp"
 
 
+def test_market_entry_without_an_executable_quote_is_unresolved_not_expired() -> None:
+    proposal = _proposal()
+
+    outcome = replay_candidate_proposal(
+        proposal,
+        _book([]),
+        stop_choice="swing_low",
+        target_choice="tp1",
+        observed_until="2025-01-02T10:02:00Z",
+        exit_horizon="2025-01-02T10:03:00Z",
+    )
+
+    assert outcome.status == "unresolved_data"
+    assert outcome.fill_time is None
+    assert outcome.net_r is None
+    assert "market-entry quote unavailable" in _reason(outcome)
+
+
+def test_market_entry_and_exit_costs_reduce_realized_net_r() -> None:
+    proposal = _proposal()
+    book = _book(
+        [
+            ("2025-01-02T10:01:00Z", 100.0, 100.5),
+            ("2025-01-02T10:01:10Z", 101.0, 101.5),
+        ]
+    )
+
+    outcome = replay_candidate_proposal(
+        proposal,
+        book,
+        stop_choice="swing_low",
+        target_choice="tp1",
+        observed_until="2025-01-02T10:04:00Z",
+        exit_horizon="2025-01-02T10:03:00Z",
+        tick_fill_slippage_points=0.25,
+        commission_per_lot=0.25,
+        contract_size=10.0,
+    )
+
+    assert outcome.status == "filled_resolved"
+    assert outcome.fill_price == 100.75
+    assert outcome.exit_price == 100.75
+    assert outcome.net_r == pytest.approx(-0.5 / (10.0 * 1.75))
+
+
 def test_market_entry_waits_until_the_configured_eligible_fill_bar() -> None:
     proposal = replace(
         _proposal(),

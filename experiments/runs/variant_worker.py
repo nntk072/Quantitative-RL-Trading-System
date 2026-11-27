@@ -147,6 +147,7 @@ def main() -> int:
             print("DRY_RUN " + tag + ": " + " ".join(command), flush=True)
             continue
         if done_marker.is_file():
+            failed_marker.unlink(missing_ok=True)
             print(f"SKIP {tag} (already done)", flush=True)
             continue
 

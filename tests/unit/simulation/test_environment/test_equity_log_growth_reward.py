@@ -71,6 +71,32 @@ def test_nonfinite_equity_is_rejected(before: float, after: float) -> None:
         reward(0.0, previous_equity=before, equity=after)
 
 
+@pytest.mark.parametrize(
+    ("scale", "breach_penalty", "message"),
+    [
+        (0.0, -10.0, "scale must be finite and positive"),
+        (True, -10.0, "scale must be finite and positive"),
+        (100.0, 0.0, "breach_penalty must be finite and negative"),
+    ],
+)
+def test_growth_reward_rejects_invalid_scaling_contract(
+    scale: float, breach_penalty: float, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        EquityLogGrowthReward(scale=scale, breach_penalty=breach_penalty)
+
+
+def test_growth_reward_requires_both_equity_endpoints() -> None:
+    with pytest.raises(ValueError, match="requires previous_equity and equity"):
+        EquityLogGrowthReward()(0.0, previous_equity=100_000.0)
+
+
+def test_growth_reward_rejects_nonfinite_scaled_result() -> None:
+    reward = EquityLogGrowthReward(scale=1e308)
+    with pytest.raises(ValueError, match="produced a non-finite reward"):
+        reward(0.0, previous_equity=1e-308, equity=1e308)
+
+
 def test_growth_reward_is_selected_by_environment_and_uses_ledger_equity() -> None:
     count = 40
     index = pd.date_range("2025-01-06 08:00", periods=count, freq="1min")

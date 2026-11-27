@@ -109,3 +109,22 @@ class TestConditionalDistributions:
         dist = conditional_pnl_distributions([])
         assert dist["overall"].count == 0
         assert dist["long"].count == 0
+
+    def test_dataframe_rows_are_paired_by_bar_and_invalid_pnl_is_dropped(self) -> None:
+        start = pd.Timestamp("2025-01-02 16:30")
+        log = pd.DataFrame(
+            [
+                {"type": "close", "bar": 3, "time": start + pd.Timedelta(minutes=3), "pnl": 5.0},
+                {"type": "open", "bar": 2, "time": start + pd.Timedelta(minutes=2)},
+                {"type": "close", "bar": 1, "time": start + pd.Timedelta(minutes=1), "pnl": "bad"},
+                {"type": "open", "bar": 0, "time": start},
+            ]
+        )
+
+        holding = holding_time_distribution(log)
+        groups = conditional_pnl_distributions(log)
+
+        assert holding.count == 2
+        assert holding.mean == pytest.approx(60.0)
+        assert groups["overall"].count == 1
+        assert groups["overall"].mean == pytest.approx(5.0)

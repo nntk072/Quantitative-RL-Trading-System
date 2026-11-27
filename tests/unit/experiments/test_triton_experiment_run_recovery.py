@@ -137,3 +137,67 @@ def test_resume_refuses_unknown_failure_without_mutating_manifest(tmp_path: Path
     assert not (
         experiment_run / "reports" / "experiment_run_manifest_before_cache_recovery.json"
     ).exists()
+
+
+@pytest.mark.parametrize("checkpoint_state", ["missing", "stale_hash"])
+def test_resume_refuses_missing_or_stale_checkpoint_identity_without_manifest_changes(
+    tmp_path: Path, checkpoint_state: str
+) -> None:
+    experiment_run, original = _experiment_run_fixture(tmp_path, variant_count=1)
+    attempt_dir = experiment_run / "runs" / "attempts" / "variant_00" / "attempt4"
+    provenance_path = attempt_dir / "attempt_provenance.json"
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8"))
+    checkpoint = Path(provenance["resume_checkpoint"])
+    if checkpoint_state == "missing":
+        checkpoint.unlink()
+    else:
+        provenance["resume_checkpoint_sha256"] = "0" * 64
+        provenance_path.write_text(json.dumps(provenance), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="resume checkpoint is missing or changed"):
+        prepare_experiment_run_resume(experiment_run)
+
+    assert (experiment_run / "experiment_run.json").read_bytes() == original
+    assert not (
+        experiment_run / "reports" / "experiment_run_manifest_before_cache_recovery.json"
+    ).exists()
+
+
+def test_resume_refuses_partial_failed_attempt_evidence_without_requeueing(tmp_path: Path) -> None:
+    experiment_run, original = _experiment_run_fixture(tmp_path, variant_count=1)
+    log = experiment_run / "logs" / "workers" / "variant_00__attempt4.log"
+    log.unlink()
+
+    with pytest.raises(ValueError, match="missing failed-attempt evidence"):
+        prepare_experiment_run_resume(experiment_run)
+
+    assert (experiment_run / "experiment_run.json").read_bytes() == original
+    assert not (experiment_run / "reports" / "cache_recovery.json").exists()
+
+
+def test_resume_rejects_stale_recovery_report_fingerprint(tmp_path: Path) -> None:
+    experiment_run, _original = _experiment_run_fixture(tmp_path, variant_count=1)
+    prepare_experiment_run_resume(experiment_run)
+    manifest_path = experiment_run / "experiment_run.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["fingerprint"] = "b" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    changed_manifest = manifest_path.read_bytes()
+
+    with pytest.raises(ValueError, match="recovery report fingerprint does not match"):
+        prepare_experiment_run_resume(experiment_run)
+
+    assert manifest_path.read_bytes() == changed_manifest
+
+
+def test_resume_accepts_interrupted_manifest_without_recovery_report(tmp_path: Path) -> None:
+    experiment_run, _original = _experiment_run_fixture(tmp_path, variant_count=1)
+    manifest_path = experiment_run / "experiment_run.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["jobs"][0]["status"] = "interrupted"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    result = prepare_experiment_run_resume(experiment_run)
+
+    assert result["requeued"] == 0
+    assert result["already_resumable"] is True

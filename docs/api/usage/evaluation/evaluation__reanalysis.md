@@ -10,19 +10,28 @@ This page contains 1 public callable records owned by `evaluation.reanalysis`. S
 
 **Exact API:** {py:obj}`evaluation.reanalysis.main` · **Source:** [evaluation/reanalysis/__init__.py:1](../../../../evaluation/reanalysis/__init__.py#L1)
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_lazy_reanalysis_package_entrypoint_delegates_to_cli`](../../../../tests/unit/evaluation/test_eval_run_provenance.py#L1464)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = main()
+def test_lazy_reanalysis_package_entrypoint_delegates_to_cli(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import evaluation.reanalysis as package
+    from evaluation.reanalysis import checkpoint_reanalysis
+
+    calls: list[str] = []
+    monkeypatch.setattr(checkpoint_reanalysis, "main", lambda: calls.append("main"))
+
+    package.main()
+
+    assert calls == ["main"]
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

@@ -60,3 +60,25 @@ def test_price_grid_is_disabled_by_default_and_validates_enabled_increment() -> 
 def test_quantization_rejects_nonpositive_grid() -> None:
     with pytest.raises(ValueError, match="finite and positive"):
         quantize_prices(np.asarray([1.0]), 0.0)
+
+
+def test_enabled_price_grid_rejects_unsupported_rounding_rule() -> None:
+    cfg = OmegaConf.create(
+        {
+            "data": {
+                "price_discretization": {
+                    "enabled": True,
+                    "increment": 0.25,
+                    "rounding": "bankers",
+                }
+            }
+        }
+    )
+
+    with pytest.raises(ValueError, match="unsupported price-grid rounding mode"):
+        configured_price_grid_increment(cfg)
+
+
+def test_bar_quantization_requires_all_ohlc_fields() -> None:
+    with pytest.raises(ValueError, match="missing price column"):
+        quantize_bar_prices(pd.DataFrame({"open": [100.0]}), 0.25)

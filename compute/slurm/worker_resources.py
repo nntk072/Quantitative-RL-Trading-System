@@ -161,9 +161,12 @@ def gpu_memory_inventory() -> list[dict[str, Any]]:
             )
         except ValueError:
             continue
-    visible = [item.strip() for item in os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")]
-    if not visible:
+    visible_setting = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if visible_setting is None:
         return records
+    visible = [item.strip() for item in visible_setting.split(",") if item.strip()]
+    if not visible:
+        return []
     selected = [
         record
         for token in visible

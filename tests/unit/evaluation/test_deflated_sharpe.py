@@ -47,3 +47,14 @@ def test_selection_among_noise_is_not_a_discovery() -> None:
     sr0 = expected_maximum_sharpe(float(np.std(sharpes, ddof=1)), n_trials=6)
     prob = deflated_sharpe_probability(sr, sr0=sr0, n_obs=n, skew=skew, kurtosis=kurt)
     assert prob < 0.95
+
+
+@pytest.mark.unit
+def test_deflated_sharpe_handles_degenerate_samples_and_nonpositive_variance() -> None:
+    assert expected_maximum_sharpe(sharpe_std=0.0, n_trials=8) == 0.0
+    assert expected_maximum_sharpe(sharpe_std=0.3, n_trials=0) == 0.0
+    assert np.isnan(deflated_sharpe_probability(0.5, 0.1, 1, 0.0, 3.0))
+    assert np.isnan(deflated_sharpe_probability(2.0, 0.1, 20, 10.0, 3.0))
+
+    assert return_moments(np.asarray([1.0, np.nan])) == (0.0, 0.0, 3.0, 1)
+    assert return_moments(np.asarray([2.0, 2.0, 2.0])) == (0.0, 0.0, 3.0, 3)

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
-from simulation.environment.rewards import DSRReward
+from simulation.environment.rewards import DSRReward, PnLReward, RMultipleReward
 
 
 def test_breach_returns_strong_terminal():
@@ -150,3 +152,45 @@ def test_reward_clipped():
         val = r(1_000_000.0, initial_balance=100_000.0)
     assert val <= 10.0
     assert val >= -10.0
+
+
+def test_pnl_reward_adds_weighted_dsr_and_reset_restarts_dsr_state() -> None:
+    reward = PnLReward(dsr_weight=0.5)
+    first = reward(
+        1_000.0,
+        realized_close_pnl=500.0,
+        initial_balance=100_000.0,
+    )
+    parts = dict(reward.last_parts)
+    assert parts["pnl"] == pytest.approx(0.005)
+    assert parts["dsr"] > 0.0
+    assert math.fsum(parts.values()) == pytest.approx(first)
+
+    reward.reset()
+    second = reward(
+        1_000.0,
+        realized_close_pnl=500.0,
+        initial_balance=100_000.0,
+    )
+    assert second == pytest.approx(first)
+
+
+def test_r_multiple_reward_only_credits_finite_closed_trade_r_and_resets_total() -> None:
+    reward = RMultipleReward(breach_penalty=-7.0)
+
+    assert reward(500.0) == pytest.approx(0.0)
+    assert reward(500.0, realized_r=float("nan")) == pytest.approx(0.0)
+    assert reward.cumulative_r == pytest.approx(0.0)
+
+    assert reward(0.0, realized_r=1.5) == pytest.approx(1.5)
+    assert reward.cumulative_r == pytest.approx(1.5)
+    assert reward(0.0) == pytest.approx(0.0)  # An open position earns no second R.
+    assert reward(0.0, realized_r=-0.5) == pytest.approx(-0.5)
+    assert reward.cumulative_r == pytest.approx(1.0)
+
+    assert reward(0.0, breach=True) == pytest.approx(-7.0)
+    assert reward.last_parts["breach"] == pytest.approx(-7.0)
+    reward.reset()
+    assert reward.cumulative_r == pytest.approx(0.0)
+    assert reward(0.0) == pytest.approx(0.0)
+    assert math.fsum(reward.last_parts.values()) == pytest.approx(0.0)

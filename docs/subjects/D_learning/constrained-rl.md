@@ -77,7 +77,7 @@ it does not by itself qualify a research result or predict a return.
 
 The environment step checks and records account constraints. Callback shaping cannot weaken its breach latch or create permission to exceed hard floors.
 
-- Source: `simulation/environment/step_constraints_runtime.py` at `c0d982f94ab9df8b2a9ddd013d2ae9a562573529`.
+- Source: `simulation/environment/episode/constraints.py` at `c0d982f94ab9df8b2a9ddd013d2ae9a562573529`.
 - Focused check: `tests/unit/simulation/test_environment/test_risk_alignment.py`.
 - Practical check: Inspect both hard constraint outcomes and learning diagnostics.
 
@@ -116,7 +116,7 @@ the exact source-facing obligations for maintainers.
 | Rewards are shaped during collection | The callback subtracts lambda times the cost from the rollout reward array and accumulates discounted episode cost. | `learning/rl/callbacks.py::LagrangianRiskCallback._on_step` |
 | Dual update waits for completed episodes | When completed costs exist, lambda becomes clip(lambda + learning_rate*(mean_cost-budget), 0, lambda_max). | `learning/rl/callbacks.py::LagrangianRiskCallback._on_rollout_end` |
 | Saved state guards resume compatibility | On resume, saved callback configuration must match current settings and saved lambda must lie inside configured bounds. | `learning/rl/callbacks.py::LagrangianRiskCallback._on_training_start` |
-| The environment still owns hard breaches | The environment step checks and records account constraints. | `simulation/environment/step_constraints_runtime.py` |
+| The environment still owns hard breaches | The environment step checks and records account constraints. | `simulation/environment/episode/constraints.py` |
 
 ## Verify
 

@@ -12,7 +12,7 @@ This page contains 2 public callable records owned by `models.encoders.mtf_reaso
 
 **Observed usage:**
 
-1. [test fixture: `test_efficient_encoders_reduce_parameters_and_keep_production_output_width`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L171)
+1. [test fixture: `test_efficient_encoders_reduce_parameters_and_keep_production_output_width`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L178)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -29,22 +29,20 @@ def test_efficient_encoders_reduce_parameters_and_keep_production_output_width()
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_reasoning_batch_matches_each_row_alone`](../../../../tests/unit/models/test_mtf_masked_suffix.py#L50)
+2. [test fixture: `test_mtf_reasoning_encoder_rejects_incompatible_attention_width`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L342)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_reasoning_batch_matches_each_row_alone() -> None:
-    torch.manual_seed(2)
-    encoder = MTFReasoningEncoder(
-        _space(), latent_dim=128, channels=(8, 8), dropout=0.0, account_dim=6
-    ).eval()
-    obs = _observations()
-    with torch.no_grad():
-        batched = encoder(obs)
-        for row in range(3):
-            alone = encoder({k: v[row : row + 1] for k, v in obs.items()})
-            assert torch.allclose(batched[row : row + 1], alone, atol=1e-5), row
+def test_mtf_reasoning_encoder_rejects_incompatible_attention_width() -> None:
+    with pytest.raises(ValueError, match="divisible by attention_heads"):
+        MTFReasoningEncoder(
+            _space(),
+            latent_dim=10,
+            channels=(8, 8),
+            dropout=0.0,
+            attention_heads=4,
+        )
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

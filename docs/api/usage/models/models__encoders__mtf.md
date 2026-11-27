@@ -12,7 +12,17 @@ This page contains 2 public callable records owned by `models.encoders.mtf`. Sta
 
 **Observed usage:**
 
-1. [test fixture: `test_plain_mtf_batch_matches_each_row_alone`](../../../../tests/unit/models/test_mtf_masked_suffix.py#L63)
+1. [test fixture: `test_mtf_encoder_rejects_invalid_observation_spaces`](../../../../tests/unit/models/test_mtf_efficient_encoders.py#L395)
+
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_mtf_encoder_rejects_invalid_observation_spaces(spec, exception, message) -> None:
+    with pytest.raises(exception, match=message):
+        MTFEncoder(spec, latent_dim=8, channels=(4,), dropout=0.0)
+```
+
+2. [test fixture: `test_plain_mtf_batch_matches_each_row_alone`](../../../../tests/unit/models/test_mtf_masked_suffix.py#L63)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -10,6 +10,7 @@ import pytest
 matplotlib.use("Agg")
 
 from training.reporting.training_curves import (
+    _save_training_html,
     plot_entropy_explvar,
     plot_kl_clip,
     plot_learning_curve,
@@ -123,6 +124,56 @@ def test_save_training_plots_empty_log(tmp_path):
     assert not any(tmp_path.glob("*.png"))
 
 
+def test_save_training_html_writes_each_available_metric_family(tmp_path):
+    pytest.importorskip("plotly")
+    frame = pd.DataFrame(
+        {
+            "timestep": [1, 2],
+            "rollout/ep_rew_mean": [0.1, 0.2],
+            "train/policy_gradient_loss": [-0.1, -0.2],
+            "train/value_loss": [1.0, 0.8],
+            "train/entropy_loss": [-1.0, -0.8],
+            "train/explained_variance": [0.2, 0.3],
+            "train/approx_kl": [0.01, 0.02],
+            "train/clip_fraction": [0.1, 0.2],
+            "train/learning_rate": [0.001, 0.0005],
+            "train/mean_exit": [0.1, 0.2],
+            "train/mean_direction": [-0.1, 0.0],
+            "train/mode_prior": [0.5, 0.6],
+        }
+    )
+
+    _save_training_html(frame, tmp_path)
+
+    assert {
+        "learning_curve.html",
+        "losses.html",
+        "entropy_explvar.html",
+        "kl_clip.html",
+        "lr.html",
+        "mode_means.html",
+    } <= {path.name for path in tmp_path.glob("*.html")}
+
+
+def test_save_training_plots_handles_single_sample_metrics_without_html(tmp_path):
+    log_path = tmp_path / "single_sample.csv"
+    pd.DataFrame(
+        {
+            "timestep": [2048],
+            "rollout/ep_rew_mean": [0.4],
+            "train/learning_rate": [3e-4],
+        }
+    ).to_csv(log_path, index=False)
+    out_dir = tmp_path / "single_sample_plots"
+
+    save_training_plots(log_path, out_dir=out_dir, save_html=True)
+
+    assert (out_dir / "learning_curve.png").is_file()
+    assert (out_dir / "lr.png").is_file()
+    assert not list(out_dir.glob("*.html"))
+    assert not (out_dir / "mode_means.png").exists()
+
+
 def test_save_dashboard_plots(tmp_path):
     log_path = tmp_path / "dashboard_log.csv"
     pd.DataFrame(
@@ -165,3 +216,37 @@ def test_save_dashboard_plots(tmp_path):
         "dashboard_grad_norm",
     ):
         assert (out / f"{name}.png").stat().st_size > 0
+
+
+@pytest.mark.parametrize(
+    "frame",
+    [pd.DataFrame(), pd.DataFrame({"pnl": [1.0]})],
+    ids=("empty", "missing-timestep"),
+)
+def test_save_dashboard_plots_skips_logs_without_dashboard_timesteps(frame, tmp_path):
+    log_path = tmp_path / "incomplete_dashboard.csv"
+    frame.to_csv(log_path, index=False)
+    out_dir = tmp_path / "incomplete_plots"
+
+    save_dashboard_plots(log_path, out_dir=out_dir)
+
+    assert not list(out_dir.glob("*.png"))
+    assert not list(out_dir.glob("*.html"))
+
+
+def test_save_dashboard_plots_coerces_bad_values_and_writes_html(tmp_path):
+    pytest.importorskip("plotly")
+    log_path = tmp_path / "dashboard_mixed_values.csv"
+    pd.DataFrame(
+        {
+            "timestep": [2048, 4096, 6144],
+            "return_pct": ["1.5", "not-a-number", "2.0"],
+        }
+    ).to_csv(log_path, index=False)
+    out_dir = tmp_path / "dashboard_mixed_values"
+
+    save_dashboard_plots(log_path, out_dir=out_dir, save_html=True)
+
+    assert (out_dir / "dashboard_return.png").stat().st_size > 0
+    assert (out_dir / "dashboard_return.html").stat().st_size > 0
+    assert not (out_dir / "dashboard_pnl.png").exists()

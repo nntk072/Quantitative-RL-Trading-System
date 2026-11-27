@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
 from artifacts import ArtifactManifest, BaselineValidation, RetentionClass, promote_to_baseline
+from artifacts.promotion import _payload_sha256
 
 
 def _baseline_manifest() -> ArtifactManifest:
@@ -171,6 +174,64 @@ def test_promotion_requires_source_lineage(
             tmp_path / "baseline",
             manifest,
             validate=lambda _: BaselineValidation("validate", ("manifest",)),
+        )
+
+
+def test_payload_identity_includes_symlink_target_and_rejects_special_entries(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "tree"
+    source.mkdir()
+    nested = source / "nested"
+    nested.mkdir()
+    (nested / "payload.txt").write_text("nested content", encoding="utf-8")
+    target = source / "payload.txt"
+    target.write_text("content", encoding="utf-8")
+    link = source / "payload-link"
+    link.symlink_to(target.name)
+
+    digest_with_link = _payload_sha256(source)
+    link.unlink()
+    link.symlink_to("different-target")
+    digest_with_other_link = _payload_sha256(source)
+
+    assert digest_with_link != digest_with_other_link
+    fifo = source / "unsupported.fifo"
+    os.mkfifo(fifo)
+    with pytest.raises(ValueError, match="unsupported baseline payload entry"):
+        _payload_sha256(source)
+
+
+def test_promotion_rejects_special_source_and_invalid_validator_result(tmp_path: Path) -> None:
+    fifo = tmp_path / "candidate.fifo"
+    os.mkfifo(fifo)
+    with pytest.raises(ValueError, match="regular file or directory"):
+        promote_to_baseline(
+            fifo,
+            tmp_path / "baseline-special-source",
+            _baseline_manifest(),
+            validate=lambda _: BaselineValidation("validate", ("manifest",)),
+        )
+    with pytest.raises(ValueError, match="regular file or directory"):
+        _payload_sha256(fifo)
+
+    missing = tmp_path / "missing.json"
+    with pytest.raises(FileNotFoundError, match="missing.json"):
+        promote_to_baseline(
+            missing,
+            tmp_path / "baseline-missing-source",
+            _baseline_manifest(),
+            validate=lambda _: BaselineValidation("validate", ("manifest",)),
+        )
+
+    source = tmp_path / "candidate.json"
+    source.write_text("{}", encoding="utf-8")
+    with pytest.raises(TypeError, match="must return BaselineValidation"):
+        promote_to_baseline(
+            source,
+            tmp_path / "baseline-invalid-validation",
+            _baseline_manifest(),
+            validate=cast(Any, lambda _: "accepted"),
         )
 
 

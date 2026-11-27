@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from decisioning.trade_setup import (
@@ -144,6 +146,46 @@ def test_entry_execution_decoder_rejects_invalid_bounds(offset: float, ttl: int)
         )
 
 
+def test_entry_execution_decoder_rejects_missing_coordinates_and_invalid_action_contract() -> None:
+    enabled_schema = build_trade_setup_action_schema(has_entry_execution=True)
+    legacy_schema = build_trade_setup_action_schema()
+
+    with pytest.raises(ValueError, match="coordinates are not enabled"):
+        decode_trade_setup_execution_choice(
+            [0.0] * legacy_schema.width,
+            legacy_schema,
+            max_limit_offset_atr=1.0,
+            max_limit_ttl_bars=10,
+        )
+    with pytest.raises(ValueError, match="positive integer"):
+        decode_trade_setup_execution_choice(
+            [0.0] * enabled_schema.width,
+            enabled_schema,
+            max_limit_offset_atr=1.0,
+            max_limit_ttl_bars=cast(int, 2.5),
+        )
+    with pytest.raises(ValueError, match="action width"):
+        decode_trade_setup_execution_choice(
+            [0.0], enabled_schema, max_limit_offset_atr=1.0, max_limit_ttl_bars=10
+        )
+    invalid_action = [0.0] * enabled_schema.width
+    invalid_action[enabled_schema.indices["entry_execution"]] = 1.1
+    with pytest.raises(ValueError, match="action values must be finite and in \\[-1, 1\\]"):
+        decode_trade_setup_execution_choice(
+            invalid_action,
+            enabled_schema,
+            max_limit_offset_atr=1.0,
+            max_limit_ttl_bars=10,
+        )
+
+
+def test_candidate_lookup_rejects_wrong_id_type_and_unknown_semantics() -> None:
+    with pytest.raises(TypeError, match="must be an integer"):
+        trade_setup_candidate(True)
+    with pytest.raises(ValueError, match="unknown trade setup semantics"):
+        trade_setup_candidate_id("unknown", "M1", 1)
+
+
 def test_setup_geometry_decoder_maps_stop_target_and_exit_coordinates() -> None:
     schema = build_trade_setup_action_schema()
     action = [0.0] * schema.width
@@ -228,3 +270,9 @@ def test_setup_geometry_decoder_rejects_non_normalized_actions(value: float) -> 
 
     with pytest.raises(ValueError, match=r"finite and in \[-1, 1\]"):
         decode_trade_setup_geometry_choice(action, schema)
+
+
+def test_setup_geometry_decoder_rejects_action_width_mismatch() -> None:
+    schema = build_trade_setup_action_schema()
+    with pytest.raises(ValueError, match="action width 1 disagrees with schema width"):
+        decode_trade_setup_geometry_choice([0.0], schema)

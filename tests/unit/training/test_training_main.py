@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import runpy
+import sys
 from argparse import Namespace
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,6 +13,47 @@ import pytest
 from omegaconf import OmegaConf
 
 import training.runner.training as training
+
+
+def _campaign_setup(tmp_path: Path, args: Namespace) -> SimpleNamespace:
+    run_dir = Path(args.survival_campaign_dir)
+    cfg = OmegaConf.create({"env": {"reward_mode": "survival"}, "ppo": {"total_timesteps": 100}})
+    config = SimpleNamespace(cfg=cfg, args=args, device="cpu")
+    data = SimpleNamespace(
+        feat_cache=tmp_path / "features.parquet",
+        feature_columns=["close"],
+        train_bars=None,
+        train_sec=None,
+        cache_dir=tmp_path,
+        primary_sym="ES",
+        primary_ticks=None,
+        schedule_path=tmp_path / "schedule.csv",
+        env_vae=None,
+        pre_ny_by_date=None,
+        vae_model=None,
+    )
+    assets = SimpleNamespace(
+        is_multi_seed=True,
+        run_dir=run_dir,
+        train_bar_count=100,
+        test_bar_count=50,
+        seeds=[42, 43, 44, 45, 46, 47],
+    )
+    return SimpleNamespace(configuration=config, data=data, run_assets=assets)
+
+
+def _campaign_args(tmp_path: Path, phase: str) -> Namespace:
+    return Namespace(
+        survival_campaign_dir=str(tmp_path / "campaign"),
+        survival_campaign_phase=phase,
+        survival_campaign_seed=42,
+        survival_campaign_fold=2,
+        resume_checkpoint=None,
+        seeds=[42, 43, 44, 45, 46, 47],
+        seed=42,
+        walk_forward=True,
+        mvp=False,
+    )
 
 
 @pytest.mark.parametrize("failure_stage", ["seed_training", "finalization", "walk_forward"])
@@ -120,3 +163,161 @@ def test_failed_survival_qualification_writes_gate_and_stops_pipeline(
         walk_forward.assert_not_called()
     else:
         walk_forward.assert_called_once()
+
+
+def test_train_seed_campaign_resumes_existing_checkpoint_in_selected_seed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from training.configuration import cli
+
+    args = _campaign_args(tmp_path, "train_seed")
+    prep = _campaign_setup(tmp_path, args)
+    checkpoint = prep.run_assets.run_dir / "seeds" / "seed42" / "model" / "ppo_latest.zip"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"partial checkpoint")
+    calls: list[list[int]] = []
+    monkeypatch.setattr(sys, "argv", ["training", "--survival-campaign-phase", "train_seed"])
+    monkeypatch.setattr(cli, "parse_train_args", lambda: args)
+    monkeypatch.setattr(training, "prepare_training_run", lambda _args: prep)
+    monkeypatch.setattr(training, "SeedRunContext", lambda preparation: preparation)
+
+    def run_selected_seeds(_context: Any, *, selected_seeds: list[int]) -> tuple[list[Any], int]:
+        calls.append(selected_seeds)
+        return [], 100
+
+    monkeypatch.setattr(
+        training,
+        "run_seed_training",
+        run_selected_seeds,
+    )
+
+    training.main()
+
+    assert args.resume_checkpoint == str(checkpoint.resolve())
+    assert calls == [[42]]
+
+
+def test_walk_forward_campaign_requires_completed_seed_before_execution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from training.configuration import cli
+
+    args = _campaign_args(tmp_path, "walk_forward_fold")
+    prep = _campaign_setup(tmp_path, args)
+    monkeypatch.setattr(sys, "argv", ["training", "--survival-campaign-phase", "walk_forward_fold"])
+    monkeypatch.setattr(cli, "parse_train_args", lambda: args)
+    monkeypatch.setattr(training, "prepare_training_run", lambda _args: prep)
+    monkeypatch.setattr(training, "SeedRunContext", lambda preparation: preparation)
+    monkeypatch.setattr(training, "run_walk_forward_validation", Mock())
+
+    with pytest.raises(SystemExit, match="must finish training before walk-forward"):
+        training.main()
+
+
+def test_survival_campaign_finalize_validates_and_writes_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from training.configuration import cli
+
+    args = _campaign_args(tmp_path, "finalize")
+    prep = _campaign_setup(tmp_path, args)
+    validated: list[Path] = []
+    gates: list[list[int]] = []
+    monkeypatch.setattr(sys, "argv", ["training", "--survival-campaign-phase", "finalize"])
+    monkeypatch.setattr(cli, "parse_train_args", lambda: args)
+    monkeypatch.setattr(
+        training, "_prepare_training_configuration", lambda _args: prep.configuration
+    )
+    monkeypatch.setattr(
+        training,
+        "validate_survival_campaign",
+        lambda **kwargs: validated.append(kwargs["run_dir"]),
+    )
+    monkeypatch.setattr(
+        training,
+        "build_survival_gate",
+        lambda **kwargs: gates.append(kwargs["seeds"]),
+    )
+
+    training.main()
+
+    assert validated == [Path(args.survival_campaign_dir).resolve()]
+    assert gates == [args.seeds]
+
+
+def test_successful_survival_training_finalizes_gate_and_all_seed_folds(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prep = _campaign_setup(tmp_path, _campaign_args(tmp_path, "finalize"))
+    results = [{"seed": seed} for seed in prep.run_assets.seeds]
+    calls: dict[str, Any] = {"folds": [], "gates": []}
+    monkeypatch.setattr(sys, "argv", ["training"])
+    monkeypatch.setattr(training, "prepare_training_run", lambda: prep)
+    monkeypatch.setattr(training, "SeedRunContext", lambda preparation: preparation)
+    monkeypatch.setattr(training, "run_seed_training", lambda _context: (results, 100))
+    monkeypatch.setattr(training, "finalize_training_run", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        training,
+        "run_walk_forward_validation",
+        lambda **kwargs: calls["folds"].append(kwargs["seed"]),
+    )
+    monkeypatch.setattr(
+        training,
+        "build_survival_gate",
+        lambda **kwargs: calls["gates"].append(kwargs["seeds"]),
+    )
+
+    training.main()
+
+    assert calls["folds"] == prep.run_assets.seeds
+    assert calls["gates"] == [prep.run_assets.seeds]
+
+
+def test_successful_portfolio_training_validates_only_the_last_seed_fold(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    prep = _campaign_setup(tmp_path, _campaign_args(tmp_path, "finalize"))
+    prep.configuration.cfg.env.reward_mode = "dsr"
+    results = [{"seed": 42}, {"seed": 43}]
+    folds: list[int] = []
+    gates: list[object] = []
+    monkeypatch.setattr(sys, "argv", ["training"])
+    monkeypatch.setattr(training, "prepare_training_run", lambda: prep)
+    monkeypatch.setattr(training, "SeedRunContext", lambda preparation: preparation)
+    monkeypatch.setattr(training, "run_seed_training", lambda _context: (results, 100))
+    monkeypatch.setattr(training, "finalize_training_run", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        training,
+        "run_walk_forward_validation",
+        lambda **kwargs: folds.append(kwargs["seed"]),
+    )
+    monkeypatch.setattr(training, "build_survival_gate", lambda **kwargs: gates.append(kwargs))
+
+    training.main()
+
+    assert folds == [43]
+    assert gates == []
+
+
+def test_training_module_entrypoint_runs_with_fully_stubbed_training_pipeline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from training.runner import (
+        reporting_runtime,
+        seed_runtime,
+        setup_runtime,
+        walk_forward_validation,
+    )
+
+    prep = _campaign_setup(tmp_path, _campaign_args(tmp_path, "finalize"))
+    prep.configuration.cfg.env.reward_mode = "dsr"
+    monkeypatch.setattr(setup_runtime, "prepare_training_run", lambda: prep)
+    monkeypatch.setattr(seed_runtime, "SeedRunContext", lambda preparation: preparation)
+    monkeypatch.setattr(seed_runtime, "run_seed_training", lambda _context: ([{"seed": 42}], 10))
+    monkeypatch.setattr(reporting_runtime, "finalize_training_run", lambda **_kwargs: None)
+    monkeypatch.setattr(
+        walk_forward_validation, "run_walk_forward_validation", lambda **_kwargs: None
+    )
+    monkeypatch.setattr(sys, "argv", ["training"])
+
+    runpy.run_path(str(Path(training.__file__)), run_name="__main__")

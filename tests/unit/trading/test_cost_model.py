@@ -6,13 +6,21 @@ import pytest
 
 from trading.account.account_state import AccountState
 from trading.execution.broker import Broker
-from trading.execution.costs import CostModel
+from trading.execution.costs import CostModel, TradingCostModel
 
 
 def test_broker_constructs_default_cost_model() -> None:
     broker = Broker()
 
     assert isinstance(broker.cost_model, CostModel)
+
+
+def test_legacy_trading_cost_model_charges_absolute_exposure_once() -> None:
+    model = TradingCostModel(spread=1.5, slippage_frac=0.1)
+
+    assert model.compute_cost(0.0, 100.0) == 0.0
+    assert model.compute_cost(-2.0, 100.0) == pytest.approx(3.3)
+    assert model.compute_spread() == pytest.approx(1.65)
 
 
 @pytest.mark.parametrize("point_value", [True, 0.0, -1.0, float("inf"), float("nan")])

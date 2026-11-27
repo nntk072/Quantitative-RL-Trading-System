@@ -1,6 +1,6 @@
 # Market data function usage
 
-This guide contains 67 public callable records across 17 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 68 public callable records across 17 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1

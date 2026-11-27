@@ -10,9 +10,11 @@ from pathlib import Path
 import pytest
 
 from artifacts.atomic import _atomic_replace, write_json_atomic, write_text_atomic
+from artifacts.config_snapshot import write_config_snapshot
 from artifacts.identity import ArtifactId, artifact_id, file_sha256
 from artifacts.layout import ArtifactLayout
 from artifacts.manifest import ArtifactManifest
+from artifacts.retention import RetentionClass
 
 
 def test_artifact_id_is_stable_for_mapping_order() -> None:
@@ -77,6 +79,18 @@ def test_artifact_layout_keeps_safe_run_namespaces(tmp_path: Path) -> None:
     assert layout.evaluation("checkpoint-replay.v1") == (
         tmp_path / "evaluation" / "checkpoint-replay.v1"
     )
+    assert layout.research() == tmp_path / "research"
+    assert layout.reports() == tmp_path / "reports"
+
+
+def test_config_snapshot_normalizes_mapping_and_keeps_existing_identical_content(
+    tmp_path: Path,
+) -> None:
+    first = write_config_snapshot(tmp_path, {"seed": 42, "algorithm": "ppo"})
+
+    assert first == tmp_path / "config.yaml"
+    assert "seed: 42" in first.read_text(encoding="utf-8")
+    assert write_config_snapshot(tmp_path, {"seed": 42, "algorithm": "ppo"}) == first
 
 
 def test_gpu_experiment_run_layout_preserves_existing_paths_and_names_artifact_roles(
@@ -238,6 +252,42 @@ def test_manifest_read_rejects_non_sequence_parents(tmp_path: Path) -> None:
     )
 
     with pytest.raises(ValueError, match="parents must be a sequence"):
+        ArtifactManifest.read(path)
+
+
+@pytest.mark.parametrize(
+    "changes,message",
+    [
+        ({"created_at": ""}, "created_at must be non-empty"),
+        ({"retention": "baseline"}, "retention must be a RetentionClass"),
+        ({"parents": ["run:1"]}, "parents must be a tuple"),
+        ({"parents": ("",)}, "parents must be non-empty"),
+        ({"provenance": []}, "provenance must be a mapping"),
+    ],
+)
+def test_manifest_rejects_invalid_metadata_shapes(changes, message: str) -> None:
+    values = {
+        "kind": "run",
+        "artifact_id": "run:1",
+        "created_at": "2026-11-26T00:00:00+00:00",
+        "retention": RetentionClass.RUN_RETAINED,
+        "parents": (),
+        "provenance": {},
+    }
+    values.update(changes)
+
+    with pytest.raises(ValueError, match=message):
+        ArtifactManifest(**values)  # type: ignore[arg-type]
+
+
+def test_manifest_read_rejects_unknown_retention_value(tmp_path: Path) -> None:
+    path = tmp_path / "manifest.json"
+    path.write_text(
+        json.dumps({"kind": "run", "artifact_id": "run:1", "retention": "unknown"}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="invalid retention"):
         ArtifactManifest.read(path)
 
 

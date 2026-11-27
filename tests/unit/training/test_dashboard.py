@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pickle
 import random
+from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 
 import numpy as np
@@ -16,7 +18,10 @@ from evaluation.metrics import calculate_metrics
 from simulation.environment.rewards import REWARD_PART_KEYS, DSRReward, PnLReward
 from training.callbacks.dashboard import (
     TrainingDashboardCallback,
+    _grad_norm_value,
+    _logger_float,
     action_stats,
+    append_dashboard_row,
     close_shares,
     format_dashboard,
     format_dashboard_table,
@@ -189,6 +194,62 @@ def test_dashboard_log_waits_for_the_interval() -> None:
     assert cb._should_log()
 
 
+def test_dashboard_callback_aggregates_behavior_and_clears_each_snapshot() -> None:
+    callback = TrainingDashboardCallback(total_timesteps=100, log_every=10)
+    callback.model = type(
+        "Model", (), {"num_timesteps": 12, "_action_schema": {"coordinates": ["direction"]}}
+    )()
+    callback.locals = {
+        "rewards": np.asarray([1.0, -0.5]),
+        "actions": np.asarray([[0.25, -0.25], [0.75, -0.75]]),
+        "infos": [
+            {
+                "reward_parts": {"pnl": 0.5, "breach": -1.0},
+                "position_direction": 1,
+                "close_reason": "structure_tp1",
+                "prior_open": {"side": "long", "sl": 2, "tp": 3, "risk_u": 0.25},
+                "risk_u": 0.25,
+            },
+            {
+                "reward_parts": {"pnl": -0.25},
+                "position_direction": -1,
+                "close_reason": "unlisted",
+                "risk_u": 0.75,
+            },
+            None,
+        ],
+    }
+
+    assert callback._on_step()
+    snapshot = callback._snapshot()
+
+    assert snapshot["train_reward_mean"] == pytest.approx(0.25)
+    assert snapshot["reward_parts"]["pnl"] == pytest.approx(0.25)
+    assert snapshot["breach_events"] == 1
+    assert snapshot["position"] == {"long": 0.5, "short": 0.5, "flat": 0.0}
+    assert snapshot["closes"]["structure_tp"] == pytest.approx(0.5)
+    assert snapshot["closes"]["other"] == pytest.approx(0.5)
+    assert callback._prior_opens[0]["side"] == "long"
+    assert callback._risk_n == 2
+    assert callback._parts == []
+
+
+def test_dashboard_rows_append_with_one_header_and_normalize_bad_metrics(tmp_path) -> None:
+    path = tmp_path / "logs" / "dashboard.csv"
+    append_dashboard_row(path, {"timestep": 4, "train_reward_mean": 0.5})
+    append_dashboard_row(path, {"timestep": 8, "train_reward_mean": -0.25})
+
+    frame = pd.read_csv(path)
+    assert frame["timestep"].tolist() == [4, 8]
+    assert path.read_text().count("timestep") == 1
+    assert _grad_norm_value(None) == ""
+    assert _grad_norm_value("n/a") == ""
+    assert _grad_norm_value("bad") == ""
+    assert _grad_norm_value("0.75") == pytest.approx(0.75)
+    assert _logger_float({"train/explained_variance": np.nan}, "train/explained_variance") == 0.0
+    assert _logger_float({"x": "bad"}, "x") == 0.0
+
+
 def test_dashboard_train_wrapper_forwards_off_policy_update_arguments(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -210,6 +271,62 @@ def test_dashboard_train_wrapper_forwards_off_policy_update_arguments(
     model.train(batch_size=64, gradient_steps=3)
 
     assert calls == [(64, 3)]
+
+
+@pytest.mark.parametrize("raises", [False, True])
+def test_dashboard_train_wrapper_records_gradient_norm_and_restores_clip(
+    monkeypatch: pytest.MonkeyPatch, raises: bool
+) -> None:
+    original_calls: list[tuple[float, float]] = []
+
+    def fake_clip(_parameters: Any, max_norm: float, *_args: Any, **_kwargs: Any) -> torch.Tensor:
+        original_calls.append((max_norm, 0.75))
+        return torch.tensor(0.75)
+
+    monkeypatch.setattr(torch.nn.utils, "clip_grad_norm_", fake_clip)
+    snapshots: list[dict[str, Any]] = []
+
+    def train() -> str:
+        torch.nn.utils.clip_grad_norm_([], 1.0)
+        if raises:
+            raise RuntimeError("optimizer step failed")
+        return "updated"
+
+    model = SimpleNamespace(
+        train=train,
+        num_timesteps=10,
+        logger=SimpleNamespace(name_to_value={"train/std": 0.5}),
+    )
+    callback = TrainingDashboardCallback(total_timesteps=10, log_every=1)
+    cast(Any, callback).model = model
+    monkeypatch.setattr(callback, "_apply_prior_interval", lambda: None)
+    monkeypatch.setattr(callback, "_maybe_eval", lambda: None)
+    monkeypatch.setattr(callback, "_should_log", lambda: True)
+    monkeypatch.setattr(callback, "_snapshot", lambda: {"timesteps": 10})
+
+    def format_snapshot(snapshot: dict[str, Any]) -> str:
+        snapshots.append(snapshot)
+        return "dashboard"
+
+    monkeypatch.setattr(
+        "training.callbacks.dashboard.format_dashboard_table",
+        format_snapshot,
+    )
+
+    callback._on_training_start()
+    if raises:
+        with pytest.raises(RuntimeError, match="optimizer step failed"):
+            model.train()
+    else:
+        assert model.train() == "updated"
+
+    assert original_calls == [(1.0, 0.75)]
+    assert torch.nn.utils.clip_grad_norm_ is fake_clip
+    if raises:
+        assert snapshots == []
+    else:
+        assert callback._grad_norm == pytest.approx(0.75)
+        assert snapshots[0]["policy"]["grad_norm"] == "0.750"
 
 
 def test_snapshot_row_keeps_behavior_and_omits_eval_until_recorded() -> None:
@@ -534,6 +651,31 @@ def test_format_dashboard_table() -> None:
     assert len(lengths) == 1
     # The diversity blob must never widen the boxes.
     assert max(lengths) < 400
+
+
+def test_training_start_wraps_policy_train_and_writes_the_due_snapshot(tmp_path: Path) -> None:
+    class Model:
+        num_timesteps = 1
+        logger = SimpleNamespace(name_to_value={})
+        policy = SimpleNamespace(set_active_prior=lambda _names: None)
+
+        def train(self) -> str:
+            return "trained"
+
+    log_path = tmp_path / "dashboard.csv"
+    callback = TrainingDashboardCallback(
+        total_timesteps=10,
+        eval_every=0,
+        log_every=1,
+        log_path=log_path,
+    )
+    model = Model()
+    callback.init_callback(model)  # type: ignore[arg-type]
+    callback.on_training_start({}, {})
+    result = cast(Any, callback.model).train()
+
+    assert result == "trained"
+    assert pd.read_csv(log_path)["timestep"].tolist() == [1]
 
 
 def test_format_diversity_table() -> None:

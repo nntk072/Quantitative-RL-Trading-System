@@ -40,24 +40,14 @@ def test_device_capabilities_are_backend_neutral() -> None:
     assert capabilities.architecture
 ```
 
-2. [test fixture: `test_device_capabilities_identify_rocm_backend`](../../../../tests/unit/compute/test_compute_contracts.py#L66)
+2. [test fixture: `test_device_capabilities_reject_invalid_hint_without_touching_accelerator`](../../../../tests/unit/compute/test_compute_contracts.py#L53)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
-    monkeypatch.setattr(torch.cuda, "device_count", lambda: 1)
-    monkeypatch.setattr(torch.cuda, "get_device_properties", lambda _index: _Properties())
-    monkeypatch.setattr(torch.cuda, "is_bf16_supported", lambda: True)
-
-    capabilities = discover_device_capabilities("cuda:0")
-
-    assert capabilities.accelerator_kind == "rocm"
-    assert capabilities.accelerator_backend == "rocm"
-    assert capabilities.device_name == "AMD Instinct MI210"
-    assert capabilities.compute_capability == (9, 0)
-# … caller assertions omitted …
+def test_device_capabilities_reject_invalid_hint_without_touching_accelerator() -> None:
+    with pytest.raises(ValueError, match="Invalid device value"):
+        discover_device_capabilities("not-a-device")
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

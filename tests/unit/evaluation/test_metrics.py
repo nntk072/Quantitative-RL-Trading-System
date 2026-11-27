@@ -24,6 +24,8 @@ from evaluation.metrics.bootstrap import (
     sortino_stat,
     win_rate_stat,
 )
+from evaluation.metrics.candle_quality import ohlc_ok_mask, tradable_mask, wick_time
+from evaluation.metrics.leakage import label_shuffle_score, time_shift_feature_scores
 from evaluation.metrics.performance import completed_position_trade_pnls
 
 
@@ -55,6 +57,44 @@ def test_legacy_final_close_without_completion_marker_remains_inferred() -> None
     assert pnls == [12.0]
     assert fill_count == 1
     assert incomplete_positions == 0
+
+
+@pytest.mark.parametrize(
+    ("completion", "expected_pnls", "expected_incomplete"),
+    [
+        ("true", [5.0], 0),
+        ("0", [], 1),
+        (1, [5.0], 0),
+        (0, [], 1),
+    ],
+)
+def test_position_completion_accepts_only_explicit_true_encodings(
+    completion: object, expected_pnls: list[float], expected_incomplete: int
+) -> None:
+    pnls, fill_count, incomplete = completed_position_trade_pnls(
+        [
+            {
+                "type": "close",
+                "position_id": "p1",
+                "net_pnl": 5.0,
+                "position_complete": completion,
+            }
+        ]
+    )
+
+    assert pnls == expected_pnls
+    assert fill_count == 1
+    assert incomplete == expected_incomplete
+
+
+def test_empty_position_id_keeps_legacy_trade_convention_and_ignores_bad_pnl() -> None:
+    pnls, fill_count, incomplete = completed_position_trade_pnls(
+        [{"position_id": "", "pnl": 3.0}, {"position_id": "", "pnl": "invalid"}]
+    )
+
+    assert pnls == [3.0]
+    assert fill_count == 1
+    assert incomplete == 0
 
 
 @pytest.mark.parametrize(
@@ -202,6 +242,27 @@ class TestComputeMetrics:
         assert math.isnan(max_drawdown_stat(empty))
         assert math.isnan(win_rate_stat(empty))
 
+    def test_position_pnls_preserve_completion_markers_and_malformed_closes(self) -> None:
+        completed, fills, incomplete = completed_position_trade_pnls(
+            [
+                {"position_id": "partial", "type": "open"},
+                {"position_id": "partial", "type": "tp_partial_close", "pnl": 5.0},
+                {
+                    "position_id": "partial",
+                    "type": "close",
+                    "pnl": 3.0,
+                    "position_complete": False,
+                },
+                {"position_id": "complete", "type": "close", "pnl": 4.0, "position_net_pnl": 5.0},
+                {"type": "close", "pnl": 2.0},
+                {"position_id": "malformed", "type": "close", "pnl": True},
+            ]
+        )
+
+        assert completed == [2.0, 5.0]
+        assert fills == 4
+        assert incomplete == 2
+
     def test_total_pnl_and_return(self) -> None:
         # Arrange
         equity = [100_000.0, 101_000.0, 102_000.0]
@@ -218,6 +279,40 @@ class TestComputeMetrics:
         # capital is known separately and must be present for drawdown.
         metrics = compute_metrics([90_000.0, 95_000.0], initial_balance=100_000.0)
         assert metrics.max_drawdown == pytest.approx(0.10)
+
+
+@pytest.mark.unit
+class TestMetricInputEdges:
+    def test_candle_quality_rejects_invalid_ohlc_and_empty_bars(self) -> None:
+        bars = pd.DataFrame(
+            {
+                "open": [10.0, 12.0],
+                "high": [11.0, 11.0],
+                "low": [9.0, 9.0],
+                "close": [10.5, 10.0],
+            },
+            index=pd.date_range("2025-01-02", periods=2, freq="min"),
+        )
+
+        np.testing.assert_array_equal(ohlc_ok_mask(bars), [True, False])
+        np.testing.assert_array_equal(tradable_mask(bars), [True, False])
+        assert tradable_mask(bars.iloc[:0]).size == 0
+        assert wick_time(bars, 500.0, "high") is None
+        assert wick_time(bars, 10.0, "missing") is None
+
+    def test_leakage_metrics_preserve_small_sample_and_invalid_shift_contracts(self) -> None:
+        short = label_shuffle_score(np.arange(7), np.arange(7))
+        assert math.isnan(short["observed_abs_corr"])
+        assert math.isnan(short["null_exceed_frac"])
+
+        constant = label_shuffle_score(np.ones(8), np.arange(8), n_perm=2)
+        assert constant["observed_abs_corr"] == 0.0
+        assert constant["null_exceed_frac"] == 1.0
+
+        shifted = time_shift_feature_scores(np.arange(10), np.arange(10), shifts=(-1, 10))
+        assert shifted["shift_0"] == pytest.approx(1.0)
+        assert math.isnan(shifted["shift_-1"])
+        assert math.isnan(shifted["shift_10"])
 
     def test_calmar_uses_return_intervals_with_or_without_initial_equity_point(self) -> None:
         with_initial = compute_metrics(
@@ -236,6 +331,34 @@ class TestComputeMetrics:
     def test_malformed_periods_per_year_is_rejected(self, value: Any) -> None:
         with pytest.raises(ValueError, match="periods_per_year must be positive"):
             compute_metrics([100.0, 101.0], initial_balance=100.0, periods_per_year=value)
+
+    def test_extreme_return_path_preserves_overflow_as_infinite_annualized_result(self) -> None:
+        metrics = compute_metrics([1e308, 5e307], initial_balance=1e-308, periods_per_year=2)
+
+        assert metrics.max_drawdown == pytest.approx(0.5)
+        assert math.isinf(metrics.calmar)
+
+    def test_unrepresentable_trade_pnl_fails_as_a_clear_input_error(self) -> None:
+        with pytest.raises(ValueError, match="trade_pnls values must be finite numbers"):
+            compute_metrics([100.0, 101.0], initial_balance=100.0, trade_pnls=[10**1000])
+
+    def test_breach_sessions_above_denominator_are_withheld(self) -> None:
+        metrics = compute_metrics(
+            [100.0, 99.0],
+            initial_balance=100.0,
+            n_sessions=1,
+            breach_events=[{"session_id": 2}, {"session_id": 3}],
+        )
+
+        assert metrics.breach_event_count == 2
+        assert metrics.breach_session_count is None
+        assert metrics.breach_rate is None
+        assert metrics.breach_rate_availability == "breach_session_count_exceeds_session_count"
+
+    def test_non_integral_config_annualization_is_rejected_and_non_mapping_falls_back(self) -> None:
+        assert evaluation_periods_per_year({"evaluation": None}) == 252 * 390
+        with pytest.raises(ValueError, match="positive integer"):
+            evaluation_periods_per_year({"evaluation": {"periods_per_year": 1.5}})
 
     @pytest.mark.parametrize("trade_pnls", [[True], [float("nan")], ["1.0"]])
     def test_malformed_trade_pnls_are_rejected(self, trade_pnls: list[Any]) -> None:
@@ -534,6 +657,24 @@ class TestComputeMetrics:
         assert inputs["breach_events"] == []
         assert inputs["completed_data_split"] is True
 
+    def test_account_path_adapter_drops_untyped_ledgers_and_split_flag(self) -> None:
+        trace = [{"session_id": 1, "equity": 100.0}]
+
+        inputs = account_path_metric_inputs(
+            {
+                "account_state_trace": trace,
+                "account_state_trace_complete": True,
+                "breach_events": "not-a-ledger",
+                "completed_data_split": "true",
+            }
+        )
+
+        assert inputs == {
+            "account_state_trace": trace,
+            "breach_events": None,
+            "completed_data_split": None,
+        }
+
     def test_empty_curve_raises(self) -> None:
         # Act / Assert
         with pytest.raises(ValueError, match="equity_curve"):
@@ -654,6 +795,18 @@ class TestCalculateMetricsAdapter:
         assert metrics.win_rate == pytest.approx(2 / 3)
         assert metrics.max_consec_loss == 1
         assert metrics.breach_rate == pytest.approx(0.5)
+
+    def test_lifecycle_close_without_optional_completion_fields_is_inferred(self) -> None:
+        metrics = calculate_metrics(
+            pd.Series([100.0, 102.0]),
+            trades=[{"type": "close", "position_id": "position-1", "pnl": 12.0}],
+        )
+
+        assert metrics.n_trades == 1
+        assert metrics.expectancy == pytest.approx(12.0)
+        assert metrics.extras["fill_count"] == 1.0
+        assert metrics.extras["incomplete_positions"] == 0.0
+        assert metrics.extras["entry_active"] == 1.0
 
     @pytest.mark.parametrize("breach_count", [False, "0", 0.0, -1])
     def test_rejects_malformed_breach_session_counts(self, breach_count: Any) -> None:

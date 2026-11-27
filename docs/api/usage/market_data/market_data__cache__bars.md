@@ -26,7 +26,7 @@ This page contains 6 public callable records owned by `market_data.cache.bars`. 
 
 **Observed usage:**
 
-1. [test fixture: `test_bar_cache_write_failure_preserves_completed_cache`](../../../../tests/integration/test_bar_cache_manifest.py#L30)
+1. [test fixture: `test_bar_cache_write_failure_preserves_completed_cache`](../../../../tests/integration/test_bar_cache_manifest.py#L35)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -46,7 +46,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_failed_manifest_publish_cannot_reuse_replaced_parquet`](../../../../tests/integration/test_bar_cache_manifest.py#L63)
+2. [test fixture: `test_failed_manifest_publish_cannot_reuse_replaced_parquet`](../../../../tests/integration/test_bar_cache_manifest.py#L68)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -292,7 +292,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_bar_cache_write_failure_preserves_completed_cache`](../../../../tests/integration/test_bar_cache_manifest.py#L45)
+1. [test fixture: `test_bar_cache_write_failure_preserves_completed_cache`](../../../../tests/integration/test_bar_cache_manifest.py#L50)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -308,7 +308,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     pd.testing.assert_frame_equal(loaded, original, check_freq=False)
 ```
 
-2. [test fixture: `test_failed_manifest_publish_cannot_reuse_replaced_parquet`](../../../../tests/integration/test_bar_cache_manifest.py#L73)
+2. [test fixture: `test_failed_manifest_publish_cannot_reuse_replaced_parquet`](../../../../tests/integration/test_bar_cache_manifest.py#L78)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -355,7 +355,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_bar_cache_write_failure_preserves_completed_cache`](../../../../tests/integration/test_bar_cache_manifest.py#L29)
+1. [test fixture: `test_bar_cache_write_failure_preserves_completed_cache`](../../../../tests/integration/test_bar_cache_manifest.py#L34)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -375,7 +375,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_failed_manifest_publish_cannot_reuse_replaced_parquet`](../../../../tests/integration/test_bar_cache_manifest.py#L62)
+2. [test fixture: `test_failed_manifest_publish_cannot_reuse_replaced_parquet`](../../../../tests/integration/test_bar_cache_manifest.py#L67)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

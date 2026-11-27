@@ -1,5 +1,6 @@
 """Regression checks for experiment run artifact admission."""
 
+import argparse
 import hashlib
 import importlib.util
 import json
@@ -14,7 +15,7 @@ from typing import Any, cast
 import numpy as np
 import pytest
 
-from experiments.runs import baseline_cache_rebuild, checkpoints
+from experiments.runs import baseline_cache_rebuild, checkpoints, runtime_metadata, state_store
 
 MODULE_PATH = Path(__file__).resolve().parents[3] / "experiments/runs/execution.py"
 SPEC = importlib.util.spec_from_file_location("experiment_run_controller", MODULE_PATH)
@@ -122,6 +123,17 @@ def test_worker_slot_distribution_uses_capacities_without_overbooking() -> None:
 def test_worker_slot_distribution_rejects_request_above_total_capacity() -> None:
     with pytest.raises(ValueError, match="exceeds the resource-derived capacity"):
         controller.distribute_worker_slots(4, {"gpuarm1": 1, "gpuarm2": 2})
+
+
+def test_worker_slot_distribution_is_deterministic_for_ties_and_zero_request() -> None:
+    assert controller.distribute_worker_slots(0, {"z-node": 0, "a-node": 0}) == {
+        "a-node": 0,
+        "z-node": 0,
+    }
+    assert controller.distribute_worker_slots(3, {"z-node": 2, "a-node": 2}) == {
+        "a-node": 2,
+        "z-node": 1,
+    }
 
 
 def test_worker_shutdown_signal_sets_the_stop_flag(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -253,15 +265,25 @@ def test_experiment_run_source_snapshot_fails_if_source_changes_during_snapshot(
 
 
 @pytest.mark.parametrize(
-    "steps,checkpoint,train_ok,gate_reason,expected",
+    "steps,checkpoint,train_ok,gate_reason,expected,tamper_checkpoint_after_manifest,manifest_config_hash_mismatch",
     [
-        (8192, b"checkpoint", True, None, True),
-        (8192, None, True, None, False),
-        (8192, b"", True, None, False),
-        (0, b"checkpoint", True, None, False),
-        (-1, b"checkpoint", True, None, False),
-        ("8192", b"checkpoint", True, None, False),
-        (8192, b"checkpoint", False, "peak_trailing_dd,max_loss_stopped_trading", False),
+        (8192, b"checkpoint", True, None, True, False, False),
+        (8192, None, True, None, False, False, False),
+        (8192, b"", True, None, False, False, False),
+        (0, b"checkpoint", True, None, False, False, False),
+        (-1, b"checkpoint", True, None, False, False, False),
+        ("8192", b"checkpoint", True, None, False, False, False),
+        (
+            8192,
+            b"checkpoint",
+            False,
+            "peak_trailing_dd,max_loss_stopped_trading",
+            False,
+            False,
+            False,
+        ),
+        (8192, b"checkpoint", True, None, False, True, False),
+        (8192, b"checkpoint", True, None, False, False, True),
     ],
 )
 def test_verify_run_artifacts(
@@ -272,6 +294,8 @@ def test_verify_run_artifacts(
     train_ok: bool,
     gate_reason: str | None,
     expected: bool,
+    tamper_checkpoint_after_manifest: bool,
+    manifest_config_hash_mismatch: bool,
 ) -> None:
     run = tmp_path / "one" / "timestamped-run"
     run.mkdir(parents=True)
@@ -352,11 +376,19 @@ def test_verify_run_artifacts(
                     "file_sha256": cache_sha256,
                 },
                 "checkpoint": {"sha256": checkpoint_hash},
-                "config": {"sha256": hashlib.sha256(config_text.encode()).hexdigest()},
+                "config": {
+                    "sha256": (
+                        "c" * 64
+                        if manifest_config_hash_mismatch
+                        else hashlib.sha256(config_text.encode()).hexdigest()
+                    )
+                },
             }
         ),
         encoding="utf-8",
     )
+    if tamper_checkpoint_after_manifest:
+        model_file.write_bytes(b"checkpoint changed after the run manifest was saved")
     fake_model = SimpleNamespace(
         num_timesteps=8192,
         action_space=SimpleNamespace(shape=(2,)),
@@ -375,6 +407,10 @@ def test_verify_run_artifacts(
     assert success is expected
     if gate_reason is not None:
         assert reason == f"training risk-survival gate failed: {gate_reason}"
+    if tamper_checkpoint_after_manifest:
+        assert reason == "missing valid training record/checkpoint at requested 8192 steps"
+    if manifest_config_hash_mismatch:
+        assert reason == "missing valid training record/checkpoint at requested 8192 steps"
     if expected:
         Path(str(cache_path) + ".hash").write_text("c" * 16 + "\n", encoding="utf-8")
         assert not controller.verify_run_artifacts(
@@ -461,6 +497,119 @@ def test_verify_run_artifacts_rejects_identity_hash_mismatch(tmp_path: Path) -> 
     )
     assert success is False
     assert "identity does not match" in reason
+
+
+@pytest.mark.parametrize(
+    ("key", "provenance_changes"),
+    [
+        ("variant__seedx", {}),
+        ("variant__seed7", {"variant": "other"}),
+        ("variant__seed7", {"seed": "7"}),
+        ("variant__seed7", {"seed": 8}),
+    ],
+)
+def test_artifact_admission_rejects_malformed_variant_or_seed_lineage(
+    tmp_path: Path, key: str, provenance_changes: dict[str, Any]
+) -> None:
+    identity = {"jobs": ["variant__seed7"], "steps": 100}
+    fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    provenance = {
+        "run_key": "variant__seed7",
+        "variant": "variant",
+        "seed": 7,
+        "requested_timesteps": 100,
+        "attempt": 1,
+        "experiment_run_fingerprint": fingerprint,
+        "identity": identity,
+        **provenance_changes,
+    }
+    (tmp_path / "attempt_provenance.json").write_text(json.dumps(provenance), encoding="utf-8")
+
+    admitted, reason = controller.verify_run_artifacts(
+        tmp_path,
+        key,
+        100,
+        expected_fingerprint=fingerprint,
+        expected_attempt=1,
+    )
+
+    assert admitted is False
+    assert reason == "attempt provenance does not match the expected experiment run"
+
+
+def test_artifact_admission_requires_complete_training_and_checkpoint_artifacts(
+    tmp_path: Path,
+) -> None:
+    identity = {"jobs": ["variant__seed7"], "steps": 100}
+    fingerprint = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+    (tmp_path / "attempt_provenance.json").write_text(
+        json.dumps(
+            {
+                "run_key": "variant__seed7",
+                "variant": "variant",
+                "seed": 7,
+                "requested_timesteps": 100,
+                "attempt": 1,
+                "experiment_run_fingerprint": fingerprint,
+                "identity": identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    admitted, reason = controller.verify_run_artifacts(
+        tmp_path,
+        "variant__seed7",
+        100,
+        expected_fingerprint=fingerprint,
+        expected_attempt=1,
+    )
+
+    assert admitted is False
+    assert reason == "missing valid training record/checkpoint at requested 100 steps"
+
+
+def test_experiment_run_dry_run_rejects_invalid_evaluation_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "repo"
+    (root / "config" / "base").mkdir(parents=True)
+    run_specs = root / "config" / "experiment_runs"
+    run_specs.mkdir()
+    (root / "config" / "base" / "default.yaml").write_text(
+        "data:\n  split:\n    train_end: '2025-12-31'\n    test_start: '2026-01-01'\n",
+        encoding="utf-8",
+    )
+    (root / "config" / "experiments.yaml").write_text(
+        "variants:\n  - name: control\n", encoding="utf-8"
+    )
+    variant_file = run_specs / "variants.txt"
+    variant_file.write_text("control\n", encoding="utf-8")
+    spec_path = run_specs / "invalid-evaluation.yaml"
+    spec_path.write_text(
+        "experiment_run_id: invalid_evaluation\n"
+        "variant_file: config/experiment_runs/variants.txt\n"
+        "variants: [control]\n"
+        "seeds: [7]\n"
+        "timesteps: 100\n"
+        "data_source: frames\n"
+        "split:\n  train_end: '2025-12-31'\n  test_start: '2026-01-01'\n"
+        "evaluation:\n  locked_oos_role: selection_acknowledged\n"
+        "  deterministic: true\n  selection_allowed: true\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(controller, "ROOT", root)
+    monkeypatch.setattr(controller, "resolve_worker_nodes", lambda *_args, **_kwargs: [])
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["experiment_run_controller.py", "--experiment-run-spec", str(spec_path), "--dry-run"],
+    )
+
+    with pytest.raises(
+        ValueError, match="report-only experiment split cannot be used for selection"
+    ):
+        controller.main()
 
 
 def test_failed_attempt_artifacts_are_hashed_and_remain_terminal_on_resume(
@@ -620,6 +769,28 @@ def test_latest_resumable_checkpoint_requires_matching_attempt_and_fingerprint(
 
     assert checkpoint == model / "ppo_ckpt_3000000_steps.zip"
     assert controller.latest_resumable_checkpoint(tmp_path, key, 2, "b" * 64) is None
+
+
+def test_archived_bootstrap_checkpoint_rejects_changed_lineage_copy(tmp_path: Path) -> None:
+    source = tmp_path / "parent" / "model" / "ppo_ckpt_1000_steps.zip"
+    source.parent.mkdir(parents=True)
+    with zipfile.ZipFile(source, "w") as archive:
+        archive.writestr("data", '{"num_timesteps":1000}')
+    run_dir = tmp_path / "successor"
+    checkpoint = {
+        "variant__seed7": {
+            "checkpoint_path": str(source),
+            "checkpoint_sha256": controller.sha256_file(source),
+        }
+    }
+
+    archived = controller.archive_initial_checkpoints(run_dir, checkpoint)
+    assert controller.archive_initial_checkpoints(run_dir, checkpoint) == archived
+
+    archived_path = archived["variant__seed7"]
+    archived_path.write_bytes(b"changed bootstrap checkpoint")
+    with pytest.raises(RuntimeError, match="archived bootstrap checkpoint changed"):
+        controller.archive_initial_checkpoints(run_dir, checkpoint)
 
 
 def test_experiment_run_source_files_include_untracked_runtime_modules(tmp_path: Path) -> None:
@@ -1100,3 +1271,170 @@ def test_baseline_cache_rebuild_cli_resolves_paths_and_prints_report(
         "report_path": (tmp_path / "reports/rebuild.json").resolve(),
     }
     assert json.loads(capsys.readouterr().out) == report
+
+
+def test_experiment_run_cli_rejects_unsafe_run_id_before_creating_outputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    monkeypatch.setattr(controller, "ROOT", repository)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["experiment_run_controller.py", "--experiment-run-id", "../outside"],
+    )
+
+    with pytest.raises(ValueError, match="unsafe experiment run id"):
+        controller.main()
+
+    assert not (repository / "outputs").exists()
+
+
+def test_experiment_run_cli_rejects_spec_outside_repository_before_reading_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = tmp_path / "repo"
+    repository.mkdir()
+    external_spec = tmp_path / "external.yaml"
+    monkeypatch.setattr(controller, "ROOT", repository)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["experiment_run_controller.py", "--experiment-run-spec", str(external_spec)],
+    )
+
+    with pytest.raises(ValueError, match="experiment run spec must be stored inside"):
+        controller.main()
+
+    assert not external_spec.exists()
+    assert not (repository / "outputs").exists()
+
+
+def test_experiment_run_package_entrypoint_delegates_to_controller(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from experiments.runs import execution, run_experiment
+
+    calls: list[str] = []
+
+    def main() -> int:
+        calls.append("main")
+        return 0
+
+    monkeypatch.setattr(execution, "main", main)
+
+    assert run_experiment() == 0
+    assert calls == ["main"]
+
+
+def test_runtime_metadata_records_installed_and_missing_packages_and_gpu(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def version(name: str) -> str:
+        if name == "pyyaml":
+            raise runtime_metadata.__dict__["importlib"].metadata.PackageNotFoundError(name)
+        return f"{name}-version"
+
+    monkeypatch.setattr(runtime_metadata.__dict__["importlib"].metadata, "version", version)
+    monkeypatch.setattr(
+        runtime_metadata.__dict__["subprocess"],
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout="GPU 0, GPU-uuid, 1.2"),
+    )
+
+    result = runtime_metadata.runtime_metadata()
+
+    assert result["packages"]["numpy"] == "numpy-version"
+    assert result["packages"]["pyyaml"] is None
+    assert result["gpu"] == "GPU 0, GPU-uuid, 1.2"
+    assert result["machine"]
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        OSError("nvidia-smi missing"),
+        runtime_metadata.__dict__["subprocess"].TimeoutExpired("nvidia-smi", 10),
+    ],
+)
+def test_runtime_metadata_treats_unavailable_gpu_probe_as_empty(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    monkeypatch.setattr(
+        runtime_metadata.__dict__["importlib"].metadata, "version", lambda name: name
+    )
+
+    def fail(*_args: object, **_kwargs: object) -> None:
+        raise error
+
+    monkeypatch.setattr(runtime_metadata.__dict__["subprocess"], "run", fail)
+
+    assert runtime_metadata.runtime_metadata()["gpu"] == ""
+
+
+def test_runtime_metadata_ignores_failed_gpu_probe_exit_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        runtime_metadata.__dict__["importlib"].metadata, "version", lambda name: name
+    )
+    monkeypatch.setattr(
+        runtime_metadata.__dict__["subprocess"],
+        "run",
+        lambda *_args, **_kwargs: SimpleNamespace(returncode=1, stdout="partial output"),
+    )
+
+    assert runtime_metadata.runtime_metadata()["gpu"] == ""
+
+
+def test_state_store_validates_and_expands_explicit_variants(tmp_path: Path) -> None:
+    args = argparse.Namespace(seeds="42, 7", timesteps=10, workers=2, n_envs=4)
+
+    jobs = state_store.validate_inputs(args, ["baseline", "candidate_1"])
+
+    assert [job["key"] for job in jobs] == [
+        "baseline__seed42",
+        "baseline__seed7",
+        "candidate_1__seed42",
+        "candidate_1__seed7",
+    ]
+    with pytest.raises(ValueError, match="unsafe variant"):
+        state_store.validate_inputs(args, ["../outside"])
+    with pytest.raises(ValueError, match="duplicate variants"):
+        state_store.validate_inputs(args, ["same", "same"])
+    with pytest.raises(ValueError, match="variant list empty"):
+        state_store.validate_inputs(args, [])
+    with pytest.raises(ValueError, match="seeds empty or duplicate"):
+        state_store.validate_inputs(argparse.Namespace(**(vars(args) | {"seeds": "42,42"})), ["v"])
+    with pytest.raises(ValueError, match="must be positive"):
+        state_store.validate_inputs(argparse.Namespace(**(vars(args) | {"timesteps": 0})), ["v"])
+
+
+def test_state_store_reads_variants_from_comment_aware_file(tmp_path: Path) -> None:
+    variant_file = tmp_path / "variants.txt"
+    variant_file.write_text("# comment\n baseline \n\ncandidate_2\n", encoding="utf-8")
+    args = argparse.Namespace(
+        variant_file=variant_file,
+        seeds="1",
+        timesteps=10,
+        workers=1,
+        n_envs=1,
+    )
+
+    jobs = state_store.validate_inputs(args)
+
+    assert [job["variant"] for job in jobs] == ["baseline", "candidate_2"]
+
+
+def test_state_store_atomic_json_record_and_manifest_roundtrip(tmp_path: Path) -> None:
+    target = tmp_path / "state.json"
+    events = tmp_path / "events.jsonl"
+    state_store.atomic_json(target, {"status": "pending"})
+    state_store.record(events, {"job": "candidate__seed42", "status": "started"})
+
+    assert state_store.read_manifest(target) == {"status": "pending"}
+    record = json.loads(events.read_text(encoding="utf-8"))
+    assert record["job"] == "candidate__seed42"
+    assert record["status"] == "started"
+    assert record["timestamp"].endswith("+00:00")

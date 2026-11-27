@@ -12,6 +12,11 @@ from market_data.cache.bars import (
     load_bar_cache,
     write_bar_cache,
 )
+from market_data.cache.storage import (
+    load_parquet_cache,
+    parquet_cache_manifest_path,
+    write_parquet_cache,
+)
 
 
 def test_bar_cache_write_failure_preserves_completed_cache(
@@ -119,3 +124,39 @@ def test_bar_cache_writer_rejects_empty_frames(tmp_path: Path) -> None:
         write_bar_cache(cache_path, empty, {})
 
     assert not cache_path.exists()
+
+
+def test_parquet_cache_rejects_duplicate_order_when_requested(tmp_path: Path) -> None:
+    cache_path = tmp_path / "ordered.parquet"
+    identity = {"cache_id": "ordered"}
+    frame = pd.DataFrame({"ts_ns": [1, 1, 2], "bid": [100.0, 100.1, 100.2]})
+    write_parquet_cache(cache_path, frame, identity, index=False, ordered_column="ts_ns")
+
+    assert (
+        load_parquet_cache(cache_path, identity, ordered_column="ts_ns", unique_order=True) is None
+    )
+
+
+def test_parquet_cache_writer_requires_order_column_when_configured(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="missing ordering column"):
+        write_parquet_cache(
+            tmp_path / "missing.parquet",
+            pd.DataFrame({"close": [100.0]}),
+            {"cache_id": "missing-order"},
+            ordered_column="ts_ns",
+        )
+
+
+def test_parquet_cache_treats_corrupt_manifest_and_unordered_rows_as_misses(
+    tmp_path: Path,
+) -> None:
+    identity = {"cache_id": "ordering"}
+    unordered_path = tmp_path / "unordered.parquet"
+    frame = pd.DataFrame({"ts_ns": [2, 1], "bid": [101.0, 100.0]})
+    write_parquet_cache(unordered_path, frame, identity, index=False, ordered_column="ts_ns")
+
+    assert load_parquet_cache(unordered_path, identity, ordered_column="ts_ns") is None
+
+    manifest_path = parquet_cache_manifest_path(unordered_path)
+    manifest_path.write_text("{invalid-json", encoding="utf-8")
+    assert load_parquet_cache(unordered_path, identity, ordered_column="ts_ns") is None

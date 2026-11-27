@@ -27,4 +27,4 @@ def configure_logging(log_path: str = "logs/mt5.log") -> None:
             diagnose=False,
         )
     except PermissionError:
-        logger.warning("Cannot write to {log_path}, falling back to stdout-only logging")
+        logger.warning("Cannot write to {}, falling back to stdout-only logging", log_path)

@@ -10,19 +10,43 @@ This page contains 4 public callable records owned by `trading.baselines.lstm_cl
 
 **Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMStrategy` · **Source:** [trading/baselines/lstm_classifier.py:156](../../../../trading/baselines/lstm_classifier.py#L156)
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_lstm_strategy_precomputes_thresholded_actions_and_replays_by_index`](../../../../tests/unit/trading/test_lstm_classifier_contracts.py#L118)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = LSTMStrategy(model=..., features=..., window=..., long_size=..., short_size=..., threshold=...)
+def test_lstm_strategy_precomputes_thresholded_actions_and_replays_by_index() -> None:
+    model = _DirectionModel()
+    features = pd.DataFrame({"x": [-1.0, -1.0, 1.0, 0.0, np.nan]})
+
+    strategy = LSTMStrategy(
+        cast(Any, model), features, window=2, long_size=0.75, short_size=-0.5, threshold=0.8
+    )
+
+    assert model.eval_called
+    assert not model.seen_nan
+    assert [strategy.act_at(index) for index in range(len(features))] == [
+        0.0,
+# … caller assertions omitted …
 ```
 
-**Lifecycle context:** Fixed-position-size strategy driven by a trained classifier.
+2. [test fixture: `test_lstm_strategy_neutral_probabilities_do_not_cross_action_threshold`](../../../../tests/unit/trading/test_lstm_classifier_contracts.py#L144)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+def test_lstm_strategy_neutral_probabilities_do_not_cross_action_threshold() -> None:
+    model = _DirectionModel()
+    features = pd.DataFrame({"x": [0.0, 0.0, 0.0]})
+
+    strategy = LSTMStrategy(cast(Any, model), features, window=1, threshold=0.99)
+
+    assert [strategy.act_at(index) for index in range(len(features))] == [0.0, 0.0, 0.0]
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -37,19 +61,22 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Exact API:** {py:obj}`trading.baselines.lstm_classifier.LSTMSweepClassifier` · **Source:** [trading/baselines/lstm_classifier.py:114](../../../../trading/baselines/lstm_classifier.py#L114)
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_lstm_classifier_forward_returns_three_direction_logits`](../../../../tests/unit/trading/test_lstm_classifier_contracts.py#L84)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-instance = LSTMSweepClassifier(n_features=..., hidden_size=..., num_layers=..., dropout=...)
+def test_lstm_classifier_forward_returns_three_direction_logits() -> None:
+    model = LSTMSweepClassifier(n_features=2, hidden_size=3, num_layers=2, dropout=0.25)
+
+    logits = model(torch.zeros((4, 5, 2)))
+
+    assert logits.shape == (4, 3)
 ```
 
-**Lifecycle context:** Small LSTM over feature windows producing a 3-class direction logit.
-
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 
@@ -82,19 +109,48 @@ The input, output, and error contract above is the safe boundary for a caller. F
   float32 and ``y`` is ``(n_samples,)`` int64 with values in {-1, 0, 1}.
   ```
 
-**Usage status:** No statically resolved project call site or source example was found. This entry is documented as an available contract, not as a tested end-user recipe.
+**Observed usage:**
 
-**Invocation shape (placeholders):**
+1. [test fixture: `test_sweep_dataset_uses_first_future_crossing_and_zero_fills_features`](../../../../tests/unit/trading/test_lstm_classifier_contracts.py#L43)
 
-Replace `...` with values that satisfy the input contract. This syntax guide is not a runnable example; the linked project call sites above are the verified recipes when available.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-result = build_sweep_dataset(bars=..., features=..., window=..., horizon=...)
+# … caller setup omitted …
+    )
+    monkeypatch.setattr(
+        "trading.baselines.lstm_classifier.detect_session_levels", lambda _bars: levels
+    )
+
+    x, y = build_sweep_dataset(bars, features, window=2, horizon=2)
+
+    assert x.dtype == torch.float32
+    assert y.dtype == torch.int64
+    assert y.tolist() == [1, -1, 1]
+    assert x[0, :, 0].tolist() == [1.0, 0.0]
 ```
 
-**Lifecycle context:** This is a standalone API owned by the module shown above. Use its documented inputs, outputs, and failure behavior together with the linked domain guide.
+2. [test fixture: `test_sweep_dataset_handles_missing_levels_and_rejects_unusable_inputs`](../../../../tests/unit/trading/test_lstm_classifier_contracts.py#L68)
 
-The input, output, and error contract above is the safe boundary for a caller. Follow the source and domain guide before integrating it; this page does not invent example values or side effects.
+Source excerpt (not standalone); follow the linked caller for imports and setup.
+
+```python
+# … caller setup omitted …
+    monkeypatch.setattr(
+        "trading.baselines.lstm_classifier.detect_session_levels", lambda _bars: no_levels
+    )
+
+    with pytest.raises(ValueError, match="No valid session levels"):
+        build_sweep_dataset(bars, features, window=2, horizon=1)
+
+    partial_levels = no_levels.copy()
+    partial_levels.loc[bars.index[-1], "asian_high"] = 100.0
+    monkeypatch.setattr(
+        "trading.baselines.lstm_classifier.detect_session_levels", lambda _bars: partial_levels
+# … caller assertions omitted …
+```
+
+These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
 
 **Workflow context:**
 

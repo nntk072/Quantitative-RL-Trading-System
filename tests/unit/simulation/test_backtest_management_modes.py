@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import NoReturn
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -9,10 +11,12 @@ from simulation.backtest.accounting import stamp_exit
 from simulation.backtest.protective_events import (
     _advance_management_modes,
     _apply_tp_management,
+    process_protective_and_account_events,
 )
 from simulation.backtest.runtime import BacktestSettings, BacktestState
 from trading import AccountState
-from trading.execution import CostModel, Position
+from trading.execution import Broker, CostModel, Position
+from trading.risk import FTMOGuardrails
 
 
 def _settings() -> BacktestSettings:
@@ -154,3 +158,65 @@ def test_deferred_modes_advance_from_excursion_and_new_confirmed_swing() -> None
 
     assert position.sl_mode == "trailing"
     assert position.tp_mode == "trailing"
+
+
+def test_eod_progress_threshold_resets_stale_counter_when_favorable_progress_advances() -> None:
+    settings = replace(
+        _settings(),
+        eod_risk={
+            "progress_threshold_atr": 0.25,
+            "max_loss_usd": 1_000_000.0,
+            "breakeven_trigger_r": 100.0,
+        },
+    )
+    position = Position(
+        direction=1,
+        size=1.0,
+        entry_price=100.0,
+        margin_used=2.0,
+        position_id="stale-progress",
+        entry_atr=2.0,
+        last_progress_favorable=0.0,
+        stale_counter=4,
+        sl_price=98.0,
+        sl_initial_price=98.0,
+    )
+    state = BacktestState(
+        account=AccountState(initial_balance=100_000.0),
+        position=position,
+    )
+    time = pd.Timestamp("2026-01-05T10:00:00Z")
+
+    def unexpected_fill(*_args: object, **_kwargs: object) -> NoReturn:
+        raise AssertionError("unexpected execution fill")
+
+    should_stop = process_protective_and_account_events(
+        state,
+        settings,
+        Broker(cost_model=settings.cost_model),
+        FTMOGuardrails(),
+        pd.DataFrame(index=[time, time + pd.Timedelta(minutes=1)]),
+        pd.Series({"open": 100.0, "high": 101.0, "low": 99.9, "close": 100.5}),
+        feature_row=None,
+        i=0,
+        bar_time=time,
+        bar_duration=pd.Timedelta(minutes=1),
+        session=0,
+        is_ny=False,
+        bar_quote=(100.5, 100.5),
+        entry_time=time - pd.Timedelta(minutes=1),
+        position_active_in_bar=True,
+        full_bar_available_after_entry=True,
+        execution_rng=np.random.default_rng(0),
+        resolve_bar_execution=unexpected_fill,
+        fill_quote_event=unexpected_fill,
+        sl_tp_fill_quote=unexpected_fill,
+        bar_spread_price_units=lambda *_args: None,
+        is_last_ny_bar=lambda *_args: False,
+        eod_guard_due=False,
+    )
+
+    assert should_stop is False
+    assert state.position is position
+    assert position.last_progress_favorable == 1.0
+    assert position.stale_counter == 0

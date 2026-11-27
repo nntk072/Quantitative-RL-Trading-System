@@ -11,8 +11,8 @@ The job combines unit and integration data, compares each product package and
 the product aggregate with the main baseline in
 `tools/quality/coverage_baseline.json`, and fails if line coverage falls below
 that baseline. Branch coverage is reported but is not gated. The product floor
-target is 100% line coverage, which is not yet met; the regression gate is the
-enforced rule today.
+target remains 100% line coverage; the main-baseline regression rule is the
+enforced gate today.
 
 ## Latest measured coverage
 
@@ -50,13 +50,23 @@ the reason must be listed here. An unlisted exclusion is a review finding.
 
 | File | Scope | Reason |
 |---|---|---|
-| `learning/rl/feature_graph.py` | line 63, `FeatureGraphCache._capture` | Needs CUDA graph capture (`torch.cuda.CUDAGraph`, side streams). Covered by GPU runs. |
-| `learning/rl/feature_graph.py` | line 141, `GraphedForwardCache._capture` | Needs CUDA graph capture. Covered by GPU runs. |
-| `learning/rl/update_graph.py` | line 27, `_StepGraph.__init__` | Needs CUDA graph capture of the PPO minibatch step. Covered by GPU runs. |
-| `learning/rl/update_graph.py` | line 75, `_StepGraph._step` | Runs only inside the CUDA graph capture above. |
+| `live/paper/__init__.py` | line 3, empty package marker | Declares no exports and has no runtime behavior. |
+| `experiments/provenance/__init__.py` | line 3, empty package marker | Declares no exports and has no runtime behavior. |
+| `simulation/backtest/cross_validation/utils/__init__.py` | line 3, empty package marker | Declares no exports and has no runtime behavior. |
+| `integrations/mt5/adapters/data.py` | lines 16, 25, abstract method bodies | Abstract interfaces are exercised through concrete adapters; these base raises have no implementation behavior. |
+| `integrations/mt5/adapters/strategy.py` | line 20, abstract method body | Abstract interface is exercised through concrete strategies; the base raise has no implementation behavior. |
+| `integrations/mt5/adapters/trader.py` | lines 19, 32, 45, 58, 71, 84, abstract method bodies | Abstract interfaces are exercised through concrete traders; these base raises have no implementation behavior. |
+| `features/pipeline/feature_matrix_builder.py` | line 887, matrix normalization persistence postcondition | Every valid path with `fit_state_path` captures the matrix fit before reaching this invariant guard; it only detects an internal control-flow regression. |
+| `trading/policy/config.py` | line 146, optional max-loss percentage guard | The frozen config's `__post_init__` always resolves the optional input to a percentage before `validate()` can run. |
+| `market_data/quality_audit.py` | lines 389-391, pandas cross-tab key invariant | `DataFrame.value_counts()` over the fixed two-column frame yields a two-element tuple; malformed keys require violating the library contract. |
+| `features/technical/indicators.py` | line 354, non-native session clock timezone guard | The called clock resolver returns an aware index for supported non-native clocks and rejects naive FTMO indexes first. |
 
-The replay-cache logic around each capture is covered on CPU by
-`tests/unit/learning/test_graph_replay_cache.py`, which fakes the capture step.
+CPU fakes in `tests/unit/learning/test_graph_replay_cache.py` exercise the
+capture orchestration and replay-cache logic without requiring CUDA. The
+PPO minibatch math is exercised with a CPU policy and fake capture APIs in
+`tests/unit/learning/test_update_graph_fake_capture.py`. Hardware replay parity
+remains a separate CUDA validation concern; it does not justify excluding the
+CPU-executable math and orchestration from product line coverage.
 
 ## Not yet excluded, and not yet covered
 

@@ -805,7 +805,7 @@ def _write_split(
         phase_timings[f"{phase_prefix}interactive_html"] = time.perf_counter() - phase_start
     phase_start = time.perf_counter()
     if not trades.empty and (save_plots or save_html):
-        from evaluation.plotting.trade_plots import write_trade_diagnostics
+        from evaluation.plotting.diagnostics.trade import write_trade_diagnostics
 
         write_trade_diagnostics(
             split_dir,
@@ -821,7 +821,7 @@ def _write_split(
         )
 
     if not trades.empty:
-        from evaluation.plotting.distribution_plots import write_distribution_artifacts
+        from evaluation.plotting.diagnostics.distributions import write_distribution_artifacts
         from evaluation.reporting.diagnostics import (
             write_bootstrap_cis,
             write_calibration_artifacts,

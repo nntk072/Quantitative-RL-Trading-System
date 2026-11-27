@@ -16,7 +16,7 @@ from decisioning.trade_setup import NO_TRADE_ID, build_trade_setup_action_schema
 from features.context.trade_setup_candidates import trade_setup_candidate_feature_columns
 from market_data.loading.ticks import TickBook
 from simulation.backtest import policy_actions
-from simulation.environment import entry_order_runtime
+from simulation.environment.entries import orders as entry_orders
 from trading.execution import CostModel
 from trading.strategies.baseline import BaselineStrategy
 
@@ -59,7 +59,7 @@ def test_rejected_pending_limit_has_matching_cancel_reject_and_account_context(
             exit_mode="structural",
         )
 
-    monkeypatch.setattr(entry_order_runtime, "place_strategy_order", reject_tp)
+    monkeypatch.setattr(entry_orders, "place_strategy_order", reject_tp)
     monkeypatch.setattr(policy_actions, "place_strategy_order", reject_tp)
 
     schema = build_trade_setup_action_schema(

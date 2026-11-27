@@ -13,6 +13,7 @@ api_paths:
 - features/context/swing_retracement.py
 - features/context/trade_setup_candidates.py
 - features/contracts.py
+- features/input_view.py
 - features/pipeline/feature_build_inputs.py
 - features/pipeline/feature_cache_identity.py
 - features/pipeline/feature_matrix_builder.py
@@ -34,18 +35,14 @@ api_paths:
 caller_paths:
 - tests/unit/simulation/test_policy_action_coverage.py
 - tests/unit/features/test_causal_prefix_invariance.py
+- tests/unit/evaluation/test_baseline_stop_features.py
+- tests/unit/live/test_rl_bridge.py
+- tests/unit/simulation/test_event_driven_backtest_coverage.py
 - tests/unit/training/test_observation_memmap.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py
 - tests/integration/backtest/test_market_entry_fill_event_parity.py
 - tests/integration/backtest/test_market_order_rejection_parity.py
 - tests/integration/backtest/test_pending_limit_rejection_parity.py
-- evaluation/plotting/chart_indicators.py
-- evaluation/plotting/chart_overlays.py
-- evaluation/plotting/data_plots.py
-- evaluation/plotting/interactive_po3.py
-- evaluation/plotting/order_chart_data.py
-- evaluation/plotting/overlay_events.py
-- evaluation/plotting/po3_plots.py
 - evaluation/reanalysis/checkpoint_reanalysis.py
 - evaluation/reanalysis/datasets.py
 - evaluation/reanalysis/provenance.py
@@ -61,21 +58,21 @@ caller_paths:
 - simulation/backtest/event_driven_backtest.py
 - simulation/backtest/policy_actions.py
 - simulation/entry_evidence.py
-- simulation/environment/action_intent_runtime.py
-- simulation/environment/action_runtime.py
+- simulation/environment/entries/action_intent.py
+- simulation/environment/actions/decoding.py
 - simulation/environment/bundles.py
 - simulation/environment/candidate_geometry_observation.py
-- simulation/environment/diagnostics_runtime.py
-- simulation/environment/entry_order_runtime.py
-- simulation/environment/entry_runtime.py
-- simulation/environment/episode_runtime.py
+- simulation/environment/diagnostics/runtime.py
+- simulation/environment/entries/orders.py
+- simulation/environment/entries/lifecycle.py
+- simulation/environment/episode/lifecycle.py
 - simulation/environment/observation_arrays_initialization.py
 - simulation/environment/step_action_execution.py
-- simulation/environment/step_constraints_runtime.py
-- simulation/environment/step_end_runtime.py
-- simulation/environment/step_info_runtime.py
+- simulation/environment/episode/constraints.py
+- simulation/environment/episode/end.py
+- simulation/environment/episode/info.py
 - simulation/environment/strategy_initialization.py
-- simulation/environment/trade_entry_record_runtime.py
+- simulation/environment/positions/entry_record.py
 - tests/architecture/test_functional_filename_contracts.py
 - tests/architecture/test_public_imports.py
 - tests/integration/backtest/test_agent_selected_entry_execution.py
@@ -106,6 +103,7 @@ caller_paths:
 - tests/unit/features/test_entry_ideas.py
 - tests/unit/features/test_feature_build_inputs.py
 - tests/unit/features/test_feature_cache_and_fit_scope.py
+- tests/unit/features/test_feature_matrix_builder_remaining_contracts.py
 - tests/unit/features/test_fold_normalize.py
 - tests/unit/features/test_htf_alignment.py
 - tests/unit/features/test_htf_sweeps.py
@@ -149,6 +147,13 @@ caller_paths:
 - training/runner/feature_preparation.py
 - training/runner/seed_runtime.py
 - training/runner/walk_forward_validation.py
+- evaluation/plotting/data/exploration.py
+- evaluation/plotting/data/po3.py
+- evaluation/plotting/interactive/po3.py
+- evaluation/plotting/orders/events.py
+- evaluation/plotting/orders/geometry.py
+- evaluation/plotting/orders/overlays.py
+- evaluation/plotting/shared/indicators.py
 source_scopes:
   - {path: features/pipeline, study_ids: [features.family_schema_and_cache, features.causal_availability, features.fit_scope_and_missing_values, features.prefix_causality_and_fit_scope]}
   - {path: features/technical, study_ids: [features.causal_availability, features.technical_indicators_window_and_units, features.confirmed_swings_and_structure, features.higher_timeframe_sweep_confirmation]}
@@ -166,7 +171,7 @@ studies:
     type: code_check
     question: Do feature families produce the declared ordered schema and bind all behavior-changing inputs to cache identity?
     source_paths: [features/pipeline/feature_matrix_builder.py, features/pipeline/schema.py, features/pipeline/feature_cache_identity.py]
-    checks: [tests/unit/features/test_feature_cache_and_fit_scope.py, tests/unit/features/test_cache_hash_full_column.py]
+    checks: [tests/unit/features/test_feature_cache_and_fit_scope.py, tests/unit/features/test_cache_hash_full_column.py, tests/unit/features/test_feature_matrix_builder_remaining_contracts.py]
     outputs: [feature_schema_and_cache_check]
   - id: features.causal_availability
     type: audit

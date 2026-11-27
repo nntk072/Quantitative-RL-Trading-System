@@ -245,7 +245,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_mark_to_market_uses_account_currency_point_value`](../../../../tests/unit/trading/test_cost_model.py#L155)
+2. [test fixture: `test_mark_to_market_uses_account_currency_point_value`](../../../../tests/unit/trading/test_cost_model.py#L163)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
