@@ -78,7 +78,7 @@ def test_multi_symbol_manager_adds_and_removes_symbol_sources(
     manager = manager_module.MultiSymbolManager(
         login="login",
         server="server",
-        password="password",
+        password="password",  # pragma: allowlist secret
         terminal_path="terminal",
         symbols=[],
         timeframe=mt5.TIMEFRAME_M1,
@@ -106,7 +106,7 @@ def test_multi_symbol_manager_updates_only_available_volatility_metrics(
     manager = manager_module.MultiSymbolManager(
         login="login",
         server="server",
-        password="password",
+        password="password",  # pragma: allowlist secret
         terminal_path="terminal",
         symbols=["US100", "US500", "EURUSD"],
     )
@@ -137,7 +137,7 @@ def test_multi_symbol_manager_returns_independent_snapshots_and_contains_add_fai
     manager = manager_module.MultiSymbolManager(
         login="login",
         server="server",
-        password="password",
+        password="password",  # pragma: allowlist secret
         terminal_path="terminal",
         symbols=["US100"],
     )

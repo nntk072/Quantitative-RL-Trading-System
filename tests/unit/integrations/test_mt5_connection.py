@@ -69,12 +69,18 @@ def test_uninitialized_terminal_is_initialized_before_requested_account_login(
     )
 
     mt5_connection.ensure_mt5_logged_in(
-        login=222, password="secret", server="demo", terminal_path="terminal"
+        login=222,
+        password="secret",  # pragma: allowlist secret
+        server="demo",
+        terminal_path="terminal",
     )
 
     assert calls == [
         ("initialize", {"path": "terminal"}),
-        ("login", {"login": 222, "password": "secret", "server": "demo"}),
+        (
+            "login",
+            {"login": 222, "password": "secret", "server": "demo"},
+        ),  # pragma: allowlist secret
     ]
 
 
@@ -89,7 +95,10 @@ def test_failed_terminal_initialization_stops_before_account_login(
 
     with pytest.raises(RuntimeError, match="Failed to initialize MT5"):
         mt5_connection.ensure_mt5_logged_in(
-            login=123, password="secret", server="demo", terminal_path="missing"
+            login=123,
+            password="secret",  # pragma: allowlist secret
+            server="demo",
+            terminal_path="missing",
         )
 
     assert calls == []
@@ -109,10 +118,15 @@ def test_login_failure_reports_runtime_error(monkeypatch: pytest.MonkeyPatch) ->
 
     with pytest.raises(RuntimeError, match="Failed to login to MT5"):
         mt5_connection.ensure_mt5_logged_in(
-            login="456", password="secret", server="demo", terminal_path="terminal"
+            login="456",
+            password="secret",  # pragma: allowlist secret
+            server="demo",
+            terminal_path="terminal",
         )
 
-    assert calls == [{"login": 456, "password": "secret", "server": "demo"}]
+    assert calls == [
+        {"login": 456, "password": "secret", "server": "demo"}
+    ]  # pragma: allowlist secret
 
 
 def test_non_numeric_login_is_rejected_before_account_lookup(
@@ -124,7 +138,10 @@ def test_non_numeric_login_is_rejected_before_account_lookup(
 
     with pytest.raises(ValueError, match="LOGIN must be an integer"):
         mt5_connection.ensure_mt5_logged_in(
-            login="account-name", password="secret", server="demo", terminal_path="terminal"
+            login="account-name",
+            password="secret",  # pragma: allowlist secret
+            server="demo",
+            terminal_path="terminal",
         )
 
     assert calls == []

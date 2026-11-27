@@ -71,7 +71,7 @@ def test_symbol_manager_records_source_and_construction_failures(
     manager = manager_module.MultiSymbolManager(
         login="login",
         server="server",
-        password="password",
+        password="password",  # pragma: allowlist secret
         terminal_path="terminal",
         symbols=["US100", "US500", "EURUSD"],
     )
