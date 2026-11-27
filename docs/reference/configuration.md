@@ -196,6 +196,7 @@ is read by every listed package.
 | `env.max_entries_per_session` | `integer` | `0` | `simulation/environment and decisioning` |
 | `env.max_episode_steps` | `null` | `null` | `simulation/environment and decisioning` |
 | `env.n_envs` | `integer` | `8` | `simulation/environment and decisioning` |
+| `env.native_data_abi.enabled` | `boolean` | `false` | `simulation/environment and decisioning` |
 | `env.obs_window` | `integer` | `60` | `simulation/environment and decisioning` |
 | `env.observation_age_scale_bars` | `integer` | `60` | `simulation/environment and decisioning` |
 | `env.observation_schema_version` | `string` | `"account-state-v2"` | `simulation/environment and decisioning` |
