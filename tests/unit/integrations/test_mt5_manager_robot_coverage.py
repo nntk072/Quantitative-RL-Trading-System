@@ -40,7 +40,7 @@ def _manager(monkeypatch: pytest.MonkeyPatch, symbols: list[str] | None = None) 
     return manager_module.MultiSymbolManager(
         login="login",
         server="server",
-        password="password",
+        password="password",  # pragma: allowlist secret
         terminal_path="terminal",
         symbols=symbols or [],
         timeframe=cast(Any, mt5.TIMEFRAME_H1),

@@ -35,7 +35,10 @@ def test_existing_account_skips_reinitialization_and_login(monkeypatch: pytest.M
     monkeypatch.setattr(mt5, "login", lambda **kwargs: calls.append(kwargs), raising=False)
 
     mt5_connection.ensure_mt5_logged_in(
-        login="123", password="secret", server="demo", terminal_path="terminal"
+        login="123",
+        password="secret",  # pragma: allowlist secret
+        server="demo",
+        terminal_path="terminal",
     )
 
     assert calls == []

@@ -50,7 +50,7 @@ def test_multi_symbol_manager_registers_selected_sources_and_skips_unavailable(
     manager = manager_module.MultiSymbolManager(
         login="login",
         server="server",
-        password="password",
+        password="password",  # pragma: allowlist secret
         terminal_path="terminal",
         symbols=["US100", "US500"],
         timeframe=mt5.TIMEFRAME_M5,
