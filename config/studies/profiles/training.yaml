@@ -45,6 +45,7 @@ api_paths:
 - training/setup/policy_diagnostics.py
 caller_paths:
 - tests/unit/training/test_observation_memmap.py
+- tests/unit/training/test_survival_gate_remaining_runtime_contracts.py
 - tests/unit/training/test_tick_execution_preflight.py
 - experiments/runs/baseline_cache_rebuild.py
 - experiments/runs/named_cache_rebuild.py

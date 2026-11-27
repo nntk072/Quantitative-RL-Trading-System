@@ -33,6 +33,8 @@ api_paths:
 - simulation/environment/trading_environment_factory.py
 - simulation/environment/worker.py
 caller_paths:
+- tests/unit/simulation/test_environment/test_candidate_geometry_observation_remaining_contracts.py
+- tests/unit/simulation/test_policy_action_coverage.py
 - tests/unit/training/test_observation_memmap.py
 - tests/unit/training/test_debug_trace.py
 - tests/integration/backtest/test_action_driven_partial_tp_tick_ledger.py

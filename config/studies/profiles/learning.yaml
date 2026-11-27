@@ -36,9 +36,11 @@ caller_paths:
 - tests/unit/learning/test_checkpoint_resume.py
 - tests/unit/learning/test_feature_graph.py
 - tests/unit/learning/test_host_mask_check.py
+- tests/unit/learning/test_learning_callbacks_coverage.py
 - tests/unit/learning/test_learning_contracts.py
 - tests/unit/learning/test_learning_supervised_reference.py
 - tests/unit/learning/test_overlap_collect.py
+- tests/unit/learning/test_rl_edge_contracts.py
 - tests/unit/learning/test_survival_objective_config.py
 - tests/unit/learning/test_update_graph.py
 - tests/unit/models/test_action_schema_checkpoint.py

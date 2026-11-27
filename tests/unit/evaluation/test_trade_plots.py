@@ -12,13 +12,13 @@ matplotlib.use("Agg")
 import pandas as pd
 import pytest
 
+from evaluation import plotting as plotting_package
 from evaluation.metrics.trade_diagnostics import (
     closed_trades_table,
     mae_mfe_table,
     rolling_win_rate,
     weekday_hour_pnl,
 )
-from evaluation import plotting as plotting_package
 from evaluation.plotting.trade_plots import (
     plot_hold_time_pnl,
     plot_mae_mfe,
