@@ -70,6 +70,7 @@ def quality_parser() -> argparse.ArgumentParser:
     diff = sub.add_parser("coverage-diff")
     diff.add_argument("report", type=Path)
     diff.add_argument("--base", default="main")
+    diff.add_argument("--full", action="store_true", help="validate a complete imported report")
     baseline = sub.add_parser("baseline-candidate")
     baseline.add_argument("manifest", type=Path)
     baseline.add_argument("--ref", default="main")
@@ -347,7 +348,7 @@ def _coverage_reporting_command(args: argparse.Namespace) -> dict[str, Any]:
             return source_quality_inventory()
         case "coverage-diff":
             return {
-                **analyze_local_coverage(args.report, args.base, False),
+                **analyze_local_coverage(args.report, args.base, args.full),
                 "qualification": "Imported report; source identity unverified",
             }
         case "baseline-candidate":

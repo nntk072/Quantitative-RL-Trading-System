@@ -111,3 +111,30 @@ existing CPU index and checks accelerator and non-accelerator drift. Resolve
 and sync are explicit network-capable operations; the primary runtime
 environment and lock remain unchanged. Optional native tools require an
 existing build configuration, actual instrumentation and local toolchain.
+
+## Hosted advisory groups
+
+Every push and pull-request opening, update or reopening runs the independent
+groups in `.github/workflows/advisory-quality.yml`. Matrix fail-fast is disabled;
+a failed group does not cancel other groups. The existing CI also runs a
+separate advisory coverage job reusing the required coverage artifact instead
+of repeating all tests. Neither advisory workflow nor the advisory coverage
+job is a dependency of the required `ci-success` gate. Do not add these
+advisory check names to required branch-protection rules.
+
+Hosted groups: infrastructure, static analysis, technical debt, security,
+scientific parity, property/fuzz, bounded mutation, native/environment,
+Coverity and CodeQL. CodeQL runs on the hosted runner using the official
+action without uploading to Code Scanning. Coverity is attempted only when
+the licensed kit is installed; missing tools and unsupported hardware are
+not successful analyses. Native/environment checks inventory and plan;
+actual native/GPU tests require applicable targets and runners. Benchmark
+comparison remains explicit because comparable benchmark evidence cannot be
+invented on an ordinary CI runner.
+
+Findings remain advisory. Tool or test execution failures are visible
+separately from the existing mandatory CI. Fuzzing and mutation budgets are
+bounded; a timed-out campaign is incomplete, not a pass. Push and PR events
+both trigger runs, including when a push updates an open PR. Runs are not
+cancelled on new commits. Public CI artifacts retain status-only summaries
+for seven days; raw analyzer reports and captured source are not uploaded.
