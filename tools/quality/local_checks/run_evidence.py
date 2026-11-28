@@ -22,18 +22,18 @@ HERE = Path(__file__).resolve().parent
 OUTPUT = ROOT / "outputs/quality-local"
 
 
-def digest(path: Path) -> str:
+def quality_file_sha256(path: Path) -> str:
     """Hash a file in bounded memory."""
     with path.open("rb") as stream:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def load(path: Path) -> Any:
+def read_quality_json(path: Path) -> Any:
     """Read JSON; invalid evidence raises instead of producing an empty report."""
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def dump(path: Path, data: Any) -> None:
+def write_quality_json(path: Path, data: Any) -> None:
     """Publish complete JSON atomically, never permitting nonfinite numeric values."""
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(f".{path.name}.{uuid4().hex}.tmp")
@@ -41,50 +41,50 @@ def dump(path: Path, data: Any) -> None:
     temp.replace(path)
 
 
-def git(*args: str, root: Path = ROOT) -> bytes:
+def quality_git(*args: str, root: Path = ROOT) -> bytes:
     """Run a read-only Git query in the repository."""
     return subprocess.check_output(["git", *args], cwd=root)
 
 
-def paths(root: Path = ROOT) -> list[str]:
+def quality_source_paths(root: Path = ROOT) -> list[str]:
     """Enumerate tracked and unignored working-tree files, including local additions."""
-    raw = git("ls-files", "-z", "--cached", "--others", "--exclude-standard", root=root)
+    raw = quality_git("ls-files", "-z", "--cached", "--others", "--exclude-standard", root=root)
     names = {os.fsdecode(name) for name in raw.split(b"\0") if name}
     return sorted(p for p in names if (root / p).is_file() or (root / p).is_symlink())
 
 
-def identity(root: Path = ROOT) -> dict[str, Any]:
+def quality_source_identity(root: Path = ROOT) -> dict[str, Any]:
     """Fingerprint the exact working tree and dependency lock, not just HEAD."""
     source = hashlib.sha256()
-    for name in paths(root):
+    for name in quality_source_paths(root):
         path = root / name
         value = (
             hashlib.sha256(os.fsencode(os.readlink(path))).hexdigest()
             if path.is_symlink()
-            else digest(path)
+            else quality_file_sha256(path)
         )
         source.update(os.fsencode(name) + b"\0" + value.encode() + b"\0")
     lock = root / "uv.lock"
     policy = HERE / "policy.json"
     return {
-        "source_commit": git("rev-parse", "HEAD", root=root).decode().strip(),
-        "source_branch": git("branch", "--show-current", root=root).decode().strip() or "detached",
+        "source_commit": quality_git("rev-parse", "HEAD", root=root).decode().strip(),
+        "source_branch": quality_git("branch", "--show-current", root=root).decode().strip() or "detached",
         "tree_sha256": source.hexdigest(),
-        "dirty": bool(git("status", "--porcelain", "--untracked-files=normal", root=root)),
-        "lock_sha256": digest(lock) if lock.is_file() else None,
-        "policy_sha256": digest(policy) if policy.is_file() else None,
+        "dirty": bool(quality_git("status", "--porcelain", "--untracked-files=normal", root=root)),
+        "lock_sha256": quality_file_sha256(lock) if lock.is_file() else None,
+        "policy_sha256": quality_file_sha256(policy) if policy.is_file() else None,
         "platform": platform.platform(),
         "architecture": platform.machine(),
         "python": sys.version,
     }
 
 
-def timestamp() -> str:
+def quality_timestamp() -> str:
     """Return an unambiguous UTC timestamp for local evidence."""
     return datetime.now(UTC).isoformat()
 
 
-def tool_versions() -> dict[str, str | None]:
+def quality_tool_versions() -> dict[str, str | None]:
     """Record relevant installed distribution versions without running installers."""
     result: dict[str, str | None] = {}
     for name in ("coverage", "pytest", "pytest-cov", "hypothesis", "mutmut", "ruff", "mypy"):
@@ -95,13 +95,13 @@ def tool_versions() -> dict[str, str | None]:
     return result
 
 
-def executable(name: str) -> str | None:
+def quality_executable(name: str) -> str | None:
     """Prefer the selected Python environment before searching PATH."""
     local = Path(sys.executable).parent / name
     return str(local) if local.is_file() and os.access(local, os.X_OK) else shutil.which(name)
 
 
-def execute(
+def run_quality_process(
     command: list[str],
     out: Path,
     timeout: int,
@@ -114,7 +114,7 @@ def execute(
     if timeout <= 0 or not command:
         raise ValueError("Invalid execution budget or command")
     out.parent.mkdir(parents=True, exist_ok=True)
-    exe = executable(command[0])
+    exe = quality_executable(command[0])
     if not exe:
         return {"status": "missing_tool", "command": command[0]}
     start = time.monotonic()
@@ -150,21 +150,21 @@ def execute(
     }
 
 
-def run_dir() -> Path:
+def create_quality_run() -> Path:
     """Allocate an isolated directory in the ignored local evidence store."""
     result = OUTPUT / f"{datetime.now(UTC):%Y%m%dT%H%M%S}-{uuid4().hex[:12]}"
     result.mkdir(parents=True)
     return result
 
 
-def finish(
+def publish_quality_manifest(
     out: Path, before: dict[str, Any], started: str, action: str, result: dict[str, Any]
 ) -> dict[str, Any]:
     """Bind outputs to the measured source state, refusing changed-tree success."""
-    after = identity()
+    after = quality_source_identity()
     unchanged = before == after
     artifacts = {
-        p.relative_to(out).as_posix(): digest(p)
+        p.relative_to(out).as_posix(): quality_file_sha256(p)
         for p in sorted(out.rglob("*"))
         if p.is_file() and not p.is_symlink() and p.name != "manifest.json"
     }
@@ -174,27 +174,27 @@ def finish(
         "run_id": out.name,
         "action": action,
         "started_at": started,
-        "finished_at": timestamp(),
-        "tool_versions": tool_versions(),
+        "finished_at": quality_timestamp(),
+        "tool_versions": quality_tool_versions(),
         "enforcement_mode": "advisory",
         "execution_status": result.get("status", "ok") if unchanged else "source_changed",
         "source_unchanged": unchanged,
         "result": result,
         "artifacts": artifacts,
     }
-    dump(out / "manifest.json", manifest)
+    write_quality_json(out / "manifest.json", manifest)
     return manifest
 
 
-def verify(manifest_path: Path) -> dict[str, Any]:
+def verify_quality_manifest(manifest_path: Path) -> dict[str, Any]:
     """Verify every referenced artifact; this establishes integrity, not authenticity."""
-    value = load(manifest_path)
+    value = read_quality_json(manifest_path)
     root = manifest_path.parent.resolve()
     if value.get("schema_version") != 1 or not value.get("source_unchanged"):
         raise ValueError("Invalid or inconsistent run manifest")
     artifacts = value["artifacts"]
     for name, expected in artifacts.items():
         path = root / name
-        if path.is_symlink() or not path.resolve().is_relative_to(root) or digest(path) != expected:
+        if path.is_symlink() or not path.resolve().is_relative_to(root) or quality_file_sha256(path) != expected:
             raise ValueError(f"Artifact integrity failure: {name}")
     return {"status": "ok", "manifest": str(manifest_path), "artifact_count": len(artifacts)}

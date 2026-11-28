@@ -42,14 +42,14 @@ ALIASES = {
 }
 
 
-def _count(value: Any) -> int:
+def _mutation_count(value: Any) -> int:
     """Validate an integer count without accepting booleans."""
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError("Mutation counts must be nonnegative integers")
     return value
 
 
-def _counts(raw: dict[str, Any], tool: str) -> dict[str, int | None]:
+def _mutation_counts(raw: dict[str, Any], tool: str) -> dict[str, int | None]:
     """Read known status counters, preserving unknown counters as null."""
     keys = {
         "killed": "caught" if tool == "cargo-mutants" else "killed",
@@ -62,7 +62,7 @@ def _counts(raw: dict[str, Any], tool: str) -> dict[str, int | None]:
     }
     if not all(keys[k] in raw for k in ("killed", "survived", "timeout")):
         raise ValueError(f"Unsupported {tool} mutation summary")
-    return {state: _count(raw[key]) if key in raw else None for state, key in keys.items()}
+    return {state: _mutation_count(raw[key]) if key in raw else None for state, key in keys.items()}
 
 
 def parse_mutmut_results(text: str) -> dict[str, str]:
@@ -80,7 +80,7 @@ def parse_mutmut_results(text: str) -> dict[str, str]:
     return rows
 
 
-def summarize(
+def summarize_mutation_results(
     raw: dict[str, Any],
     *,
     tool: str,
@@ -91,8 +91,8 @@ def summarize(
     """Keep raw counts, verified status counts and denominator qualifications separate."""
     if tool not in {"mutmut", "cargo-mutants"}:
         raise ValueError("Unsupported mutation tool")
-    counts = _counts(raw, tool)
-    total = _count(raw["total_mutants"] if "total_mutants" in raw else raw["total"])
+    counts = _mutation_counts(raw, tool)
+    total = _mutation_count(raw["total_mutants"] if "total_mutants" in raw else raw["total"])
     known = sum(value for value in counts.values() if value is not None)
     if known > total:
         raise ValueError("Reported statuses exceed total mutants")
@@ -127,7 +127,7 @@ def summarize(
     }
 
 
-def import_report(
+def import_mutation_results(
     report: Path, tool: str, scope: dict[str, Any], complete: bool, details: Path | None = None
 ) -> dict[str, Any]:
     """Import a report; never infer execution completeness from a JSON file alone."""
@@ -135,4 +135,4 @@ def import_report(
     mutants = parse_mutmut_results(details.read_text()) if details and tool == "mutmut" else None
     if details and tool != "mutmut":
         raise ValueError("Per-mutant import requires a supported mutmut results text report")
-    return summarize(raw, tool=tool, scope=scope, complete=complete, mutants=mutants)
+    return summarize_mutation_results(raw, tool=tool, scope=scope, complete=complete, mutants=mutants)

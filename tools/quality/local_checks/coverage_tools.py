@@ -11,13 +11,13 @@ from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES, aggregate_coverage, compare_baseline
 
-from .core import HERE, ROOT, digest, dump, execute, git, load, paths
-from .receipts import inventory, outcomes
+from tools.quality.local_checks.run_evidence import HERE, ROOT, quality_file_sha256, write_quality_json, run_quality_process, quality_git, read_quality_json, quality_source_paths
+from tools.quality.local_checks.receipts import read_collected_inventory, validate_test_receipts
 
 PLUGIN = "tools.quality.local_checks.pytest_receipts"
 
 
-def changed_lines(diff: str) -> dict[str, set[int]]:
+def changed_source_lines(diff: str) -> dict[str, set[int]]:
     """Extract postimage lines from zero-context Git hunks."""
     result: dict[str, set[int]] = {}
     current: str | None = None
@@ -32,7 +32,7 @@ def changed_lines(diff: str) -> dict[str, set[int]]:
     return result
 
 
-def diff_metrics(
+def changed_coverage_metrics(
     report: dict[str, Any], changed: dict[str, set[int]], critical: list[str]
 ) -> dict[str, Any]:
     """Count statements and branch arcs associated with changed source lines."""
@@ -66,7 +66,7 @@ def diff_metrics(
     }
 
 
-def validate(report: dict[str, Any], full: bool) -> None:
+def validate_coverage_report(report: dict[str, Any], full: bool) -> None:
     """Validate statement and arc partitions; full reports must inventory every package."""
     packages = set()
     for name, row in report["files"].items():
@@ -88,7 +88,7 @@ def validate(report: dict[str, Any], full: bool) -> None:
         raise ValueError("Incomplete product package or branch coverage")
 
 
-def _config(out: Path) -> Path:
+def _local_coverage_config(out: Path) -> Path:
     """Derive a local configuration without changing the canonical project settings."""
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["coverage"]["run"]
     text = "[run]\nbranch = True\nrelative_files = True\nsource =\n"
@@ -98,7 +98,7 @@ def _config(out: Path) -> Path:
     return path
 
 
-def _job(
+def _run_coverage_shard(
     out: Path, name: str, args: list[str], config: Path, timeout: int, workers: int
 ) -> dict[str, Any]:
     """Execute an isolated shard with coverage and exact collection receipts."""
@@ -124,33 +124,33 @@ def _job(
     ]
     if workers > 1:
         command.extend(["-n", str(workers)])
-    result = execute(command + args, out / f"{name}.log", timeout, env=env)
+    result = run_quality_process(command + args, out / f"{name}.log", timeout, env=env)
     if result["status"] != "ok":
         return result
-    rows = inventory(sorted(out.glob(f"{name}-inventory.json*")))
-    receipts = outcomes(out / f"{name}-receipts.jsonl", {r["nodeid"] for r in rows})
+    rows = read_collected_inventory(sorted(out.glob(f"{name}-inventory.json*")))
+    receipts = validate_test_receipts(out / f"{name}-receipts.jsonl", {r["nodeid"] for r in rows})
     if any(r["status"] in {"failed", "incomplete"} for r in receipts.values()):
         raise ValueError("Invalid execution receipts")
-    dump(out / f"{name}-outcomes.json", receipts)
+    write_quality_json(out / f"{name}-outcomes.json", receipts)
     if not list(raw.glob(f".coverage.{name}*")):
         raise ValueError("Coverage data missing")
     return {**result, "inventory": rows, "tests": len(rows)}
 
 
-def collect(
+def collect_local_coverage(
     out: Path, selection: list[str], full: bool, timeout: int, workers: int
 ) -> dict[str, Any]:
     """Collect selected tests or the explicit full unit/integration coverage profile."""
     if full == bool(selection) or workers < 1 or any(p.startswith("-") for p in selection):
         raise ValueError("Specify either --full or explicit test paths")
-    policy = load(HERE / "policy.json")
-    config = _config(out)
+    policy = read_quality_json(HERE / "policy.json")
+    config = _local_coverage_config(out)
     jobs = (
         {name: ["-m", marker, "tests"] for name, marker in policy["markers"].items()}
         if full
         else {"selected": selection}
     )
-    reports = {name: _job(out, name, args, config, timeout, workers) for name, args in jobs.items()}
+    reports = {name: _run_coverage_shard(out, name, args, config, timeout, workers) for name, args in jobs.items()}
     if any(r["status"] != "ok" for r in reports.values()):
         return {"status": "incomplete", "jobs": reports}
     env = {"COVERAGE_FILE": str(out / ".coverage"), "COVERAGE_RCFILE": str(config)}
@@ -160,7 +160,7 @@ def collect(
         ["xml", "-o", str(out / "coverage.xml")],
         ["html", "-d", str(out / "htmlcov")],
     ):
-        result = execute(
+        result = run_quality_process(
             [sys.executable, "-m", "coverage", *command],
             out / f"{command[0]}.log",
             timeout,
@@ -168,30 +168,30 @@ def collect(
         )
         if result["status"] != "ok":
             return {"status": "incomplete", "stage": command[0], "result": result}
-    raw = load(out / "coverage.json")
-    validate(raw, full)
+    raw = read_quality_json(out / "coverage.json")
+    validate_coverage_report(raw, full)
     if full:
-        _validate_files(raw, config, out / ".coverage")
-    dump(out / "coverage-summary.json", aggregate_coverage(raw))
+        _validate_product_file_inventory(raw, config, out / ".coverage")
+    write_quality_json(out / "coverage-summary.json", aggregate_coverage(raw))
     nodes = [row for r in reports.values() for row in r["inventory"]]
     if len({row["nodeid"] for row in nodes}) != len(nodes):
         raise ValueError("Unit and integration inventories overlap")
-    dump(out / "test-inventory.json", nodes)
+    write_quality_json(out / "test-inventory.json", nodes)
     return {
         "status": "ok",
         "scope": "full" if full else "selected",
         "jobs": reports,
-        "coverage_sha256": digest(out / ".coverage"),
+        "coverage_sha256": quality_file_sha256(out / ".coverage"),
     }
 
 
-def _validate_files(report: dict[str, Any], config: Path, data: Path) -> None:
+def _validate_product_file_inventory(report: dict[str, Any], config: Path, data: Path) -> None:
     """Require executable product modules to agree with coverage.py source analysis."""
     from coverage import Coverage
 
     cov = Coverage(config_file=str(config), data_file=str(data))
     cov.load()
-    for path in paths():
+    for path in quality_source_paths():
         if path.split("/")[0] not in PRODUCT_PACKAGES or not path.endswith(".py"):
             continue
         if (ROOT / path).is_symlink():
@@ -204,24 +204,24 @@ def _validate_files(report: dict[str, Any], config: Path, data: Path) -> None:
             raise ValueError(f"Source statement mismatch: {path}")
 
 
-def analyze(report: Path, base: str, full: bool) -> dict[str, Any]:
+def analyze_local_coverage(report: Path, base: str, full: bool) -> dict[str, Any]:
     """Compare against a target Git ref without modifying the established baseline."""
     if base.startswith("-"):
         raise ValueError("Invalid base")
-    raw = load(report)
-    validate(raw, full)
-    merged = git("merge-base", base, "HEAD").decode().strip()
-    diff = git("diff", "--no-renames", "--unified=0", merged, "--").decode()
-    changed = changed_lines(diff)
-    for name in git("ls-files", "--others", "--exclude-standard", "-z").decode().split("\0"):
+    raw = read_quality_json(report)
+    validate_coverage_report(raw, full)
+    merged = quality_git("merge-base", base, "HEAD").decode().strip()
+    diff = quality_git("diff", "--no-renames", "--unified=0", merged, "--").decode()
+    changed = changed_source_lines(diff)
+    for name in quality_git("ls-files", "--others", "--exclude-standard", "-z").decode().split("\0"):
         if name.endswith(".py") and (ROOT / name).is_file():
             changed[name] = set(range(1, len((ROOT / name).read_text().splitlines()) + 1))
-    policy = load(HERE / "policy.json")
+    policy = read_quality_json(HERE / "policy.json")
     summary = aggregate_coverage(raw)
-    delta = diff_metrics(raw, changed, policy["critical_prefixes"])
+    delta = changed_coverage_metrics(raw, changed, policy["critical_prefixes"])
     findings = []
     if full:
-        baseline = json.loads(git("show", f"{base}:tools/quality/coverage_baseline.json"))
+        baseline = json.loads(quality_git("show", f"{base}:tools/quality/coverage_baseline.json"))
         if baseline.get("source_branch") != "main":
             raise ValueError("Expected the committed main baseline")
         findings.extend(compare_baseline(summary, baseline))

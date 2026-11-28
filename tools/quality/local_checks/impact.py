@@ -13,7 +13,7 @@ from typing import Any
 from coverage import CoverageData
 
 
-def _git(root: Path, *args: str) -> str:
+def _impact_git(root: Path, *args: str) -> str:
     """Run a read-only Git query in the selected checkout."""
     return subprocess.check_output(["git", *args], cwd=root).decode()
 
@@ -22,31 +22,31 @@ def changed_paths(root: Path, base: str) -> tuple[str, list[str]]:
     """Include committed, staged, unstaged and untracked paths; keep rename endpoints."""
     if base.startswith("-"):
         raise ValueError("Invalid base ref")
-    merge_base = _git(root, "merge-base", base, "HEAD").strip()
-    tracked = _git(root, "diff", "--no-renames", "--name-only", "-z", merge_base, "--")
-    untracked = _git(root, "ls-files", "--others", "--exclude-standard", "-z")
+    merge_base = _impact_git(root, "merge-base", base, "HEAD").strip()
+    tracked = _impact_git(root, "diff", "--no-renames", "--name-only", "-z", merge_base, "--")
+    untracked = _impact_git(root, "ls-files", "--others", "--exclude-standard", "-z")
     return merge_base, sorted(set(filter(None, (tracked + untracked).split("\0"))))
 
 
-def _module(path: str) -> str:
+def _python_module_name(path: str) -> str:
     """Translate a Python source path into its import name."""
     return path.removesuffix(".py").removesuffix("/__init__").replace("/", ".")
 
 
-def _parents(module: str) -> set[str]:
+def _module_prefixes(module: str) -> set[str]:
     """Return all package prefixes of a module name."""
     parts = module.split(".")
     return {".".join(parts[:i]) for i in range(1, len(parts) + 1)}
 
 
-def _imports(path: str, tree: ast.AST) -> set[str]:
+def _source_import_names(path: str, tree: ast.AST) -> set[str]:
     """Extract explicit absolute and relative imports."""
     names: set[str] = set()
-    package = _module(path) if path.endswith("/__init__.py") else _module(path).rpartition(".")[0]
+    package = _python_module_name(path) if path.endswith("/__init__.py") else _python_module_name(path).rpartition(".")[0]
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                names.update(_parents(alias.name))
+                names.update(_module_prefixes(alias.name))
         elif isinstance(node, ast.ImportFrom):
             prefix = node.module or ""
             if node.level:
@@ -56,25 +56,25 @@ def _imports(path: str, tree: ast.AST) -> set[str]:
                     raise ValueError(f"Invalid relative import in {path}")
                 prefix = ".".join(filter(None, [".".join(parts[:offset]), prefix]))
             if prefix:
-                names.update(_parents(prefix))
+                names.update(_module_prefixes(prefix))
                 for alias in node.names:
-                    names.update(_parents(f"{prefix}.{alias.name}"))
+                    names.update(_module_prefixes(f"{prefix}.{alias.name}"))
     return names
 
 
 def reverse_imports(sources: dict[str, str]) -> dict[str, set[str]]:
     """Build a reverse file dependency graph without executing imported modules."""
-    by_module = {_module(path): path for path in sources}
+    by_module = {_python_module_name(path): path for path in sources}
     reverse: dict[str, set[str]] = defaultdict(set)
     for path, source in sources.items():
-        for name in _imports(path, ast.parse(source, filename=path)):
+        for name in _source_import_names(path, ast.parse(source, filename=path)):
             target = by_module.get(name)
             if target and target != path:
                 reverse[target].add(path)
     return dict(reverse)
 
 
-def closure(graph: dict[str, set[str]], changed: set[str]) -> set[str]:
+def transitive_import_dependants(graph: dict[str, set[str]], changed: set[str]) -> set[str]:
     """Return transitive import dependants, including the changed files."""
     result = set(changed)
     pending = list(changed)
@@ -108,7 +108,7 @@ def coverage_contexts(root: Path, data_path: Path) -> dict[str, set[str]]:
     return dict(rows)
 
 
-def select(
+def select_impacted_tests(
     changed: set[str],
     sources: dict[str, str],
     tests: set[str],
@@ -124,7 +124,7 @@ def select(
         reasons.append("missing validated coverage contexts")
     try:
         graph = reverse_imports(sources)
-        affected = closure(graph, changed)
+        affected = transitive_import_dependants(graph, changed)
     except (SyntaxError, ValueError) as exc:
         graph = {}
         affected = changed
@@ -133,7 +133,7 @@ def select(
     for path in affected:
         selected.update(contexts.get(path, set()) & tests)
     for path in changed - tests:
-        if path not in contexts and not (closure(graph, {path}) & tests):
+        if path not in contexts and not (transitive_import_dependants(graph, {path}) & tests):
             reasons.append(f"no test evidence for {path}")
     if changed and not selected:
         reasons.append("no tests selected for nonempty change")
@@ -147,7 +147,7 @@ def select(
     }
 
 
-def plan(
+def plan_impacted_tests(
     root: Path,
     base: str,
     inventory: Path,
@@ -156,7 +156,7 @@ def plan(
 ) -> dict[str, Any]:
     """Use only coverage evidence bound to the exact merge base and inventory digest."""
     merge_base, changed = changed_paths(root, base)
-    paths = set(filter(None, _git(root, "ls-files", "-z").split("\0"))) | set(changed)
+    paths = set(filter(None, _impact_git(root, "ls-files", "-z").split("\0"))) | set(changed)
     sources = {
         path: (root / path).read_text(encoding="utf-8")
         for path in paths
@@ -173,5 +173,5 @@ def plan(
         and metadata.get("inventory_sha256") == hashlib.sha256(inventory.read_bytes()).hexdigest()
     )
     contexts = coverage_contexts(root, data_path) if valid else {}
-    result = select(set(changed), sources, tests, contexts)
+    result = select_impacted_tests(set(changed), sources, tests, contexts)
     return {**result, "merge_base": merge_base, "changed": changed, "evidence_valid": valid}

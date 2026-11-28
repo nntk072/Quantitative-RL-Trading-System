@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 
-def _number(path: Path) -> int | None:
+def _read_cgroup_number(path: Path) -> int | None:
     """Read a cgroup integer, treating an unlimited or unavailable value as unknown."""
     try:
         value = path.read_text().strip()
@@ -31,7 +31,7 @@ def cgroup_directory(proc: Path = Path("/proc/self/cgroup")) -> Path | None:
     return directory if directory.is_relative_to(mount) and directory.is_dir() else None
 
 
-def _limits(directory: Path | None) -> tuple[int | None, int | None]:
+def _cgroup_limits(directory: Path | None) -> tuple[int | None, int | None]:
     """Collect the tightest CPU quota and memory headroom across cgroup ancestors."""
     if directory is None:
         return None, None
@@ -46,14 +46,14 @@ def _limits(directory: Path | None) -> tuple[int | None, int | None]:
                 cpu_limits.append(max(1, int(quota) // int(period)))
         except (OSError, ValueError):
             pass
-        limit = _number(parent / "memory.max")
-        used = _number(parent / "memory.current")
+        limit = _read_cgroup_number(parent / "memory.max")
+        used = _read_cgroup_number(parent / "memory.current")
         if limit is not None and used is not None:
             memory_limits.append(max(0, limit - used))
     return min(cpu_limits, default=None), min(memory_limits, default=None)
 
 
-def _host_available() -> int | None:
+def _host_memory_available() -> int | None:
     """Read the host available-memory estimate when exposed."""
     try:
         for line in Path("/proc/meminfo").read_text().splitlines():
@@ -64,7 +64,7 @@ def _host_available() -> int | None:
     return None
 
 
-def budget(
+def worker_capacity_budget(
     requested: int,
     worker_mib: int,
     *,
@@ -94,14 +94,14 @@ def budget(
     }
 
 
-def discover_budget(requested: int, worker_mib: int, reserve_mib: int = 512) -> dict[str, Any]:
+def discover_worker_capacity(requested: int, worker_mib: int, reserve_mib: int = 512) -> dict[str, Any]:
     """Combine affinity, cgroup ancestor quotas and available host memory."""
     affinity = (
         len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count() or 1
     )
-    quota, cgroup_ram = _limits(cgroup_directory())
-    available = min((n for n in (_host_available(), cgroup_ram) if n is not None), default=None)
-    return budget(
+    quota, cgroup_ram = _cgroup_limits(cgroup_directory())
+    available = min((n for n in (_host_memory_available(), cgroup_ram) if n is not None), default=None)
+    return worker_capacity_budget(
         requested,
         worker_mib,
         available_bytes=available,
@@ -111,7 +111,7 @@ def discover_budget(requested: int, worker_mib: int, reserve_mib: int = 512) -> 
     )
 
 
-def cache_key(lock: Path, profile: str, tool_versions: dict[str, str]) -> str:
+def quality_cache_key(lock: Path, profile: str, tool_versions: dict[str, str]) -> str:
     """Separate CPU/GPU/analyzer caches by lock, ABI, platform and actual tool versions."""
     if not profile or not tool_versions or any(not v for v in tool_versions.values()):
         raise ValueError("Cache identity requires a profile and actual tool versions")
@@ -127,7 +127,7 @@ def cache_key(lock: Path, profile: str, tool_versions: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
-def schedule(
+def schedule_resource_waves(
     groups: dict[str, tuple[float, int]], workers: int, memory_mib: int
 ) -> list[list[str]]:
     """Plan duration-balanced waves, respecting per-group memory and concurrent limits."""

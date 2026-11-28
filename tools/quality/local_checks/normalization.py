@@ -11,14 +11,14 @@ from urllib.parse import unquote, urlparse
 from xml.etree import ElementTree
 
 
-def _list(value: Any, label: str) -> list[Any]:
+def _require_report_list(value: Any, label: str) -> list[Any]:
     """Validate a structured list rather than silently discarding malformed data."""
     if not isinstance(value, list):
         raise ValueError(f"Expected list: {label}")
     return value
 
 
-def _location(value: Any, root: Path) -> str | None:
+def _normalize_finding_location(value: Any, root: Path) -> str | None:
     """Normalize repository-relative and file URI locations."""
     if value is None:
         return None
@@ -34,7 +34,7 @@ def _location(value: Any, root: Path) -> str | None:
     return path
 
 
-def finding(
+def make_quality_finding(
     tool: str,
     checker: str,
     message: str,
@@ -48,7 +48,7 @@ def finding(
     native_id: Any = None,
 ) -> dict[str, Any]:
     """Use stable report-independent identities; do not copy secret matches."""
-    path = _location(file, root)
+    path = _normalize_finding_location(file, root)
     location = line if isinstance(line, int) and not isinstance(line, bool) and line > 0 else None
     fingerprint = hashlib.sha256(
         json.dumps([tool, checker, path, location, package, native_id], sort_keys=True).encode()
@@ -69,19 +69,19 @@ def finding(
     }
 
 
-def _sarif(raw: dict[str, Any], tool: str, root: Path) -> list[dict[str, Any]]:
+def _normalize_sarif(raw: dict[str, Any], tool: str, root: Path) -> list[dict[str, Any]]:
     """Parse standard SARIF and reject reported execution failure."""
-    runs = _list(raw["runs"], "SARIF runs")
+    runs = _require_report_list(raw["runs"], "SARIF runs")
     if not runs or raw.get("version") != "2.1.0":
         raise ValueError("Unsupported SARIF document")
     result = []
     for run in runs:
         if any(v.get("executionSuccessful") is False for v in run.get("invocations", [])):
             raise ValueError("SARIF reports failed analysis")
-        for row in _list(run.get("results", []), "SARIF results"):
+        for row in _require_report_list(run.get("results", []), "SARIF results"):
             loc = (row.get("locations") or [{}])[0].get("physicalLocation", {})
             result.append(
-                finding(
+                make_quality_finding(
                     tool,
                     str(row["ruleId"]),
                     "Potential secret (redacted)" if tool == "gitleaks" else row["message"]["text"],
@@ -102,7 +102,7 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
         if raw.get("errors"):
             raise ValueError(f"{tool} reported analysis errors")
         raw = raw["results"]
-    for row in _list(raw, tool):
+    for row in _require_report_list(raw, tool):
         if tool == "ruff":
             checker, msg, path, line = (
                 row["code"],
@@ -142,7 +142,7 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
             checker, msg, path, line = row["code"], row["message"], row["file"], row["line"]
             severity = row.get("level")
         result.append(
-            finding(
+            make_quality_finding(
                 tool,
                 str(checker),
                 str(msg),
@@ -156,16 +156,16 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     return result
 
 
-def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+def _normalize_dependency_findings(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     """Normalize package vulnerability reports."""
     result = []
     if tool == "pip-audit":
-        for dep in _list(raw["dependencies"], "dependencies"):
+        for dep in _require_report_list(raw["dependencies"], "dependencies"):
             if dep.get("skip_reason"):
                 raise ValueError("pip-audit skipped at least one dependency")
-            for issue in _list(dep["vulns"], "vulnerabilities"):
+            for issue in _require_report_list(dep["vulns"], "vulnerabilities"):
                 result.append(
-                    finding(
+                    make_quality_finding(
                         tool,
                         issue["id"],
                         issue.get("description") or issue["id"],
@@ -175,13 +175,13 @@ def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, 
                     )
                 )
     elif tool == "osv-scanner":
-        for scan in _list(raw["results"], "OSV results"):
+        for scan in _require_report_list(raw["results"], "OSV results"):
             path = scan.get("source", {}).get("path")
-            for dep in _list(scan["packages"], "OSV packages"):
-                for issue in _list(dep.get("vulnerabilities", []), "OSV vulnerabilities"):
+            for dep in _require_report_list(scan["packages"], "OSV packages"):
+                for issue in _require_report_list(dep.get("vulnerabilities", []), "OSV vulnerabilities"):
                     package = dep["package"]
                     result.append(
-                        finding(
+                        make_quality_finding(
                             tool,
                             issue["id"],
                             issue.get("summary") or issue["id"],
@@ -192,10 +192,10 @@ def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, 
                         )
                     )
     elif tool == "cargo-audit":
-        for issue in _list(raw["vulnerabilities"]["list"], "cargo-audit vulnerabilities"):
+        for issue in _require_report_list(raw["vulnerabilities"]["list"], "cargo-audit vulnerabilities"):
             advisory, package = issue["advisory"], issue["package"]
             result.append(
-                finding(
+                make_quality_finding(
                     tool,
                     advisory["id"],
                     advisory.get("title") or advisory["id"],
@@ -209,15 +209,15 @@ def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, 
     return result
 
 
-def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+def _normalize_trivy_findings(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     """Normalize vulnerability, configuration, secret and license findings."""
     result = []
     if "Results" not in raw or raw.get("Results") is None:
         raise ValueError("Trivy did not report a result inventory")
-    for target in _list(raw["Results"], "Trivy results"):
+    for target in _require_report_list(raw["Results"], "Trivy results"):
         for issue in target.get("Vulnerabilities") or []:
             result.append(
-                finding(
+                make_quality_finding(
                     "trivy",
                     issue["VulnerabilityID"],
                     issue.get("Title") or issue["VulnerabilityID"],
@@ -230,7 +230,7 @@ def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
             )
         for issue in target.get("Misconfigurations") or []:
             result.append(
-                finding(
+                make_quality_finding(
                     "trivy",
                     issue["ID"],
                     issue.get("Title") or issue["ID"],
@@ -241,7 +241,7 @@ def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
             )
         for issue in target.get("Secrets") or []:
             result.append(
-                finding(
+                make_quality_finding(
                     "trivy",
                     issue["RuleID"],
                     "Potential secret (redacted)",
@@ -253,7 +253,7 @@ def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
             )
         for issue in target.get("Licenses") or []:
             result.append(
-                finding(
+                make_quality_finding(
                     "trivy",
                     issue["Name"],
                     "License finding",
@@ -266,15 +266,15 @@ def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     return result
 
 
-def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
+def _normalize_other_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     """Normalize other explicitly supported analyzer formats."""
     result = []
     if tool == "coverity":
         if raw.get("error"):
             raise ValueError("Coverity reported an error")
-        for issue in _list(raw["issues"], "Coverity issues"):
+        for issue in _require_report_list(raw["issues"], "Coverity issues"):
             result.append(
-                finding(
+                make_quality_finding(
                     tool,
                     issue["checkerName"],
                     issue.get("checkerProperties", {}).get("subcategoryLocalEffect", ""),
@@ -289,9 +289,9 @@ def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
         for scan in raw if isinstance(raw, list) else [raw]:
             if scan.get("results", {}).get("parsing_errors"):
                 raise ValueError("Checkov reported parsing errors")
-            for issue in _list(scan["results"]["failed_checks"], "Checkov findings"):
+            for issue in _require_report_list(scan["results"]["failed_checks"], "Checkov findings"):
                 result.append(
-                    finding(
+                    make_quality_finding(
                         tool,
                         issue["check_id"],
                         issue["check_name"],
@@ -303,10 +303,10 @@ def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
                     )
                 )
     elif tool == "sqlfluff":
-        for source in _list(raw, tool):
-            for issue in _list(source["violations"], "SQLFluff violations"):
+        for source in _require_report_list(raw, tool):
+            for issue in _require_report_list(source["violations"], "SQLFluff violations"):
                 result.append(
-                    finding(
+                    make_quality_finding(
                         tool,
                         issue["code"],
                         issue["description"],
@@ -320,20 +320,20 @@ def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     return result
 
 
-def normalize(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
+def normalize_analyzer_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     """Dispatch supported structured reports; malformed input is never a clean scan."""
     if isinstance(raw, dict) and raw.get("version") == "2.1.0":
-        return _sarif(raw, tool, root)
+        return _normalize_sarif(raw, tool, root)
     if tool in {"ruff", "semgrep", "bandit", "mypy", "shellcheck", "hadolint", "actionlint"}:
         return _source_findings(tool, raw, root)
     if tool in {"pip-audit", "osv-scanner", "cargo-audit"}:
-        return _dependencies(tool, raw, root)
+        return _normalize_dependency_findings(tool, raw, root)
     if tool == "trivy":
-        return _trivy(raw, root)
-    return _other(tool, raw, root)
+        return _normalize_trivy_findings(raw, root)
+    return _normalize_other_findings(tool, raw, root)
 
 
-def read_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
+def read_analyzer_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
     """Read JSON, mypy JSON lines, or Cppcheck XML; fail closed on format errors."""
     text = path.read_text()
     if tool == "mypy":
@@ -346,7 +346,7 @@ def read_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
         if doc.tag != "results" or errors is None:
             raise ValueError("Invalid Cppcheck XML")
         return [
-            finding(
+            make_quality_finding(
                 tool,
                 row.attrib["id"],
                 row.attrib["msg"],
@@ -365,7 +365,7 @@ def read_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
             if not match:
                 raise ValueError("Unrecognized Vulture diagnostic")
             rows.append(
-                finding(
+                make_quality_finding(
                     tool,
                     "dead-code",
                     match[3],
@@ -378,4 +378,4 @@ def read_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
         return rows
     else:
         raw = json.loads(text)
-    return normalize(tool, raw, root)
+    return normalize_analyzer_findings(tool, raw, root)

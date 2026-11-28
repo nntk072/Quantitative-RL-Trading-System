@@ -7,16 +7,16 @@ import math
 from pathlib import Path
 from typing import Any
 
-from .core import load
+from tools.quality.local_checks.run_evidence import read_quality_json
 
 
-def inventory(files: list[Path]) -> list[dict[str, Any]]:
+def read_collected_inventory(files: list[Path]) -> list[dict[str, Any]]:
     """Reject missing, empty, duplicated or inconsistent worker inventories."""
     if not files:
         raise ValueError("No inventory files")
     result: list[dict[str, Any]] | None = None
     for path in files:
-        rows = sorted(load(path), key=lambda row: row["nodeid"])
+        rows = sorted(read_quality_json(path), key=lambda row: row["nodeid"])
         ids = [r["nodeid"] for r in rows]
         if not ids or len(ids) != len(set(ids)):
             raise ValueError("Empty or duplicate inventory")
@@ -27,7 +27,7 @@ def inventory(files: list[Path]) -> list[dict[str, Any]]:
     return result
 
 
-def outcomes(path: Path, expected: set[str]) -> dict[str, dict[str, Any]]:
+def validate_test_receipts(path: Path, expected: set[str]) -> dict[str, dict[str, Any]]:
     """Require every collected test to have a unique and valid execution receipt."""
     phases: dict[str, dict[str, dict[str, Any]]] = {}
     for line in path.read_text().splitlines():

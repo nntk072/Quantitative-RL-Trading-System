@@ -5,12 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize
-from tools.quality.local_checks.normalization import normalize, read_report
+from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize_mutation_results
+from tools.quality.local_checks.normalization import normalize_analyzer_findings, read_analyzer_report
 
 
 def test_mutation_scores_do_not_treat_timeouts_as_kills() -> None:
-    result = summarize(
+    result = summarize_mutation_results(
         {"total": 6, "killed": 2, "survived": 1, "timeout": 1, "no_tests": 1, "suspicious": 1},
         tool="mutmut",
         scope={"covered_lines_only": True},
@@ -23,7 +23,7 @@ def test_mutation_scores_do_not_treat_timeouts_as_kills() -> None:
 
 
 def test_mutation_incomplete_inventory_and_unknown_states() -> None:
-    result = summarize(
+    result = summarize_mutation_results(
         {"total": 8, "killed": 2, "survived": 1, "timeout": 1},
         tool="mutmut",
         scope={},
@@ -41,7 +41,7 @@ def test_mutation_incomplete_inventory_and_unknown_states() -> None:
 
 def test_sarif_failed_execution_is_not_clean(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="failed analysis"):
-        normalize(
+        normalize_analyzer_findings(
             "codeql",
             {
                 "version": "2.1.0",
@@ -52,7 +52,7 @@ def test_sarif_failed_execution_is_not_clean(tmp_path: Path) -> None:
 
 
 def test_dependency_and_secret_reports_are_normalized(tmp_path: Path) -> None:
-    rows = normalize(
+    rows = normalize_analyzer_findings(
         "pip-audit",
         {
             "dependencies": [
@@ -67,7 +67,7 @@ def test_dependency_and_secret_reports_are_normalized(tmp_path: Path) -> None:
     )
     assert rows[0]["package"] == "example"
     assert rows[0]["checker"] == "TEST-1"
-    rows = normalize(
+    rows = normalize_analyzer_findings(
         "trivy",
         {
             "Results": [
@@ -88,9 +88,9 @@ def test_mypy_ndjson_and_cppcheck_xml(tmp_path: Path) -> None:
     report.write_text(
         '{"file":"x.py","line":3,"message":"bad","severity":"error","code":"arg-type"}\n'
     )
-    assert read_report("mypy", report, tmp_path)[0]["line"] == 3
+    assert read_analyzer_report("mypy", report, tmp_path)[0]["line"] == 3
     report.write_text(
         '<results version="2"><errors><error id="sample" msg="bad" '
         'severity="warning"><location file="x.cpp" line="2"/></error></errors></results>'
     )
-    assert read_report("cppcheck", report, tmp_path)[0]["line"] == 2
+    assert read_analyzer_report("cppcheck", report, tmp_path)[0]["line"] == 2
