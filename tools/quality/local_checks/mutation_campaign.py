@@ -132,7 +132,7 @@ def run_python_mutation(
             env=env,
         )
         stages["details"] = run_quality_process(
-            ["mutmut", "results", "--all"],
+            ["mutmut", "results", "--all", "true"],
             out / "mutation-details.log",
             timeout,
             cwd=checkout,
@@ -172,9 +172,12 @@ def run_python_mutation(
     write_quality_json(out / "mutation-summary.json", summary)
     status = (
         "incomplete"
-        if summary["status"] != "complete"
+        if summary["status"] != "complete" or not summary["generated"]
         else "findings"
-        if any(summary["counts"].get(k) for k in ("survived", "segfault", "suspicious"))
+        if any(
+            summary["counts"].get(k)
+            for k in ("survived", "segfault", "suspicious", "timeout", "no_tests", "unexecuted")
+        )
         else "ok"
     )
     return {

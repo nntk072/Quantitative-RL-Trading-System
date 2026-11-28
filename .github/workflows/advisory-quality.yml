@@ -147,6 +147,7 @@ jobs:
             scientific-parity)
               run_check product-oracles "$QRL_PYTHON" -m pytest -q tests/unit/tooling/test_local_quality_product_oracles.py
               run_check semantic-registry quality semantic
+              run_check semantic-cpu quality --timeout 300 semantic --run
               for pair in frame-bundle gym-transition backtest rollout-buffer ppo-math; do
                 run_check "$pair" quality --timeout 180 product-parity "$pair"
               done
@@ -162,6 +163,10 @@ jobs:
               ;;
             native-environment)
               run_check native-inventory quality native
+              run_check rust-format quality --timeout 120 native rust fmt
+              run_check cpp-analysis quality --timeout 120 native cpp cppcheck
+              run_check sql-lint quality --timeout 120 native sql lint
+              run_check web-lint quality --timeout 120 native web lint
               run_check tool-inventory quality doctor
               for profile in cpu gpu analyzers; do
                 run_check "$profile" quality environment "$profile" plan
@@ -251,12 +256,15 @@ jobs:
           languages: python
           build-mode: none
       - uses: github/codeql-action/analyze@v4
+        id: codeql-analysis
         with:
           upload: never
           upload-database: false
           output: ${{ runner.temp }}/codeql-results
       - name: Report finding count without publishing source snippets
         if: always()
+        env:
+          ANALYSIS_OUTCOME: ${{ steps.codeql-analysis.outcome }}
         run: |
           python - <<'PY'
           import json
@@ -265,7 +273,7 @@ jobs:
           reports = list((Path(os.environ["RUNNER_TEMP"]) / "codeql-results").glob("*.sarif"))
           count = sum(len(run.get("results", [])) for path in reports
                       for run in json.loads(path.read_text())["runs"])
-          status = "findings" if count else "ok" if reports else "unavailable"
+          status = ("incomplete" if os.environ["ANALYSIS_OUTCOME"] != "success"\n                    else "findings" if count else "ok" if reports else "unavailable")
           directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-codeql"
           directory.mkdir(exist_ok=True)
           payload = {"group": "codeql", "commit": os.environ["GITHUB_SHA"],
