@@ -13,6 +13,7 @@ env:
   UV_FROZEN: "1"
   QRL_CHECK_NO_SYNC: "1"
   SEMGREP_SEND_METRICS: "off"
+  QRL_OSV_UPDATE: "1"
 
 jobs:
   groups:
@@ -115,10 +116,15 @@ jobs:
         run: |
           set +e
           failed=0
+          receipts="$RUNNER_TEMP/advisory-checks.tsv"
+          : > "$receipts"
           run_check() {
-            printf 'Running advisory check: %s\n' "$1"
+            local label="$1" code=0
+            printf 'Running advisory check: %s\n' "$label"
             shift
-            "$@" || failed=1
+            "$@" || code=$?
+            printf '%s\t%s\n' "$label" "$code" >> "$receipts"
+            if [[ "$code" != 0 ]]; then failed=1; fi
           }
           quality() {
             ./tools/check local-quality "$@"
@@ -152,7 +158,7 @@ jobs:
               done
               ;;
             mutation)
-              run_check bounded-mutation quality --timeout 180 mutation --scope risk --test tests/unit/trading/test_risk_properties.py --children 2
+              run_check bounded-mutation quality --timeout 240 mutation --scope account-limits --test tests/unit/trading/test_semantic_oracle_limits_sizing.py --children 2
               ;;
             native-environment)
               run_check native-inventory quality native
@@ -193,17 +199,30 @@ jobs:
                   "action": data["action"],
                   "status": data["execution_status"],
                   "source_commit": data["source_commit"],
-                  "tools": {k: {"status": v.get("status"), "findings": v.get("findings_count")}
+                  "tools": {k: {"status": v.get("status"), "findings": v.get("findings_count"),
+                                 "skipped": v.get("skipped_count"), "returncode": v.get("returncode"),
+                                 "error_type": v.get("error_type")}
                             for k, v in result.get("tools", {}).items()},
+                  "stages": {k: {"status": v.get("status"), "returncode": v.get("returncode")}
+                             for k, v in result.get("stages", {}).items()},
+                  "mutation_counts": result.get("summary", {}).get("counts") if data["action"] == "mutation" else None,
                   "findings_count": result.get("findings_count"),
                   "scenario_counts": result.get("counts") if data["action"] == "semantic" else None,
               })
           directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-report"
           directory.mkdir(exist_ok=True)
-          (directory / "status.json").write_text(json.dumps(rows, indent=2) + "\n")
+          receipts = Path(os.environ["RUNNER_TEMP"]) / "advisory-checks.tsv"
+          checks = [{"check": line.split("\t")[0], "exit": int(line.split("\t")[1])}
+                    for line in receipts.read_text().splitlines()] if receipts.is_file() else []
+          payload = {"group": os.environ["GROUP"], "commit": os.environ["GITHUB_SHA"],
+                     "checks": checks, "manifests": rows}
+          (directory / "status.json").write_text(json.dumps(payload, indent=2) + "\n")
+          print(json.dumps(payload, indent=2))
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
               f.write("## Advisory: " + os.environ["GROUP"] + "\n\n")
               f.write("| Check | Status |\n|---|---|\n")
+              for check in checks:
+                  f.write(f"| {check['check']} | exit {check['exit']} |\n")
               for row in rows:
                   f.write(f"| {row['action']} | {row['status']} |\n")
                   for name, tool in row["tools"].items():
@@ -247,6 +266,75 @@ jobs:
           count = sum(len(run.get("results", [])) for path in reports
                       for run in json.loads(path.read_text())["runs"])
           status = "findings" if count else "ok" if reports else "unavailable"
+          directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-codeql"
+          directory.mkdir(exist_ok=True)
+          payload = {"group": "codeql", "commit": os.environ["GITHUB_SHA"],
+                     "checks": [], "manifests": [{"action": "codeql", "status": status,
+                                                  "findings_count": count if reports else None}]}
+          (directory / "status.json").write_text(json.dumps(payload, indent=2) + "\n")
+          print(json.dumps(payload, indent=2))
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
               f.write(f"## CodeQL: {status}\n\nFindings: {count if reports else 'unavailable'}\n")
           PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: advisory-codeql
+          path: ${{ runner.temp }}/advisory-codeql/status.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  report:
+    name: advisory / consolidated-report
+    needs: [groups, codeql]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: advisory-*
+          path: ${{ runner.temp }}/advisory-reports
+      - name: Consolidate independent advisory evidence
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "advisory-reports"
+          expected = {"infrastructure", "static-analysis", "technical-debt", "security",
+                      "scientific-parity", "property-fuzz", "mutation", "native-environment",
+                      "coverity", "codeql"}
+          reports = {}
+          for path in sorted(root.glob("advisory-*/status.json")):
+              row = json.loads(path.read_text())
+              if row.get("commit") == os.environ["GITHUB_SHA"]:
+                  reports[row["group"]] = row
+          missing = sorted(expected - reports.keys())
+          payload = {"commit": os.environ["GITHUB_SHA"], "groups": reports,
+                     "missing_groups": missing,
+                     "coverage": "See advisory / coverage in the required CI workflow"}
+          destination = Path(os.environ["RUNNER_TEMP"]) / "advisory-consolidated.json"
+          destination.write_text(json.dumps(payload, indent=2) + "\n")
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
+              f.write("## Consolidated advisory evidence\n\n")
+              f.write("| Group | Reported outcomes |\n|---|---|\n")
+              for group in sorted(expected):
+                  row = reports.get(group)
+                  outcomes = sorted({m["status"] for m in row["manifests"]}) if row else []
+                  if row and any(c["exit"] for c in row["checks"]):
+                      outcomes.append("nonzero check")
+                  f.write(f"| {group} | {', '.join(outcomes) or 'unavailable'} |\n")
+              f.write("\nCoverage reuses the required CI artifact in advisory / coverage.\n")
+          if missing:
+              raise SystemExit("Missing or mismatched advisory status reports")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: advisory-consolidated
+          path: ${{ runner.temp }}/advisory-consolidated.json
+          retention-days: 7
+          if-no-files-found: warn

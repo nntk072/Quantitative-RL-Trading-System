@@ -95,6 +95,39 @@ def _normalize_sarif(raw: dict[str, Any], tool: str, root: Path) -> list[dict[st
     return result
 
 
+def partition_partial_report(
+    tool: str, raw: dict[str, Any], root: Path
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Keep usable findings while separately recording unassessed input.
+
+    The strict normalizers still reject partial input. Callers must mark the
+    resulting scan incomplete whenever this partition contains skipped entries.
+    """
+    result = dict(raw)
+    skipped: list[dict[str, Any]] = []
+    if tool in {"bandit", "semgrep"}:
+        errors = _require_report_list(raw.get("errors", []), "analysis errors")
+        for row in errors:
+            skipped.append(
+                {
+                    "file": _normalize_finding_location(row.get("filename", row.get("path")), root),
+                    "reason": "analyzer_reported_error",
+                }
+            )
+        result["errors"] = []
+    elif tool == "pip-audit":
+        dependencies = _require_report_list(raw["dependencies"], "dependencies")
+        result["dependencies"] = []
+        for row in dependencies:
+            if row.get("skip_reason"):
+                skipped.append({"package": row["name"], "reason": "dependency_not_assessed"})
+            else:
+                result["dependencies"].append(row)
+    else:
+        raise ValueError("Unsupported partial report format")
+    return result, skipped
+
+
 def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     """Normalize supported source diagnostic schemas."""
     result = []

@@ -138,3 +138,9 @@ bounded; a timed-out campaign is incomplete, not a pass. Push and PR events
 both trigger runs, including when a push updates an open PR. Runs are not
 cancelled on new commits. Public CI artifacts retain status-only summaries
 for seven days; raw analyzer reports and captured source are not uploaded.
+The consolidated advisory report includes per-check exit statuses, analyzer
+skip counts, and mutation stage status. An incomplete scan preserves findings
+from assessed inputs without implying that skipped inputs passed. The bounded
+PR mutation campaign targets account-loss floor arithmetic; wider mutation
+scopes are available through the local command. OSV updates its offline
+vulnerability database in hosted CI and scans the authoritative uv lock.

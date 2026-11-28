@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import os
 import site
 from pathlib import Path
 from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES
-from tools.quality.local_checks.normalization import make_quality_finding, read_analyzer_report
+from tools.quality.local_checks.normalization import (
+    make_quality_finding,
+    partition_partial_report,
+    read_analyzer_report,
+)
 from tools.quality.local_checks.run_evidence import (
     HERE,
     ROOT,
@@ -128,11 +133,19 @@ def _static_commands(out: Path) -> dict[str, tuple[list[str], tuple[int, ...], P
     docker = [p for p in files if Path(p).name == "Dockerfile"]
     sql = [p for p in files if p.endswith(".sql")]
     sarif = out / "gitleaks-native.sarif"
+    bandit_report = out / "bandit-native.json"
+    osv_update = (
+        ["--download-offline-databases"] if os.environ.get("QRL_OSV_UPDATE") == "1" else []
+    )
     # None means the tool writes to stdout; the caller retains its separate stderr.
     return {
         "ruff": (["ruff", "check", "--output-format", "json", *owned], (1,), None),
         "mypy": (["mypy", "--output", "json", *owned], (1,), None),
-        "bandit": (["bandit", "-r", *owned, "-f", "json"], (1,), None),
+        "bandit": (
+            ["bandit", "-q", "-r", *owned, "-f", "json", "-o", str(bandit_report)],
+            (1,),
+            bandit_report,
+        ),
         "semgrep": (
             [
                 "semgrep",
@@ -168,6 +181,7 @@ def _static_commands(out: Path) -> dict[str, tuple[list[str], tuple[int, ...], P
                 "pip-audit",
                 "--format",
                 "json",
+                "--skip-editable",
                 *[arg for p in site.getsitepackages() for arg in ("--path", p)],
             ],
             (1,),
@@ -188,7 +202,17 @@ def _static_commands(out: Path) -> dict[str, tuple[list[str], tuple[int, ...], P
             sarif,
         ),
         "osv-scanner": (
-            ["osv-scanner", "scan", "source", "--offline", "--format", "json", "-r", "."],
+            [
+                "osv-scanner",
+                "scan",
+                "source",
+                "--offline",
+                *osv_update,
+                "--format",
+                "json",
+                "-L",
+                "uv.lock",
+            ],
             (1,),
             None,
         ),
@@ -268,15 +292,26 @@ def run_static_analyzers(out: Path, timeout: int, selected: list[str]) -> dict[s
         row = run_quality_process(argv, log, timeout, findings_codes=codes)
         if row["status"] in {"ok", "findings"}:
             try:
-                issues = _read_static_findings(
-                    tool, file_report or log, log.with_suffix(".log.stderr")
-                )
-                if row["status"] == "findings" and not issues:
+                report = file_report or log
+                partial = []
+                if tool in {"bandit", "semgrep", "pip-audit"}:
+                    raw = read_quality_json(report)
+                    usable, partial = partition_partial_report(tool, raw, ROOT)
+                    if partial:
+                        report = out / f"{tool}-partial-native.json"
+                        write_quality_json(report, usable)
+                issues = _read_static_findings(tool, report, log.with_suffix(".log.stderr"))
+                if row["status"] == "findings" and not issues and not partial:
                     raise ValueError("Nonzero findings exit without normalized findings")
                 publish_analyzer_findings(out, tool, issues)
-                row.update(status="findings" if issues else "ok", findings_count=len(issues))
+                row.update(
+                    status="incomplete" if partial else "findings" if issues else "ok",
+                    findings_count=len(issues),
+                    skipped_count=len(partial),
+                    skipped=partial,
+                )
             except (OSError, ValueError, KeyError, TypeError, IndexError) as exc:
-                row.update(status="error", error=str(exc))
+                row.update(status="error", error=str(exc), error_type=type(exc).__name__)
         results[tool] = row
     statuses = {row["status"] for row in results.values()}
     return {

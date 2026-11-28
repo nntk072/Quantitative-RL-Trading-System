@@ -11,6 +11,7 @@ from tools.quality.local_checks.mutation_results import (
 )
 from tools.quality.local_checks.normalization import (
     normalize_analyzer_findings,
+    partition_partial_report,
     read_analyzer_report,
 )
 
@@ -126,3 +127,32 @@ def test_locked_mutmut_export_reconciles_unreported_statuses() -> None:
     assert result["counts"]["segfault"] == 1
     assert result["status"] == "incomplete"
     assert result["score_denominator"] == 2
+
+
+def test_partial_analyzer_reports_preserve_findings(tmp_path: Path) -> None:
+    """Skipped dependencies remain incomplete while assessed findings remain visible."""
+    raw = {
+        "dependencies": [
+            {"name": "local-wheel", "skip_reason": "not indexed"},
+            {"name": "sample", "version": "1", "vulns": [{"id": "TEST-1"}]},
+        ],
+    }
+    usable, skipped = partition_partial_report("pip-audit", raw, tmp_path)
+    assert skipped == [{"package": "local-wheel", "reason": "dependency_not_assessed"}]
+    assert normalize_analyzer_findings("pip-audit", usable, tmp_path)[0]["checker"] == "TEST-1"
+    assert len(raw["dependencies"]) == 2
+    with pytest.raises(ValueError, match="skipped"):
+        normalize_analyzer_findings("pip-audit", raw, tmp_path)
+
+
+def test_partial_bandit_report_keeps_scan_errors_distinct(tmp_path: Path) -> None:
+    """A skipped source is not a clean scan and does not erase other findings."""
+    raw = {
+        "errors": [{"filename": "sample.py", "reason": "could not parse"}],
+        "results": [],
+    }
+    usable, skipped = partition_partial_report("bandit", raw, tmp_path)
+    assert skipped == [{"file": "sample.py", "reason": "analyzer_reported_error"}]
+    assert normalize_analyzer_findings("bandit", usable, tmp_path) == []
+    with pytest.raises(ValueError, match="analysis errors"):
+        normalize_analyzer_findings("bandit", raw, tmp_path)

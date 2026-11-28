@@ -25,6 +25,7 @@ from tools.quality.local_checks.run_evidence import (
 
 MUTATION_SCOPES = {
     "risk": ("trading/account/", "trading/risk/", "trading/policy/"),
+    "account-limits": ("trading/account/limits.py",),
     "execution": ("trading/execution/", "trading/orders/", "simulation/"),
     "temporal": ("market_data/", "features/"),
     "decisioning": ("decisioning/",),
@@ -51,10 +52,18 @@ def _mutation_configured_project(
         ]
         if not configured["only_mutate"] or not tests:
             raise ValueError("Expanded mutation scope requires explicit relevant tests")
+    if scope == "account-limits":
+        # Keep the PR campaign bounded and use only the reviewed loss-floor module.
+        configured["only_mutate"] = ["trading/account/limits.py"]
+    # Keep imports outside the mutation scope resolvable in the copied checkout.
+    configured["also_copy"] = sorted(
+        set(configured.get("also_copy", [])) | {"config", "research_tools", "tools"}
+    )
     if tests:
         configured["pytest_add_cli_args_test_selection"] = ["-m", "unit", *tests]
     if include_uncovered:
         configured["mutate_only_covered_lines"] = False
+    configured["debug"] = True
     table = (
         "[tool.mutmut]\n"
         + "\n".join(f"{k} = {json.dumps(v)}" for k, v in configured.items())
@@ -131,7 +140,12 @@ def run_python_mutation(
         )
     report = checkout / "mutants/mutmut-cicd-stats.json"
     if not report.is_file():
-        return {"status": "incomplete", "worktree": str(checkout), "stages": stages}
+        return {
+            "status": "incomplete",
+            "worktree": str(checkout),
+            "stages": stages,
+            "reason": "mutation_report_not_generated",
+        }
     shutil.copyfile(report, out / "mutmut-native.json")
     details = stages.get("details", {})
     mutants = (
