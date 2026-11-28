@@ -497,7 +497,7 @@ def main() -> int:
             {"status": "disabled"} if mode == "off" else _dispatch_quality_action(args, out, policy)
         )
     except (OSError, ValueError, TypeError, KeyError, ImportError, RuntimeError) as exc:
-        result = {"status": "error", "error": str(exc)}
+        result = {"status": "error", "error": str(exc), "error_type": type(exc).__name__}
     write_quality_json(out / "result.json", result)
     manifest = publish_quality_manifest(out, before, started, args.action, result, mode)
     status = manifest["execution_status"]

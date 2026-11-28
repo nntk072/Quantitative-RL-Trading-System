@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -180,3 +183,34 @@ def test_manifest_rejects_tampered_or_unexpected_artifacts(tmp_path: Path) -> No
     (tmp_path / "unexpected.json").write_text("{}")
     with pytest.raises(ValueError, match="unexpected"):
         verify_quality_manifest(manifest)
+
+
+def test_receipt_destination_survives_test_environment_changes(tmp_path: Path) -> None:
+    source = tmp_path / "test_environment.py"
+    source.write_text(
+        "def test_environment(monkeypatch):\n"
+        "    monkeypatch.delenv('QRL_LOCAL_RECEIPTS')\n"
+        "    assert True\n"
+    )
+    receipts = tmp_path / "receipts.jsonl"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-p",
+            "tools.quality.local_checks.pytest_receipts",
+            "--rootdir",
+            str(tmp_path),
+            "-q",
+            str(source),
+        ],
+        env={**os.environ, "QRL_LOCAL_RECEIPTS": str(receipts)},
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    outcomes = validate_test_receipts(receipts, {"test_environment.py::test_environment"})
+    assert outcomes["test_environment.py::test_environment"]["status"] == "passed"

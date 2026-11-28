@@ -40,21 +40,31 @@ def pytest_collection_finish(session: pytest.Session) -> None:
         )
 
 
-def pytest_runtest_logreport(report: pytest.TestReport) -> None:
-    """Record phase outcomes on the controller; worker processes never share a log."""
-    target = os.environ.get("QRL_LOCAL_RECEIPTS")
-    if not target or os.environ.get("PYTEST_XDIST_WORKER"):
-        return
-    with Path(target).open("a", encoding="utf-8") as stream:
-        stream.write(
-            json.dumps(
-                {
-                    "nodeid": report.nodeid,
-                    "phase": report.when,
-                    "outcome": report.outcome,
-                    "seconds": report.duration,
-                    "xfail": bool(getattr(report, "wasxfail", False)),
-                }
+class _ReceiptWriter:
+    """Bind the receipt destination before tests can alter the process environment."""
+
+    def __init__(self, target: Path) -> None:
+        self.target = target
+
+    def pytest_runtest_logreport(self, report: pytest.TestReport) -> None:
+        """Record phase outcomes on the controller for the whole pytest session."""
+        with self.target.open("a", encoding="utf-8") as stream:
+            stream.write(
+                json.dumps(
+                    {
+                        "nodeid": report.nodeid,
+                        "phase": report.when,
+                        "outcome": report.outcome,
+                        "seconds": report.duration,
+                        "xfail": bool(getattr(report, "wasxfail", False)),
+                    }
+                )
+                + "\n"
             )
-            + "\n"
-        )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register a session-scoped controller writer with a stable destination."""
+    target = os.environ.get("QRL_LOCAL_RECEIPTS")
+    if target and not os.environ.get("PYTEST_XDIST_WORKER"):
+        config.pluginmanager.register(_ReceiptWriter(Path(target).resolve()), "qrl-receipt-writer")

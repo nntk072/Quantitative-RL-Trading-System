@@ -215,6 +215,14 @@ jobs:
                   "mutation_counts": result.get("summary", {}).get("counts") if data["action"] == "mutation" else None,
                   "findings_count": result.get("findings_count"),
                   "scenario_counts": result.get("counts") if data["action"] == "semantic" else None,
+                  "diagnostic": result.get("error") if result.get("error") in {
+                      "Unexpected test or phase", "Duplicate or invalid receipt",
+                      "Invalid test duration", "Collected tests are missing execution evidence",
+                      "Shard did not collect its assigned test inventory",
+                      "No inventory files", "Empty or duplicate inventory",
+                      "Workers collected different tests", "Invalid inventory or shard count",
+                  } else None,
+                  "error_type": result.get("error_type"),
               })
           directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-report"
           directory.mkdir(exist_ok=True)
@@ -275,7 +283,8 @@ jobs:
           reports = list((Path(os.environ["RUNNER_TEMP"]) / "codeql-results").glob("*.sarif"))
           count = sum(len(run.get("results", [])) for path in reports
                       for run in json.loads(path.read_text())["runs"])
-          status = ("incomplete" if os.environ["ANALYSIS_OUTCOME"] != "success"\n                    else "findings" if count else "ok" if reports else "unavailable")
+          status = ("incomplete" if os.environ["ANALYSIS_OUTCOME"] != "success"
+                    else "findings" if count else "ok" if reports else "unavailable")
           directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-codeql"
           directory.mkdir(exist_ok=True)
           payload = {"group": "codeql", "commit": os.environ["GITHUB_SHA"],
