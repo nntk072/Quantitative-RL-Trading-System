@@ -42,7 +42,7 @@ def _test_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--path", action="append", default=[])
     parser.add_argument(
         "--marker",
-        default="unit and not slow and not integration and not architecture and not gpu and not triton and not research"
+        default="unit and not slow and not integration and not architecture and not gpu and not triton and not research",
     )
     parser.add_argument("--count", type=int, default=4)
     parser.add_argument("--workers", type=int, default=2)
@@ -321,7 +321,11 @@ def _analysis_command(
             )
             findings = any(summary["counts"].get(k) for k in ("survived", "segfault", "suspicious"))
             status = (
-                "incomplete" if summary["status"] != "complete" else "findings" if findings else "ok"
+                "incomplete"
+                if summary["status"] != "complete"
+                else "findings"
+                if findings
+                else "ok"
             )
             return {"status": status, "summary": summary}
         case _:
