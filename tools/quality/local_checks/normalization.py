@@ -128,6 +128,38 @@ def partition_partial_report(
     return result, skipped
 
 
+def classify_pypi_scope(
+    skipped: list[dict[str, Any]],
+    locked: list[dict[str, Any]],
+    installed: dict[str, str],
+) -> list[dict[str, Any]]:
+    """Classify skipped packages against exact installed versions and locked index provenance.
+
+    The PyPI advisory service does not establish vulnerability coverage for
+    the editable project itself or a wheel from a different registry.
+    Unknown or mismatched skips remain execution incompleteness.
+    """
+    classified = []
+    for row in skipped:
+        name = row["package"]
+        key = re.sub(r"[-_.]+", "-", name).lower()
+        version = installed.get(key)
+        matches = [
+            package
+            for package in locked
+            if package["name"] == key and package["version"] == version
+        ]
+        scope = "unassessed"
+        if len(matches) == 1:
+            source = matches[0].get("source", {})
+            if source.get("editable") == ".":
+                scope = "editable_project"
+            elif source.get("registry") == "https://download.pytorch.org/whl/cu130":
+                scope = "non_pypi_accelerator_registry"
+        classified.append({**row, "version": version, "scope": scope})
+    return classified
+
+
 def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     """Normalize supported source diagnostic schemas."""
     result = []

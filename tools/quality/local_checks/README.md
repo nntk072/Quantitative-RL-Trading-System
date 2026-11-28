@@ -55,7 +55,8 @@ resource and Slurm rules; do not run heavyweight checks on login nodes.
 Policy: `policy.json` controls new actions (off/advisory/blocking). Existing
 coverage floors and all required CI commands stay untouched. Exit 0 means
 successful execution, advisory findings, disabled or not applicable; exit 1
-means blocking findings; exit 2 means incomplete, unavailable, invalid or
+means blocking findings; a scope-limited audit returns zero only in advisory
+mode and retains its unassessed inventory. Exit 2 means incomplete, unavailable, invalid or
 failed execution. Read the explicit manifest status. A timed-out analyzer is
 not a clean scan. `--timeout` bounds each external process, not the sum.
 
@@ -144,3 +145,12 @@ from assessed inputs without implying that skipped inputs passed. The bounded
 PR mutation campaign targets account-loss floor arithmetic; wider mutation
 scopes are available through the local command. OSV updates its offline
 vulnerability database in hosted CI and scans the authoritative uv lock.
+
+
+The PyPI audit explicitly distinguishes the installed editable project and
+the exact locked CUDA PyTorch wheel from PyPI-indexed dependencies. If the
+PyPI service skips one of those exact locked versions, the tool reports
+`scope_limited` and records the unassessed package and version. Any unknown
+or mismatched skip remains incomplete. This is not evidence that the
+non-PyPI wheel is vulnerability-free; OSV and Trivy provide complementary
+checks, not a guarantee of complete vulnerability coverage.

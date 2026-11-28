@@ -10,6 +10,7 @@ from tools.quality.local_checks.mutation_results import (
     summarize_mutation_results,
 )
 from tools.quality.local_checks.normalization import (
+    classify_pypi_scope,
     normalize_analyzer_findings,
     partition_partial_report,
     read_analyzer_report,
@@ -156,3 +157,25 @@ def test_partial_bandit_report_keeps_scan_errors_distinct(tmp_path: Path) -> Non
     assert normalize_analyzer_findings("bandit", usable, tmp_path) == []
     with pytest.raises(ValueError, match="analysis errors"):
         normalize_analyzer_findings("bandit", raw, tmp_path)
+
+
+def test_pypi_scope_only_accepts_exact_locked_non_pypi_versions() -> None:
+    """Known registry limitations are distinct from unexplained package skips."""
+    skipped = [{"package": "local-project"}, {"package": "torch"}, {"package": "unknown"}]
+    locked = [
+        {"name": "local-project", "version": "1", "source": {"editable": "."}},
+        {
+            "name": "torch",
+            "version": "2+cu130",
+            "source": {"registry": "https://download.pytorch.org/whl/cu130"},
+        },
+    ]
+    rows = classify_pypi_scope(
+        skipped, locked, {"local-project": "1", "torch": "2+cu130", "unknown": "1"}
+    )
+    assert [row["scope"] for row in rows] == [
+        "editable_project",
+        "non_pypi_accelerator_registry",
+        "unassessed",
+    ]
+    assert classify_pypi_scope(skipped[1:2], locked, {"torch": "3"})[0]["scope"] == "unassessed"

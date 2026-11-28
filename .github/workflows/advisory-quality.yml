@@ -131,6 +131,7 @@ jobs:
           }
           case "$GROUP" in
             infrastructure)
+              run_check quality-format "$QRL_PYTHON" -m ruff format --check --diff tools/quality/local_checks tests/unit/tooling/test_local_quality_impact.py tests/unit/tooling/test_local_quality_normalization.py tests/unit/tooling/test_local_quality_product_oracles.py
               run_check infrastructure-tests "$QRL_PYTHON" -m pytest -q tests/unit/tooling/test_local_quality_impact.py tests/unit/tooling/test_local_quality_normalization.py
               run_check workflow-and-shell quality --timeout 120 static actionlint shellcheck hadolint sqlfluff
               ;;
@@ -206,7 +207,8 @@ jobs:
                   "source_commit": data["source_commit"],
                   "tools": {k: {"status": v.get("status"), "findings": v.get("findings_count"),
                                  "skipped": v.get("skipped_count"), "returncode": v.get("returncode"),
-                                 "error_type": v.get("error_type")}
+                                 "error_type": v.get("error_type"),
+                                 "scope_exclusions": v.get("skipped", []) if k == "pip-audit" else []}
                             for k, v in result.get("tools", {}).items()},
                   "stages": {k: {"status": v.get("status"), "returncode": v.get("returncode")}
                              for k, v in result.get("stages", {}).items()},

@@ -508,6 +508,8 @@ def main() -> int:
     )
     if status == "findings":
         return int(mode == "blocking")
+    if status == "scope_limited":
+        return 0 if mode == "advisory" else 2
     return 0 if status in {"ok", "disabled", "not_applicable"} else 2
 
 

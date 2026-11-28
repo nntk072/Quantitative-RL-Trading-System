@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import os
 import site
+import tomllib
+from importlib.metadata import distributions
 from pathlib import Path
 from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES
 from tools.quality.local_checks.normalization import (
+    classify_pypi_scope,
     make_quality_finding,
     partition_partial_report,
     read_analyzer_report,
@@ -134,9 +137,7 @@ def _static_commands(out: Path) -> dict[str, tuple[list[str], tuple[int, ...], P
     sql = [p for p in files if p.endswith(".sql")]
     sarif = out / "gitleaks-native.sarif"
     bandit_report = out / "bandit-native.json"
-    osv_update = (
-        ["--download-offline-databases"] if os.environ.get("QRL_OSV_UPDATE") == "1" else []
-    )
+    osv_update = ["--download-offline-databases"] if os.environ.get("QRL_OSV_UPDATE") == "1" else []
     # None means the tool writes to stdout; the caller retains its separate stderr.
     return {
         "ruff": (["ruff", "check", "--output-format", "json", *owned], (1,), None),
@@ -304,8 +305,25 @@ def run_static_analyzers(out: Path, timeout: int, selected: list[str]) -> dict[s
                 if row["status"] == "findings" and not issues and not partial:
                     raise ValueError("Nonzero findings exit without normalized findings")
                 publish_analyzer_findings(out, tool, issues)
+                limited = False
+                if tool == "pip-audit" and partial:
+                    locked = tomllib.loads((ROOT / "uv.lock").read_text())["package"]
+                    installed = {
+                        dist.metadata["Name"].lower().replace("_", "-").replace(".", "-"): (
+                            dist.version
+                        )
+                        for dist in distributions(path=site.getsitepackages())
+                    }
+                    partial = classify_pypi_scope(partial, locked, installed)
+                    limited = all(item["scope"] != "unassessed" for item in partial)
                 row.update(
-                    status="incomplete" if partial else "findings" if issues else "ok",
+                    status="scope_limited"
+                    if limited
+                    else "incomplete"
+                    if partial
+                    else "findings"
+                    if issues
+                    else "ok",
                     findings_count=len(issues),
                     skipped_count=len(partial),
                     skipped=partial,
@@ -316,7 +334,9 @@ def run_static_analyzers(out: Path, timeout: int, selected: list[str]) -> dict[s
     statuses = {row["status"] for row in results.values()}
     return {
         "status": "incomplete"
-        if statuses - {"ok", "findings", "not_applicable"}
+        if statuses - {"ok", "findings", "not_applicable", "scope_limited"}
+        else "scope_limited"
+        if "scope_limited" in statuses
         else "findings"
         if "findings" in statuses
         else "ok",
