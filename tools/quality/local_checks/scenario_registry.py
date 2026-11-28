@@ -6,7 +6,7 @@ import ast
 from pathlib import Path
 from typing import Any
 
-from tools.quality.local_checks.run_evidence import HERE, ROOT, read_quality_json, verify_quality_manifest
+from tools.quality.local_checks.run_evidence import HERE, ROOT, read_quality_json, verify_quality_manifest, quality_source_identity
 
 
 def _valid_scenario_selector(selector: str) -> bool:
@@ -49,6 +49,8 @@ def report_semantic_scenarios(
     if manifest_path:
         verify_quality_manifest(manifest_path)
         source = read_quality_json(manifest_path)
+        if source.get("tree_sha256") != quality_source_identity()["tree_sha256"]:
+            raise ValueError("Scenario evidence belongs to a different source tree")
         if source["execution_status"] not in {"ok", "findings"}:
             raise ValueError("Incomplete execution evidence")
         if source["result"].get("validation_platform", "cpu") != platform:
@@ -64,6 +66,7 @@ def report_semantic_scenarios(
         if domain and row["domain"] != domain:
             continue
         selectors = row["selectors"]
+        complete_scope = source is not None and (source["result"].get("scope") == "full" or (source.get("action") == "semantic" and set(selectors).issubset(source["result"].get("scenario_selectors", []))))
         missing = [s for s in selectors if not _valid_scenario_selector(s)]
         relevant = {s: [n for n in outcomes if n == s or n.startswith(s+"::") or n.startswith(s+"[")]
                     for s in selectors}
@@ -73,7 +76,7 @@ def report_semantic_scenarios(
             "stale_mapping" if missing else
             "platform_not_checked" if row["platform"] != platform else
             "failed" if "failed" in executed.values() else
-            "passed" if all(relevant.values()) and executed and set(executed.values()) == {"passed"} else
+            "passed" if complete_scope and all(relevant.values()) and executed and set(executed.values()) == {"passed"} else
             "partial_or_skipped" if executed else "mapped_unexecuted"
         )
         result.append({**row, "status": status, "missing_selectors": missing, "outcomes": executed})

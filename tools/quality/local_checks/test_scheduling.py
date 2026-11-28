@@ -87,6 +87,7 @@ def _execute_test_shard(
     run = run_quality_process(
         [sys.executable, "-m", "pytest", "-p", PLUGIN, "-q", "-m", marker, *paths,
          f"--junitxml={directory / 'junit.xml'}"], directory / "pytest.log", timeout,
+        findings_codes=(1,),
         env={"QRL_LOCAL_SELECTION": str(selection), "QRL_LOCAL_INVENTORY": str(inventory),
              "QRL_LOCAL_RECEIPTS": str(receipts), "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
              "OPENBLAS_NUM_THREADS": "1"},
@@ -99,8 +100,8 @@ def _execute_test_shard(
         raise ValueError("Shard did not collect its assigned test inventory")
     outcomes = validate_test_receipts(receipts, expected)
     write_quality_json(directory / "outcomes.json", outcomes)
-    return {**run, "status": "ok" if all(r["status"] in {"passed", "skipped"} for r in outcomes.values())
-            else "incomplete", "count": len(rows)}
+    return {**run, "status": "incomplete" if any(r["status"] == "incomplete" for r in outcomes.values())
+            else "findings" if any(r["status"] == "failed" for r in outcomes.values()) else "ok", "count": len(rows)}
 
 
 def run_balanced_test_shards(
@@ -121,5 +122,6 @@ def run_balanced_test_shards(
         futures = [pool.submit(_execute_test_shard, i, shard, out, timeout, paths, marker)
                    for i, shard in enumerate(shards)]
         runs = [future.result() for future in futures]
-    return {"status": "ok" if all(run["status"] == "ok" for run in runs) else "incomplete",
+    return {"status": "incomplete" if any(run["status"] not in {"ok", "findings"} for run in runs) else
+            "findings" if any(run["status"] == "findings" for run in runs) else "ok",
             "shards": shards, "capacity": capacity, "runs": runs}

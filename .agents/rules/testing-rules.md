@@ -26,6 +26,19 @@ Test types required for features:
 3. **Architecture tests** — package ownership, imports, and repository contracts under `tests/architecture/`.
 4. **Research tests** — evidence protocols and larger analysis checks under `tests/research/`.
 
+## Advisory local quality tooling
+
+Use `./tools/check local-quality --help` for opt-in coverage diff,
+impacted-test, static analysis, semantic, mutation, and evidence commands.
+The implementation and policy live in `tools/quality/local_checks/`.
+Preserve the existing required gates and distinguish infrastructure errors,
+missing tools, advisory findings, and measured success. Never lower an
+existing baseline, add unjustified coverage exclusions, weaken assertions
+or parity tolerances, or claim unexecuted hardware validation passed.
+Impact planning is for fast feedback, not a replacement for full CI.
+Historical debt and costly training/fuzz/mutation campaigns are separate
+work; run only the scope authorized by the active task.
+
 ## Test-driven development (mandatory for new features)
 
 1. Write the test first (RED) — it should FAIL.

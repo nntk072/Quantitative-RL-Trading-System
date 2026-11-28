@@ -278,6 +278,13 @@ run_gpu() {
 }
 
 case "$GATE" in
+  local-quality)
+    shift
+    if [[ -n "$PYTHON_BIN" ]]; then
+      exec "$PYTHON_BIN" -m tools.quality.local_checks "$@"
+    fi
+    exec "$UV_BIN" run --no-sync -- python -m tools.quality.local_checks "$@"
+    ;;
   deps) run_deps ;;
   security-deps) run_security_deps ;;
   security-secrets) run_security_secrets ;;
@@ -316,5 +323,5 @@ case "$GATE" in
     run_training_smoke
     ;;
   gpu|triton) run_gpu ;;
-  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|docs|coverage|coverage-report|graph-quality|contracts|unit|unit-shard|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
+  *) echo "usage: $0 {local-quality|deps|security-deps|security-secrets|quality|architecture|docs|coverage|coverage-report|graph-quality|contracts|unit|unit-shard|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
 esac

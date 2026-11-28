@@ -9,7 +9,17 @@
     "mutation": "advisory",
     "semantic": "advisory",
     "parity": "advisory",
-    "performance": "advisory"
+    "performance": "advisory",
+    "native": "advisory",
+    "properties": "advisory",
+    "fuzz": "advisory",
+    "debt": "advisory",
+    "test-inventory": "advisory",
+    "test-shards": "advisory",
+    "impacted": "advisory",
+    "environment": "advisory",
+    "dashboard": "advisory",
+    "cache": "advisory"
   },
   "targets": {
     "statement": 100,
