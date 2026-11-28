@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from trading.column_schema import suffix_columns
 from trading.orders.targets import (
     collapse_levels,
     deviation_candidates,
@@ -245,11 +246,8 @@ def stop_menu(
             raw.append((name, level))
     ob_stem = "ob_bull_low" if direction == 1 else "ob_bear_high"
     row_columns = getattr(row, "index", ())
-    for column in row_columns:
-        column_name = str(column)
-        if (column_name == ob_stem or column_name.endswith(f"_{ob_stem}")) and _flag(
-            row, column_name.removesuffix("_low").removesuffix("_high") + "_active"
-        ):
+    for column_name in suffix_columns(row_columns, (ob_stem,)):
+        if _flag(row, column_name.removesuffix("_low").removesuffix("_high") + "_active"):
             level = finite_level(row, column_name)
             if level is not None:
                 raw.append((column_name, level))

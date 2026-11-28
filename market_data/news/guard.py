@@ -16,14 +16,20 @@ published in advance.
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections import OrderedDict
+from collections.abc import Hashable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import RLock
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
+_NEWS_MASK_CACHE_LIMIT = 4
+_NEWS_MASK_CACHE: OrderedDict[Hashable, np.ndarray[Any, Any]] = OrderedDict()
+_NEWS_MASK_CACHE_LOCK = RLock()
 
 
 @dataclass(frozen=True)
@@ -146,6 +152,60 @@ def news_block_mask(
     if config.exempt_open_manipulation:
         exempt = (labels == "ny") & (offsets.to_numpy() < open_manipulation_bars)
     return np.asarray(blackout | (spike & ~exempt), dtype=bool)
+
+
+def cached_news_block_mask(
+    cache_key: Hashable,
+    bar_times: Sequence[datetime],
+    close: np.ndarray[Any, Any],
+    atr: np.ndarray[Any, Any],
+    session_ids: np.ndarray[Any, Any],
+    session_labels: np.ndarray[Any, Any],
+    release_times: Sequence[datetime],
+    config: NewsGuardConfig,
+    *,
+    open_manipulation_bars: int,
+) -> np.ndarray[Any, Any]:
+    """Reuse an immutable news mask when the caller supplies a content identity.
+
+    The cache is process-local and bounded. ``cache_key`` must identify every input,
+    including source arrays, release-calendar contents, guard settings, and the open
+    manipulation window. Bundle-backed environments use the verified bundle key.
+
+    Args:
+        cache_key: Content identity covering every input that affects the mask.
+        bar_times: Ordered bar timestamps used for release-window matching.
+        close: Close-price values used to calculate price movement.
+        atr: Average true range values used to scale movement thresholds.
+        session_ids: Numeric session identifier for each bar.
+        session_labels: Session label for each bar.
+        release_times: Scheduled news release timestamps.
+        config: News guard settings.
+        open_manipulation_bars: NY opening bars exempt from spike blocking when enabled.
+
+    Returns:
+        A read-only boolean mask that is true where entries are blocked.
+    """
+    with _NEWS_MASK_CACHE_LOCK:
+        cached = _NEWS_MASK_CACHE.get(cache_key)
+        if cached is not None:
+            _NEWS_MASK_CACHE.move_to_end(cache_key)
+            return cached
+        mask = news_block_mask(
+            bar_times,
+            close,
+            atr,
+            session_ids,
+            session_labels,
+            release_times,
+            config,
+            open_manipulation_bars=open_manipulation_bars,
+        )
+        mask.setflags(write=False)
+        _NEWS_MASK_CACHE[cache_key] = mask
+        while len(_NEWS_MASK_CACHE) > _NEWS_MASK_CACHE_LIMIT:
+            _NEWS_MASK_CACHE.popitem(last=False)
+        return mask
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]

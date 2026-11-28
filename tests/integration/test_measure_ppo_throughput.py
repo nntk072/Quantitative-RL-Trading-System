@@ -162,6 +162,21 @@ def test_environment_step_timer_records_wrapped_steps() -> None:
     env.close()
 
 
+def test_environment_step_profiler_profiles_only_requested_policy_steps() -> None:
+    env = _StepTimingWrapper(gym.make("CartPole-v1"), profile_steps=2)
+    env.reset(seed=1)
+
+    env.step(0)
+    env.step(1)
+    env.step(0)
+
+    profile = env.get_step_profile()
+    assert profile["profiled_steps"] == 2
+    assert isinstance(profile["top_cumulative"], str)
+    assert "CartPole" in profile["top_cumulative"] or "step" in profile["top_cumulative"]
+    env.close()
+
+
 def test_class_method_timer_restores_class_without_mutating_instance() -> None:
     class Meter:
         def increment(self, value: int) -> int:

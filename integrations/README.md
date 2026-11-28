@@ -11,8 +11,7 @@ partial fills, and unit/timezone conversion explicitly. Paper/live operation
 requires its own deployment checks and should not be inferred from backtest
 success.
 
-See the [integration guide](../docs/modules/integrations.md),
-[broker-adapter how-to](../docs/how-to/add_broker_adapter.md), and
+See the [integration guide](../docs/modules/integrations.md) and
 [live runtime guide](../live/README.md).
 The [MetaTrader guide](mt5/README.md) documents the current adapter components
 and their order boundary.

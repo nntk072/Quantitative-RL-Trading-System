@@ -27,20 +27,39 @@ from simulation.environment.worker import make_bundle_env
 from training.setup.environments import _training_episodic
 
 
-def _profile(env: Any, steps: int, seed: int) -> tuple[float, cProfile.Profile]:
-    """Step ``env`` for ``steps`` steps under cProfile and return wall time and stats."""
+def _latency_percentiles_ms(samples_ns: np.ndarray[Any, Any]) -> dict[str, float | None]:
+    """Summarize per-step latency samples in milliseconds."""
+    if samples_ns.size == 0:
+        return {"p50": None, "p95": None, "p99": None}
+    p50, p95, p99 = np.percentile(samples_ns, [50, 95, 99]) / 1_000_000.0
+    return {"p50": float(p50), "p95": float(p95), "p99": float(p99)}
+
+
+def _profile(
+    env: Any,
+    steps: int,
+    seed: int,
+    *,
+    capture_profile: bool = True,
+) -> tuple[float, cProfile.Profile, list[int]]:
+    """Step ``env`` and return wall time, optional cProfile stats, and latencies."""
     env.action_space.seed(seed)
     env.reset(seed=seed)
     profiler = cProfile.Profile()
+    latency_samples_ns: list[int] = []
     started = time.perf_counter()
-    profiler.enable()
+    if capture_profile:
+        profiler.enable()
     for _ in range(steps):
+        step_started_ns = time.perf_counter_ns()
         out = env.step(env.action_space.sample())
+        latency_samples_ns.append(time.perf_counter_ns() - step_started_ns)
         if out[2] or (len(out) > 3 and out[3]):
             env.reset()
-    profiler.disable()
+    if capture_profile:
+        profiler.disable()
     wall = time.perf_counter() - started
-    return wall, profiler
+    return wall, profiler, latency_samples_ns
 
 
 def _time_subproc(spec: EnvSpec, n_envs: int, steps: int, seed: int) -> dict[str, float]:
@@ -99,8 +118,9 @@ def main() -> None:
     )
     env = make_bundle_env(spec)
     # Warm the caches once so the profile measures steady-state stepping.
-    _profile(env, min(200, args.steps), args.seed)
-    wall, profiler = _profile(env, args.steps, args.seed)
+    _profile(env, min(200, args.steps), args.seed, capture_profile=False)
+    wall, _, latency_samples_ns = _profile(env, args.steps, args.seed, capture_profile=False)
+    _, profiler, _ = _profile(env, args.steps, args.seed, capture_profile=True)
 
     stream = io.StringIO()
     pstats.Stats(profiler, stream=stream).sort_stats("cumulative").print_stats(args.top)
@@ -108,6 +128,7 @@ def main() -> None:
         "steps": args.steps,
         "wall_seconds": wall,
         "mean_step_ms": 1000.0 * wall / args.steps,
+        "step_latency_ms": _latency_percentiles_ms(np.asarray(latency_samples_ns, dtype=np.int64)),
         "top_cumulative": stream.getvalue(),
     }
     if args.vec_envs > 0:

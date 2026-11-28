@@ -5,7 +5,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from features.context.entry_ideas import entry_idea_context
 from simulation.entry_evidence import build_entry_evidence
 from simulation.entry_state import EntryCandidate, EntryEvidence
 from simulation.environment.diagnostics.errors import (
@@ -16,6 +15,7 @@ from simulation.environment.diagnostics.errors import (
 from trading.orders import manipulation_state
 from trading.strategies import BaselineStrategy
 
+from ..entries.context_cache import cached_entry_idea_context
 from ..entry_diagnostics import _REJECTION_COUNTERS
 from ..market_view import FeatureRow
 from ..mixin_base import RuntimeMixinBase
@@ -137,7 +137,7 @@ class DiagnosticsRuntimeMixin(RuntimeMixinBase):
             return discrete_action, risk_frac
             # PO3 manipulation state must not veto a separately active idea such as
             # an Order Block reaction, FVG retest, or swing retracement.
-        if entry_idea_context(feat_row, discrete_action)["ideas"]:
+        if cached_entry_idea_context(self, feat_row, discrete_action)["ideas"]:
             return discrete_action, risk_frac
         if (
             isinstance(self.strategy, BaselineStrategy)

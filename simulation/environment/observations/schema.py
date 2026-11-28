@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
+from dataclasses import dataclass
 from typing import Any, cast
 
 import numpy as np
@@ -211,6 +213,263 @@ def closed_window_raw(
         block[rows] if selected_columns is None else block[rows][:, selected_columns],
         dtype=np.float32,
     )
+
+
+@dataclass(slots=True)
+class _PreparedWindowPrefixCacheEntry:
+    """Prepared immutable historical rows for one visible HTF window."""
+
+    visible_end: int
+    first_visible: int
+    length: int
+    include_validity: bool
+    block_identity: int
+    starts_identity: int
+    columns_identity: int
+    values: np.ndarray[Any, Any]
+
+
+@dataclass(slots=True)
+class _PreparedRollingWindowCacheEntry:
+    """Prepared M1 rows for one sliding observation window."""
+
+    start: int
+    end: int
+    length: int
+    include_validity: bool
+    block_identity: int
+    columns_identity: int
+    values: np.ndarray[Any, Any]
+
+
+def _prepare_rolling_window_with_cache(
+    block: np.ndarray[Any, Any],
+    start: int,
+    end: int,
+    length: int,
+    *,
+    columns: np.ndarray[Any, Any] | None,
+    include_validity: bool,
+    cache_key: str,
+    cache: MutableMapping[str, _PreparedRollingWindowCacheEntry],
+) -> tuple[np.ndarray[Any, Any], bool]:
+    """Reuse sanitized rows as an immutable M1 observation window advances.
+
+    Args:
+        block: Contiguous source feature matrix.
+        start: Inclusive first row of the requested window.
+        end: Exclusive end row of the requested window.
+        length: Maximum number of rows in the observation window.
+        columns: Optional source-column indices to include.
+        include_validity: Whether to append feature-validity channels.
+        cache_key: Key identifying this environment's rolling window.
+        cache: Mutable per-environment prepared-window cache.
+
+    Returns:
+        The sanitized observation rows and whether they were reused or extended.
+    """
+    if block.ndim != 2:
+        return prepare_observation_feature_channels(
+            np.zeros((0, 1), dtype=np.float32), include_validity=include_validity
+        ), False
+
+    first = max(0, int(start))
+    stop = min(int(end), int(block.shape[0]))
+    if stop < first:
+        stop = first
+    window_length = int(length)
+    selected_columns = None if columns is None else np.asarray(columns, dtype=np.int64)
+    columns_identity = 0 if columns is None else id(columns)
+    previous = cache.get(cache_key)
+
+    if (
+        previous is not None
+        and previous.start == first
+        and previous.end == stop
+        and previous.length == window_length
+        and previous.include_validity is bool(include_validity)
+        and previous.block_identity == id(block)
+        and previous.columns_identity == columns_identity
+    ):
+        return previous.values, True
+
+    if (
+        previous is not None
+        and stop > first
+        and previous.length == window_length
+        and previous.include_validity is bool(include_validity)
+        and previous.block_identity == id(block)
+        and previous.columns_identity == columns_identity
+        and previous.end + 1 == stop
+        and first in (previous.start, previous.start + 1)
+        and stop - first <= window_length
+    ):
+        old_rows = previous.values[1:] if first == previous.start + 1 else previous.values
+        current_row = block[stop - 1]
+        if selected_columns is not None:
+            current_row = current_row[selected_columns]
+        prepared_row = prepare_observation_feature_channels(
+            np.asarray(current_row, dtype=np.float32).reshape(1, -1),
+            include_validity=include_validity,
+        )
+        values = np.concatenate((old_rows, prepared_row), axis=0)
+        cache_hit = True
+    else:
+        raw = block[first:stop]
+        if selected_columns is not None:
+            raw = raw[:, selected_columns]
+        values = prepare_observation_feature_channels(raw, include_validity=include_validity)
+        cache_hit = False
+
+    cache[cache_key] = _PreparedRollingWindowCacheEntry(
+        start=first,
+        end=stop,
+        length=window_length,
+        include_validity=bool(include_validity),
+        block_identity=id(block),
+        columns_identity=columns_identity,
+        values=values,
+    )
+    return values, cache_hit
+
+
+def _prepare_closed_window_with_prefix_cache(
+    block: np.ndarray[Any, Any],
+    starts: np.ndarray[Any, Any],
+    end: int,
+    length: int,
+    *,
+    columns: np.ndarray[Any, Any] | None,
+    include_validity: bool,
+    cache_key: str,
+    cache: MutableMapping[str, _PreparedWindowPrefixCacheEntry],
+    write_current_row_directly: bool = False,
+) -> tuple[np.ndarray[Any, Any], bool]:
+    """Reuse prepared closed rows while reading the current decision row each step.
+
+    Observation feature arrays are immutable after environment construction.
+    Within a visible-candle boundary, all window rows except the current M1 row
+    are therefore stable and can be sanitized once. The dynamic decision row is
+    still read and sanitized on every call.
+
+    Args:
+        block: Contiguous source feature matrix.
+        starts: M1 row offsets marking each completed higher-timeframe candle.
+        end: Current decision row index.
+        length: Maximum number of completed rows in the observation window.
+        columns: Optional source-column indices to include.
+        include_validity: Whether to append feature-validity channels.
+        cache_key: Key identifying this environment's higher-timeframe window.
+        cache: Mutable per-environment prepared-prefix cache.
+        write_current_row_directly: Whether to fill the output's current row directly.
+
+    Returns:
+        The sanitized observation rows and whether the stable prefix was reused.
+    """
+    decision = int(end)
+    window_length = int(length)
+    if block.ndim != 2:
+        raw = closed_window_raw(block, starts, decision, window_length, columns=columns)
+        return prepare_observation_feature_channels(raw, include_validity=include_validity), False
+
+    selected_columns = None if columns is None else np.asarray(columns, dtype=np.int64)
+    width = int(block.shape[1]) if selected_columns is None else int(selected_columns.size)
+    visible_end = int(np.searchsorted(starts, decision, side="right")) if starts.size else 0
+    if width == 0 or decision < 0 or visible_end == 0:
+        raw = closed_window_raw(block, starts, decision, window_length, columns=columns)
+        return prepare_observation_feature_channels(raw, include_validity=include_validity), False
+
+    first_visible = max(0, visible_end - window_length)
+    columns_identity = 0 if columns is None else id(columns)
+    previous = cache.get(cache_key)
+    if (
+        previous is not None
+        and previous.visible_end == visible_end
+        and previous.length == window_length
+        and previous.include_validity is bool(include_validity)
+        and previous.block_identity == id(block)
+        and previous.starts_identity == id(starts)
+        and previous.columns_identity == columns_identity
+    ):
+        prepared_prefix = previous.values
+        cache_hit = True
+    elif (
+        previous is not None
+        and previous.length == window_length
+        and previous.include_validity is bool(include_validity)
+        and previous.block_identity == id(block)
+        and previous.starts_identity == id(starts)
+        and previous.columns_identity == columns_identity
+        and window_length > 1
+        and previous.visible_end + 1 == visible_end
+        and first_visible in (previous.first_visible, previous.first_visible + 1)
+    ):
+        closed_row_index = int(starts[visible_end - 1]) - 1
+        closed_row = block[closed_row_index]
+        if selected_columns is not None:
+            closed_row = closed_row[selected_columns]
+        prepared_closed_row = prepare_observation_feature_channels(
+            np.asarray(closed_row, dtype=np.float32).reshape(1, -1),
+            include_validity=include_validity,
+        )
+        old_prefix = previous.values
+        if first_visible == previous.first_visible + 1:
+            old_prefix = old_prefix[1:]
+        prepared_prefix = np.concatenate((old_prefix, prepared_closed_row), axis=0)
+        cache[cache_key] = _PreparedWindowPrefixCacheEntry(
+            visible_end=visible_end,
+            first_visible=first_visible,
+            length=window_length,
+            include_validity=bool(include_validity),
+            block_identity=id(block),
+            starts_identity=id(starts),
+            columns_identity=columns_identity,
+            values=prepared_prefix,
+        )
+        cache_hit = True
+    else:
+        prefix_rows = starts[first_visible + 1 : visible_end] - 1
+        raw_prefix = block[prefix_rows]
+        if selected_columns is not None:
+            raw_prefix = raw_prefix[:, selected_columns]
+        prepared_prefix = prepare_observation_feature_channels(
+            raw_prefix, include_validity=include_validity
+        )
+        cache[cache_key] = _PreparedWindowPrefixCacheEntry(
+            visible_end=visible_end,
+            first_visible=first_visible,
+            length=window_length,
+            include_validity=bool(include_validity),
+            block_identity=id(block),
+            starts_identity=id(starts),
+            columns_identity=columns_identity,
+            values=prepared_prefix,
+        )
+        cache_hit = False
+
+    current_row = block[decision]
+    if selected_columns is not None:
+        current_row = current_row[selected_columns]
+    if write_current_row_directly:
+        current_row = np.asarray(current_row, dtype=np.float32)
+        finite = np.isfinite(current_row)
+        feature_width = int(current_row.size)
+        values = np.empty(
+            (int(prepared_prefix.shape[0]) + 1, int(prepared_prefix.shape[1])),
+            dtype=np.float32,
+        )
+        values[:-1] = prepared_prefix
+        values[-1, :feature_width] = 0.0
+        np.copyto(values[-1, :feature_width], current_row, where=finite)
+        if include_validity:
+            values[-1, feature_width:] = finite
+        return values, cache_hit
+
+    prepared_current = prepare_observation_feature_channels(
+        np.asarray(current_row, dtype=np.float32).reshape(1, -1),
+        include_validity=include_validity,
+    )
+    return np.concatenate((prepared_prefix, prepared_current), axis=0), cache_hit
 
 
 def prepare_observation_feature_channels_many(

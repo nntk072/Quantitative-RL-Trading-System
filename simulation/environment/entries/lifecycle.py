@@ -6,12 +6,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from features.context.entry_ideas import entry_idea_context
 from trading.execution import Position
 from trading.orders import dynamic_tp, filter_sl_candidates, source_timeframe
 
 from ..market_view import BarView, FeatureRow
 from ..mixin_base import RuntimeMixinBase
+from .context_cache import cached_entry_idea_context
 
 
 class EntryRuntimeMixin(RuntimeMixinBase):
@@ -121,7 +121,8 @@ class EntryRuntimeMixin(RuntimeMixinBase):
             except (TypeError, ValueError):
                 session = ""
         tp_legs: list[dict[str, Any]] = []
-        idea_context = entry_idea_context(
+        idea_context = cached_entry_idea_context(
+            self,
             feat_row,
             int(getattr(self.position, "direction", 0)),
             include_zones=True,

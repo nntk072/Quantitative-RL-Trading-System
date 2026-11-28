@@ -17,11 +17,14 @@ remain unmeasured, so this is not an end-to-end experiment run benchmark.
 from __future__ import annotations
 
 import argparse
+import cProfile
 import gc
 import hashlib
+import io
 import json
 import os
 import platform
+import pstats
 import random
 import subprocess
 import time
@@ -65,25 +68,52 @@ from training.setup.environments import _training_episodic, strategy_from_cfg
 class _StepTimingWrapper(gym.Wrapper[Any, Any, Any, Any]):
     """Collect per-environment step duration for a diagnostic probe."""
 
-    def __init__(self, env: gym.Env[Any, Any]) -> None:
+    def __init__(self, env: gym.Env[Any, Any], *, profile_steps: int = 0) -> None:
         super().__init__(env)
+        if profile_steps < 0:
+            raise ValueError("profile_steps must be nonnegative")
         self._step_seconds = 0.0
         self._step_count = 0
+        self._profile_step_limit = int(profile_steps)
+        self._profiled_step_count = 0
+        self._step_profiler = cProfile.Profile() if profile_steps else None
 
     def step(self, action: Any) -> Any:
         started = time.perf_counter()
+        profiler = self._step_profiler
+        should_profile = (
+            profiler is not None and self._profiled_step_count < self._profile_step_limit
+        )
+        if should_profile:
+            assert profiler is not None
+            profiler.enable()
         try:
             return self.env.step(action)
         finally:
+            if should_profile and profiler is not None:
+                profiler.disable()
+                self._profiled_step_count += 1
             self._step_seconds += time.perf_counter() - started
             self._step_count += 1
 
     def get_step_timing(self) -> dict[str, float | int]:
         return {"seconds": self._step_seconds, "steps": self._step_count}
 
+    def get_step_profile(self) -> dict[str, int | str]:
+        """Return a bounded cProfile summary for policy-driven environment steps."""
+        stream = io.StringIO()
+        if self._step_profiler is not None:
+            pstats.Stats(self._step_profiler, stream=stream).sort_stats("cumulative").print_stats(
+                30
+            )
+        return {
+            "profiled_steps": self._profiled_step_count,
+            "top_cumulative": stream.getvalue(),
+        }
 
-def _timed_env_from_factory(env_factory: Any) -> _StepTimingWrapper:
-    return _StepTimingWrapper(env_factory())
+
+def _timed_env_from_factory(env_factory: Any, *, profile_steps: int = 0) -> _StepTimingWrapper:
+    return _StepTimingWrapper(env_factory(), profile_steps=profile_steps)
 
 
 def _json_default(value: Any) -> Any:
@@ -175,6 +205,15 @@ def _parse_args() -> argparse.Namespace:
         "--measure-env-steps",
         action="store_true",
         help="Time TradingEnv.step calls and report per-shard environment time.",
+    )
+    parser.add_argument(
+        "--profile-env-steps",
+        type=int,
+        default=0,
+        help=(
+            "Collect cProfile summaries for the first N environment steps per worker during "
+            "policy-driven PPO rollouts. Profiling overhead makes this a diagnostic run."
+        ),
     )
     parser.add_argument(
         "--total-timesteps",
@@ -381,6 +420,7 @@ def _train_probe(
     update_semaphore_dir: Path | None = None,
     update_semaphore_slots: int = 0,
     warmup_rollouts: int = 0,
+    profile_env_steps: int = 0,
 ) -> dict[str, Any]:
     import torch
 
@@ -440,8 +480,8 @@ def _train_probe(
     if not isinstance(parent_env.observation_space, spaces.Dict):
         raise TypeError("PPO throughput probe requires a Dict observation space")
     env_fn: Callable[[], gym.Env[Any, Any]] = partial(make_bundle_env, spec)
-    if measure_env_steps:
-        env_fn = partial(_timed_env_from_factory, env_fn)
+    if measure_env_steps or profile_env_steps > 0:
+        env_fn = partial(_timed_env_from_factory, env_fn, profile_steps=profile_env_steps)
     model = build_agent(
         parent_env, cfg, arch=arch, algo=algo, device=device, env_fn=env_fn, seed=seed
     )
@@ -570,6 +610,7 @@ def _train_probe(
                 sum(float(item["seconds"]) for item in env_step_stats[cursor : cursor + width])
             )
             cursor += width
+    env_step_profiles = vec_env.env_method("get_step_profile") if profile_env_steps > 0 else []
 
     # SB3 counts every per-env step into ``num_timesteps``, so this is the real
     # number of env steps the rollout produced (>= total_timesteps because the
@@ -647,6 +688,8 @@ def _train_probe(
         "torch_compile_warmup_seconds": compile_warmup_seconds,
         "matmul_precision": torch.get_float32_matmul_precision(),
         "env_step_timing_enabled": measure_env_steps,
+        "env_step_profile_limit_per_worker": profile_env_steps,
+        "env_step_profiles": env_step_profiles,
         "env_step_calls": sum(int(item["steps"]) for item in env_step_stats),
         "env_step_cpu_seconds_total": sum(float(item["seconds"]) for item in env_step_stats),
         "env_step_wall_lower_bound_seconds": max(env_step_shard_seconds, default=0.0),
@@ -765,6 +808,7 @@ def main() -> None:
         or (args.total_timesteps is not None and args.total_timesteps < 1)
         or args.warmup_rollouts < 0
         or args.update_semaphore_slots < 0
+        or args.profile_env_steps < 0
     ):
         raise SystemExit(
             "n_envs, rollout steps, batch size, and total_timesteps must be positive; "
@@ -792,6 +836,7 @@ def main() -> None:
         args.update_semaphore_dir,
         args.update_semaphore_slots,
         args.warmup_rollouts,
+        args.profile_env_steps,
     )
     print(json.dumps(report, indent=2, default=_json_default))
 

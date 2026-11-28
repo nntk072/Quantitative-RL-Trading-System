@@ -105,8 +105,8 @@ def validate_research_protocol(protocol: Mapping[str, Any]) -> None:
             raise ValueError(f"survival contract field {key!r} differs from the frozen value")
 
     policy = _mapping(protocol.get("policy"), "policy")
-    if int(policy.get("default_n_envs", 0)) != 8:
-        raise ValueError("canonical survival policy must default to n_envs=8")
+    if int(policy.get("default_n_envs", 0)) != 16:
+        raise ValueError("canonical survival policy must default to n_envs=16")
     if tuple(policy.get("all_setup_timeframes", ())) != EXPECTED_TIMEFRAMES:
         raise ValueError("canonical policy must retain all nine setup timeframes")
     for key in ("canonical_survival_config", "control_config", "price_geometry_config"):
@@ -183,8 +183,8 @@ def validate_research_protocol(protocol: Mapping[str, Any]) -> None:
         raise ValueError("compute comparisons must use full paths per environment")
     if float(compute.get("minimum_full_path_equivalents_per_environment", 0.0)) < 2.0:
         raise ValueError("compute budget must preserve at least two full paths per environment")
-    if int(compute.get("default_n_envs", 0)) != 8:
-        raise ValueError("canonical compute shape must remain n_envs=8")
+    if int(compute.get("default_n_envs", 0)) != 16:
+        raise ValueError("canonical compute shape must remain n_envs=16")
 
 
 def research_protocol_sha256(protocol: Mapping[str, Any]) -> str:

@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import pandas as pd
+import pytest
 import torch
 
 from simulation.environment.env import TradingEnv
+from simulation.environment.observations import runtime as observation_runtime
+from simulation.environment.observations import schema as observation_schema
 from simulation.environment.observations.schema import (
     closed_window,
     run_starts,
@@ -93,6 +97,206 @@ def test_closed_window_without_available_candles_marks_every_row_invalid() -> No
 
     np.testing.assert_array_equal(window, np.zeros((4, 2), dtype=np.float32))
     np.testing.assert_array_equal(mask, np.zeros(4, dtype=np.float32))
+
+
+@pytest.mark.parametrize("include_validity", [False, True])
+def test_prepared_window_prefix_cache_tracks_dynamic_current_rows(
+    include_validity: bool,
+) -> None:
+    block = np.arange(18, dtype=np.float32).reshape(9, 2)
+    block[4, 0] = np.nan
+    block[7, 1] = np.inf
+    starts = np.asarray([0, 3, 6], dtype=np.int64)
+    columns = np.asarray([1, 0], dtype=np.int64)
+    cache: dict[str, Any] = {}
+    # Same-boundary steps reuse the prefix, and adjacent candle boundaries update
+    # it by one closed row instead of rebuilding the complete window.
+    expected_hits = {
+        0: False,
+        1: True,
+        2: True,
+        3: True,
+        4: True,
+        5: True,
+        6: True,
+        7: True,
+        8: True,
+    }
+
+    for decision in range(block.shape[0]):
+        actual, cache_hit = observation_schema._prepare_closed_window_with_prefix_cache(
+            block,
+            starts,
+            decision,
+            4,
+            columns=columns,
+            include_validity=include_validity,
+            cache_key="m5",
+            cache=cache,
+        )
+        expected = observation_schema.prepare_observation_feature_channels(
+            observation_schema.closed_window_raw(block, starts, decision, 4, columns=columns),
+            include_validity=include_validity,
+        )
+
+        np.testing.assert_array_equal(actual, expected)
+        assert cache_hit is expected_hits[decision]
+
+
+def test_prepared_window_prefix_cache_rebuilds_after_visibility_skip() -> None:
+    block = np.arange(20, dtype=np.float32).reshape(10, 2)
+    starts = np.arange(block.shape[0], dtype=np.int64)
+    cache: dict[str, Any] = {}
+
+    for decision, expected_hit in ((0, False), (5, False)):
+        actual, cache_hit = observation_schema._prepare_closed_window_with_prefix_cache(
+            block,
+            starts,
+            decision,
+            4,
+            columns=None,
+            include_validity=False,
+            cache_key="m1",
+            cache=cache,
+        )
+        expected = observation_schema.prepare_observation_feature_channels(
+            observation_schema.closed_window_raw(block, starts, decision, 4),
+            include_validity=False,
+        )
+
+        np.testing.assert_array_equal(actual, expected)
+        assert cache_hit is expected_hit
+
+
+@pytest.mark.parametrize("include_validity", [False, True])
+def test_direct_current_row_output_matches_cached_window_reference(
+    include_validity: bool,
+) -> None:
+    block = np.arange(36, dtype=np.float32).reshape(12, 3)
+    block[2, 0] = np.nan
+    block[5, 1] = np.inf
+    block[9, 2] = -np.inf
+    columns_cases = (None, np.asarray([2, 0], dtype=np.int64), np.zeros(0, dtype=np.int64))
+    boundary_cases = (
+        (np.zeros(0, dtype=np.int64), tuple(range(12))),
+        (np.asarray([0, 3, 6, 9], dtype=np.int64), tuple(range(12))),
+        (np.asarray([0, 3, 6, 9], dtype=np.int64), (0, 1, 6, 7, 11)),
+    )
+
+    for starts, decisions in boundary_cases:
+        for columns in columns_cases:
+            reference_cache: dict[str, Any] = {}
+            direct_cache: dict[str, Any] = {}
+            for decision in decisions:
+                raw = observation_schema.closed_window_raw(
+                    block, starts, decision, 4, columns=columns
+                )
+                finite = np.isfinite(raw)
+                expected_values = np.zeros(raw.shape, dtype=np.float32)
+                np.copyto(expected_values, raw, where=finite)
+                if include_validity:
+                    expected = np.concatenate((expected_values, finite.astype(np.float32)), axis=1)
+                else:
+                    expected = expected_values
+
+                reference, reference_hit = (
+                    observation_schema._prepare_closed_window_with_prefix_cache(
+                        block,
+                        starts,
+                        decision,
+                        4,
+                        columns=columns,
+                        include_validity=include_validity,
+                        cache_key="reference",
+                        cache=reference_cache,
+                    )
+                )
+                direct, direct_hit = observation_schema._prepare_closed_window_with_prefix_cache(
+                    block,
+                    starts,
+                    decision,
+                    4,
+                    columns=columns,
+                    include_validity=include_validity,
+                    cache_key="direct",
+                    cache=direct_cache,
+                    write_current_row_directly=True,
+                )
+
+                np.testing.assert_array_equal(reference, expected)
+                np.testing.assert_array_equal(direct, expected)
+                assert direct_hit is reference_hit
+
+
+@pytest.mark.parametrize("include_validity", [False, True])
+def test_prepared_rolling_window_cache_tracks_sliding_observation_rows(
+    include_validity: bool,
+) -> None:
+    block = np.arange(30, dtype=np.float32).reshape(10, 3)
+    block[3, 1] = np.nan
+    block[7, 2] = np.inf
+    columns = np.asarray([2, 0], dtype=np.int64)
+    cache: dict[str, Any] = {}
+
+    expected_hits = {
+        (0, 0): False,
+        (0, 1): True,
+        (0, 2): True,
+        (0, 3): True,
+        (0, 4): True,
+        (1, 5): True,
+        (2, 6): True,
+        (4, 7): False,
+        (5, 8): True,
+        (6, 9): True,
+    }
+    for start, end in expected_hits:
+        actual, cache_hit = observation_schema._prepare_rolling_window_with_cache(
+            block,
+            start,
+            end,
+            4,
+            columns=columns,
+            include_validity=include_validity,
+            cache_key="m1",
+            cache=cache,
+        )
+        expected = observation_schema.prepare_observation_feature_channels(
+            block[start:end, columns], include_validity=include_validity
+        )
+
+        np.testing.assert_array_equal(actual, expected)
+        assert cache_hit is expected_hits[(start, end)]
+
+
+def test_prepared_rolling_window_cache_rebuilds_when_inputs_change() -> None:
+    block = np.arange(30, dtype=np.float32).reshape(10, 3)
+    cache: dict[str, Any] = {}
+    cases = [
+        (block, 0, 4, 4, np.asarray([0, 2]), False),
+        (block.copy(), 1, 5, 4, np.asarray([0, 2]), False),
+        (block, 2, 6, 4, np.asarray([1, 2]), False),
+        (block, 3, 7, 3, np.asarray([1, 2]), False),
+        (block, 4, 8, 3, np.asarray([1, 2]), True),
+    ]
+
+    for source, start, end, length, columns, include_validity in cases:
+        actual, cache_hit = observation_schema._prepare_rolling_window_with_cache(
+            source,
+            start,
+            end,
+            length,
+            columns=columns,
+            include_validity=include_validity,
+            cache_key="m1",
+            cache=cache,
+        )
+        expected = observation_schema.prepare_observation_feature_channels(
+            source[start:end, columns], include_validity=include_validity
+        )
+
+        np.testing.assert_array_equal(actual, expected)
+        assert not cache_hit
 
 
 def test_timeframe_starts_preserve_equal_consecutive_candles() -> None:
@@ -260,6 +464,70 @@ def test_opt_in_mtf_validity_sanitizes_nonfinite_features_across_streams() -> No
         sequence = observation[f"seq_{timeframe}"]
         assert sequence[-1, feature_column] == 0.0
         assert sequence[-1, len(columns) + feature_column] == valid
+
+
+def test_mtf_direct_current_row_preserves_registered_fixed_action_rollout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bars, features, _ = _day()
+    env_pairs = [
+        (
+            _env(bars, features, mtf=True, feature_validity_channels=True),
+            _env(bars, features, mtf=True, feature_validity_channels=True),
+        )
+        for _ in range(8)
+    ]
+    reference_cache_ids = {
+        id(reference_env._htf_prepared_observation_cache) for _, reference_env in env_pairs
+    }
+    original_helper = observation_schema._prepare_closed_window_with_prefix_cache
+
+    def use_direct_output_for_candidate(
+        *args: Any, **kwargs: Any
+    ) -> tuple[np.ndarray[Any, Any], bool]:
+        kwargs["write_current_row_directly"] = id(kwargs["cache"]) not in reference_cache_ids
+        return original_helper(*args, **kwargs)
+
+    monkeypatch.setattr(
+        observation_runtime,
+        "_prepare_closed_window_with_prefix_cache",
+        use_direct_output_for_candidate,
+    )
+
+    def assert_nested_equal(left: Any, right: Any) -> None:
+        if isinstance(left, np.ndarray):
+            np.testing.assert_array_equal(left, right)
+        elif isinstance(left, dict):
+            assert isinstance(right, dict)
+            assert left.keys() == right.keys()
+            for key in left:
+                assert_nested_equal(left[key], right[key])
+        elif isinstance(left, (list, tuple)):
+            assert isinstance(right, (list, tuple))
+            assert len(left) == len(right)
+            for left_item, right_item in zip(left, right, strict=True):
+                assert_nested_equal(left_item, right_item)
+        else:
+            assert left == right
+
+    for env_index, (cached_env, reference_env) in enumerate(env_pairs):
+        cached_env.action_space.seed(71 + env_index)
+        cached_observation, _ = cached_env.reset(seed=42 + env_index)
+        reference_observation, _ = reference_env.reset(seed=42 + env_index)
+        assert_nested_equal(cached_observation, reference_observation)
+
+    for _ in range(256):
+        for cached_env, reference_env in env_pairs:
+            action = cached_env.action_space.sample()
+            cached_result = cached_env.step(action)
+            reference_env._htf_prepared_observation_cache.clear()
+            reference_env._m1_prepared_observation_cache.clear()
+            reference_result = reference_env.step(action)
+            assert_nested_equal(cached_result, reference_result)
+            if cached_result[2] or cached_result[3]:
+                cached_reset, _ = cached_env.reset()
+                reference_reset, _ = reference_env.reset()
+                assert_nested_equal(cached_reset, reference_reset)
 
 
 def test_opt_in_mtf_validity_masks_missing_columns_and_padding() -> None:

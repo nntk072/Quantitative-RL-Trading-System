@@ -18,9 +18,9 @@ from ..mixin_base import RuntimeMixinBase
 from .schema import (
     DEFAULT_HTF_WINDOWS,
     HTF_BRANCHES,
-    closed_window_raw,
+    _prepare_closed_window_with_prefix_cache,
+    _prepare_rolling_window_with_cache,
     prepare_observation_feature_channels,
-    prepare_observation_feature_channels_many,
     sanitize_observation_values,
 )
 
@@ -76,17 +76,41 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             Mapping from ``str`` keys to ``np.ndarray[Any, Any]`` values.
         """
         start_idx = self._session_seq_start()
-        seq = self._obs_features_arr[start_idx : self.step_idx]
         if (self.mtf or self.trade_setup_actions) and self._m1_idx.size:
-            seq = seq[:, self._m1_idx]
+            seq, _ = _prepare_rolling_window_with_cache(
+                self._obs_features_arr,
+                start_idx,
+                self.step_idx,
+                self.obs_window,
+                columns=self._m1_idx,
+                include_validity=self.feature_validity_channels,
+                cache_key="m1",
+                cache=self._m1_prepared_observation_cache,
+            )
         elif self.mtf or self.trade_setup_actions:
+            seq = self._obs_features_arr[start_idx : self.step_idx]
             seq = np.zeros((seq.shape[0], 1), dtype=np.float32)
             seq.fill(np.nan)
+            seq = prepare_observation_feature_channels(
+                seq, include_validity=self.feature_validity_channels
+            )
         elif not self._obs_columns:
+            seq = self._obs_features_arr[start_idx : self.step_idx]
             seq = np.full_like(seq, np.nan, dtype=np.float32)
-        seq = prepare_observation_feature_channels(
-            seq, include_validity=self.feature_validity_channels
-        )
+            seq = prepare_observation_feature_channels(
+                seq, include_validity=self.feature_validity_channels
+            )
+        else:
+            seq, _ = _prepare_rolling_window_with_cache(
+                self._obs_features_arr,
+                start_idx,
+                self.step_idx,
+                self.obs_window,
+                columns=None,
+                include_validity=self.feature_validity_channels,
+                cache_key="m1",
+                cache=self._m1_prepared_observation_cache,
+            )
         seq, seq_mask = pad_observation_window(seq, self.obs_window)
 
         # Account state
@@ -215,25 +239,25 @@ class ObservationRuntimeMixin(RuntimeMixinBase):
             obs.update(build_candidate_geometry_observation(self))
         if self.mtf:
             decision = int(self.step_idx)
-            # One sanitize/mask pass for all higher-timeframe windows; per-window
-            # gather and padding are unchanged.
+            # Reuse immutable closed-candle prefixes; refresh each current row.
             lengths = [
                 int(self._mtf_windows.get(key, DEFAULT_HTF_WINDOWS[key]))
                 for key, _, _ in HTF_BRANCHES
             ]
-            raw_windows = [
-                closed_window_raw(
+            prepared_windows = [
+                _prepare_closed_window_with_prefix_cache(
                     self._obs_features_arr,
                     self._htf_starts[key],
                     decision,
                     length,
                     columns=self._htf_idx[key],
-                )
+                    include_validity=self.feature_validity_channels,
+                    cache_key=key,
+                    cache=self._htf_prepared_observation_cache,
+                    write_current_row_directly=True,
+                )[0]
                 for (key, _, _), length in zip(HTF_BRANCHES, lengths, strict=False)
             ]
-            prepared_windows = prepare_observation_feature_channels_many(
-                raw_windows, include_validity=self.feature_validity_channels
-            )
             for (key, _, seq_key), length, values in zip(
                 HTF_BRANCHES, lengths, prepared_windows, strict=False
             ):
