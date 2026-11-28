@@ -5,8 +5,16 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tools.quality.local_checks.impact import transitive_import_dependants, reverse_imports, select_impacted_tests
-from tools.quality.local_checks.resources import worker_capacity_budget, quality_cache_key, schedule_resource_waves
+from tools.quality.local_checks.impact import (
+    reverse_imports,
+    select_impacted_tests,
+    transitive_import_dependants,
+)
+from tools.quality.local_checks.resources import (
+    quality_cache_key,
+    schedule_resource_waves,
+    worker_capacity_budget,
+)
 
 
 def test_impact_combines_transitive_imports_and_contexts() -> None:
@@ -38,9 +46,13 @@ def test_impact_relative_imports_and_deleted_sources() -> None:
 
 def test_memory_and_cpu_limits_are_both_respected() -> None:
     mib = 1024 * 1024
-    result = worker_capacity_budget(8, 1000, available_bytes=3500 * mib, affinity_cpus=6, quota_cpus=4)
+    result = worker_capacity_budget(
+        8, 1000, available_bytes=3500 * mib, affinity_cpus=6, quota_cpus=4
+    )
     assert result["workers"] == 2
-    assert worker_capacity_budget(8, 1000, available_bytes=100 * mib, affinity_cpus=6)["workers"] == 0
+    assert (
+        worker_capacity_budget(8, 1000, available_bytes=100 * mib, affinity_cpus=6)["workers"] == 0
+    )
     assert worker_capacity_budget(8, 1000, available_bytes=None, affinity_cpus=6)["workers"] == 1
 
 

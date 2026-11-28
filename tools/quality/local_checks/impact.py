@@ -42,7 +42,11 @@ def _module_prefixes(module: str) -> set[str]:
 def _source_import_names(path: str, tree: ast.AST) -> set[str]:
     """Extract explicit absolute and relative imports."""
     names: set[str] = set()
-    package = _python_module_name(path) if path.endswith("/__init__.py") else _python_module_name(path).rpartition(".")[0]
+    package = (
+        _python_module_name(path)
+        if path.endswith("/__init__.py")
+        else _python_module_name(path).rpartition(".")[0]
+    )
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
@@ -177,11 +181,17 @@ def plan_impacted_tests(
         and metadata.get("execution_status") in {"ok", "findings"}
         and metadata.get("action") == "coverage"
         and coverage_result.get("scope") == "full"
-        and coverage_result.get("coverage_sha256") == hashlib.sha256(data_path.read_bytes()).hexdigest()
-        and coverage_result.get("inventory_sha256") == hashlib.sha256(inventory.read_bytes()).hexdigest()
+        and coverage_result.get("coverage_sha256")
+        == hashlib.sha256(data_path.read_bytes()).hexdigest()
+        and coverage_result.get("inventory_sha256")
+        == hashlib.sha256(inventory.read_bytes()).hexdigest()
     )
     contexts = coverage_contexts(root, data_path) if valid else {}
-    newly_added = {p for p in changed if p.startswith("tests/") and Path(p).name.startswith("test_") and p in sources}
+    newly_added = {
+        p
+        for p in changed
+        if p.startswith("tests/") and Path(p).name.startswith("test_") and p in sources
+    }
     if newly_added - tests or not tests.issubset(sources):
         contexts = {}
         tests = (tests & sources.keys()) | newly_added

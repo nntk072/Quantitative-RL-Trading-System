@@ -68,25 +68,53 @@ def verified_baseline_candidate(manifest_path: Path, ref: str) -> dict[str, Any]
 def source_quality_inventory() -> dict[str, Any]:
     """Classify every tracked or unignored file by role and applicable language."""
     rows = []
-    languages = {".py": "python", ".rs": "rust", ".c": "c", ".cpp": "cpp", ".cc": "cpp",
-                 ".cxx": "cpp", ".cu": "cuda", ".cuh": "cuda", ".sql": "sql",
-                 ".ts": "typescript", ".tsx": "typescript", ".js": "javascript", ".jsx": "javascript",
-                 ".sh": "shell", ".yaml": "configuration", ".yml": "configuration",
-                 ".toml": "configuration"}
+    languages = {
+        ".py": "python",
+        ".rs": "rust",
+        ".c": "c",
+        ".cpp": "cpp",
+        ".cc": "cpp",
+        ".cxx": "cpp",
+        ".cu": "cuda",
+        ".cuh": "cuda",
+        ".sql": "sql",
+        ".ts": "typescript",
+        ".tsx": "typescript",
+        ".js": "javascript",
+        ".jsx": "javascript",
+        ".sh": "shell",
+        ".yaml": "configuration",
+        ".yml": "configuration",
+        ".toml": "configuration",
+    }
     for name in quality_source_paths():
         head = name.split("/")[0]
         role = (
-            "product" if head in PRODUCT_PACKAGES else
-            "test" if head == "tests" else
-            "research" if head in {"research_tools", "evidence"} or name.startswith("scripts/research/") else
-            "tooling" if head in {"tools", "scripts", ".agents", ".github"} else
-            "configuration" if head == "config" else
-            "generated" if name.startswith("docs/api/generated/") else
-            "vendored" if head in {"vendor", "third_party"} else "other"
+            "product"
+            if head in PRODUCT_PACKAGES
+            else "test"
+            if head == "tests"
+            else "research"
+            if head in {"research_tools", "evidence"} or name.startswith("scripts/research/")
+            else "tooling"
+            if head in {"tools", "scripts", ".agents", ".github"}
+            else "configuration"
+            if head == "config"
+            else "generated"
+            if name.startswith("docs/api/generated/")
+            else "vendored"
+            if head in {"vendor", "third_party"}
+            else "other"
         )
         language = languages.get(Path(name).suffix.lower(), "other")
-        rows.append({"path": name, "role": role, "language": language,
-                     "symlink": (ROOT / name).is_symlink()})
+        rows.append(
+            {
+                "path": name,
+                "role": role,
+                "language": language,
+                "symlink": (ROOT / name).is_symlink(),
+            }
+        )
     return {"status": "ok", "count": len(rows), "files": rows}
 
 
@@ -122,11 +150,22 @@ def audit_quality_exclusions(base: str) -> dict[str, Any]:
             if row not in prior.get(name, []):
                 changed.append({"path": name, **row})
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["coverage"]
-    old_cfg = tomllib.loads(quality_git("show", f"{merged}:pyproject.toml").decode())["tool"]["coverage"]
+    old_cfg = tomllib.loads(quality_git("show", f"{merged}:pyproject.toml").decode())["tool"][
+        "coverage"
+    ]
     doc = (ROOT / "docs/architecture/coverage-policy.md").read_text()
-    undocumented = [{"path": name, **row} for name, rows in current.items()
-                    for row in rows if f"`{name}`" not in doc]
+    undocumented = [
+        {"path": name, **row}
+        for name, rows in current.items()
+        for row in rows
+        if f"`{name}`" not in doc
+    ]
     findings = bool(changed or undocumented or cfg != old_cfg)
-    return {"status": "findings" if findings else "ok", "new_or_moved": changed,
-            "undocumented": undocumented, "configuration_changed": cfg != old_cfg,
-            "base": merged, "inventory": {k: v for k, v in current.items() if v}}
+    return {
+        "status": "findings" if findings else "ok",
+        "new_or_moved": changed,
+        "undocumented": undocumented,
+        "configuration_changed": cfg != old_cfg,
+        "base": merged,
+        "inventory": {k: v for k, v in current.items() if v},
+    }

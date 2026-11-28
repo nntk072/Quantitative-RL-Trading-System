@@ -11,9 +11,17 @@ from pathlib import Path
 from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES, aggregate_coverage, compare_baseline
-
-from tools.quality.local_checks.run_evidence import HERE, ROOT, quality_file_sha256, write_quality_json, run_quality_process, quality_git, read_quality_json, quality_source_paths
 from tools.quality.local_checks.receipts import read_collected_inventory, validate_test_receipts
+from tools.quality.local_checks.run_evidence import (
+    HERE,
+    ROOT,
+    quality_file_sha256,
+    quality_git,
+    quality_source_paths,
+    read_quality_json,
+    run_quality_process,
+    write_quality_json,
+)
 
 PLUGIN = "tools.quality.local_checks.pytest_receipts"
 
@@ -87,7 +95,9 @@ def validate_coverage_report(report: dict[str, Any], full: bool) -> None:
             or len(hit | miss) != s["num_branches"]
         ):
             raise ValueError(f"Coverage counts do not reconcile: {name}")
-    if full and (not packages.issuperset(PRODUCT_PACKAGES) or not report["meta"]["branch_coverage"]):
+    if full and (
+        not packages.issuperset(PRODUCT_PACKAGES) or not report["meta"]["branch_coverage"]
+    ):
         raise ValueError("Incomplete product package or branch coverage")
 
 
@@ -157,7 +167,10 @@ def collect_local_coverage(
         if full
         else {"selected": selection}
     )
-    reports = {name: _run_coverage_shard(out, name, args, config, timeout, workers) for name, args in jobs.items()}
+    reports = {
+        name: _run_coverage_shard(out, name, args, config, timeout, workers)
+        for name, args in jobs.items()
+    }
     if any(r["status"] != "ok" for r in reports.values()):
         return {"status": "incomplete", "jobs": reports}
     env = {"COVERAGE_FILE": str(out / ".coverage"), "COVERAGE_RCFILE": str(config)}
@@ -213,7 +226,9 @@ def _validate_product_file_inventory(report: dict[str, Any], config: Path, data:
             raise ValueError(f"Source statement mismatch: {path}")
 
 
-def analyze_local_coverage(report: Path, base: str, full: bool, baseline_manifest: Path | None = None) -> dict[str, Any]:
+def analyze_local_coverage(
+    report: Path, base: str, full: bool, baseline_manifest: Path | None = None
+) -> dict[str, Any]:
     """Compare against a target Git ref without modifying the established baseline."""
     if base.startswith("-"):
         raise ValueError("Invalid base")
@@ -222,7 +237,9 @@ def analyze_local_coverage(report: Path, base: str, full: bool, baseline_manifes
     merged = quality_git("merge-base", base, "HEAD").decode().strip()
     diff = quality_git("diff", "--no-renames", "--unified=0", merged, "--").decode()
     changed = changed_source_lines(diff)
-    for name in quality_git("ls-files", "--others", "--exclude-standard", "-z").decode().split("\0"):
+    for name in (
+        quality_git("ls-files", "--others", "--exclude-standard", "-z").decode().split("\0")
+    ):
         if name.endswith(".py") and (ROOT / name).is_file():
             changed[name] = set(range(1, len((ROOT / name).read_text().splitlines()) + 1))
     policy = read_quality_json(HERE / "policy.json")
@@ -252,9 +269,14 @@ def analyze_local_coverage(report: Path, base: str, full: bool, baseline_manifes
 
         candidate = verified_baseline_candidate(baseline_manifest, base)
         findings.extend(compare_baseline(summary, candidate["summary"]))
-        for name, row in {"overall": candidate["summary"]["overall"], **candidate["summary"]["packages"]}.items():
+        for name, row in {
+            "overall": candidate["summary"]["overall"],
+            **candidate["summary"]["packages"],
+        }.items():
             prior = row["branch_ratio"]
-            current = (summary["overall"] if name == "overall" else summary["packages"].get(name, {})).get("branch_ratio")
+            current = (
+                summary["overall"] if name == "overall" else summary["packages"].get(name, {})
+            ).get("branch_ratio")
             if prior is not None and (current is None or current < prior):
                 findings.append(f"{name}: branch coverage below verified baseline")
     for name, row in delta["files"].items():

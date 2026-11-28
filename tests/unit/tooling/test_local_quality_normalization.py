@@ -5,8 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize_mutation_results
-from tools.quality.local_checks.normalization import normalize_analyzer_findings, read_analyzer_report
+from tools.quality.local_checks.mutation_results import (
+    parse_mutmut_results,
+    summarize_mutation_results,
+)
+from tools.quality.local_checks.normalization import (
+    normalize_analyzer_findings,
+    read_analyzer_report,
+)
 
 
 def test_mutation_scores_do_not_treat_timeouts_as_kills() -> None:

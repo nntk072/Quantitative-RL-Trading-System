@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 import hashlib
 from collections import defaultdict
-from pathlib import Path
 from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES
@@ -54,8 +53,11 @@ def _debt_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
 
 def audit_technical_debt() -> dict[str, Any]:
     """Report approximate complexity, duplicate bodies, module size and suppression inventory."""
-    sources = {p: (ROOT/p).read_text() for p in quality_source_paths()
-               if p.endswith(".py") and p.split("/")[0] in PRODUCT_PACKAGES and not (ROOT/p).is_symlink()}
+    sources = {
+        p: (ROOT / p).read_text()
+        for p in quality_source_paths()
+        if p.endswith(".py") and p.split("/")[0] in PRODUCT_PACKAGES and not (ROOT / p).is_symlink()
+    }
     functions = []
     modules = []
     suppressions = []
@@ -64,21 +66,51 @@ def audit_technical_debt() -> dict[str, Any]:
         tree = ast.parse(source, filename=path)
         modules.append({"file": path, "lines": len(source.splitlines())})
         for number, line in enumerate(source.splitlines(), 1):
-            if any(token in line for token in ("# type: ignore", "# noqa", "# pragma: no cover", "# nosec")):
+            if any(
+                token in line
+                for token in ("# type: ignore", "# noqa", "# pragma: no cover", "# nosec")
+            ):
                 suppressions.append({"file": path, "line": number})
         for node in ast.walk(tree):
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                count = 1 + sum(isinstance(x, (ast.If, ast.For, ast.AsyncFor, ast.While,
-                            ast.IfExp, ast.ExceptHandler, ast.Match, ast.BoolOp)) for x in ast.walk(node))
+                count = 1 + sum(
+                    isinstance(
+                        x,
+                        (
+                            ast.If,
+                            ast.For,
+                            ast.AsyncFor,
+                            ast.While,
+                            ast.IfExp,
+                            ast.ExceptHandler,
+                            ast.Match,
+                            ast.BoolOp,
+                        ),
+                    )
+                    for x in ast.walk(node)
+                )
                 name = f"{path}:{node.lineno}:{node.name}"
-                functions.append({"function": name, "lines": (node.end_lineno or node.lineno)-node.lineno+1,
-                                  "approximate_complexity": count})
+                functions.append(
+                    {
+                        "function": name,
+                        "lines": (node.end_lineno or node.lineno) - node.lineno + 1,
+                        "approximate_complexity": count,
+                    }
+                )
                 if len(list(ast.walk(node))) >= 25:
-                    key = hashlib.sha256(ast.dump(ast.Module(body=node.body, type_ignores=[]),
-                                                  include_attributes=False).encode()).hexdigest()
+                    key = hashlib.sha256(
+                        ast.dump(
+                            ast.Module(body=node.body, type_ignores=[]), include_attributes=False
+                        ).encode()
+                    ).hexdigest()
                     duplicate[key].append(name)
     cycles = _debt_cycles(reverse_imports(sources))
-    return {"status": "findings" if cycles or any(len(v)>1 for v in duplicate.values()) else "ok",
-            "modules": modules, "functions": functions, "suppressions": suppressions,
-            "cycles": cycles, "duplicate_bodies": [v for v in duplicate.values() if len(v)>1],
-            "qualification": "AST heuristics are review leads; they do not establish defective or dead code."}
+    return {
+        "status": "findings" if cycles or any(len(v) > 1 for v in duplicate.values()) else "ok",
+        "modules": modules,
+        "functions": functions,
+        "suppressions": suppressions,
+        "cycles": cycles,
+        "duplicate_bodies": [v for v in duplicate.values() if len(v) > 1],
+        "qualification": "AST heuristics are review leads; they do not establish defective or dead code.",
+    }
