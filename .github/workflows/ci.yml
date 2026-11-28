@@ -91,21 +91,53 @@ jobs:
       - run: uv sync --extra dev
       - run: ./tools/check contracts
 
-  unit:
+  unit-shards:
     needs: dependency-lock
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard: evaluation
+            paths: tests/unit/evaluation
+          - shard: simulation-config
+            paths: tests/unit/simulation tests/unit/configuration
+          - shard: features-and-contracts
+            paths: tests/unit/features tests/unit/decisioning tests/unit/artifacts tests/unit/research_tools tests/unit/tooling tests/unit/scripts
+          - shard: training-data
+            paths: tests/unit/training tests/unit/market_data tests/unit/research
+          - shard: trading-and-experiments
+            paths: tests/unit/trading tests/unit/experiments tests/unit/live
+          - shard: compute-and-models
+            paths: tests/unit/models tests/unit/compute tests/unit/integrations tests/unit/learning
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: uv sync --extra dev
-      - run: QRL_COVERAGE_FILE=.coverage.unit ./tools/check unit
+      - name: Run unit shard
+        run: QRL_COVERAGE_FILE=.coverage.unit.${{ matrix.shard }} ./tools/check unit-shard ${{ matrix.paths }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: qrl-coverage-unit
-          path: .coverage.unit*
+          name: qrl-coverage-unit-${{ matrix.shard }}
+          path: .coverage.unit.${{ matrix.shard }}
           include-hidden-files: true
           if-no-files-found: ignore
+
+  unit:
+    needs: unit-shards
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every unit shard
+        env:
+          SHARDS: ${{ needs.unit-shards.result }}
+        run: |
+          if [[ "$SHARDS" != "success" ]]; then
+            echo "Unit test shards did not all pass: $SHARDS" >&2
+            exit 1
+          fi
+          echo "All unit test shards passed"
 
   build-smoke:
     needs: dependency-lock
@@ -117,7 +149,7 @@ jobs:
       - run: ./tools/check build
 
   integration:
-    needs: [architecture, contracts, unit]
+    needs: dependency-lock
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -155,7 +187,7 @@ jobs:
           if-no-files-found: ignore
 
   parity:
-    needs: [architecture, contracts, unit]
+    needs: dependency-lock
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
