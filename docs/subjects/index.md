@@ -46,7 +46,6 @@ qa/multiple-testing-cost-stress
 qa/experiment-design-controls-ablations
 qa/artifacts-evidence-lineage
 qa/research-findings-negative-results
-qa/extension-development-and-tests
 qa/security-and-dependencies
 qa/triton-slurm-hardware-performance
 qa/live-paper-metatrader

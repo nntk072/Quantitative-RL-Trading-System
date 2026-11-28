@@ -98,7 +98,6 @@ run_docs() {
     tests/unit/tooling/test_documentation_api_usage.py
   run_module tools.documentation.check_notebooks
   run_module tools.documentation.inventory --check
-  run_module tools.documentation.coverage --check
   run_module tools.documentation.figures
   run_module tools.documentation.evidence_audit --check
   run_module tools.documentation.check_docs

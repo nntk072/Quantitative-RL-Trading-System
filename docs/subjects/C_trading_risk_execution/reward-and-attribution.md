@@ -66,7 +66,7 @@ examples/reward-and-attribution
 
 ## Tasks
 
-- Use [add reward](../../how-to/add_reward.md) before changing a reward mode.
+- Check the [reward reference](../../reference/rewards.md) before changing how a reward mode is interpreted.
 - Use [reward concept](../../concepts/rewards.md) for optimization interpretation.
 - Use [evaluate checkpoint](../../how-to/evaluate_checkpoint.md) for outcome metrics.
 - Follow [validation protocol](../../research/validation_protocol.md) before making an OOS claim.

@@ -61,8 +61,9 @@ examples/stops-targets-multi-tp-exits
 
 ## Tasks
 
-- Use [add action schema](../../how-to/add_action_schema.md) before changing action coordinates.
-- Use [schema version change](../../how-to/schema_version_change.md) before changing persisted TP slot meaning.
+- Use the [action schema reference](../../reference/action_schemas.md) for current action coordinates.
+- Use the [schema compatibility reference](../../reference/cache_and_schema_versions.md)
+  when reviewing persisted TP slot meaning.
 - Compare selected levels with [trade setup](../B_market_structure_setups/trade-setups.md) provenance.
 - Read the [risk and execution reference](../../reference/risk_and_execution.md) when sizing or fill price changes.
 

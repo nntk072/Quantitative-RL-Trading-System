@@ -74,8 +74,8 @@ See the [contract reference](../../reference/subjects/feature-causality-and-norm
 
 ## Tasks
 
-- [Add a feature](../../how-to/add_feature.md) and include a prefix-invariance
-  check when the transformation uses future-sensitive operations.
+- Include a prefix-invariance check when a feature transformation uses
+  future-sensitive operations.
 - [Build a feature cache](../../how-to/build_feature_cache.md) after the
   feature semantics and identity inputs are defined.
 - Choose train and validation rows with the

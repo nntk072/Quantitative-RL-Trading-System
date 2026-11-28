@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 
 from tools.documentation.check_notebooks import notebook_paths, validate_notebook
-from tools.documentation.coverage import DIMENSIONS, build_coverage
-from tools.documentation.coverage import OUTPUT as COVERAGE_OUTPUT
 from tools.documentation.figures import validate as validate_figures
 from tools.documentation.function_docstrings import missing_docstrings
 from tools.documentation.inventory import (
@@ -36,16 +34,6 @@ def test_internal_execution_plan_is_not_published_as_documentation() -> None:
     assert not (ROOT / "docs/operations/research_execution_plan.md").exists()
 
 
-def test_subject_coverage_snapshot_is_machine_readable_and_current() -> None:
-    """Coverage JSON should preserve the reviewed dimensions and topic count."""
-    expected = json.dumps(build_coverage(), indent=2, sort_keys=True) + "\n"
-    assert COVERAGE_OUTPUT.read_text(encoding="utf-8") == expected
-    report = json.loads(expected)
-    assert len(report["dimensions"]) == len(DIMENSIONS)
-    assert report["subject_count"] >= 30
-    assert all(set(row["dimensions"]) == set(DIMENSIONS) for row in report["subjects"])
-
-
 def test_figure_registry_has_provenance_and_no_orphan_assets() -> None:
     """Every maintained image and diagram should have traceable context."""
     assert validate_figures() == []
@@ -64,7 +52,7 @@ def test_tutorial_notebooks_have_valid_tier_metadata_and_local_links() -> None:
         if validate_notebook(path)
     }
     assert failures == {}
-    assert len(notebook_paths()) == 47
+    assert len(notebook_paths()) == 46
 
 
 def test_notebook_runner_marks_only_cpu_tier_a_for_execution() -> None:

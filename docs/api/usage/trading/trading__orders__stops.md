@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `trading.orders.stops`. St
 
 **Purpose:** Keep SL levels on the correct side and at least ``min_dist`` away.
 
-**Exact API:** {py:obj}`trading.orders.stops.filter_sl_candidates` · **Source:** [trading/orders/stops.py:76](../../../../trading/orders/stops.py#L76)
+**Exact API:** {py:obj}`trading.orders.stops.filter_sl_candidates` · **Source:** [trading/orders/stops.py:77](../../../../trading/orders/stops.py#L77)
 
 **Inputs and outputs:**
 
@@ -52,7 +52,7 @@ The input, output, and error contract above is the safe boundary for a caller. F
 
 **Purpose:** Return the PO3 manipulation state that filters structural stops.
 
-**Exact API:** {py:obj}`trading.orders.stops.manipulation_state` · **Source:** [trading/orders/stops.py:48](../../../../trading/orders/stops.py#L48)
+**Exact API:** {py:obj}`trading.orders.stops.manipulation_state` · **Source:** [trading/orders/stops.py:49](../../../../trading/orders/stops.py#L49)
 
 **Inputs and outputs:**
 
@@ -101,7 +101,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Build structural stops and audit every rejected level.
 
-**Exact API:** {py:obj}`trading.orders.stops.stop_menu` · **Source:** [trading/orders/stops.py:107](../../../../trading/orders/stops.py#L107)
+**Exact API:** {py:obj}`trading.orders.stops.stop_menu` · **Source:** [trading/orders/stops.py:108](../../../../trading/orders/stops.py#L108)
 
 **Inputs and outputs:**
 

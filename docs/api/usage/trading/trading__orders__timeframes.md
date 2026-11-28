@@ -26,7 +26,7 @@ This page contains 5 public callable records owned by `trading.orders.timeframes
 
 **Observed usage:**
 
-1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L163)
+1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L164)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -46,7 +46,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L128)
+2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L129)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -62,7 +62,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
         if level is not None:
             raw.append((f"{tf_up}_{swing_name}", level))
     row_columns = getattr(row, "index", ())
-    for column in row_columns:
+    for column_name in suffix_columns(row_columns, (ob_target_stem,)):
 # … caller assertions omitted …
 ```
 
@@ -95,7 +95,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `target_menu`](../../../../trading/orders/targets.py#L155)
+1. [production caller: `target_menu`](../../../../trading/orders/targets.py#L154)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -158,7 +158,7 @@ def source_timeframe(reference_name: str) -> str:
 
 **Observed usage:**
 
-1. [production caller: `_timeframe_rank_for_stop`](../../../../trading/orders/stops.py#L31)
+1. [production caller: `_timeframe_rank_for_stop`](../../../../trading/orders/stops.py#L32)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -245,7 +245,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L148)
+1. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L149)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -264,7 +264,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L97)
+2. [production caller: `target_menu`](../../../../trading/orders/targets.py#L98)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

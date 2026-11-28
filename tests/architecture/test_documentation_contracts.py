@@ -169,7 +169,7 @@ def test_repository_documentation_entrypoints_and_site_configuration_exist() -> 
         "SUPPORT.md",
         "CITATION.cff",
         "docs/decisions/repository_standards.md",
-        "docs/development/documentation.md",
+        "docs/operations/README.md",
         "docs/conf.py",
         "docs/index.md",
         "docs/api/index.md",

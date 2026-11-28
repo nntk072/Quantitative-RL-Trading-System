@@ -43,5 +43,5 @@ budget with the run; see [constrained RL](../concepts/constrained_rl.md).
 
 For a comparison, change one declared factor and keep data, seed protocol,
 action schema, rollout geometry, execution costs, and evaluation path matched.
-For a checkpoint-compatible schema change, follow the
-[schema version guide](schema_version_change.md).
+For current checkpoint and cache compatibility contracts, see the
+[cache and schema reference](../reference/cache_and_schema_versions.md).

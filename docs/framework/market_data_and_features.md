@@ -37,4 +37,4 @@ See the [causal features tutorial](../learn/tutorials/02_causal_features.ipynb),
 
 ## Extension points and reference
 
-Use [add a feature](../how-to/add_feature), [prepare market data](../how-to/prepare_market_data), and the [Market Data API](../api/domains/data). Exact cache identity rules are in [cache and schema versions](../reference/cache_and_schema_versions).
+Use [prepare market data](../how-to/prepare_market_data), the [feature catalog](../reference/feature_catalog), and the [Market Data API](../api/domains/data). Exact cache identity rules are in [cache and schema versions](../reference/cache_and_schema_versions).

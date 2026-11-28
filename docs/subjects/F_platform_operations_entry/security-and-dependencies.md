@@ -97,8 +97,7 @@ examples/security-and-dependencies
   for the tracked report, platform scope, and documented exceptions.
 - Use the [security check contract](../../reference/subjects/security-and-dependencies.md)
   for the tools, inputs, exit conditions, and blind spots.
-- Follow the [contribution workflow](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/c0d982f94ab9df8b2a9ddd013d2ae9a562573529/CONTRIBUTING.md) to review
-  dependency changes and their lockfile impact.
+- Review dependency changes together with their lockfile impact.
 
 ## Contract
 

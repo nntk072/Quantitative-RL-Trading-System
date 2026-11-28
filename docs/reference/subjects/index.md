@@ -67,5 +67,4 @@ product-overview
 live-paper-metatrader
 triton-slurm-hardware-performance
 security-and-dependencies
-extension-development-and-tests
 ```

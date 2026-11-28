@@ -25,4 +25,4 @@
 - Partial close caps at current size and books only that leg (`trading/execution/broker.py`).
 - Protective bar fill may be worse than stop on a gap (`trading/execution/quotes.py`).
 
-See the [subject guide](../../subjects/C_trading_risk_execution/execution-fills-costs.md), [broker adapter task](../../how-to/add_broker_adapter.md), and [risk/execution reference](../risk_and_execution.md). Live broker equivalence is **not measured**.
+See the [subject guide](../../subjects/C_trading_risk_execution/execution-fills-costs.md), the [risk/execution reference](../risk_and_execution.md), and the [integration module guide](../../modules/integrations.md). Live broker equivalence is **not measured**.

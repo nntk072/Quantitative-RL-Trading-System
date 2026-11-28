@@ -52,10 +52,10 @@ Review the current evidence synthesis, negative findings, and unresolved gates.
 Inspect reproducibility levels and run CPU-sized evidence notebooks.
 :::
 
-:::{grid-item-card} Develop and operate Quant
-:link: develop/index
+:::{grid-item-card} Operate Quant
+:link: operations/README
 :link-type: doc
-Find extension, testing, architecture, deployment, and operations guides.
+Find supported environment, deployment, and operations guides.
 :::
 ::::
 
@@ -80,7 +80,7 @@ flowchart LR
 - **I need exact behavior:** [Framework guides](framework/index) → [API reference](api/index).
 - **I want to check a finding:** [Research questions](research/README) → [Result registry](reproduce/result_registry) → [Reproduction notebooks](reproduce/index).
 - **I want the research synthesis:** [Evidence report](research/research_evidence_report), with the current evidence limits and reproduction routes.
-- **I want to contribute:** [Developer guide](develop/index) → [Testing](development/testing) → [Documentation](development/documentation).
+- **I want to operate the system:** [Operations guide](operations/README) → [Triton workflow](operations/triton).
 
 ## Documentation map
 
@@ -95,7 +95,10 @@ api/index
 research/README
 research/research_evidence_report
 reproduce/index
-develop/index
+operations/README
+modules/README
+decisions/README
+security/dependency_security_status
 ```
 
 ```{toctree}

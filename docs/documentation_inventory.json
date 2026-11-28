@@ -1,22 +1,6 @@
 {
-  "page_count": 488,
+  "page_count": 470,
   "pages": [
-    {
-      "links": [
-        "development/documentation_coverage.md",
-        "development/supplementary_source_map.md",
-        "development/figure_registry.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/MAINTAINING.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "home",
-      "status": "current",
-      "title": "Maintaining project documentation",
-      "type": "developer"
-    },
     {
       "links": [
         "https://nntk072.github.io/Quantitative-RL-Trading-System/",
@@ -33,18 +17,13 @@
         "research/research_evidence_report.md",
         "concepts/reproducibility.md",
         "operations/triton.md",
-        "development/testing.md",
+        "operations/README.md",
         "operations/RUNNING_COMMANDS.md",
         "operations/DEPLOYMENT.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/AGENTS.md",
-        "MAINTAINING.md",
-        "development/documentation.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/CONTRIBUTING.md",
         "decisions/repository_standards.md",
         "decisions/README.md",
         "tutorials/README.md",
         "how-to/README.md",
-        "development/documentation_coverage.md",
         "research/README.md"
       ],
       "orphan_status": "in toctree",
@@ -75,7 +54,7 @@
       "links": [
         "../../framework/market_data_and_features",
         "../../learn/tutorials/02_causal_features.ipynb",
-        "../../how-to/add_feature"
+        "../../reference/feature_catalog"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/data.md",
@@ -121,7 +100,7 @@
     {
       "links": [
         "../../framework/live_and_infrastructure",
-        "../../how-to/add_broker_adapter"
+        "../../modules/integrations"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/domains/runtime.md",
@@ -291,13 +270,13 @@
         "../../../../experiments/runs/checkpoint_lineage.py#L244",
         "../../../../artifacts/layout.py#L224",
         "../../../../experiments/runs/cache_failure_recovery.py#L165",
-        "../../../../experiments/runs/reporting.py#L408",
+        "../../../../experiments/runs/reporting.py#L417",
         "../../../../artifacts/layout.py#L198",
         "../../../../artifacts/layout.py#L233",
         "../../../../artifacts/layout.py#L362",
         "../../../../artifacts/layout.py#L321",
         "../../../../artifacts/layout.py#L349",
-        "../../../../experiments/runs/reporting.py#L482",
+        "../../../../experiments/runs/reporting.py#L491",
         "../../../../artifacts/layout.py#L235",
         "../../../../tests/unit/compute/test_worker_dispatch_parsing.py#L579",
         "../../../../compute/slurm/worker_dispatch.py#L387",
@@ -309,7 +288,7 @@
         "../../../../artifacts/layout.py#L207",
         "../../../../artifacts/layout.py#L257",
         "../../../../experiments/runs/cache_failure_recovery.py#L111",
-        "../../../../experiments/runs/reporting.py#L484",
+        "../../../../experiments/runs/reporting.py#L493",
         "../../../../artifacts/layout.py#L162",
         "../../../../artifacts/layout.py#L269",
         "../../../../artifacts/layout.py#L358"
@@ -1174,18 +1153,30 @@
     },
     {
       "links": [
-        "../../../../evaluation/rollout/trained_policy_rollout.py#L1212",
+        "../../../../evaluation/rollout/trained_policy_decisions.py#L256",
+        "../../../../evaluation/rollout/trained_policy_rollout.py#L453"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/evaluation/evaluation__rollout__trained_policy_decisions.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Evaluation \u00b7 `rollout.trained_policy_decisions`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../evaluation/rollout/trained_policy_rollout.py#L919",
         "../../../../tests/unit/evaluation/test_rollout.py#L390",
         "../../../../tests/unit/evaluation/test_rollout.py#L824",
-        "../../../../evaluation/rollout/trained_policy_rollout.py#L367",
+        "../../../../evaluation/rollout/trained_policy_rollout.py#L74",
         "../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L105",
         "../../../../tests/integration/evaluation/test_random_eligible_setup_rollout.py#L258",
-        "../../../../evaluation/rollout/trained_policy_rollout.py#L1212",
+        "../../../../evaluation/rollout/trained_policy_rollout.py#L919",
         "../../../../tests/unit/evaluation/test_rollout.py#L390",
-        "../../../../tests/unit/evaluation/test_rollout.py#L824",
-        "../../../../evaluation/rollout/trained_policy_rollout.py#L305",
-        "../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L185",
-        "../../../../tests/unit/evaluation/test_random_eligible_setup.py#L105"
+        "../../../../tests/unit/evaluation/test_rollout.py#L824"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/evaluation/evaluation__rollout__trained_policy_rollout.md",
@@ -2410,20 +2401,20 @@
     },
     {
       "links": [
-        "../../../../market_data/news/guard.py#L30",
+        "../../../../market_data/news/guard.py#L36",
         "../../../../tests/integration/backtest/test_agent_selected_entry_execution.py#L2013",
         "../../../../tests/integration/backtest/test_news_spike_guard_backtest.py#L52",
-        "../../../../market_data/news/guard.py#L179",
+        "../../../../market_data/news/guard.py#L239",
         "../../../../simulation/backtest/event_driven_backtest.py#L1138",
-        "../../../../simulation/environment/observation_arrays_initialization.py#L294",
-        "../../../../market_data/news/guard.py#L42",
-        "../../../../tests/unit/market_data/test_news_guard.py#L154",
+        "../../../../simulation/environment/observation_arrays_initialization.py#L296",
+        "../../../../market_data/news/guard.py#L48",
+        "../../../../tests/unit/market_data/test_news_guard.py#L232",
         "../../../../simulation/backtest/event_driven_backtest.py#L1150",
-        "../../../../market_data/news/guard.py#L97",
-        "../../../../tests/unit/market_data/test_news_guard.py#L60",
-        "../../../../tests/unit/market_data/test_news_guard.py#L81",
-        "../../../../market_data/news/guard.py#L154",
-        "../../../../tests/unit/market_data/test_news_guard.py#L158",
+        "../../../../market_data/news/guard.py#L103",
+        "../../../../tests/unit/market_data/test_news_guard.py#L62",
+        "../../../../tests/unit/market_data/test_news_guard.py#L83",
+        "../../../../market_data/news/guard.py#L214",
+        "../../../../tests/unit/market_data/test_news_guard.py#L236",
         "../../../../simulation/environment/trading_environment_factory.py#L684"
       ],
       "orphan_status": "in toctree",
@@ -2801,7 +2792,7 @@
       "links": [
         "../../../../models/runtime/precision.py#L13",
         "../../../../tests/integration/test_device.py#L595",
-        "../../../../learning/rl/agent.py#L1045"
+        "../../../../learning/rl/agent.py#L771"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/models/models__runtime__precision.md",
@@ -2931,15 +2922,15 @@
         "../../../../simulation/environment/env.py#L34",
         "../../../../tests/integration/backtest/test_account_transition_parity.py#L69",
         "../../../../tests/integration/backtest/test_account_transition_parity.py#L133",
-        "../../../../simulation/environment/env.py#L439",
+        "../../../../simulation/environment/env.py#L440",
         "../../../../tests/unit/simulation/test_environment/test_bundle_env_equivalence.py#L69",
         "../../../../tests/unit/simulation/test_environment/test_bundle_env_equivalence.py#L148",
-        "../../../../simulation/environment/env.py#L471",
+        "../../../../simulation/environment/env.py#L473",
         "../../../../tests/integration/backtest/test_account_transition_parity.py#L86",
         "../../../../tests/integration/backtest/test_account_transition_parity.py#L153",
-        "../../../../simulation/environment/env.py#L485",
+        "../../../../simulation/environment/env.py#L487",
         "../../../../tests/unit/simulation/test_environment/test_simulation_transition_contract.py#L40",
-        "../../../../simulation/environment/env.py#L483"
+        "../../../../simulation/environment/env.py#L485"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/simulation/simulation__environment__env.md",
@@ -3436,10 +3427,10 @@
     },
     {
       "links": [
-        "../../../../trading/orders/stops.py#L76",
-        "../../../../trading/orders/stops.py#L48",
+        "../../../../trading/orders/stops.py#L77",
+        "../../../../trading/orders/stops.py#L49",
         "../../../../trading/orders/entries.py#L270",
-        "../../../../trading/orders/stops.py#L107",
+        "../../../../trading/orders/stops.py#L108",
         "../../../../tests/integration/backtest/test_entry_levels.py#L120",
         "../../../../tests/integration/backtest/test_entry_levels.py#L141"
       ],
@@ -3455,13 +3446,13 @@
     },
     {
       "links": [
-        "../../../../trading/orders/targets.py#L20",
+        "../../../../trading/orders/targets.py#L21",
         "../../../../tests/integration/backtest/test_entry_levels.py#L92",
         "../../../../tests/integration/backtest/test_entry_levels.py#L107",
-        "../../../../trading/orders/targets.py#L212",
+        "../../../../trading/orders/targets.py#L211",
         "../../../../tests/integration/backtest/test_entry_levels.py#L706",
-        "../../../../trading/orders/stops.py#L256",
-        "../../../../trading/orders/targets.py#L58",
+        "../../../../trading/orders/stops.py#L254",
+        "../../../../trading/orders/targets.py#L59",
         "../../../../tests/integration/backtest/test_entry_levels.py#L169",
         "../../../../tests/integration/backtest/test_entry_levels.py#L193"
       ],
@@ -3478,18 +3469,18 @@
     {
       "links": [
         "../../../../trading/orders/timeframes.py#L8",
-        "../../../../trading/orders/stops.py#L163",
-        "../../../../trading/orders/targets.py#L128",
+        "../../../../trading/orders/stops.py#L164",
+        "../../../../trading/orders/targets.py#L129",
         "../../../../trading/orders/timeframes.py#L32",
-        "../../../../trading/orders/targets.py#L155",
+        "../../../../trading/orders/targets.py#L154",
         "../../../../trading/orders/timeframes.py#L72",
         "../../../../trading/orders/timeframes.py#L75",
-        "../../../../trading/orders/stops.py#L31",
+        "../../../../trading/orders/stops.py#L32",
         "../../../../trading/orders/timeframes.py#L54",
         "../../../../trading/orders/entries.py#L128",
         "../../../../trading/orders/timeframes.py#L20",
-        "../../../../trading/orders/stops.py#L148",
-        "../../../../trading/orders/targets.py#L97"
+        "../../../../trading/orders/stops.py#L149",
+        "../../../../trading/orders/targets.py#L98"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__orders__timeframes.md",
@@ -3829,23 +3820,23 @@
     },
     {
       "links": [
-        "../../../../trading/strategies/po3_ifvg.py#L14",
+        "../../../../trading/strategies/po3_ifvg.py#L16",
         "../../../../tests/unit/evaluation/test_order_chart.py#L1184",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L13",
-        "../../../../trading/strategies/po3_ifvg.py#L112",
-        "../../../../trading/strategies/po3_ifvg.py#L229",
+        "../../../../trading/strategies/po3_ifvg.py#L114",
+        "../../../../trading/strategies/po3_ifvg.py#L231",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L15",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L21",
-        "../../../../trading/strategies/po3_ifvg.py#L205",
-        "../../../../trading/strategies/po3_ifvg.py#L189",
-        "../../../../trading/strategies/po3_ifvg.py#L254",
-        "../../../../trading/strategies/po3_ifvg.py#L137",
-        "../../../../trading/strategies/po3_ifvg.py#L393",
+        "../../../../trading/strategies/po3_ifvg.py#L207",
+        "../../../../trading/strategies/po3_ifvg.py#L191",
+        "../../../../trading/strategies/po3_ifvg.py#L256",
+        "../../../../trading/strategies/po3_ifvg.py#L139",
+        "../../../../trading/strategies/po3_ifvg.py#L395",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L63",
         "../../../../tests/unit/simulation/test_environment/test_merged_overlay.py#L123",
-        "../../../../trading/strategies/po3_ifvg.py#L139",
-        "../../../../trading/strategies/po3_ifvg.py#L156",
-        "../../../../trading/strategies/po3_ifvg.py#L125"
+        "../../../../trading/strategies/po3_ifvg.py#L141",
+        "../../../../trading/strategies/po3_ifvg.py#L158",
+        "../../../../trading/strategies/po3_ifvg.py#L127"
       ],
       "orphan_status": "in toctree",
       "path": "docs/api/usage/trading/trading__strategies__po3_ifvg.md",
@@ -4798,7 +4789,7 @@
       "orphan_status": "in toctree",
       "path": "docs/decisions/README.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Decisions"
       ],
       "section": "decisions",
       "status": "current",
@@ -4827,109 +4818,6 @@
       "section": "decisions",
       "status": "current",
       "title": "Repository standards decisions",
-      "type": "developer"
-    },
-    {
-      "links": [
-        "../architecture/README",
-        "../architecture/migrations/README",
-        "../operations/README",
-        "../MAINTAINING",
-        "../security/dependency_security_status"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/develop/index.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "develop",
-      "status": "current",
-      "title": "Develop Quant",
-      "type": "developer"
-    },
-    {
-      "links": [
-        "documentation_coverage.md",
-        "../architecture/visual_index",
-        "../documentation_inventory.json",
-        "../MAINTAINING.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/development/documentation.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "development",
-      "status": "current",
-      "title": "Source documentation and comment policy",
-      "type": "developer"
-    },
-    {
-      "links": [
-        "../documentation_inventory.json"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/development/documentation_coverage.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "development",
-      "status": "current",
-      "title": "Documentation coverage audit",
-      "type": "developer"
-    },
-    {
-      "links": [
-        "../figure_registry.json",
-        "supplementary_source_map.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/development/figure_registry.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "development",
-      "status": "current",
-      "title": "Figure and diagram registry",
-      "type": "developer"
-    },
-    {
-      "links": [
-        "../learn/foundations.md",
-        "../concepts/partial_observability.md",
-        "../concepts/data_time_and_validation.md",
-        "../research/validation_protocol.md",
-        "../concepts/ppo_rollout_geometry.md",
-        "../concepts/trade_lifecycle.md",
-        "../reference/action_schemas.md",
-        "../concepts/risk_and_account_limits.md",
-        "../reference/risk_and_execution.md",
-        "../concepts/sequence_models.md",
-        "../reference/model_architectures.md",
-        "../concepts/research_statistics.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/development/supplementary_source_map.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "development",
-      "status": "current",
-      "title": "Supplementary source archive map",
-      "type": "developer"
-    },
-    {
-      "links": [
-        "../../tools/quality/coverage_baseline.json"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/development/testing.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "development",
-      "status": "current",
-      "title": "Testing strategy",
       "type": "developer"
     },
     {
@@ -4983,7 +4871,7 @@
         "../api/domains/runtime",
         "../api/domains/engineering",
         "../architecture/runtime/live_execution",
-        "../how-to/add_broker_adapter",
+        "../modules/integrations",
         "../operations/DEPLOYMENT",
         "../operations/README"
       ],
@@ -5003,8 +4891,8 @@
         "../modules/market_data",
         "../modules/features",
         "../reference/feature_catalog",
-        "../how-to/add_feature",
         "../how-to/prepare_market_data",
+        "../reference/feature_catalog",
         "../api/domains/data",
         "../reference/cache_and_schema_versions"
       ],
@@ -5100,115 +4988,15 @@
         "run_training.md",
         "evaluate_checkpoint.md",
         "run_experiment.md",
-        "add_feature.md",
-        "add_encoder.md",
-        "add_reward.md",
-        "add_action_schema.md",
-        "add_metric.md",
-        "add_broker_adapter.md",
         "troubleshooting.md",
-        "configuration_recipes.md",
-        "schema_version_change.md"
+        "configuration_recipes.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/README.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "How-to guides",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "../reference/action_schemas.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/add_action_schema.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Add an action schema",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/trading/README.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/live/README.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/integrations/README.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/add_broker_adapter.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Add a broker adapter",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "../model_variants.md",
-        "../architecture/model_and_policy_architecture.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/add_encoder.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Add an encoder",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "../modules/features.md",
-        "../concepts/market_structure.md",
-        "../config.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/add_feature.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Add a feature",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "../reference/metrics.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/add_metric.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Add an evaluation metric",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "../concepts/rewards.md",
-        "../reference/rewards.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/simulation/environment/README.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/add_reward.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Add a reward",
       "type": "how-to"
     },
     {
@@ -5220,9 +5008,7 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/build_feature_cache.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Build a feature cache",
@@ -5236,13 +5022,11 @@
         "../learn/tutorials/advanced/multi_timeframe_features.ipynb",
         "../concepts/causality.md",
         "../concepts/constrained_rl.md",
-        "schema_version_change.md"
+        "../reference/cache_and_schema_versions.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/configuration_recipes.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Configuration recipes",
@@ -5254,9 +5038,7 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/evaluate_checkpoint.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Evaluate a checkpoint",
@@ -5270,9 +5052,7 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/prepare_market_data.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Prepare market data",
@@ -5286,9 +5066,7 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/run_experiment.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Run a configured experiment",
@@ -5300,29 +5078,10 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/run_training.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Run a training job",
-      "type": "how-to"
-    },
-    {
-      "links": [
-        "../reference/checkpoint_compatibility.md",
-        "../reference/cache_and_schema_versions.md",
-        "../reference/manifest_schemas.md",
-        "../development/testing.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/how-to/schema_version_change.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
-      "section": "how-to",
-      "status": "current",
-      "title": "Changing a serialized schema or cache identity",
       "type": "how-to"
     },
     {
@@ -5340,9 +5099,7 @@
       ],
       "orphan_status": "in toctree",
       "path": "docs/how-to/troubleshooting.md",
-      "primary_navigation_owner": [
-        "Develop"
-      ],
+      "primary_navigation_owner": [],
       "section": "how-to",
       "status": "current",
       "title": "Troubleshooting by symptom",
@@ -5360,9 +5117,8 @@
         "reproduce/result_registry",
         "reproduce/index",
         "research/research_evidence_report",
-        "develop/index",
-        "development/testing",
-        "development/documentation"
+        "operations/README",
+        "operations/triton"
       ],
       "orphan_status": "in toctree",
       "path": "docs/index.md",
@@ -5549,7 +5305,6 @@
     },
     {
       "links": [
-        "../../../how-to/add_encoder",
         "../../../api/domains/models",
         "../../../reference/model_architectures"
       ],
@@ -5682,7 +5437,6 @@
         "compute.md",
         "live.md",
         "integrations.md",
-        "testing.md",
         "repository_layout.md",
         "../architecture/README.md",
         "../architecture/README.md",
@@ -5694,7 +5448,7 @@
       "orphan_status": "in toctree",
       "path": "docs/modules/README.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Modules"
       ],
       "section": "modules",
       "status": "current",
@@ -5861,19 +5615,6 @@
       "type": "developer"
     },
     {
-      "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/AGENTS.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/ci-verification.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/modules/testing.md",
-      "primary_navigation_owner": [],
-      "section": "modules",
-      "status": "current",
-      "title": "Testing module",
-      "type": "developer"
-    },
-    {
       "links": [],
       "orphan_status": "in toctree",
       "path": "docs/modules/trading.md",
@@ -5900,7 +5641,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/DEPLOYMENT.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -5920,7 +5661,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/README.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -5935,7 +5676,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/RUNNING_COMMANDS.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -5951,7 +5692,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/cli_cookbook.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -5960,14 +5701,12 @@
     },
     {
       "links": [
-        "triton.md",
-        "../development/testing.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md"
+        "triton.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/operations/hardware.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -5982,7 +5721,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/live-status.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -5997,7 +5736,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/performance.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -6009,7 +5748,7 @@
       "orphan_status": "in toctree",
       "path": "docs/operations/research_campaign_plan.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -6018,16 +5757,13 @@
     },
     {
       "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md",
         "RUNNING_COMMANDS.md",
-        "../concepts/reproducibility.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md"
+        "../concepts/reproducibility.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/operations/triton.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Operations"
       ],
       "section": "operations",
       "status": "operational",
@@ -6439,7 +6175,7 @@
         "../../evaluation/metrics/performance.py#L563",
         "../../evaluation/metrics/temporal.py#L157",
         "../../evaluation/metrics/temporal.py#L136",
-        "../../evaluation/rollout/trained_policy_rollout.py#L1212",
+        "../../evaluation/rollout/trained_policy_rollout.py#L919",
         "../../evaluation/metrics/performance.py#L769",
         "../../evaluation/metrics/temporal.py#L63",
         "../../evaluation/metrics/performance.py#L460",
@@ -6560,9 +6296,9 @@
         "../../evaluation/rollout/structure_priority_setup.py#L21",
         "../../evaluation/rollout/structure_priority_setup.py#L161",
         "../../evaluation/rollout/baseline_signal_actions.py#L11",
-        "../../evaluation/rollout/trained_policy_rollout.py#L367",
-        "../../evaluation/rollout/trained_policy_rollout.py#L1212",
-        "../../evaluation/rollout/trained_policy_rollout.py#L305",
+        "../../evaluation/rollout/trained_policy_rollout.py#L74",
+        "../../evaluation/rollout/trained_policy_rollout.py#L919",
+        "../../evaluation/rollout/trained_policy_decisions.py#L256",
         "../../evaluation/rollout/episode_rollout.py#L26",
         "../../evaluation/rollout/random_eligible_setup.py#L232",
         "../../evaluation/rollout/random_eligible_setup.py#L109",
@@ -6776,15 +6512,15 @@
         "../../market_data/loading/ticks.py#L679",
         "../../market_data/loading/ticks.py#L1015",
         "../../market_data/news/calendar.py#L60",
-        "../../market_data/news/guard.py#L30",
+        "../../market_data/news/guard.py#L36",
         "../../market_data/news/calendar.py#L255",
-        "../../market_data/news/guard.py#L179",
+        "../../market_data/news/guard.py#L239",
         "../../market_data/news/calendar.py#L152",
         "../../market_data/news/calendar.py#L179",
         "../../market_data/news/calendar.py#L198",
-        "../../market_data/news/guard.py#L42",
-        "../../market_data/news/guard.py#L97",
-        "../../market_data/news/guard.py#L154",
+        "../../market_data/news/guard.py#L48",
+        "../../market_data/news/guard.py#L103",
+        "../../market_data/news/guard.py#L214",
         "../../market_data/splits/definitions.py#L125",
         "../../market_data/splits/definitions.py#L145",
         "../../market_data/splits/definitions.py#L161",
@@ -6878,9 +6614,9 @@
         "../../simulation/environment/trading_environment_factory.py#L145",
         "../../simulation/environment/trading_environment_factory.py#L25",
         "../../simulation/environment/trading_environment_factory.py#L423",
-        "../../simulation/environment/env.py#L439",
-        "../../simulation/environment/env.py#L471",
-        "../../simulation/environment/env.py#L485",
+        "../../simulation/environment/env.py#L440",
+        "../../simulation/environment/env.py#L473",
+        "../../simulation/environment/env.py#L487",
         "../../trading/account/account_state.py#L28",
         "../../trading/policy/config.py#L24",
         "../../trading/policy/config.py#L202",
@@ -6956,26 +6692,26 @@
         "../../trading/orders/entries.py#L45",
         "../../trading/orders/timeframes.py#L5",
         "../../trading/orders/entries.py#L31",
-        "../../trading/orders/targets.py#L20",
+        "../../trading/orders/targets.py#L21",
         "../../trading/orders/selection.py#L148",
         "../../trading/orders/selection.py#L15",
         "../../trading/orders/selection.py#L74",
-        "../../trading/orders/targets.py#L212",
+        "../../trading/orders/targets.py#L211",
         "../../trading/orders/levels.py#L29",
         "../../trading/orders/entries.py#L165",
-        "../../trading/orders/stops.py#L76",
+        "../../trading/orders/stops.py#L77",
         "../../trading/orders/levels.py#L8",
         "../../trading/orders/entry_execution.py#L51",
         "../../trading/orders/entry_execution.py#L10",
-        "../../trading/orders/stops.py#L48",
+        "../../trading/orders/stops.py#L49",
         "../../trading/orders/timeframes.py#L8",
         "../../trading/orders/entries.py#L202",
         "../../trading/orders/timeframes.py#L32",
         "../../trading/orders/timeframes.py#L75",
         "../../trading/orders/entries.py#L636",
         "../../trading/orders/timeframes.py#L54",
-        "../../trading/orders/stops.py#L107",
-        "../../trading/orders/targets.py#L58",
+        "../../trading/orders/stops.py#L108",
+        "../../trading/orders/targets.py#L59",
         "../../trading/orders/timeframes.py#L20",
         "../../trading/orders/selection.py#L198",
         "../../trading/policy/fixed_risk.py#L5",
@@ -7040,7 +6776,7 @@
         "../../trading/risk/guardrails.py#L205",
         "../../trading/strategies/baseline.py#L11",
         "../../trading/strategies/distribution.py#L69",
-        "../../trading/strategies/po3_ifvg.py#L14",
+        "../../trading/strategies/po3_ifvg.py#L16",
         "../../trading/strategies/strategy_contract.py#L27",
         "../../trading/strategies/baseline.py#L34",
         "../../trading/strategies/baseline.py#L46",
@@ -7054,15 +6790,15 @@
         "../../trading/strategies/distribution.py#L209",
         "../../trading/strategies/distribution.py#L226",
         "../../trading/strategies/distribution.py#L154",
-        "../../trading/strategies/po3_ifvg.py#L112",
-        "../../trading/strategies/po3_ifvg.py#L229",
-        "../../trading/strategies/po3_ifvg.py#L205",
-        "../../trading/strategies/po3_ifvg.py#L189",
-        "../../trading/strategies/po3_ifvg.py#L254",
-        "../../trading/strategies/po3_ifvg.py#L393",
-        "../../trading/strategies/po3_ifvg.py#L139",
-        "../../trading/strategies/po3_ifvg.py#L156",
-        "../../trading/strategies/po3_ifvg.py#L125",
+        "../../trading/strategies/po3_ifvg.py#L114",
+        "../../trading/strategies/po3_ifvg.py#L231",
+        "../../trading/strategies/po3_ifvg.py#L207",
+        "../../trading/strategies/po3_ifvg.py#L191",
+        "../../trading/strategies/po3_ifvg.py#L256",
+        "../../trading/strategies/po3_ifvg.py#L395",
+        "../../trading/strategies/po3_ifvg.py#L141",
+        "../../trading/strategies/po3_ifvg.py#L158",
+        "../../trading/strategies/po3_ifvg.py#L127",
         "../../trading/strategies/strategy_contract.py#L81",
         "../../trading/strategies/strategy_contract.py#L89",
         "../../trading/strategies/strategy_contract.py#L102",
@@ -7249,8 +6985,8 @@
     {
       "links": [
         "../../subjects/C_trading_risk_execution/execution-fills-costs.md",
-        "../../how-to/add_broker_adapter.md",
-        "../risk_and_execution.md"
+        "../risk_and_execution.md",
+        "../../modules/integrations.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/reference/subjects/execution-fills-costs.md",
@@ -7274,21 +7010,6 @@
       "section": "reference",
       "status": "current",
       "title": "Experiment design, controls and ablations contract",
-      "type": "reference"
-    },
-    {
-      "links": [
-        "../../development/testing.md",
-        "../../development/documentation.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/reference/subjects/extension-development-and-tests.md",
-      "primary_navigation_owner": [
-        "Framework"
-      ],
-      "section": "reference",
-      "status": "current",
-      "title": "Development and tests contract",
       "type": "reference"
     },
     {
@@ -7469,8 +7190,7 @@
     {
       "links": [
         "../../subjects/C_trading_risk_execution/reward-and-attribution.md",
-        "../rewards.md",
-        "../../how-to/add_reward.md"
+        "../rewards.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/reference/subjects/reward-and-attribution.md",
@@ -7928,7 +7648,7 @@
       "orphan_status": "in toctree",
       "path": "docs/security/dependency_security_status.md",
       "primary_navigation_owner": [
-        "Develop"
+        "Security"
       ],
       "section": "security",
       "status": "current",
@@ -7943,7 +7663,6 @@
         "../../glossary.md",
         "../../reference/subjects/cache-identity.md",
         "../../how-to/build_feature_cache.md",
-        "../../how-to/schema_version_change.md",
         "../../reference/cache_and_schema_versions.md",
         "../qa/cache-identity.md"
       ],
@@ -8024,7 +7743,6 @@
         "../../glossary.md",
         "../../learn/tutorials/02_causal_features.ipynb",
         "../../reference/subjects/feature-causality-and-normalization.md",
-        "../../how-to/add_feature.md",
         "../../how-to/build_feature_cache.md",
         "splits-and-walk-forward.md",
         "../qa/feature-causality-and-normalization.md"
@@ -8103,7 +7821,6 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../reference/subjects/technical-indicators.md",
-        "../../how-to/add_feature.md",
         "../../reference/feature_catalog.md",
         "cache-identity.md",
         "../qa/technical-indicators.md"
@@ -8148,8 +7865,8 @@
         "examples/action-schemas-and-parameterization.ipynb",
         "../../reference/subjects/action-schemas-and-parameterization.md",
         "../../reference/action_schemas.md",
-        "../../how-to/add_action_schema.md",
-        "../../how-to/schema_version_change.md",
+        "../../reference/action_schemas.md",
+        "../../reference/cache_and_schema_versions.md",
         "../../reference/action_schemas.md"
       ],
       "orphan_status": "in toctree",
@@ -8233,8 +7950,8 @@
         "examples/observations-and-masks.ipynb",
         "../../reference/subjects/observations-and-masks.md",
         "../../reference/observation_schemas.md",
-        "../../how-to/add_feature.md",
-        "../../how-to/schema_version_change.md",
+        "../../reference/observation_schemas.md",
+        "../../reference/cache_and_schema_versions.md",
         "../../reference/observation_schemas.md"
       ],
       "orphan_status": "in toctree",
@@ -8253,7 +7970,6 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../glossary.md",
-        "../../how-to/add_feature.md",
         "../../reference/feature_catalog.md",
         "swings-liquidity-smt-po3-fvg-ifvg.md",
         "../../reference/risk_and_execution.md"
@@ -8275,7 +7991,6 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../glossary.md",
-        "../../how-to/add_feature.md",
         "../../how-to/build_feature_cache.md",
         "../../reference/feature_catalog.md",
         "../A_data_features/feature-causality-and-normalization.md"
@@ -8383,7 +8098,6 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../glossary.md",
-        "../../how-to/add_broker_adapter.md",
         "../../how-to/prepare_market_data.md",
         "../../how-to/evaluate_checkpoint.md",
         "stops-targets-multi-tp-exits.md"
@@ -8419,7 +8133,7 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../glossary.md",
-        "../../how-to/add_reward.md",
+        "../../reference/rewards.md",
         "../../concepts/rewards.md",
         "../../how-to/evaluate_checkpoint.md",
         "../../research/validation_protocol.md"
@@ -8442,8 +8156,8 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../glossary.md",
-        "../../how-to/add_action_schema.md",
-        "../../how-to/schema_version_change.md",
+        "../../reference/action_schemas.md",
+        "../../reference/cache_and_schema_versions.md",
         "../B_market_structure_setups/trade-setups.md",
         "../../reference/risk_and_execution.md"
       ],
@@ -8819,16 +8533,6 @@
     {
       "links": [],
       "orphan_status": "in toctree",
-      "path": "docs/subjects/F_platform_operations_entry/examples/extension-development-and-tests.ipynb",
-      "primary_navigation_owner": [],
-      "section": "subjects",
-      "status": "current",
-      "title": "Test when a higher-timeframe feature becomes visible",
-      "type": "tutorial"
-    },
-    {
-      "links": [],
-      "orphan_status": "in toctree",
       "path": "docs/subjects/F_platform_operations_entry/examples/live-paper-metatrader.ipynb",
       "primary_navigation_owner": [],
       "section": "subjects",
@@ -8867,38 +8571,6 @@
       "type": "tutorial"
     },
     {
-      "links": [
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/c0d982f94ab9df8b2a9ddd013d2ae9a562573529/CONTRIBUTING.md",
-        "../../development/testing.md",
-        "../../glossary.md",
-        "../../glossary.md",
-        "../../glossary.md",
-        "../../glossary.md",
-        "../../how-to/add_feature.md",
-        "../../how-to/add_encoder.md",
-        "../../how-to/add_action_schema.md",
-        "../../how-to/add_reward.md",
-        "../../how-to/add_metric.md",
-        "../../how-to/add_broker_adapter.md",
-        "../../how-to/schema_version_change.md",
-        "../A_data_features/cache-identity.md",
-        "../../how-to/README.md",
-        "../../modules/README.md",
-        "../../development/testing.md",
-        "../../development/documentation.md",
-        "../../reference/subjects/extension-development-and-tests.md"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/subjects/F_platform_operations_entry/extension-development-and-tests.md",
-      "primary_navigation_owner": [
-        "Subjects"
-      ],
-      "section": "subjects",
-      "status": "current",
-      "title": "Extension development and tests",
-      "type": "developer"
-    },
-    {
       "links": [],
       "orphan_status": "in toctree",
       "path": "docs/subjects/F_platform_operations_entry/index.md",
@@ -8920,7 +8592,6 @@
         "../../glossary.md",
         "../../glossary.md",
         "../../operations/live-status.md",
-        "../../how-to/add_broker_adapter.md",
         "../../reference/observation_schemas.md",
         "../../reference/subjects/live-paper-metatrader.md",
         "../C_trading_risk_execution/account-state-risk-prop-constraints.md"
@@ -8973,8 +8644,7 @@
         "../../glossary.md",
         "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/c0d982f94ab9df8b2a9ddd013d2ae9a562573529/SECURITY.md",
         "../../security/dependency_security_status.md",
-        "../../reference/subjects/security-and-dependencies.md",
-        "https://github.com/nntk072/Quantitative-RL-Trading-System/blob/c0d982f94ab9df8b2a9ddd013d2ae9a562573529/CONTRIBUTING.md"
+        "../../reference/subjects/security-and-dependencies.md"
       ],
       "orphan_status": "in toctree",
       "path": "docs/subjects/F_platform_operations_entry/security-and-dependencies.md",
@@ -9104,16 +8774,6 @@
       "section": "subjects",
       "status": "current",
       "title": "QA for experiment design, controls and ablations",
-      "type": "developer"
-    },
-    {
-      "links": [],
-      "orphan_status": "in toctree",
-      "path": "docs/subjects/qa/extension-development-and-tests.md",
-      "primary_navigation_owner": [],
-      "section": "subjects",
-      "status": "current",
-      "title": "QA for extension development and tests",
       "type": "developer"
     },
     {

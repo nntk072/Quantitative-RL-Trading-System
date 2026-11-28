@@ -95,7 +95,7 @@ def test_file_accountability_classifies_owned_and_generated_paths(tmp_path: Path
         "tools/check",
         "tools/documentation/public_api.py",
         "config/base/default.yaml",
-        "docs/development/testing.md",
+        "docs/how-to/README.md",
         "docs/api/usage/market_data/example.md",
         "assets/logo.svg",
     )
@@ -125,7 +125,7 @@ def test_file_accountability_classifies_owned_and_generated_paths(tmp_path: Path
     assert by_path["tools/check"]["owner"] == "ci_operation_engineer"
     assert by_path["tools/documentation/public_api.py"]["owner"] == "evidence_reporting_engineer"
     assert by_path["config/base/default.yaml"]["owner"] == "ml_engineer"
-    assert by_path["docs/development/testing.md"]["disposition"] == "documentation"
+    assert by_path["docs/how-to/README.md"]["disposition"] == "documentation"
     assert by_path["docs/api/usage/market_data/example.md"]["disposition"] == "generated"
     assert by_path["docs/api/usage/market_data/example.md"]["eligible"] is False
     assert by_path["assets/logo.svg"]["exclusion_reason"]

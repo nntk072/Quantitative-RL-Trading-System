@@ -14,6 +14,4 @@ proof that a supported kernel actually runs.
 
 The table is an environment selection guide, not an availability report.
 Check current hardware inventory, allocation, CPU/RAM, and project Slurm rules
-before submitting work. See [Triton operations](triton.md),
-[Python environment guide](../development/testing.md), and
-the maintained [agent Slurm rules](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md).
+before submitting work. See the [Triton operations guide](triton.md).

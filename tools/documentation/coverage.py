@@ -10,9 +10,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "docs/development/documentation_coverage.md"
-OUTPUT = ROOT / "docs/documentation_coverage.json"
-OUTPUT = ROOT / "docs/documentation_coverage.json"
+SOURCE = ROOT / "dev-docs/development/documentation_coverage.md"
+OUTPUT = ROOT / "dev-docs/documentation_coverage.json"
 DIMENSIONS = (
     "concept",
     "architecture",
@@ -61,7 +60,7 @@ def build_coverage() -> dict[str, Any]:
         raise ValueError("coverage matrix contains duplicate subjects")
     return {
         "schema_version": 1,
-        "source": "docs/development/documentation_coverage.md",
+        "source": "dev-docs/development/documentation_coverage.md",
         "dimensions": list(DIMENSIONS),
         "state_vocabulary": CELL_STATES,
         "subject_count": len(rows),
@@ -78,6 +77,7 @@ def main() -> int:
     args = parser.parse_args()
     expected = json.dumps(build_coverage(), indent=2, sort_keys=True) + "\n"
     if args.write:
+        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
         OUTPUT.write_text(expected, encoding="utf-8")
         print(f"Wrote {OUTPUT.relative_to(ROOT)}")
         return 0

@@ -196,3 +196,6 @@ zscaler.crt
 # Local IDE agent config (rules live in .agents/rules/)
 .cursor/
 .kilocode/
+
+# Local-only developer notes and contributor runbooks.
+/dev-docs/

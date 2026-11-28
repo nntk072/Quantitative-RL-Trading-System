@@ -3478,7 +3478,7 @@
       "name": "evaluate_provider",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 1212,
+      "source_line": 919,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -11362,9 +11362,9 @@
       "name": "validate_model_candidate_geometry_observation_schema",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 324,
-      "source_module": "learning.rl.agent",
-      "source_path": "learning/rl/agent.py"
+      "source_line": 296,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
     },
     {
       "classification": "cross-package internal",
@@ -11374,9 +11374,9 @@
       "name": "validate_model_trade_setup_observation_schema",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 311,
-      "source_module": "learning.rl.agent",
-      "source_path": "learning/rl/agent.py"
+      "source_line": 283,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
     },
     {
       "classification": "cross-package internal",
@@ -13162,7 +13162,7 @@
       "name": "evaluate_model",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 367,
+      "source_line": 74,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -13174,7 +13174,7 @@
       "name": "evaluate_provider",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 1212,
+      "source_line": 919,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -13186,9 +13186,9 @@
       "name": "make_action_fn",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 305,
-      "source_module": "evaluation.rollout.trained_policy_rollout",
-      "source_path": "evaluation/rollout/trained_policy_rollout.py"
+      "source_line": 256,
+      "source_module": "evaluation.rollout.trained_policy_decisions",
+      "source_path": "evaluation/rollout/trained_policy_decisions.py"
     },
     {
       "classification": "stable",
@@ -13493,26 +13493,50 @@
     {
       "classification": "private implementation",
       "documented": true,
-      "exported_from": "evaluation.rollout.trained_policy_rollout",
+      "exported_from": "evaluation.rollout.trained_policy_decisions",
       "kind": "function",
       "name": "_candidate_geometry_action_trace",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 118,
-      "source_module": "evaluation.rollout.trained_policy_rollout",
-      "source_path": "evaluation/rollout/trained_policy_rollout.py"
+      "source_line": 69,
+      "source_module": "evaluation.rollout.trained_policy_decisions",
+      "source_path": "evaluation/rollout/trained_policy_decisions.py"
     },
     {
       "classification": "private implementation",
       "documented": true,
-      "exported_from": "evaluation.rollout.trained_policy_rollout",
+      "exported_from": "evaluation.rollout.trained_policy_decisions",
       "kind": "function",
       "name": "_decision_result_record",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 268,
-      "source_module": "evaluation.rollout.trained_policy_rollout",
-      "source_path": "evaluation/rollout/trained_policy_rollout.py"
+      "source_line": 219,
+      "source_module": "evaluation.rollout.trained_policy_decisions",
+      "source_path": "evaluation/rollout/trained_policy_decisions.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "evaluation.rollout.trained_policy_decisions",
+      "kind": "function",
+      "name": "_pre_action_setup_identity",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 182,
+      "source_module": "evaluation.rollout.trained_policy_decisions",
+      "source_path": "evaluation/rollout/trained_policy_decisions.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "evaluation.rollout.trained_policy_decisions",
+      "kind": "function",
+      "name": "_setup_choice_probability_summary",
+      "numpy_style": false,
+      "package": "evaluation",
+      "source_line": 12,
+      "source_module": "evaluation.rollout.trained_policy_decisions",
+      "source_path": "evaluation/rollout/trained_policy_decisions.py"
     },
     {
       "classification": "private implementation",
@@ -13522,31 +13546,7 @@
       "name": "_finite_constraint_cost",
       "numpy_style": false,
       "package": "evaluation",
-      "source_line": 42,
-      "source_module": "evaluation.rollout.trained_policy_rollout",
-      "source_path": "evaluation/rollout/trained_policy_rollout.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "evaluation.rollout.trained_policy_rollout",
-      "kind": "function",
-      "name": "_pre_action_setup_identity",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 231,
-      "source_module": "evaluation.rollout.trained_policy_rollout",
-      "source_path": "evaluation/rollout/trained_policy_rollout.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "evaluation.rollout.trained_policy_rollout",
-      "kind": "function",
-      "name": "_setup_choice_probability_summary",
-      "numpy_style": false,
-      "package": "evaluation",
-      "source_line": 61,
+      "source_line": 55,
       "source_module": "evaluation.rollout.trained_policy_rollout",
       "source_path": "evaluation/rollout/trained_policy_rollout.py"
     },
@@ -14458,7 +14458,7 @@
       "name": "_account_config",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 86,
+      "source_line": 95,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14470,7 +14470,7 @@
       "name": "_account_currency",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 73,
+      "source_line": 82,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14482,19 +14482,7 @@
       "name": "_episode_coverage",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 288,
-      "source_module": "experiments.runs.reporting",
-      "source_path": "experiments/runs/reporting.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "experiments.runs.reporting",
-      "kind": "function",
-      "name": "_family_metadata",
-      "numpy_style": false,
-      "package": "experiments",
-      "source_line": 971,
+      "source_line": 297,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14506,31 +14494,7 @@
       "name": "_finite_metrics",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 377,
-      "source_module": "experiments.runs.reporting",
-      "source_path": "experiments/runs/reporting.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "experiments.runs.reporting",
-      "kind": "function",
-      "name": "_fmt_money",
-      "numpy_style": false,
-      "package": "experiments",
-      "source_line": 648,
-      "source_module": "experiments.runs.reporting",
-      "source_path": "experiments/runs/reporting.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "experiments.runs.reporting",
-      "kind": "function",
-      "name": "_fmt_percent",
-      "numpy_style": false,
-      "package": "experiments",
-      "source_line": 634,
+      "source_line": 386,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14542,7 +14506,7 @@
       "name": "_pnl_reconciliation",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 113,
+      "source_line": 122,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14554,7 +14518,7 @@
       "name": "_read_json",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 21,
+      "source_line": 30,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14566,7 +14530,7 @@
       "name": "_resource_profiles",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 164,
+      "source_line": 173,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14578,7 +14542,7 @@
       "name": "_run_dir",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 56,
+      "source_line": 65,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14590,7 +14554,7 @@
       "name": "_sha256",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 37,
+      "source_line": 46,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14602,19 +14566,7 @@
       "name": "_split_log",
       "numpy_style": false,
       "package": "experiments",
-      "source_line": 258,
-      "source_module": "experiments.runs.reporting",
-      "source_path": "experiments/runs/reporting.py"
-    },
-    {
-      "classification": "private implementation",
-      "documented": true,
-      "exported_from": "experiments.runs.reporting",
-      "kind": "function",
-      "name": "_write_summary_outputs",
-      "numpy_style": false,
-      "package": "experiments",
-      "source_line": 851,
+      "source_line": 267,
       "source_module": "experiments.runs.reporting",
       "source_path": "experiments/runs/reporting.py"
     },
@@ -14629,6 +14581,54 @@
       "source_line": 15,
       "source_module": "experiments.runs.source_snapshot",
       "source_path": "experiments/runs/source_snapshot.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.summary_rendering",
+      "kind": "function",
+      "name": "_family_metadata",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 348,
+      "source_module": "experiments.runs.summary_rendering",
+      "source_path": "experiments/runs/summary_rendering.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.summary_rendering",
+      "kind": "function",
+      "name": "_fmt_money",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 25,
+      "source_module": "experiments.runs.summary_rendering",
+      "source_path": "experiments/runs/summary_rendering.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.summary_rendering",
+      "kind": "function",
+      "name": "_fmt_percent",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 11,
+      "source_module": "experiments.runs.summary_rendering",
+      "source_path": "experiments/runs/summary_rendering.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "experiments.runs.summary_rendering",
+      "kind": "function",
+      "name": "_write_summary_outputs",
+      "numpy_style": false,
+      "package": "experiments",
+      "source_line": 228,
+      "source_module": "experiments.runs.summary_rendering",
+      "source_path": "experiments/runs/summary_rendering.py"
     },
     {
       "classification": "private implementation",
@@ -18082,7 +18082,7 @@
       "name": "_autocast_override",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 996,
+      "source_line": 722,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -18094,7 +18094,7 @@
       "name": "_finalize_cuda_policy",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 1009,
+      "source_line": 735,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -18106,7 +18106,7 @@
       "name": "_ppo_policy_and_ent_coef",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 857,
+      "source_line": 583,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
@@ -18118,45 +18118,141 @@
       "name": "_validate_survival_objective_config",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 834,
+      "source_line": 560,
       "source_module": "learning.rl.agent",
       "source_path": "learning/rl/agent.py"
     },
     {
       "classification": "private implementation",
+      "documented": false,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 309,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
       "documented": true,
-      "exported_from": "learning.rl.callbacks",
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "bind_discrete_action_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 18,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "persist_action_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 39,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "validate_model_action_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 89,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "validate_model_candidate_geometry_observation_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 296,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "validate_model_discrete_action_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 193,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "validate_model_observation_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 263,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "learning.rl.agent_contracts",
+      "kind": "function",
+      "name": "validate_model_trade_setup_observation_schema",
+      "numpy_style": false,
+      "package": "learning",
+      "source_line": 283,
+      "source_module": "learning.rl.agent_contracts",
+      "source_path": "learning/rl/agent_contracts.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "learning.rl.callback_action_stats",
       "kind": "function",
       "name": "_action_coordinate_names",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 32,
-      "source_module": "learning.rl.callbacks",
-      "source_path": "learning/rl/callbacks.py"
+      "source_line": 10,
+      "source_module": "learning.rl.callback_action_stats",
+      "source_path": "learning/rl/callback_action_stats.py"
     },
     {
       "classification": "private implementation",
       "documented": true,
-      "exported_from": "learning.rl.callbacks",
+      "exported_from": "learning.rl.callback_action_stats",
       "kind": "function",
       "name": "_record_action_coordinates",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 51,
-      "source_module": "learning.rl.callbacks",
-      "source_path": "learning/rl/callbacks.py"
+      "source_line": 29,
+      "source_module": "learning.rl.callback_action_stats",
+      "source_path": "learning/rl/callback_action_stats.py"
     },
     {
       "classification": "private implementation",
       "documented": true,
-      "exported_from": "learning.rl.callbacks",
+      "exported_from": "learning.rl.callback_action_stats",
       "kind": "function",
       "name": "_summarize_action_coordinates",
       "numpy_style": false,
       "package": "learning",
-      "source_line": 86,
-      "source_module": "learning.rl.callbacks",
-      "source_path": "learning/rl/callbacks.py"
+      "source_line": 64,
+      "source_module": "learning.rl.callback_action_stats",
+      "source_path": "learning/rl/callback_action_stats.py"
     },
     {
       "classification": "cross-package internal",
@@ -20434,7 +20530,7 @@
       "name": "NewsGuardConfig",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 30,
+      "source_line": 36,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
@@ -20470,7 +20566,7 @@
       "name": "causal_atr5",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 179,
+      "source_line": 239,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
@@ -20518,7 +20614,7 @@
       "name": "load_release_times",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 42,
+      "source_line": 48,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
@@ -20530,7 +20626,7 @@
       "name": "news_block_mask",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 97,
+      "source_line": 103,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
@@ -20542,7 +20638,7 @@
       "name": "news_guard_config",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 154,
+      "source_line": 214,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
@@ -20611,10 +20707,46 @@
       "documented": false,
       "exported_from": "market_data.news.guard",
       "kind": "value",
+      "name": "_NEWS_MASK_CACHE",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 31,
+      "source_module": "market_data.news.guard",
+      "source_path": "market_data/news/guard.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.news.guard",
+      "kind": "value",
+      "name": "_NEWS_MASK_CACHE_LIMIT",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 30,
+      "source_module": "market_data.news.guard",
+      "source_path": "market_data/news/guard.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.news.guard",
+      "kind": "value",
+      "name": "_NEWS_MASK_CACHE_LOCK",
+      "numpy_style": false,
+      "package": "market_data",
+      "source_line": 32,
+      "source_module": "market_data.news.guard",
+      "source_path": "market_data/news/guard.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "market_data.news.guard",
+      "kind": "value",
       "name": "_REPO_ROOT",
       "numpy_style": false,
       "package": "market_data",
-      "source_line": 151,
+      "source_line": 211,
       "source_module": "market_data.news.guard",
       "source_path": "market_data/news/guard.py"
     },
@@ -23595,6 +23727,42 @@
       "source_path": "simulation/environment/entries/action_intent.py"
     },
     {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.entries.context_cache",
+      "kind": "value",
+      "name": "_EntryIdeaContextCache",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 10,
+      "source_module": "simulation.environment.entries.context_cache",
+      "source_path": "simulation/environment/entries/context_cache.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.entries.context_cache",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 57,
+      "source_module": "simulation.environment.entries.context_cache",
+      "source_path": "simulation/environment/entries/context_cache.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "simulation.environment.entries.context_cache",
+      "kind": "function",
+      "name": "cached_entry_idea_context",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 15,
+      "source_module": "simulation.environment.entries.context_cache",
+      "source_path": "simulation/environment/entries/context_cache.py"
+    },
+    {
       "classification": "cross-package internal",
       "documented": true,
       "exported_from": "simulation.environment.entries.funnel",
@@ -23842,7 +24010,7 @@
       "name": "TradingEnv.from_bundle",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 439,
+      "source_line": 440,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -23854,7 +24022,7 @@
       "name": "TradingEnv.step",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 471,
+      "source_line": 473,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -23866,7 +24034,7 @@
       "name": "TradingEnv.transition",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 485,
+      "source_line": 487,
       "source_module": "simulation.environment.env",
       "source_path": "simulation/environment/env.py"
     },
@@ -24262,7 +24430,7 @@
       "name": "ObservationArraysInitializationMixin",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 29,
+      "source_line": 31,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -24274,7 +24442,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 386,
+      "source_line": 390,
       "source_module": "simulation.environment.observation_arrays_initialization",
       "source_path": "simulation/environment/observation_arrays_initialization.py"
     },
@@ -24301,6 +24469,54 @@
       "source_line": 5,
       "source_module": "simulation.environment.observation_runtime",
       "source_path": "simulation/environment/observation_runtime.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.observations.schema",
+      "kind": "class",
+      "name": "_PreparedRollingWindowCacheEntry",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 233,
+      "source_module": "simulation.environment.observations.schema",
+      "source_path": "simulation/environment/observations/schema.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.observations.schema",
+      "kind": "class",
+      "name": "_PreparedWindowPrefixCacheEntry",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 219,
+      "source_module": "simulation.environment.observations.schema",
+      "source_path": "simulation/environment/observations/schema.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.observations.schema",
+      "kind": "function",
+      "name": "_prepare_closed_window_with_prefix_cache",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 336,
+      "source_module": "simulation.environment.observations.schema",
+      "source_path": "simulation/environment/observations/schema.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.observations.schema",
+      "kind": "function",
+      "name": "_prepare_rolling_window_with_cache",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 245,
+      "source_module": "simulation.environment.observations.schema",
+      "source_path": "simulation/environment/observations/schema.py"
     },
     {
       "classification": "private implementation",
@@ -24598,7 +24814,7 @@
       "name": "_ARRAY_NAME",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 22,
+      "source_line": 24,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24610,7 +24826,55 @@
       "name": "_RELEVANT_CONFIG_PATHS",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 23,
+      "source_line": 25,
+      "source_module": "simulation.environment.shared_bundle",
+      "source_path": "simulation/environment/shared_bundle.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.shared_bundle",
+      "kind": "value",
+      "name": "_VERIFIED_BUNDLE_CACHE",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 69,
+      "source_module": "simulation.environment.shared_bundle",
+      "source_path": "simulation/environment/shared_bundle.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.shared_bundle",
+      "kind": "value",
+      "name": "_VERIFIED_BUNDLE_CACHE_LIMIT",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 68,
+      "source_module": "simulation.environment.shared_bundle",
+      "source_path": "simulation/environment/shared_bundle.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "simulation.environment.shared_bundle",
+      "kind": "value",
+      "name": "_VERIFIED_BUNDLE_CACHE_LOCK",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 70,
+      "source_module": "simulation.environment.shared_bundle",
+      "source_path": "simulation/environment/shared_bundle.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": true,
+      "exported_from": "simulation.environment.shared_bundle",
+      "kind": "function",
+      "name": "_bundle_file_identity",
+      "numpy_style": false,
+      "package": "simulation",
+      "source_line": 73,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24622,7 +24886,7 @@
       "name": "_fsync_directory",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 186,
+      "source_line": 212,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24634,7 +24898,7 @@
       "name": "_json_compatible",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 108,
+      "source_line": 134,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24646,7 +24910,7 @@
       "name": "_lookup_path",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 66,
+      "source_line": 92,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24658,7 +24922,7 @@
       "name": "_relevant_config",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 87,
+      "source_line": 113,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24670,7 +24934,7 @@
       "name": "_sha256_file",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 199,
+      "source_line": 225,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24682,7 +24946,7 @@
       "name": "_validate_arrays",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 212,
+      "source_line": 238,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24694,7 +24958,7 @@
       "name": "_write_array",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 159,
+      "source_line": 185,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24706,7 +24970,7 @@
       "name": "_write_bundle_directory",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 229,
+      "source_line": 255,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24718,7 +24982,7 @@
       "name": "_write_manifest",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 172,
+      "source_line": 198,
       "source_module": "simulation.environment.shared_bundle",
       "source_path": "simulation/environment/shared_bundle.py"
     },
@@ -24766,7 +25030,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "simulation",
-      "source_line": 582,
+      "source_line": 604,
       "source_module": "simulation.environment.step_action_execution",
       "source_path": "simulation/environment/step_action_execution.py"
     },
@@ -25779,6 +26043,54 @@
       "source_path": "trading/baselines/step_indexed_strategy.py"
     },
     {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "trading.column_schema",
+      "kind": "value",
+      "name": "_COLUMN_MATCH_CACHE",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 7,
+      "source_module": "trading.column_schema",
+      "source_path": "trading/column_schema.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "trading.column_schema",
+      "kind": "value",
+      "name": "_COLUMN_MATCH_CACHE_LIMIT",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 8,
+      "source_module": "trading.column_schema",
+      "source_path": "trading/column_schema.py"
+    },
+    {
+      "classification": "private implementation",
+      "documented": false,
+      "exported_from": "trading.column_schema",
+      "kind": "value",
+      "name": "__all__",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 48,
+      "source_module": "trading.column_schema",
+      "source_path": "trading/column_schema.py"
+    },
+    {
+      "classification": "cross-package internal",
+      "documented": true,
+      "exported_from": "trading.column_schema",
+      "kind": "function",
+      "name": "suffix_columns",
+      "numpy_style": false,
+      "package": "trading",
+      "source_line": 11,
+      "source_module": "trading.column_schema",
+      "source_path": "trading/column_schema.py"
+    },
+    {
       "classification": "stable",
       "documented": true,
       "exported_from": "trading.execution",
@@ -26134,7 +26446,7 @@
       "name": "collapse_levels",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 20,
+      "source_line": 21,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26182,7 +26494,7 @@
       "name": "deviation_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 212,
+      "source_line": 211,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26218,7 +26530,7 @@
       "name": "filter_sl_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 76,
+      "source_line": 77,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26266,7 +26578,7 @@
       "name": "manipulation_state",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 48,
+      "source_line": 49,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26350,7 +26662,7 @@
       "name": "stop_menu",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 107,
+      "source_line": 108,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26362,7 +26674,7 @@
       "name": "target_menu",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 58,
+      "source_line": 59,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26470,7 +26782,7 @@
       "name": "filter_sl_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 76,
+      "source_line": 77,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26482,7 +26794,7 @@
       "name": "manipulation_state",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 48,
+      "source_line": 49,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26542,7 +26854,7 @@
       "name": "stop_buffer",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 64,
+      "source_line": 65,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26614,7 +26926,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 449,
+      "source_line": 447,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26626,7 +26938,7 @@
       "name": "_flag",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 34,
+      "source_line": 35,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26638,7 +26950,7 @@
       "name": "_timeframe_rank_for_stop",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 22,
+      "source_line": 23,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26650,7 +26962,7 @@
       "name": "filter_sl_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 76,
+      "source_line": 77,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26662,7 +26974,7 @@
       "name": "manipulation_state",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 48,
+      "source_line": 49,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26674,7 +26986,7 @@
       "name": "stop_buffer",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 64,
+      "source_line": 65,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26686,7 +26998,7 @@
       "name": "stop_menu",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 107,
+      "source_line": 108,
       "source_module": "trading.orders.stops",
       "source_path": "trading/orders/stops.py"
     },
@@ -26698,7 +27010,7 @@
       "name": "_DEVIATION_COLUMN_CACHE",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 237,
+      "source_line": 236,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26710,7 +27022,7 @@
       "name": "_PRICE_TOL",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 17,
+      "source_line": 18,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26722,7 +27034,7 @@
       "name": "__all__",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 315,
+      "source_line": 312,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26734,7 +27046,7 @@
       "name": "_deviation_level_columns",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 240,
+      "source_line": 239,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26746,7 +27058,7 @@
       "name": "collapse_levels",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 20,
+      "source_line": 21,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26758,7 +27070,7 @@
       "name": "deviation_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 212,
+      "source_line": 211,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26770,7 +27082,7 @@
       "name": "finite_level",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 293,
+      "source_line": 290,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26794,7 +27106,7 @@
       "name": "suffixed_levels",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 272,
+      "source_line": 271,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -26806,7 +27118,7 @@
       "name": "target_menu",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 58,
+      "source_line": 59,
       "source_module": "trading.orders.targets",
       "source_path": "trading/orders/targets.py"
     },
@@ -27778,7 +28090,7 @@
       "name": "PO3IFVGStrategy",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 14,
+      "source_line": 16,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28006,7 +28318,7 @@
       "name": "PO3IFVGStrategy.bind_columns",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 112,
+      "source_line": 114,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28018,7 +28330,7 @@
       "name": "PO3IFVGStrategy.context_direction",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 229,
+      "source_line": 231,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28030,7 +28342,7 @@
       "name": "PO3IFVGStrategy.entry_gap",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 205,
+      "source_line": 207,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28042,7 +28354,7 @@
       "name": "PO3IFVGStrategy.entry_liquidity",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 189,
+      "source_line": 191,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28054,7 +28366,7 @@
       "name": "PO3IFVGStrategy.entry_setup",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 254,
+      "source_line": 256,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28066,7 +28378,7 @@
       "name": "PO3IFVGStrategy.sl_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 393,
+      "source_line": 395,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28078,7 +28390,7 @@
       "name": "PO3IFVGStrategy.sl_reference",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 139,
+      "source_line": 141,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28090,7 +28402,7 @@
       "name": "PO3IFVGStrategy.target_candidates",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 156,
+      "source_line": 158,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28102,7 +28414,7 @@
       "name": "PO3IFVGStrategy.validate_entry",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 125,
+      "source_line": 127,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28114,7 +28426,7 @@
       "name": "_any",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 486,
+      "source_line": 488,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28126,7 +28438,7 @@
       "name": "_columns",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 473,
+      "source_line": 475,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28138,7 +28450,7 @@
       "name": "_flag",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 460,
+      "source_line": 462,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28150,7 +28462,7 @@
       "name": "_gap_stops",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 515,
+      "source_line": 517,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28162,7 +28474,7 @@
       "name": "_prefixed",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 499,
+      "source_line": 501,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },
@@ -28174,7 +28486,7 @@
       "name": "_within_atr",
       "numpy_style": false,
       "package": "trading",
-      "source_line": 545,
+      "source_line": 547,
       "source_module": "trading.strategies.po3_ifvg",
       "source_path": "trading/strategies/po3_ifvg.py"
     },

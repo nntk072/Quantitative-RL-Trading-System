@@ -18,8 +18,8 @@ approval to launch a long experiment.
 7. Evaluate a frozen checkpoint with matching schema and execution settings.
    Produce trade/equity ledgers before summarizing metrics.
 
-On Triton, follow [resource operations](../operations/triton.md) and
-`.agents/rules/triton-slurm.md`. Preserve active allocations and run identity;
+On Triton, follow [resource operations](../operations/triton.md). Preserve
+active allocations and run identity;
 do not duplicate a run to recover a worker failure.
 
 Current command names can be inspected without starting a job:

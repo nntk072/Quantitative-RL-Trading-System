@@ -58,7 +58,7 @@ examples/order-blocks-and-premium-discount
 
 ## Tasks
 
-- [Add a feature](../../how-to/add_feature.md) and record its time-of-availability and model-facing columns.
+- Record each feature's time-of-availability and model-facing columns.
 - [Review the feature catalog](../../reference/feature_catalog.md) before changing selected columns.
 - Use the [swings and liquidity guide](swings-liquidity-smt-po3-fvg-ifvg.md) for the upstream confirmed-level contract.
 - Consult [risk and execution reference](../../reference/risk_and_execution.md) for downstream order behavior; this page does not define execution.

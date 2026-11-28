@@ -8,7 +8,7 @@ This page contains 3 public callable records owned by `trading.orders.targets`. 
 
 **Purpose:** Merge prices within ``1e-4`` and join their names with ``|``.
 
-**Exact API:** {py:obj}`trading.orders.targets.collapse_levels` · **Source:** [trading/orders/targets.py:20](../../../../trading/orders/targets.py#L20)
+**Exact API:** {py:obj}`trading.orders.targets.collapse_levels` · **Source:** [trading/orders/targets.py:21](../../../../trading/orders/targets.py#L21)
 
 **Inputs and outputs:**
 
@@ -72,7 +72,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Use extensions of already-created swing legs as TP levels.
 
-**Exact API:** {py:obj}`trading.orders.targets.deviation_candidates` · **Source:** [trading/orders/targets.py:212](../../../../trading/orders/targets.py#L212)
+**Exact API:** {py:obj}`trading.orders.targets.deviation_candidates` · **Source:** [trading/orders/targets.py:211](../../../../trading/orders/targets.py#L211)
 
 **Inputs and outputs:**
 
@@ -105,14 +105,14 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert deviation_candidates(row) == [("standard_deviation_level_neg_4_price", 106.0)]
 ```
 
-2. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L256)
+2. [production caller: `stop_menu`](../../../../trading/orders/stops.py#L254)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
 # … caller setup omitted …
-            row, column_name.removesuffix("_low").removesuffix("_high") + "_active"
-        ):
+    for column_name in suffix_columns(row_columns, (ob_stem,)):
+        if _flag(row, column_name.removesuffix("_low").removesuffix("_high") + "_active"):
             level = finite_level(row, column_name)
             if level is not None:
                 raw.append((column_name, level))
@@ -136,7 +136,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Build eligible take-profit prices from reward-risk and market-structure levels.
 
-**Exact API:** {py:obj}`trading.orders.targets.target_menu` · **Source:** [trading/orders/targets.py:58](../../../../trading/orders/targets.py#L58)
+**Exact API:** {py:obj}`trading.orders.targets.target_menu` · **Source:** [trading/orders/targets.py:59](../../../../trading/orders/targets.py#L59)
 
 **Inputs and outputs:**
 

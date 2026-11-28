@@ -97,10 +97,10 @@ for coordinate tables.
 
 ## Tasks
 
-- [Add a feature](../../how-to/add_feature.md) and decide whether a finite-value
-  channel is needed for its missingness semantics.
-- Use [schema versioning guidance](../../how-to/schema_version_change.md) when
-  changing stored observation meaning or shape.
+- Use the [observation schema reference](../../reference/observation_schemas.md)
+  for current branches and account coordinates.
+- Use [schema compatibility guidance](../../reference/cache_and_schema_versions.md)
+  when reviewing stored observation meaning or shape changes.
 - Use the [observation schema reference](../../reference/observation_schemas.md)
   for current branches and account coordinates.
 

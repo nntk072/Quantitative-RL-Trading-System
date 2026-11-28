@@ -8,7 +8,7 @@ This page contains 5 public callable records owned by `market_data.news.guard`. 
 
 **Purpose:** Settings for the news and spike guard, from ``execution.news_spike_guard``.
 
-**Exact API:** {py:obj}`market_data.news.guard.NewsGuardConfig` · **Source:** [market_data/news/guard.py:30](../../../../market_data/news/guard.py#L30)
+**Exact API:** {py:obj}`market_data.news.guard.NewsGuardConfig` · **Source:** [market_data/news/guard.py:36](../../../../market_data/news/guard.py#L36)
 
 **Observed usage:**
 
@@ -76,7 +76,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** 5-bar average true range from past bars only (used when no ``atr_5`` feature exists).
 
-**Exact API:** {py:obj}`market_data.news.guard.causal_atr5` · **Source:** [market_data/news/guard.py:179](../../../../market_data/news/guard.py#L179)
+**Exact API:** {py:obj}`market_data.news.guard.causal_atr5` · **Source:** [market_data/news/guard.py:239](../../../../market_data/news/guard.py#L239)
 
 **Inputs and outputs:**
 
@@ -116,7 +116,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `_initialize_observation_arrays`](../../../../simulation/environment/observation_arrays_initialization.py#L294)
+2. [production caller: `_initialize_observation_arrays`](../../../../simulation/environment/observation_arrays_initialization.py#L296)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -147,7 +147,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Release times (UTC) from a calendar CSV written by ``market_data.news.calendar``.
 
-**Exact API:** {py:obj}`market_data.news.guard.load_release_times` · **Source:** [market_data/news/guard.py:42](../../../../market_data/news/guard.py#L42)
+**Exact API:** {py:obj}`market_data.news.guard.load_release_times` · **Source:** [market_data/news/guard.py:48](../../../../market_data/news/guard.py#L48)
 
 **Inputs and outputs:**
 
@@ -165,7 +165,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_load_release_times_reads_utc_column`](../../../../tests/unit/market_data/test_news_guard.py#L154)
+1. [test fixture: `test_load_release_times_reads_utc_column`](../../../../tests/unit/market_data/test_news_guard.py#L232)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -212,7 +212,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Purpose:** Boolean mask over bars: True where new entries are blocked.
 
-**Exact API:** {py:obj}`market_data.news.guard.news_block_mask` · **Source:** [market_data/news/guard.py:97](../../../../market_data/news/guard.py#L97)
+**Exact API:** {py:obj}`market_data.news.guard.news_block_mask` · **Source:** [market_data/news/guard.py:103](../../../../market_data/news/guard.py#L103)
 
 **Inputs and outputs:**
 
@@ -238,7 +238,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_spike_blocks_new_entries_outside_ny_open_window`](../../../../tests/unit/market_data/test_news_guard.py#L60)
+1. [test fixture: `test_spike_blocks_new_entries_outside_ny_open_window`](../../../../tests/unit/market_data/test_news_guard.py#L62)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -264,7 +264,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert not mask[0:6].any()
 ```
 
-2. [test fixture: `test_ny_open_manipulation_is_not_treated_as_news`](../../../../tests/unit/market_data/test_news_guard.py#L81)
+2. [test fixture: `test_ny_open_manipulation_is_not_treated_as_news`](../../../../tests/unit/market_data/test_news_guard.py#L83)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -306,7 +306,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Build the guard from ``execution.news_spike_guard``; None when the guard is disabled.
 
-**Exact API:** {py:obj}`market_data.news.guard.news_guard_config` · **Source:** [market_data/news/guard.py:154](../../../../market_data/news/guard.py#L154)
+**Exact API:** {py:obj}`market_data.news.guard.news_guard_config` · **Source:** [market_data/news/guard.py:214](../../../../market_data/news/guard.py#L214)
 
 **Inputs and outputs:**
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_news_guard_config_is_optional_and_resolves_relative_calendar_path`](../../../../tests/unit/market_data/test_news_guard.py#L158)
+1. [test fixture: `test_news_guard_config_is_optional_and_resolves_relative_calendar_path`](../../../../tests/unit/market_data/test_news_guard.py#L236)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

@@ -91,7 +91,6 @@ def primary_navigation_owners() -> dict[Path, set[str]]:
         "api": "API",
         "research": "Research",
         "reproduce": "Reproduce",
-        "develop": "Develop",
         "operations": "Operations",
     }
     for block in toctree_blocks(root_page):

@@ -17,9 +17,8 @@ Applies to this repo's pytest setup (`tests/`).
 The coverage gate measures line and conditional branch coverage for production
 packages and compares it with the committed baseline from `main`. Do not claim
 that percentage alone proves test quality. Review uncovered paths against the
-behavior and failure modes the package owns. See
-[the measured testing strategy](../../docs/development/testing.md) for scope,
-baseline provenance, and update rules.
+behavior and failure modes the package owns. Run `./tools/check coverage` and
+`./tools/check coverage-report` for the maintained gates.
 
 Test types required for features:
 1. **Unit tests** — production behavior at an isolated package boundary, under `tests/unit/<domain>/`.

@@ -178,7 +178,6 @@ MAINTAINED_DOCS = (
     "training/artifacts/README.md",
     "training/configuration/README.md",
     "training/reporting/README.md",
-    "tests/README.md",
     "tests/unit/research/README.md",
     "scripts/README.md",
     "scripts/research/analysis/README.md",
@@ -301,17 +300,15 @@ def validate(root: Path) -> list[str]:
             "api/index",
             "research/README",
             "reproduce/index",
-            "develop/index",
+            "operations/README",
         )
         if ":glob:" in index_text:
             errors.append("docs/index.md: root navigation must use explicit page references")
         for section in required_sections:
             if section not in index_text:
                 errors.append(f"docs/index.md: missing primary destination {section}")
-        if "../operations/README" not in (root / "docs/develop/index.md").read_text(
-            encoding="utf-8"
-        ):
-            errors.append("docs/develop/index.md: operations portal is not reachable from Develop")
+        if "operations/README" not in index_text:
+            errors.append("docs/index.md: operations portal is not reachable from the site root")
     for notebook in sorted(
         path for path in (root / "docs").rglob("*.ipynb") if "_build" not in path.parts
     ):
