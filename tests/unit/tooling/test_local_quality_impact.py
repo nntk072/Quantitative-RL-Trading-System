@@ -6,20 +6,28 @@ import json
 from pathlib import Path
 
 import pytest
-from tools.quality.local_checks.coverage_tools import changed_coverage_metrics, changed_source_lines, validate_coverage_report
-from tools.quality.local_checks.receipts import read_collected_inventory, validate_test_receipts
-from tools.quality.local_checks.run_evidence import quality_file_sha256, verify_quality_manifest, write_quality_json
-from tools.quality.local_checks.test_scheduling import balance_test_shards
+from tools.quality.local_checks.coverage_tools import (
+    changed_coverage_metrics,
+    changed_source_lines,
+    validate_coverage_report,
+)
 from tools.quality.local_checks.impact import (
     reverse_imports,
     select_impacted_tests,
     transitive_import_dependants,
 )
+from tools.quality.local_checks.receipts import read_collected_inventory, validate_test_receipts
 from tools.quality.local_checks.resources import (
     quality_cache_key,
     schedule_resource_waves,
     worker_capacity_budget,
 )
+from tools.quality.local_checks.run_evidence import (
+    quality_file_sha256,
+    verify_quality_manifest,
+    write_quality_json,
+)
+from tools.quality.local_checks.test_scheduling import balance_test_shards
 
 
 def test_impact_combines_transitive_imports_and_contexts() -> None:
@@ -80,8 +88,13 @@ def test_waves_do_not_oversubscribe_memory() -> None:
 
 
 def test_impact_falls_back_for_dynamic_import_resolution() -> None:
-    sources = {"pkg/a.py": "import importlib\nimportlib.import_module(name)", "tests/test_a.py": "import pkg.a"}
-    result = select_impacted_tests({"pkg/a.py"}, sources, {"tests/test_a.py"}, {"pkg/a.py": {"tests/test_a.py"}})
+    sources = {
+        "pkg/a.py": "import importlib\nimportlib.import_module(name)",
+        "tests/test_a.py": "import pkg.a",
+    }
+    result = select_impacted_tests(
+        {"pkg/a.py"}, sources, {"tests/test_a.py"}, {"pkg/a.py": {"tests/test_a.py"}}
+    )
     assert result["mode"] == "full"
 
 
@@ -92,9 +105,17 @@ def test_changed_coverage_counts_branches_without_counting_exclusions() -> None:
         "+++ b/trading/risk/sample.py\n@@ -3,0 +4,3 @@\n"
     )
     row = {
-        "executed_lines": [4], "missing_lines": [5], "excluded_lines": [6],
-        "executed_branches": [[4, 5]], "missing_branches": [[4, 7]],
-        "summary": {"covered_lines": 1, "num_statements": 2, "covered_branches": 1, "num_branches": 2},
+        "executed_lines": [4],
+        "missing_lines": [5],
+        "excluded_lines": [6],
+        "executed_branches": [[4, 5]],
+        "missing_branches": [[4, 7]],
+        "summary": {
+            "covered_lines": 1,
+            "num_statements": 2,
+            "covered_branches": 1,
+            "num_branches": 2,
+        },
     }
     report = {"files": {path: row}, "meta": {"branch_coverage": True}}
     validate_coverage_report(report, False)
@@ -132,7 +153,9 @@ def test_inventory_and_shards_reject_missing_or_duplicate_nodes(tmp_path: Path) 
     with pytest.raises(ValueError, match="different"):
         read_collected_inventory([first, second])
     plan = balance_test_shards(rows, {rows[0]["nodeid"]: 10.0}, 2, True)
-    assert sorted(node for shard in plan for node in shard["nodes"]) == sorted(row["nodeid"] for row in rows)
+    assert sorted(node for shard in plan for node in shard["nodes"]) == sorted(
+        row["nodeid"] for row in rows
+    )
     with pytest.raises(ValueError, match="Invalid"):
         balance_test_shards(rows + rows[:1], {}, 2, True)
 
@@ -141,10 +164,14 @@ def test_manifest_rejects_tampered_or_unexpected_artifacts(tmp_path: Path) -> No
     data = tmp_path / "result.json"
     data.write_text("{}")
     manifest = tmp_path / "manifest.json"
-    write_quality_json(manifest, {
-        "schema_version": 1, "source_unchanged": True,
-        "artifacts": {"result.json": quality_file_sha256(data)},
-    })
+    write_quality_json(
+        manifest,
+        {
+            "schema_version": 1,
+            "source_unchanged": True,
+            "artifacts": {"result.json": quality_file_sha256(data)},
+        },
+    )
     assert verify_quality_manifest(manifest)["status"] == "ok"
     data.write_text("tampered")
     with pytest.raises(ValueError, match="integrity"):

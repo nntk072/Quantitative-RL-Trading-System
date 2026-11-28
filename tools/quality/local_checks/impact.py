@@ -71,8 +71,10 @@ def _has_dynamic_import(source: str) -> bool:
     return any(
         isinstance(node, ast.Call)
         and (
-            isinstance(node.func, ast.Name) and node.func.id in {"__import__", "import_module"}
-            or isinstance(node.func, ast.Attribute) and node.func.attr in {"import_module", "spec_from_file_location"}
+            isinstance(node.func, ast.Name)
+            and node.func.id in {"__import__", "import_module"}
+            or isinstance(node.func, ast.Attribute)
+            and node.func.attr in {"import_module", "spec_from_file_location"}
         )
         for node in ast.walk(ast.parse(source))
     )

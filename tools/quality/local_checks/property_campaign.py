@@ -58,11 +58,11 @@ def run_product_fuzzer(target: str, seconds: int, corpus: Path, seed_value: int)
         atheris.instrument_func(PRODUCT_ORACLES[name])
     corpus.mkdir(parents=True, exist_ok=True)
 
-    @atheris.instrument_func
     def fuzz_input(data: bytes) -> None:
         """Route bounded byte inputs to the registered independent oracle."""
         exercise_product_oracles(data, target)
 
+    atheris.instrument_func(fuzz_input)
     atheris.Setup(
         [
             sys.argv[0],

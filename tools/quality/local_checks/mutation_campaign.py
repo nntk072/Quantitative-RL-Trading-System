@@ -9,7 +9,10 @@ from pathlib import Path
 from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES
-from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize_mutation_results
+from tools.quality.local_checks.mutation_results import (
+    parse_mutmut_results,
+    summarize_mutation_results,
+)
 from tools.quality.local_checks.resources import discover_worker_capacity
 from tools.quality.local_checks.run_evidence import (
     OUTPUT,

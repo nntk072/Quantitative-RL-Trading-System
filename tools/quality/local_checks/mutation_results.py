@@ -115,7 +115,7 @@ def summarize_mutation_results(
         for state, value in counts.items():
             if value is not None and observed[state] != value:
                 raise ValueError(f"Mutation status mismatch: {state}")
-        counts = observed
+        counts.update(observed)
         residual = 0
     unfinished = any(counts.get(state) for state in ("not_checked", "interrupted"))
     complete = complete and not unfinished

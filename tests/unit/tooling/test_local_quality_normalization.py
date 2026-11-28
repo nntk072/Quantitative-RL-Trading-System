@@ -104,18 +104,23 @@ def test_mypy_ndjson_and_cppcheck_xml(tmp_path: Path) -> None:
 
 def test_locked_mutmut_export_reconciles_unreported_statuses() -> None:
     """The locked exporter omits type-check and not-checked counts."""
-    from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize_mutation_results
-
     raw = {
-        "total": 6, "killed": 1, "survived": 1, "timeout": 0,
-        "no_tests": 0, "skipped": 1, "suspicious": 0,
-        "check_was_interrupted_by_user": 0, "segfault": 1,
+        "total": 6,
+        "killed": 1,
+        "survived": 1,
+        "timeout": 0,
+        "no_tests": 0,
+        "skipped": 1,
+        "suspicious": 0,
+        "check_was_interrupted_by_user": 0,
+        "segfault": 1,
     }
     details = parse_mutmut_results(
-        "a: killed\nb: survived\nc: skipped\nd: segfault\n"
-        "e: caught by type check\nf: not checked\n"
+        "a: killed\nb: survived\nc: skipped\nd: segfault\ne: caught by type check\nf: not checked\n"
     )
-    result = summarize_mutation_results(raw, tool="mutmut", scope={}, complete=True, mutants=details)
+    result = summarize_mutation_results(
+        raw, tool="mutmut", scope={}, complete=True, mutants=details
+    )
     assert result["counts"]["type_check"] == 1
     assert result["counts"]["not_checked"] == 1
     assert result["counts"]["segfault"] == 1
