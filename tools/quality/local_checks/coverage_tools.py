@@ -84,7 +84,7 @@ def validate(report: dict[str, Any], full: bool) -> None:
             or len(hit | miss) != s["num_branches"]
         ):
             raise ValueError(f"Coverage counts do not reconcile: {name}")
-    if full and (not PRODUCT_PACKAGES <= packages or not report["meta"]["branch_coverage"]):
+    if full and (not packages >= PRODUCT_PACKAGES or not report["meta"]["branch_coverage"]):
         raise ValueError("Incomplete product package or branch coverage")
 
 
@@ -111,8 +111,16 @@ def _job(
         "QRL_LOCAL_RECEIPTS": str(out / f"{name}-receipts.jsonl"),
     }
     command = [
-        sys.executable, "-m", "pytest", "-p", PLUGIN, "--cov", "--cov-context=test",
-        f"--cov-config={config}", "--cov-report=", f"--junitxml={out / (name + '.xml')}",
+        sys.executable,
+        "-m",
+        "pytest",
+        "-p",
+        PLUGIN,
+        "--cov",
+        "--cov-context=test",
+        f"--cov-config={config}",
+        "--cov-report=",
+        f"--junitxml={out / (name + '.xml')}",
     ]
     if workers > 1:
         command.extend(["-n", str(workers)])
@@ -139,7 +147,8 @@ def collect(
     config = _config(out)
     jobs = (
         {name: ["-m", marker, "tests"] for name, marker in policy["markers"].items()}
-        if full else {"selected": selection}
+        if full
+        else {"selected": selection}
     )
     reports = {name: _job(out, name, args, config, timeout, workers) for name, args in jobs.items()}
     if any(r["status"] != "ok" for r in reports.values()):
@@ -151,8 +160,12 @@ def collect(
         ["xml", "-o", str(out / "coverage.xml")],
         ["html", "-d", str(out / "htmlcov")],
     ):
-        result = execute([sys.executable, "-m", "coverage", *command], out / f"{command[0]}.log",
-                         timeout, env=env)
+        result = execute(
+            [sys.executable, "-m", "coverage", *command],
+            out / f"{command[0]}.log",
+            timeout,
+            env=env,
+        )
         if result["status"] != "ok":
             return {"status": "incomplete", "stage": command[0], "result": result}
     raw = load(out / "coverage.json")
@@ -164,8 +177,12 @@ def collect(
     if len({row["nodeid"] for row in nodes}) != len(nodes):
         raise ValueError("Unit and integration inventories overlap")
     dump(out / "test-inventory.json", nodes)
-    return {"status": "ok", "scope": "full" if full else "selected", "jobs": reports,
-            "coverage_sha256": digest(out / ".coverage")}
+    return {
+        "status": "ok",
+        "scope": "full" if full else "selected",
+        "jobs": reports,
+        "coverage_sha256": digest(out / ".coverage"),
+    }
 
 
 def _validate_files(report: dict[str, Any], config: Path, data: Path) -> None:
@@ -210,8 +227,9 @@ def analyze(report: Path, base: str, full: bool) -> dict[str, Any]:
         findings.extend(compare_baseline(summary, baseline))
         for name, row in {"overall": baseline["overall"], **baseline["packages"]}.items():
             prior = row["branch_ratio"]
-            current = (summary["overall"] if name == "overall" else
-                       summary["packages"].get(name, {})).get("branch_ratio")
+            current = (
+                summary["overall"] if name == "overall" else summary["packages"].get(name, {})
+            ).get("branch_ratio")
             if prior is not None and (current is None or current < prior):
                 findings.append(f"{name}: branch coverage regression")
     for name, row in delta["files"].items():
@@ -222,5 +240,11 @@ def analyze(report: Path, base: str, full: bool) -> dict[str, Any]:
                 findings.append(f"{name}: changed {kind} coverage below advisory target")
         if row["excluded_changed_lines"]:
             findings.append(f"{name}: new or changed excluded lines")
-    return {"status": "findings" if findings else "ok", "summary": summary,
-            "diff": delta, "merge_base": merged, "findings": findings, "scope": "full" if full else "selected"}
+    return {
+        "status": "findings" if findings else "ok",
+        "summary": summary,
+        "diff": delta,
+        "merge_base": merged,
+        "findings": findings,
+        "scope": "full" if full else "selected",
+    }
