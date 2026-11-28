@@ -65,6 +65,7 @@ caller_paths:
 - training/runner/seed_runtime.py
 - training/runner/survival_campaign.py
 - training/runner/walk_forward_validation.py
+- tools/quality/local_checks/product_oracles.py
 source_scopes:
   - {path: artifacts/atomic.py, study_ids: [artifacts.identity_and_atomic_storage]}
   - {path: artifacts/identity.py, study_ids: [artifacts.identity_and_atomic_storage]}

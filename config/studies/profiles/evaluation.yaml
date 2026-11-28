@@ -216,6 +216,7 @@ caller_paths:
 - training/runner/walk_forward_validation.py
 - training/setup/environments.py
 - tests/unit/evaluation/test_performance_metric_remaining_contracts.py
+- tools/quality/local_checks/product_oracles.py
 source_scopes:
   - {path: evaluation/metrics, study_ids: [evaluation.metrics_and_inference, evaluation.cohorts_and_baseline_matching, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}
   - {path: evaluation/rollout, study_ids: [evaluation.cohorts_and_baseline_matching, evaluation.candidate_geometry_value, evaluation.primary_value_vs_no_trade, evaluation.secondary_matched_comparisons]}

@@ -77,6 +77,7 @@ caller_paths:
 - training/runner/data_stage.py
 - training/runner/seed_runtime.py
 - training/runner/walk_forward_validation.py
+- tools/quality/local_checks/product_oracles.py
 source_scopes:
   - {path: configuration/schema.py, study_ids: [configuration.schema_and_domain_validation]}
   - {path: configuration/configuration_loader.py, study_ids: [configuration.schema_and_domain_validation, configuration.merge_precedence_and_overrides]}

@@ -144,6 +144,7 @@ caller_paths:
 - tests/unit/learning/test_rl_agent_additional_runtime_contracts.py
 - tests/unit/simulation/test_environment/test_candidate_geometry_observation_remaining_contracts.py
 - tests/unit/training/test_survival_gate_remaining_runtime_contracts.py
+- tools/quality/local_checks/product_oracles.py
 source_scopes:
   - {path: decisioning/observations.py, study_ids: [decisioning.observation_contract]}
   - {path: decisioning/observation_state.py, study_ids: [decisioning.observation_contract]}
