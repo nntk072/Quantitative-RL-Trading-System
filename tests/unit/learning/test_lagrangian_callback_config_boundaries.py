@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any, cast
 
+import numpy as np
 import pytest
 
 from learning.rl.callbacks import LagrangianRiskCallback
@@ -53,3 +55,21 @@ def test_lagrangian_callback_accepts_zero_daily_and_trailing_budgets() -> None:
 
     assert callback.daily_loss_limit_usd == 0.0
     assert callback.trailing_dd_limit_usd == 0.0
+
+
+@pytest.mark.parametrize(
+    ("rewards", "infos", "message"),
+    [
+        (None, [{}], "did not receive VecEnv step data"),
+        (np.asarray([1.0]), [], "environment batch size changed"),
+    ],
+)
+def test_lagrangian_callback_rejects_incomplete_vector_step_data(
+    rewards: object, infos: list[dict[str, object]], message: str
+) -> None:
+    callback = LagrangianRiskCallback()
+    callback.init_callback(SimpleNamespace(n_envs=1))  # type: ignore[arg-type]
+    callback.locals = {"rewards": rewards, "dones": np.asarray([False]), "infos": infos}
+
+    with pytest.raises(RuntimeError, match=message):
+        callback._on_step()
