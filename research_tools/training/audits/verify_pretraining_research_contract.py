@@ -57,7 +57,7 @@ def _survival_errors(
         "max loss 10%": ftmo["max_loss_limit_initial_pct"] == 0.10,
         "$900 sizing ceiling": ftmo["risk_sizing_limit_usd"] == 900.0,
         "undiscounted PPO": ppo["gamma"] == 1.0 and ppo["gae_lambda"] == 1.0,
-        "eight env default": env["n_envs"] == 8,
+        "sixteen env default": env["n_envs"] == 16,
         "setup actions": env["strategy_actions"] is True and env["trade_setup_actions"] is True,
         "setup timeframes": tuple(features["entry_ideas"]["timeframes"]) == setup_timeframes
         and tuple(env["trade_setup_candidate_timeframes"]) == setup_timeframes,

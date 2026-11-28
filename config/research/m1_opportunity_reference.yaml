@@ -19,7 +19,7 @@ features:
     timeframes: [M1]
 
 env:
-  n_envs: 8
+  n_envs: 16
   strategy_actions: true
   trade_setup_actions: true
   trade_setup_candidate_timeframes: [M1]
@@ -60,6 +60,11 @@ agent:
   arch: tcn
 
 ppo:
+  rollout_feature_graph: true
+  update_graph: true
+  rollout_host_mask_check: true
+  rollout_policy_graph: true
+  torch_compile_features: true
   policy_distribution: trade_setup_hybrid_v1
   actor_arch: shared
   n_steps: 2048
@@ -75,5 +80,5 @@ ppo:
   checkpoint_freq: 250000
 
 quality_execution:
-  requested_n_envs: 8
+  requested_n_envs: 16
   exact_n_envs: true

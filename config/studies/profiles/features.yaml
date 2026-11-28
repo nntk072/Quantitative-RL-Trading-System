@@ -50,6 +50,7 @@ caller_paths:
 - evaluation/reporting/order_chart_regeneration.py
 - evaluation/reporting/run_manifest.py
 - evaluation/rollout/baseline_features.py
+- evaluation/rollout/trained_policy_decisions.py
 - evaluation/rollout/trained_policy_rollout.py
 - experiments/runs/baseline_cache_rebuild.py
 - experiments/runs/named_cache_rebuild.py
@@ -62,8 +63,7 @@ caller_paths:
 - simulation/environment/actions/decoding.py
 - simulation/environment/bundles.py
 - simulation/environment/candidate_geometry_observation.py
-- simulation/environment/diagnostics/runtime.py
-- simulation/environment/entries/orders.py
+- simulation/environment/entries/context_cache.py
 - simulation/environment/entries/lifecycle.py
 - simulation/environment/episode/lifecycle.py
 - simulation/environment/observation_arrays_initialization.py

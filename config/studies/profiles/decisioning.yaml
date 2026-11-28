@@ -32,11 +32,13 @@ caller_paths:
 - evaluation/rollout/provider.py
 - evaluation/rollout/random_eligible_setup.py
 - evaluation/rollout/structure_priority_setup.py
+- evaluation/rollout/trained_policy_decisions.py
 - evaluation/rollout/trained_policy_rollout.py
 - features/context/entry_ideas.py
 - features/context/trade_setup_candidates.py
 - learning/rl/agent.py
-- learning/rl/callbacks.py
+- learning/rl/agent_contracts.py
+- learning/rl/callback_diagnostics.py
 - learning/rl/candidate_geometry.py
 - learning/rl/candidate_geometry_policy.py
 - tests/unit/learning/test_hybrid_agent_boundary_contracts.py

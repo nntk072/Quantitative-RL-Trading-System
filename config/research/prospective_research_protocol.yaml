@@ -52,7 +52,7 @@ policy:
   price_geometry_config: config/research/survival_trade_setup_candidate_geometry.yaml
   canonical_architecture: mtf_reasoning
   policy_family: PPO
-  default_n_envs: 8
+  default_n_envs: 16
   all_setup_timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
   gate_ii_ablation_configs:
     A: config/research/m1_opportunity_reference.yaml
@@ -105,7 +105,7 @@ compute:
   budget_unit: aggregate_environment_steps
   comparison_unit: full_path_equivalents_per_environment
   minimum_full_path_equivalents_per_environment: 2.0
-  default_n_envs: 8
+  default_n_envs: 16
   raw_fps_is_not_a_semantic_budget: true
 
 robustness:

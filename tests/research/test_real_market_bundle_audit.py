@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from scripts.research.experiment_runs import audit_real_market_bundle_parity as audit
+from research_tools.market_data.experiment_runs import audit_real_market_bundle_parity as audit
 
 
 def test_raw_input_hashes_use_configured_files_without_experiment_run_outputs(

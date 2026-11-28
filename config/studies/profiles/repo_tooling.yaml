@@ -98,7 +98,6 @@ api_paths:
 - tools/documentation/check_docs.py
 - tools/documentation/check_notebooks.py
 - tools/documentation/configuration_reference.py
-- tools/documentation/coverage.py
 - tools/documentation/figures.py
 - tools/documentation/function_docstrings.py
 - tools/documentation/inventory.py
