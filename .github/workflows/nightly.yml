@@ -1,6 +1,8 @@
 name: Nightly
 
 on:
+  pull_request:
+    branches: [main]
   schedule:
     - cron: '0 2 * * *'  # 02:00 UTC daily
   workflow_dispatch:
