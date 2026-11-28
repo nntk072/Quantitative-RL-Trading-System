@@ -102,7 +102,7 @@ jobs:
           - shard: simulation-config
             paths: tests/unit/simulation tests/unit/configuration
           - shard: features-and-contracts
-            paths: tests/unit/features tests/unit/decisioning tests/unit/artifacts tests/unit/research_tools tests/unit/tooling tests/unit/scripts
+            paths: tests/unit/features tests/unit/decisioning tests/unit/artifacts tests/unit/research_tools tests/unit/tooling
           - shard: training-data
             paths: tests/unit/training tests/unit/market_data tests/unit/research
           - shard: trading-and-experiments
