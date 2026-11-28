@@ -6,6 +6,7 @@ import json
 import re
 import sys
 import tomllib
+from importlib.metadata import version
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,8 @@ def changed_coverage_metrics(
     result = {}
     absent = []
     for name, lines in sorted(changed.items()):
+        if not lines:
+            continue
         if name.split("/")[0] not in PRODUCT_PACKAGES or not name.endswith(".py"):
             continue
         row = report["files"].get(name)
@@ -84,14 +87,18 @@ def validate_coverage_report(report: dict[str, Any], full: bool) -> None:
             or len(hit | miss) != s["num_branches"]
         ):
             raise ValueError(f"Coverage counts do not reconcile: {name}")
-    if full and (not packages >= PRODUCT_PACKAGES or not report["meta"]["branch_coverage"]):
+    if full and (not packages.issuperset(PRODUCT_PACKAGES) or not report["meta"]["branch_coverage"]):
         raise ValueError("Incomplete product package or branch coverage")
 
 
 def _local_coverage_config(out: Path) -> Path:
     """Derive a local configuration without changing the canonical project settings."""
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["coverage"]["run"]
-    text = "[run]\nbranch = True\nrelative_files = True\nsource =\n"
+    text = "[run]\nbranch = True\nrelative_files = True\n"
+    installed = tuple(int(n) for n in version("coverage").split(".")[:2])
+    if installed >= (7, 10):
+        text += "patch = subprocess\n"
+    text += "source =\n"
     text += "".join(f"    {name}\n" for name in cfg["source"])
     path = out / "coverage.ini"
     path.write_text(text)
@@ -182,6 +189,8 @@ def collect_local_coverage(
         "scope": "full" if full else "selected",
         "jobs": reports,
         "coverage_sha256": quality_file_sha256(out / ".coverage"),
+        "inventory_sha256": quality_file_sha256(out / "test-inventory.json"),
+        "coverage_config_sha256": quality_file_sha256(config),
     }
 
 
@@ -204,7 +213,7 @@ def _validate_product_file_inventory(report: dict[str, Any], config: Path, data:
             raise ValueError(f"Source statement mismatch: {path}")
 
 
-def analyze_local_coverage(report: Path, base: str, full: bool) -> dict[str, Any]:
+def analyze_local_coverage(report: Path, base: str, full: bool, baseline_manifest: Path | None = None) -> dict[str, Any]:
     """Compare against a target Git ref without modifying the established baseline."""
     if base.startswith("-"):
         raise ValueError("Invalid base")
@@ -220,6 +229,10 @@ def analyze_local_coverage(report: Path, base: str, full: bool) -> dict[str, Any
     summary = aggregate_coverage(raw)
     delta = changed_coverage_metrics(raw, changed, policy["critical_prefixes"])
     findings = []
+    if delta["unmeasured_changed_files"]:
+        findings.append("Changed product files absent from coverage evidence")
+    if not delta["branch_data_present"]:
+        findings.append("Branch coverage data unavailable")
     if full:
         baseline = json.loads(quality_git("show", f"{base}:tools/quality/coverage_baseline.json"))
         if baseline.get("source_branch") != "main":
@@ -232,6 +245,18 @@ def analyze_local_coverage(report: Path, base: str, full: bool) -> dict[str, Any
             ).get("branch_ratio")
             if prior is not None and (current is None or current < prior):
                 findings.append(f"{name}: branch coverage regression")
+    if baseline_manifest is not None:
+        if not full:
+            raise ValueError("A selected report cannot be compared with a full baseline")
+        from tools.quality.local_checks.coverage_governance import verified_baseline_candidate
+
+        candidate = verified_baseline_candidate(baseline_manifest, base)
+        findings.extend(compare_baseline(summary, candidate["summary"]))
+        for name, row in {"overall": candidate["summary"]["overall"], **candidate["summary"]["packages"]}.items():
+            prior = row["branch_ratio"]
+            current = (summary["overall"] if name == "overall" else summary["packages"].get(name, {})).get("branch_ratio")
+            if prior is not None and (current is None or current < prior):
+                findings.append(f"{name}: branch coverage below verified baseline")
     for name, row in delta["files"].items():
         for kind in ("statement", "branch"):
             total = row[f"{kind}_total"]

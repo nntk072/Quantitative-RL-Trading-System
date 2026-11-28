@@ -65,9 +65,10 @@ def quality_source_identity(root: Path = ROOT) -> dict[str, Any]:
         )
         source.update(os.fsencode(name) + b"\0" + value.encode() + b"\0")
     lock = root / "uv.lock"
-    policy = HERE / "policy.json"
+    policy = root / "tools/quality/local_checks/policy.json"
     return {
         "source_commit": quality_git("rev-parse", "HEAD", root=root).decode().strip(),
+        "git_tree_sha": quality_git("rev-parse", "HEAD^{tree}", root=root).decode().strip(),
         "source_branch": quality_git("branch", "--show-current", root=root).decode().strip() or "detached",
         "tree_sha256": source.hexdigest(),
         "dirty": bool(quality_git("status", "--porcelain", "--untracked-files=normal", root=root)),
@@ -98,7 +99,14 @@ def quality_tool_versions() -> dict[str, str | None]:
 def quality_executable(name: str) -> str | None:
     """Prefer the selected Python environment before searching PATH."""
     local = Path(sys.executable).parent / name
-    return str(local) if local.is_file() and os.access(local, os.X_OK) else shutil.which(name)
+    if local.is_file() and os.access(local, os.X_OK):
+        return str(local)
+    analyzer_bin = os.environ.get("QRL_ANALYZER_BIN")
+    if analyzer_bin:
+        candidate = Path(analyzer_bin) / name
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return shutil.which(name)
 
 
 def run_quality_process(
@@ -158,7 +166,7 @@ def create_quality_run() -> Path:
 
 
 def publish_quality_manifest(
-    out: Path, before: dict[str, Any], started: str, action: str, result: dict[str, Any]
+    out: Path, before: dict[str, Any], started: str, action: str, result: dict[str, Any], mode: str = "advisory"
 ) -> dict[str, Any]:
     """Bind outputs to the measured source state, refusing changed-tree success."""
     after = quality_source_identity()
@@ -176,7 +184,7 @@ def publish_quality_manifest(
         "started_at": started,
         "finished_at": quality_timestamp(),
         "tool_versions": quality_tool_versions(),
-        "enforcement_mode": "advisory",
+        "enforcement_mode": mode,
         "execution_status": result.get("status", "ok") if unchanged else "source_changed",
         "source_unchanged": unchanged,
         "result": result,
@@ -190,9 +198,18 @@ def verify_quality_manifest(manifest_path: Path) -> dict[str, Any]:
     """Verify every referenced artifact; this establishes integrity, not authenticity."""
     value = read_quality_json(manifest_path)
     root = manifest_path.parent.resolve()
-    if value.get("schema_version") != 1 or not value.get("source_unchanged"):
+    if value.get("schema_version") != 1 or value.get("source_unchanged") is not True:
         raise ValueError("Invalid or inconsistent run manifest")
     artifacts = value["artifacts"]
+    if not isinstance(artifacts, dict):
+        raise ValueError("Invalid artifact inventory")
+    actual = {
+        p.relative_to(root).as_posix()
+        for p in root.rglob("*")
+        if p.is_file() and not p.is_symlink() and p.name != "manifest.json"
+    }
+    if set(artifacts) != actual:
+        raise ValueError("Missing or unexpected artifact files")
     for name, expected in artifacts.items():
         path = root / name
         if path.is_symlink() or not path.resolve().is_relative_to(root) or quality_file_sha256(path) != expected:

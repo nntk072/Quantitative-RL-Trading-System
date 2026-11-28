@@ -164,14 +164,26 @@ def plan_impacted_tests(
     }
     rows = json.loads(inventory.read_text())
     tests = {row["nodeid"].split("::", 1)[0] for row in rows}
-    if not tests or not tests <= sources.keys() or not all(p.startswith("tests/") for p in tests):
-        raise ValueError("Invalid or stale collected test inventory")
+    if not tests or not all(p.startswith("tests/") for p in tests):
+        raise ValueError("Invalid collected test inventory")
     metadata = json.loads(receipt.read_text())
+    from tools.quality.local_checks.run_evidence import verify_quality_manifest
+
+    verify_quality_manifest(receipt)
+    coverage_result = metadata["result"]
     valid = (
         metadata.get("source_commit") == merge_base
-        and metadata.get("coverage_sha256") == hashlib.sha256(data_path.read_bytes()).hexdigest()
-        and metadata.get("inventory_sha256") == hashlib.sha256(inventory.read_bytes()).hexdigest()
+        and metadata.get("dirty") is False
+        and metadata.get("execution_status") in {"ok", "findings"}
+        and metadata.get("action") == "coverage"
+        and coverage_result.get("scope") == "full"
+        and coverage_result.get("coverage_sha256") == hashlib.sha256(data_path.read_bytes()).hexdigest()
+        and coverage_result.get("inventory_sha256") == hashlib.sha256(inventory.read_bytes()).hexdigest()
     )
     contexts = coverage_contexts(root, data_path) if valid else {}
+    newly_added = {p for p in changed if p.startswith("tests/") and Path(p).name.startswith("test_") and p in sources}
+    if newly_added - tests or not tests.issubset(sources):
+        contexts = {}
+        tests = (tests & sources.keys()) | newly_added
     result = select_impacted_tests(set(changed), sources, tests, contexts)
     return {**result, "merge_base": merge_base, "changed": changed, "evidence_valid": valid}

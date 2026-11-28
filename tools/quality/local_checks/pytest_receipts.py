@@ -15,6 +15,16 @@ def _write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2) + "\n")
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Apply an exact explicit node-ID selection without command-line length limits."""
+    selection = os.environ.get("QRL_LOCAL_SELECTION")
+    if selection:
+        expected = set(json.loads(Path(selection).read_text()))
+        items[:] = [item for item in items if item.nodeid in expected]
+        if {item.nodeid for item in items} != expected:
+            raise pytest.UsageError("Selected test inventory could not be collected")
+
+
 def pytest_collection_finish(session: pytest.Session) -> None:
     """Capture exact node IDs after marker and impact selection."""
     target = os.environ.get("QRL_LOCAL_INVENTORY")
