@@ -105,22 +105,34 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     for row in _list(raw, tool):
         if tool == "ruff":
             checker, msg, path, line = (
-                row["code"], row["message"], row["filename"], row["location"]["row"]
+                row["code"],
+                row["message"],
+                row["filename"],
+                row["location"]["row"],
             )
             severity = None
         elif tool == "semgrep":
             checker, msg, path, line = (
-                row["check_id"], row["extra"]["message"], row["path"], row["start"]["line"]
+                row["check_id"],
+                row["extra"]["message"],
+                row["path"],
+                row["start"]["line"],
             )
             severity = row["extra"].get("severity")
         elif tool == "bandit":
             checker, msg, path, line = (
-                row["test_id"], row["issue_text"], row["filename"], row["line_number"]
+                row["test_id"],
+                row["issue_text"],
+                row["filename"],
+                row["line_number"],
             )
             severity = row.get("issue_severity")
         elif tool == "mypy":
             checker, msg, path, line = (
-                row.get("code") or "diagnostic", row["message"], row["file"], row["line"]
+                row.get("code") or "diagnostic",
+                row["message"],
+                row["file"],
+                row["line"],
             )
             severity = row["severity"]
         elif tool == "actionlint":
@@ -131,7 +143,13 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
             severity = row.get("level")
         result.append(
             finding(
-                tool, str(checker), str(msg), root, file=path, line=line, severity=severity,
+                tool,
+                str(checker),
+                str(msg),
+                root,
+                file=path,
+                line=line,
+                severity=severity,
                 confidence=row.get("issue_confidence"),
             )
         )
@@ -147,8 +165,14 @@ def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, 
                 raise ValueError("pip-audit skipped at least one dependency")
             for issue in _list(dep["vulns"], "vulnerabilities"):
                 result.append(
-                    finding(tool, issue["id"], issue.get("description") or issue["id"], root,
-                            package=dep["name"], native_id=dep.get("version"))
+                    finding(
+                        tool,
+                        issue["id"],
+                        issue.get("description") or issue["id"],
+                        root,
+                        package=dep["name"],
+                        native_id=dep.get("version"),
+                    )
                 )
     elif tool == "osv-scanner":
         for scan in _list(raw["results"], "OSV results"):
@@ -157,15 +181,28 @@ def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, 
                 for issue in _list(dep.get("vulnerabilities", []), "OSV vulnerabilities"):
                     package = dep["package"]
                     result.append(
-                        finding(tool, issue["id"], issue.get("summary") or issue["id"], root,
-                                file=path, package=package["name"], native_id=package.get("version"))
+                        finding(
+                            tool,
+                            issue["id"],
+                            issue.get("summary") or issue["id"],
+                            root,
+                            file=path,
+                            package=package["name"],
+                            native_id=package.get("version"),
+                        )
                     )
     elif tool == "cargo-audit":
         for issue in _list(raw["vulnerabilities"]["list"], "cargo-audit vulnerabilities"):
             advisory, package = issue["advisory"], issue["package"]
             result.append(
-                finding(tool, advisory["id"], advisory.get("title") or advisory["id"], root,
-                        package=package["name"], native_id=package.get("version"))
+                finding(
+                    tool,
+                    advisory["id"],
+                    advisory.get("title") or advisory["id"],
+                    root,
+                    package=package["name"],
+                    native_id=package.get("version"),
+                )
             )
     else:
         raise ValueError(f"Unsupported dependency tool: {tool}")
@@ -180,25 +217,51 @@ def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     for target in _list(raw["Results"], "Trivy results"):
         for issue in target.get("Vulnerabilities") or []:
             result.append(
-                finding("trivy", issue["VulnerabilityID"], issue.get("Title") or issue["VulnerabilityID"],
-                        root, file=target["Target"], package=issue["PkgName"],
-                        severity=issue.get("Severity"), native_id=issue.get("InstalledVersion"))
+                finding(
+                    "trivy",
+                    issue["VulnerabilityID"],
+                    issue.get("Title") or issue["VulnerabilityID"],
+                    root,
+                    file=target["Target"],
+                    package=issue["PkgName"],
+                    severity=issue.get("Severity"),
+                    native_id=issue.get("InstalledVersion"),
+                )
             )
         for issue in target.get("Misconfigurations") or []:
             result.append(
-                finding("trivy", issue["ID"], issue.get("Title") or issue["ID"], root,
-                        file=target["Target"], severity=issue.get("Severity"))
+                finding(
+                    "trivy",
+                    issue["ID"],
+                    issue.get("Title") or issue["ID"],
+                    root,
+                    file=target["Target"],
+                    severity=issue.get("Severity"),
+                )
             )
         for issue in target.get("Secrets") or []:
             result.append(
-                finding("trivy", issue["RuleID"], "Potential secret (redacted)", root,
-                        file=target["Target"], severity=issue.get("Severity"), line=issue.get("StartLine"))
+                finding(
+                    "trivy",
+                    issue["RuleID"],
+                    "Potential secret (redacted)",
+                    root,
+                    file=target["Target"],
+                    severity=issue.get("Severity"),
+                    line=issue.get("StartLine"),
+                )
             )
         for issue in target.get("Licenses") or []:
             result.append(
-                finding("trivy", issue["Name"], "License finding", root,
-                        file=target["Target"], package=issue.get("PkgName"),
-                        severity=issue.get("Severity"))
+                finding(
+                    "trivy",
+                    issue["Name"],
+                    "License finding",
+                    root,
+                    file=target["Target"],
+                    package=issue.get("PkgName"),
+                    severity=issue.get("Severity"),
+                )
             )
     return result
 
@@ -211,11 +274,16 @@ def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
             raise ValueError("Coverity reported an error")
         for issue in _list(raw["issues"], "Coverity issues"):
             result.append(
-                finding(tool, issue["checkerName"],
-                        issue.get("checkerProperties", {}).get("subcategoryLocalEffect", ""),
-                        root, file=issue.get("mainEventFilePathname"),
-                        line=issue.get("mainEventLineNumber"), severity=issue.get("impact"),
-                        native_id=issue.get("mergeKey"))
+                finding(
+                    tool,
+                    issue["checkerName"],
+                    issue.get("checkerProperties", {}).get("subcategoryLocalEffect", ""),
+                    root,
+                    file=issue.get("mainEventFilePathname"),
+                    line=issue.get("mainEventLineNumber"),
+                    severity=issue.get("impact"),
+                    native_id=issue.get("mergeKey"),
+                )
             )
     elif tool == "checkov":
         for scan in raw if isinstance(raw, list) else [raw]:
@@ -223,16 +291,29 @@ def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
                 raise ValueError("Checkov reported parsing errors")
             for issue in _list(scan["results"]["failed_checks"], "Checkov findings"):
                 result.append(
-                    finding(tool, issue["check_id"], issue["check_name"], root,
-                            file=issue["file_path"], line=(issue.get("file_line_range") or [None])[0],
-                            severity=issue.get("severity"), native_id=issue.get("resource"))
+                    finding(
+                        tool,
+                        issue["check_id"],
+                        issue["check_name"],
+                        root,
+                        file=issue["file_path"],
+                        line=(issue.get("file_line_range") or [None])[0],
+                        severity=issue.get("severity"),
+                        native_id=issue.get("resource"),
+                    )
                 )
     elif tool == "sqlfluff":
         for source in _list(raw, tool):
             for issue in _list(source["violations"], "SQLFluff violations"):
                 result.append(
-                    finding(tool, issue["code"], issue["description"], root, file=source["filepath"],
-                            line=issue.get("start_line_no", issue.get("line_no")))
+                    finding(
+                        tool,
+                        issue["code"],
+                        issue["description"],
+                        root,
+                        file=source["filepath"],
+                        line=issue.get("start_line_no", issue.get("line_no")),
+                    )
                 )
     else:
         raise ValueError(f"No structured normalizer for {tool}")
@@ -265,9 +346,15 @@ def read_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
         if doc.tag != "results" or errors is None:
             raise ValueError("Invalid Cppcheck XML")
         return [
-            finding(tool, row.attrib["id"], row.attrib["msg"], root,
-                    file=loc.get("file"), line=int(loc.get("line", "0")),
-                    severity=row.get("severity"))
+            finding(
+                tool,
+                row.attrib["id"],
+                row.attrib["msg"],
+                root,
+                file=loc.get("file"),
+                line=int(loc.get("line", "0")),
+                severity=row.get("severity"),
+            )
             for row in errors.findall("error")
             for loc in [next(iter(row.findall("location")), ElementTree.Element("location"))]
         ]
@@ -277,8 +364,17 @@ def read_report(tool: str, path: Path, root: Path) -> list[dict[str, Any]]:
             match = re.fullmatch(r"(.+):(\d+): (.+) \((\d+)% confidence\)", line)
             if not match:
                 raise ValueError("Unrecognized Vulture diagnostic")
-            rows.append(finding(tool, "dead-code", match[3], root, file=match[1],
-                                line=int(match[2]), confidence=int(match[4])))
+            rows.append(
+                finding(
+                    tool,
+                    "dead-code",
+                    match[3],
+                    root,
+                    file=match[1],
+                    line=int(match[2]),
+                    confidence=int(match[4]),
+                )
+            )
         return rows
     else:
         raw = json.loads(text)
