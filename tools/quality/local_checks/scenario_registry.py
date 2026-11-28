@@ -6,7 +6,13 @@ import ast
 from pathlib import Path
 from typing import Any
 
-from tools.quality.local_checks.run_evidence import HERE, ROOT, read_quality_json, verify_quality_manifest, quality_source_identity
+from tools.quality.local_checks.run_evidence import (
+    HERE,
+    ROOT,
+    quality_source_identity,
+    read_quality_json,
+    verify_quality_manifest,
+)
 
 
 def _valid_scenario_selector(selector: str) -> bool:
@@ -19,8 +25,12 @@ def _valid_scenario_selector(selector: str) -> bool:
         return source.name.startswith("test_")
     nodes = ast.parse(source.read_text()).body
     for name in names:
-        matches = [node for node in nodes if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
-                   and node.name == name]
+        matches = [
+            node
+            for node in nodes
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == name
+        ]
         if len(matches) != 1:
             return False
         nodes = matches[0].body
@@ -30,8 +40,12 @@ def _valid_scenario_selector(selector: str) -> bool:
 def scenario_selectors(domain: str | None, platform: str) -> list[str]:
     """Return reviewed selectors for the requested domain and execution platform."""
     registry = read_quality_json(HERE / "scenarios.json")
-    selectors = {s for row in registry if (domain is None or row["domain"] == domain)
-                 and row["platform"] == platform for s in row["selectors"]}
+    selectors = {
+        s
+        for row in registry
+        if (domain is None or row["domain"] == domain) and row["platform"] == platform
+        for s in row["selectors"]
+    }
     if any(not _valid_scenario_selector(s) for s in selectors):
         raise ValueError("Scenario registry has stale test mappings")
     return sorted(selectors)
@@ -66,22 +80,46 @@ def report_semantic_scenarios(
         if domain and row["domain"] != domain:
             continue
         selectors = row["selectors"]
-        complete_scope = source is not None and (source["result"].get("scope") == "full" or (source.get("action") == "semantic" and set(selectors).issubset(source["result"].get("scenario_selectors", []))))
+        complete_scope = source is not None and (
+            source["result"].get("scope") == "full"
+            or (
+                source.get("action") == "semantic"
+                and set(selectors).issubset(source["result"].get("scenario_selectors", []))
+            )
+        )
         missing = [s for s in selectors if not _valid_scenario_selector(s)]
-        relevant = {s: [n for n in outcomes if n == s or n.startswith(s+"::") or n.startswith(s+"[")]
-                    for s in selectors}
+        relevant = {
+            s: [n for n in outcomes if n == s or n.startswith(s + "::") or n.startswith(s + "[")]
+            for s in selectors
+        }
         executed = {n: outcomes[n]["status"] for nodes in relevant.values() for n in nodes}
         status = (
-            "unmapped" if not selectors else
-            "stale_mapping" if missing else
-            "platform_not_checked" if row["platform"] != platform else
-            "failed" if "failed" in executed.values() else
-            "passed" if complete_scope and all(relevant.values()) and executed and set(executed.values()) == {"passed"} else
-            "partial_or_skipped" if executed else "mapped_unexecuted"
+            "unmapped"
+            if not selectors
+            else "stale_mapping"
+            if missing
+            else "platform_not_checked"
+            if row["platform"] != platform
+            else "failed"
+            if "failed" in executed.values()
+            else "passed"
+            if complete_scope
+            and all(relevant.values())
+            and executed
+            and set(executed.values()) == {"passed"}
+            else "partial_or_skipped"
+            if executed
+            else "mapped_unexecuted"
         )
         result.append({**row, "status": status, "missing_selectors": missing, "outcomes": executed})
-    return {"status": "findings" if any(r["status"] in {"stale_mapping", "failed"} for r in result) else "ok",
-            "scenarios": result, "counts": {s: sum(r["status"] == s for r in result)
-            for s in sorted({r["status"] for r in result})},
-            "source_commit": source.get("source_commit") if source else None,
-            "qualification": "A mapped test is not a passed scenario; hardware evidence remains distinct."}
+    return {
+        "status": "findings"
+        if any(r["status"] in {"stale_mapping", "failed"} for r in result)
+        else "ok",
+        "scenarios": result,
+        "counts": {
+            s: sum(r["status"] == s for r in result) for s in sorted({r["status"] for r in result})
+        },
+        "source_commit": source.get("source_commit") if source else None,
+        "qualification": "A mapped test is not a passed scenario; hardware evidence remains distinct.",
+    }

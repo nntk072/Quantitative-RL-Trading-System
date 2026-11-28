@@ -156,7 +156,9 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
     return result
 
 
-def _normalize_dependency_findings(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+def _normalize_dependency_findings(
+    tool: str, raw: dict[str, Any], root: Path
+) -> list[dict[str, Any]]:
     """Normalize package vulnerability reports."""
     result = []
     if tool == "pip-audit":
@@ -178,7 +180,9 @@ def _normalize_dependency_findings(tool: str, raw: dict[str, Any], root: Path) -
         for scan in _require_report_list(raw["results"], "OSV results"):
             path = scan.get("source", {}).get("path")
             for dep in _require_report_list(scan["packages"], "OSV packages"):
-                for issue in _require_report_list(dep.get("vulnerabilities", []), "OSV vulnerabilities"):
+                for issue in _require_report_list(
+                    dep.get("vulnerabilities", []), "OSV vulnerabilities"
+                ):
                     package = dep["package"]
                     result.append(
                         make_quality_finding(
@@ -192,7 +196,9 @@ def _normalize_dependency_findings(tool: str, raw: dict[str, Any], root: Path) -
                         )
                     )
     elif tool == "cargo-audit":
-        for issue in _require_report_list(raw["vulnerabilities"]["list"], "cargo-audit vulnerabilities"):
+        for issue in _require_report_list(
+            raw["vulnerabilities"]["list"], "cargo-audit vulnerabilities"
+        ):
             advisory, package = issue["advisory"], issue["package"]
             result.append(
                 make_quality_finding(

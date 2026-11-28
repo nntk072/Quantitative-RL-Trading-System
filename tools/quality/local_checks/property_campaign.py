@@ -8,27 +8,39 @@ import os
 import sys
 from pathlib import Path
 
-from tools.quality.local_checks.product_oracles import ORACLE_MODULES, PRODUCT_ORACLES, exercise_product_oracles
+from tools.quality.local_checks.product_oracles import (
+    ORACLE_MODULES,
+    PRODUCT_ORACLES,
+    exercise_product_oracles,
+)
 
 PROPERTY_EXAMPLES = {"dev": 12, "pr": 80, "nightly": 500}
 
 
 def run_product_properties(target: str, profile: str, seed_value: int, corpus: Path) -> None:
     """Use persistent failure examples with explicit seed and profile."""
-    from hypothesis import given, seed, settings, strategies as st
+    from hypothesis import given, seed, settings
+    from hypothesis import strategies as st
     from hypothesis.database import DirectoryBasedExampleDatabase
 
     for name in PRODUCT_ORACLES if target == "all" else [target]:
+
         def check_target(selected: str) -> None:
             """Bind the target to this Hypothesis invocation."""
+
             @seed(seed_value)
-            @settings(max_examples=PROPERTY_EXAMPLES[profile], deadline=None,
-                      database=DirectoryBasedExampleDatabase(corpus / selected))
+            @settings(
+                max_examples=PROPERTY_EXAMPLES[profile],
+                deadline=None,
+                database=DirectoryBasedExampleDatabase(corpus / selected),
+            )
             @given(st.binary(min_size=0, max_size=128))
             def property_check(data: bytes) -> None:
                 """Assert the selected independent product contract."""
                 exercise_product_oracles(data, selected)
+
             property_check()
+
         check_target(name)
 
 
@@ -45,12 +57,23 @@ def run_product_fuzzer(target: str, seconds: int, corpus: Path, seed_value: int)
     for name in names:
         atheris.instrument_func(PRODUCT_ORACLES[name])
     corpus.mkdir(parents=True, exist_ok=True)
+
     @atheris.instrument_func
     def fuzz_input(data: bytes) -> None:
         """Route bounded byte inputs to the registered independent oracle."""
         exercise_product_oracles(data, target)
-    atheris.Setup([sys.argv[0], str(corpus), f"-max_total_time={seconds}",
-                   f"-seed={seed_value}", "-max_len=128", "-artifact_prefix="+str(corpus)+os.sep], fuzz_input)
+
+    atheris.Setup(
+        [
+            sys.argv[0],
+            str(corpus),
+            f"-max_total_time={seconds}",
+            f"-seed={seed_value}",
+            "-max_len=128",
+            "-artifact_prefix=" + str(corpus) + os.sep,
+        ],
+        fuzz_input,
+    )
     atheris.Fuzz()
 
 

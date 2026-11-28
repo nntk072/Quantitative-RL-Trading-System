@@ -135,4 +135,6 @@ def import_mutation_results(
     mutants = parse_mutmut_results(details.read_text()) if details and tool == "mutmut" else None
     if details and tool != "mutmut":
         raise ValueError("Per-mutant import requires a supported mutmut results text report")
-    return summarize_mutation_results(raw, tool=tool, scope=scope, complete=complete, mutants=mutants)
+    return summarize_mutation_results(
+        raw, tool=tool, scope=scope, complete=complete, mutants=mutants
+    )

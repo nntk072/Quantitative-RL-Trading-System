@@ -94,13 +94,17 @@ def worker_capacity_budget(
     }
 
 
-def discover_worker_capacity(requested: int, worker_mib: int, reserve_mib: int = 512) -> dict[str, Any]:
+def discover_worker_capacity(
+    requested: int, worker_mib: int, reserve_mib: int = 512
+) -> dict[str, Any]:
     """Combine affinity, cgroup ancestor quotas and available host memory."""
     affinity = (
         len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count() or 1
     )
     quota, cgroup_ram = _cgroup_limits(cgroup_directory())
-    available = min((n for n in (_host_memory_available(), cgroup_ram) if n is not None), default=None)
+    available = min(
+        (n for n in (_host_memory_available(), cgroup_ram) if n is not None), default=None
+    )
     return worker_capacity_budget(
         requested,
         worker_mib,

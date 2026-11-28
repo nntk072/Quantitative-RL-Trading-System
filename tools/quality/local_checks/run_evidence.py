@@ -69,7 +69,8 @@ def quality_source_identity(root: Path = ROOT) -> dict[str, Any]:
     return {
         "source_commit": quality_git("rev-parse", "HEAD", root=root).decode().strip(),
         "git_tree_sha": quality_git("rev-parse", "HEAD^{tree}", root=root).decode().strip(),
-        "source_branch": quality_git("branch", "--show-current", root=root).decode().strip() or "detached",
+        "source_branch": quality_git("branch", "--show-current", root=root).decode().strip()
+        or "detached",
         "tree_sha256": source.hexdigest(),
         "dirty": bool(quality_git("status", "--porcelain", "--untracked-files=normal", root=root)),
         "lock_sha256": quality_file_sha256(lock) if lock.is_file() else None,
@@ -166,7 +167,12 @@ def create_quality_run() -> Path:
 
 
 def publish_quality_manifest(
-    out: Path, before: dict[str, Any], started: str, action: str, result: dict[str, Any], mode: str = "advisory"
+    out: Path,
+    before: dict[str, Any],
+    started: str,
+    action: str,
+    result: dict[str, Any],
+    mode: str = "advisory",
 ) -> dict[str, Any]:
     """Bind outputs to the measured source state, refusing changed-tree success."""
     after = quality_source_identity()
@@ -212,6 +218,10 @@ def verify_quality_manifest(manifest_path: Path) -> dict[str, Any]:
         raise ValueError("Missing or unexpected artifact files")
     for name, expected in artifacts.items():
         path = root / name
-        if path.is_symlink() or not path.resolve().is_relative_to(root) or quality_file_sha256(path) != expected:
+        if (
+            path.is_symlink()
+            or not path.resolve().is_relative_to(root)
+            or quality_file_sha256(path) != expected
+        ):
             raise ValueError(f"Artifact integrity failure: {name}")
     return {"status": "ok", "manifest": str(manifest_path), "artifact_count": len(artifacts)}

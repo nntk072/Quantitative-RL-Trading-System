@@ -17,14 +17,29 @@ from tools.quality.local_checks.run_evidence import run_quality_process, write_q
 PLUGIN = "tools.quality.local_checks.pytest_receipts"
 
 
-def collect_test_inventory(out: Path, timeout: int, paths: list[str], marker: str) -> dict[str, Any]:
+def collect_test_inventory(
+    out: Path, timeout: int, paths: list[str], marker: str
+) -> dict[str, Any]:
     """Collect exact node IDs with the project-owned pytest marker rules."""
     if not paths or any(p.startswith("-") for p in paths):
         raise ValueError("Expected explicit test paths")
     target = out / "test-inventory.json"
     run = run_quality_process(
-        [sys.executable, "-m", "pytest", "-p", PLUGIN, "--collect-only", "-q", "-m", marker, *paths],
-        out / "collection.log", timeout, env={"QRL_LOCAL_INVENTORY": str(target)},
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-p",
+            PLUGIN,
+            "--collect-only",
+            "-q",
+            "-m",
+            marker,
+            *paths,
+        ],
+        out / "collection.log",
+        timeout,
+        env={"QRL_LOCAL_INVENTORY": str(target)},
     )
     if run["status"] != "ok":
         return {"status": "incomplete", "collection": run}
@@ -63,8 +78,12 @@ def balance_test_shards(
         key = node.split("::", 1)[0] if affinity else node
         groups.setdefault(key, []).append(node)
     fallback = statistics.median(durations.values()) if durations else 1.0
-    weights = {name: sum(durations.get(n, fallback) for n in group) for name, group in groups.items()}
-    shards: list[dict[str, Any]] = [{"nodes": [], "seconds": 0.0} for _ in range(min(count, len(groups)))]
+    weights = {
+        name: sum(durations.get(n, fallback) for n in group) for name, group in groups.items()
+    }
+    shards: list[dict[str, Any]] = [
+        {"nodes": [], "seconds": 0.0} for _ in range(min(count, len(groups)))
+    ]
     for name in sorted(groups, key=lambda key: (-weights[key], key)):
         target = min(shards, key=lambda row: (row["seconds"], len(row["nodes"])))
         target["nodes"].extend(groups[name])
@@ -85,12 +104,29 @@ def _execute_test_shard(
     inventory = directory / "inventory.json"
     receipts = directory / "receipts.jsonl"
     run = run_quality_process(
-        [sys.executable, "-m", "pytest", "-p", PLUGIN, "-q", "-m", marker, *paths,
-         f"--junitxml={directory / 'junit.xml'}"], directory / "pytest.log", timeout,
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-p",
+            PLUGIN,
+            "-q",
+            "-m",
+            marker,
+            *paths,
+            f"--junitxml={directory / 'junit.xml'}",
+        ],
+        directory / "pytest.log",
+        timeout,
         findings_codes=(1,),
-        env={"QRL_LOCAL_SELECTION": str(selection), "QRL_LOCAL_INVENTORY": str(inventory),
-             "QRL_LOCAL_RECEIPTS": str(receipts), "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
-             "OPENBLAS_NUM_THREADS": "1"},
+        env={
+            "QRL_LOCAL_SELECTION": str(selection),
+            "QRL_LOCAL_INVENTORY": str(inventory),
+            "QRL_LOCAL_RECEIPTS": str(receipts),
+            "OMP_NUM_THREADS": "1",
+            "MKL_NUM_THREADS": "1",
+            "OPENBLAS_NUM_THREADS": "1",
+        },
     )
     if run["status"] not in {"ok", "findings"}:
         return run
@@ -100,28 +136,53 @@ def _execute_test_shard(
         raise ValueError("Shard did not collect its assigned test inventory")
     outcomes = validate_test_receipts(receipts, expected)
     write_quality_json(directory / "outcomes.json", outcomes)
-    return {**run, "status": "incomplete" if any(r["status"] == "incomplete" for r in outcomes.values())
-            else "findings" if any(r["status"] == "failed" for r in outcomes.values()) else "ok", "count": len(rows)}
+    return {
+        **run,
+        "status": "incomplete"
+        if any(r["status"] == "incomplete" for r in outcomes.values())
+        else "findings"
+        if any(r["status"] == "failed" for r in outcomes.values())
+        else "ok",
+        "count": len(rows),
+    }
 
 
 def run_balanced_test_shards(
-    out: Path, timeout: int, paths: list[str], marker: str, count: int, workers: int,
-    memory_mib: int, history: list[Path], affinity: bool
+    out: Path,
+    timeout: int,
+    paths: list[str],
+    marker: str,
+    count: int,
+    workers: int,
+    memory_mib: int,
+    history: list[Path],
+    affinity: bool,
 ) -> dict[str, Any]:
     """Collect, plan and run with affinity/cgroup/memory limits and isolated receipts."""
     collected = collect_test_inventory(out, timeout, paths, marker)
     if collected["status"] != "ok":
         return collected
-    shards = balance_test_shards(collected["inventory"], read_test_duration_history(history), count, affinity)
+    shards = balance_test_shards(
+        collected["inventory"], read_test_duration_history(history), count, affinity
+    )
     capacity = discover_worker_capacity(workers, memory_mib)
     write_quality_json(out / "shards.json", shards)
     write_quality_json(out / "resource-budget.json", capacity)
     if capacity["workers"] == 0:
         return {"status": "insufficient_resources", "capacity": capacity}
     with ThreadPoolExecutor(max_workers=min(capacity["workers"], len(shards))) as pool:
-        futures = [pool.submit(_execute_test_shard, i, shard, out, timeout, paths, marker)
-                   for i, shard in enumerate(shards)]
+        futures = [
+            pool.submit(_execute_test_shard, i, shard, out, timeout, paths, marker)
+            for i, shard in enumerate(shards)
+        ]
         runs = [future.result() for future in futures]
-    return {"status": "incomplete" if any(run["status"] not in {"ok", "findings"} for run in runs) else
-            "findings" if any(run["status"] == "findings" for run in runs) else "ok",
-            "shards": shards, "capacity": capacity, "runs": runs}
+    return {
+        "status": "incomplete"
+        if any(run["status"] not in {"ok", "findings"} for run in runs)
+        else "findings"
+        if any(run["status"] == "findings" for run in runs)
+        else "ok",
+        "shards": shards,
+        "capacity": capacity,
+        "runs": runs,
+    }

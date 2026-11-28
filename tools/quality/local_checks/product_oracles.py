@@ -16,14 +16,19 @@ def oracle_risk_capacity(data: bytes) -> None:
     from trading.risk.budget import approve_dynamic_risk
 
     raw = data.ljust(12, b"\0")
-    a, b, c, d, e, f = (int.from_bytes(raw[i:i+2], "little") for i in range(0, 12, 2))
+    a, b, c, d, e, f = (int.from_bytes(raw[i : i + 2], "little") for i in range(0, 12, 2))
     start, equity, limit = 100000 + a, 90000 + b, c
     assert canonical_daily_loss(start, equity) == max(0, start - equity)
     assert daily_floor(start, limit) == start - limit
     assert remaining_daily_capacity(start, equity, limit) == max(0, equity - start + limit)
-    decision = approve_dynamic_risk(equity=equity, risk_frac=d / 65536,
-        max_agent_risk_frac=e / 65536, daily_capacity=c, account_capacity=a,
-        execution_reserve_usd=f)
+    decision = approve_dynamic_risk(
+        equity=equity,
+        risk_frac=d / 65536,
+        max_agent_risk_frac=e / 65536,
+        daily_capacity=c,
+        account_capacity=a,
+        execution_reserve_usd=f,
+    )
     cap = min(equity * e / 65536, c, a)
     assert decision.policy_cap_usd == cap
     assert decision.approved_usd == min(equity * d / 65536, max(0, cap - f))
@@ -33,16 +38,28 @@ def oracle_action_geometry(data: bytes) -> None:
     """Exercise versioned action coordinates and candidate geometry round trips."""
     from decisioning.actions import build_action_schema
     from decisioning.trade_setup import (
-        CANDIDATE_GEOMETRY_ENTRY_TYPES, TRADE_SETUP_DIRECTIONS, TRADE_SETUP_IDEAS,
-        TRADE_SETUP_TIMEFRAMES, candidate_geometry_slot, candidate_geometry_slot_semantics,
-        trade_setup_candidate, trade_setup_candidate_id, trade_setup_center, trade_setup_id_from_box,
+        CANDIDATE_GEOMETRY_ENTRY_TYPES,
+        TRADE_SETUP_DIRECTIONS,
+        TRADE_SETUP_IDEAS,
+        TRADE_SETUP_TIMEFRAMES,
+        candidate_geometry_slot,
+        candidate_geometry_slot_semantics,
+        trade_setup_candidate,
+        trade_setup_candidate_id,
+        trade_setup_center,
+        trade_setup_id_from_box,
     )
 
     raw = data.ljust(5, b"\0")
     direction, sl, tp, multi, simplex = [bool(raw[0] & (1 << i)) for i in range(5)]
     try:
-        schema = build_action_schema(has_direction=direction, has_sl_mode=sl, has_tp_mode=tp,
-                                     has_multi_tp=multi, has_simplex=simplex)
+        schema = build_action_schema(
+            has_direction=direction,
+            has_sl_mode=sl,
+            has_tp_mode=tp,
+            has_multi_tp=multi,
+            has_simplex=simplex,
+        )
     except ValueError:
         assert simplex and not multi
     else:
@@ -75,7 +92,7 @@ def oracle_tick_lookup(data: bytes) -> None:
     asks: list[float] = []
     current = offset
     for i in range(min(24, len(raw) // 3)):
-        gap, bid, spread = raw[i*3:i*3+3]
+        gap, bid, spread = raw[i * 3 : i * 3 + 3]
         current += (gap % 5) * 1000000
         times.append(current)
         bids.append(100.0 + bid / 8)
@@ -102,8 +119,9 @@ def oracle_tick_lookup(data: bytes) -> None:
         return row[1] > limit if strict else row[1] >= limit
 
     expected = next((r for r in rows if query <= r[0] <= expiry and crosses_limit(r)), None)
-    actual = book.first_limit_execution_event(side, limit, stamp,
-        pd.Timestamp(expiry, unit="ns", tz="UTC"), require_trade_through=strict)
+    actual = book.first_limit_execution_event(
+        side, limit, stamp, pd.Timestamp(expiry, unit="ns", tz="UTC"), require_trade_through=strict
+    )
     assert (None if actual is None else (actual[0].value, *actual[1:])) == expected
 
 
@@ -114,7 +132,7 @@ def oracle_temporal_integrity(data: bytes) -> None:
 
     a, b, c, d = data.ljust(4, b"\0")[:4]
     n, folds, purge, embargo = 100 + a, 1 + b % 6, c % 10, d % 8
-    seen = list(purged_walk_forward(n, folds, .25, purge, embargo, label_horizon=3))
+    seen = list(purged_walk_forward(n, folds, 0.25, purge, embargo, label_horizon=3))
     assert len(seen) == folds
     prior_end = -1
     for fold in seen:
@@ -124,11 +142,11 @@ def oracle_temporal_integrity(data: bytes) -> None:
         assert int(test[0]) > prior_end and int(test[-1]) < n
         prior_end = int(test[-1])
     minutes = (3, 5, 10)[a % 3]
-    index = pd.date_range("2025-01-06", periods=(2+b%8)*minutes+1, freq="min", tz="UTC")
+    index = pd.date_range("2025-01-06", periods=(2 + b % 8) * minutes + 1, freq="min", tz="UTC")
     source = pd.DataFrame({"signal": range(len(index[::minutes]))}, index=index[::minutes])
     spine = pd.DataFrame({"bar": range(len(index))}, index=index)
     key = f"M{minutes}"
-    result = align_timeframes(spine, {key: source})[key+"_signal"]
+    result = align_timeframes(spine, {key: source})[key + "_signal"]
     for i, value in enumerate(result):
         assert pd.isna(value) if i < minutes else value == i // minutes - 1
 
@@ -139,14 +157,14 @@ def oracle_fill_and_drawdown(data: bytes) -> None:
     from trading.execution.costs import CostModel
 
     raw = data.ljust(3, b"\0")[:40]
-    model = CostModel(spread_points=raw[0]/8, commission_per_lot=raw[1]/8)
+    model = CostModel(spread_points=raw[0] / 8, commission_per_lot=raw[1] / 8)
     bid, ask = model.bar_quote(100.0)
-    assert bid == 100.0 and ask == 100.0 + raw[0]/8
+    assert bid == 100.0 and ask == 100.0 + raw[0] / 8
     assert model.fill_price(bid, ask, 1) == ask
     assert model.fill_price(bid, ask, -1) == bid
-    assert model.total_cost(raw[2]/8) == raw[1]*raw[2]/64
+    assert model.total_cost(raw[2] / 8) == raw[1] * raw[2] / 64
     curve = [100.0 + v for v in raw]
-    expected = max((max(curve[:i+1])-v)/max(curve[:i+1]) for i,v in enumerate(curve))
+    expected = max((max(curve[: i + 1]) - v) / max(curve[: i + 1]) for i, v in enumerate(curve))
     assert math.isclose(max_drawdown(curve), expected, abs_tol=1e-12)
 
 
@@ -159,7 +177,7 @@ def oracle_artifact_and_config(data: bytes) -> None:
     a = artifact_id("quality-fixture", {"a": raw, "b": 1})
     b = artifact_id("quality-fixture", {"b": 1, "a": raw})
     assert a == b
-    expected = hashlib.sha256(("{\"a\":\"" + raw + "\",\"b\":1}").encode()).hexdigest()
+    expected = hashlib.sha256(('{"a":"' + raw + '","b":1}').encode()).hexdigest()
     assert a.digest == expected
     try:
         load_config(["ppo.__qrl_invalid_" + raw + "=1"])
@@ -170,8 +188,11 @@ def oracle_artifact_and_config(data: bytes) -> None:
 
 
 PRODUCT_ORACLES: dict[str, Callable[[bytes], None]] = {
-    "risk": oracle_risk_capacity, "actions": oracle_action_geometry, "ticks": oracle_tick_lookup,
-    "chronology": oracle_temporal_integrity, "accounting": oracle_fill_and_drawdown,
+    "risk": oracle_risk_capacity,
+    "actions": oracle_action_geometry,
+    "ticks": oracle_tick_lookup,
+    "chronology": oracle_temporal_integrity,
+    "accounting": oracle_fill_and_drawdown,
     "provenance": oracle_artifact_and_config,
 }
 
