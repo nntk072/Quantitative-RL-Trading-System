@@ -6,11 +6,10 @@ from pathlib import Path
 from typing import Any
 
 from omegaconf import OmegaConf
-from scripts.research.analysis.features import audit_observation_warmup_validity_profiles as runner
-from scripts.research.analysis.features.audit_observation_warmup_validity_profiles import (
-    _observation_group_key,
-    group_profiles,
-)
+from research_tools.features.features import audit_observation_warmup_validity_profiles as runner
+
+_observation_group_key = runner._observation_group_key
+group_profiles = runner.group_profiles
 
 
 def _cfg(
@@ -34,10 +33,7 @@ def _cfg(
 def test_observation_group_key_tracks_arch_raw_columns_and_validity_mask(
     monkeypatch,
 ) -> None:
-    monkeypatch.setattr(
-        "scripts.research.analysis.features.audit_observation_warmup_validity_profiles.feature_config_key",
-        lambda _cfg: "same-feature-builder",
-    )
+    monkeypatch.setattr(runner, "feature_config_key", lambda _cfg: "same-feature-builder")
     baseline = _observation_group_key(_cfg())
 
     assert _observation_group_key(_cfg(arch="mlp")) != baseline
@@ -49,10 +45,7 @@ def test_observation_group_key_tracks_arch_raw_columns_and_validity_mask(
 def test_group_profiles_collapses_only_equivalent_observation_contracts(
     monkeypatch,
 ) -> None:
-    monkeypatch.setattr(
-        "scripts.research.analysis.features.audit_observation_warmup_validity_profiles.feature_config_key",
-        lambda _cfg: "same-feature-builder",
-    )
+    monkeypatch.setattr(runner, "feature_config_key", lambda _cfg: "same-feature-builder")
     groups = group_profiles(
         [
             ("features/first", _cfg()),
@@ -121,7 +114,7 @@ def test_run_group_uses_resolved_config_without_yaml_round_trip(
         return summary
 
     monkeypatch.setattr(
-        "scripts.research.analysis.features.audit_observation_warmup_validity.build_audit_from_config",
+        "research_tools.features.features.audit_observation_warmup_validity.build_audit_from_config",
         fake_build_audit_from_config,
         raising=False,
     )

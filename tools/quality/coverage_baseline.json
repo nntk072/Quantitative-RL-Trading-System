@@ -1,156 +1,152 @@
 {
-  "captured_on": "2026-10-31",
+  "captured_on": "2026-11-28",
   "overall": {
-    "branch_ratio": 0.616530221215816,
-    "branches": 11482,
-    "combined_ratio": 0.7162544794938724,
-    "covered_branches": 7079,
-    "covered_lines": 25300,
-    "files": 447,
-    "line_ratio": 0.7502075673111137,
-    "statements": 33724
+    "branch_ratio": 0.8516614869710734,
+    "branches": 16732,
+    "combined_ratio": 0.9111242376831955,
+    "covered_branches": 14250,
+    "covered_lines": 42821,
+    "files": 566,
+    "line_ratio": 0.9327974556702827,
+    "statements": 45906
   },
   "packages": {
     "artifacts": {
-      "branch_ratio": 0.8636363636363636,
+      "branch_ratio": 1.0,
       "branches": 88,
-      "covered_branches": 76,
-      "covered_lines": 341,
+      "covered_branches": 88,
+      "covered_lines": 360,
       "files": 9,
-      "line_ratio": 0.9472222222222222,
+      "line_ratio": 1.0,
       "statements": 360
     },
     "compute": {
-      "branch_ratio": 0.476303317535545,
-      "branches": 422,
-      "covered_branches": 201,
-      "covered_lines": 647,
+      "branch_ratio": 0.971830985915493,
+      "branches": 426,
+      "covered_branches": 414,
+      "covered_lines": 1168,
       "files": 13,
-      "line_ratio": 0.5525192143467123,
-      "statements": 1171
+      "line_ratio": 0.9915110356536503,
+      "statements": 1178
     },
     "configuration": {
-      "branch_ratio": 0.8809523809523809,
-      "branches": 42,
-      "covered_branches": 37,
-      "covered_lines": 121,
+      "branch_ratio": 1.0,
+      "branches": 88,
+      "covered_branches": 88,
+      "covered_lines": 201,
       "files": 5,
-      "line_ratio": 0.937984496124031,
-      "statements": 129
+      "line_ratio": 1.0,
+      "statements": 201
     },
     "decisioning": {
-      "branch_ratio": 0.8114754098360656,
-      "branches": 122,
-      "covered_branches": 99,
-      "covered_lines": 458,
-      "files": 11,
-      "line_ratio": 0.9443298969072165,
-      "statements": 485
+      "branch_ratio": 1.0,
+      "branches": 206,
+      "covered_branches": 206,
+      "covered_lines": 604,
+      "files": 10,
+      "line_ratio": 1.0,
+      "statements": 604
     },
     "evaluation": {
-      "branch_ratio": 0.6299513551077137,
-      "branches": 2878,
-      "covered_branches": 1813,
-      "covered_lines": 6246,
-      "files": 77,
-      "line_ratio": 0.7925390178911306,
-      "statements": 7881
+      "branch_ratio": 0.8135946622185154,
+      "branches": 4796,
+      "covered_branches": 3902,
+      "covered_lines": 11083,
+      "files": 123,
+      "line_ratio": 0.9025244299674267,
+      "statements": 12280
     },
     "experiments": {
-      "branch_ratio": 0.49225473321858865,
-      "branches": 1162,
-      "covered_branches": 572,
-      "covered_lines": 1852,
-      "files": 24,
-      "line_ratio": 0.5905612244897959,
-      "statements": 3136
+      "branch_ratio": 0.8341503267973857,
+      "branches": 1224,
+      "covered_branches": 1021,
+      "covered_lines": 2960,
+      "files": 25,
+      "line_ratio": 0.9107692307692308,
+      "statements": 3250
     },
     "features": {
-      "branch_ratio": 0.8283333333333334,
-      "branches": 1200,
-      "covered_branches": 994,
-      "covered_lines": 3197,
+      "branch_ratio": 0.922976501305483,
+      "branches": 1532,
+      "covered_branches": 1414,
+      "covered_lines": 4053,
       "files": 40,
-      "line_ratio": 0.934522069570301,
-      "statements": 3421
+      "line_ratio": 0.9782766111513396,
+      "statements": 4143
     },
     "integrations": {
-      "branch_ratio": 0.24549549549549549,
-      "branches": 444,
-      "covered_branches": 109,
-      "covered_lines": 628,
-      "files": 29,
-      "line_ratio": 0.4453900709219858,
-      "statements": 1410
+      "branch_ratio": 0.9010791366906474,
+      "branches": 556,
+      "covered_branches": 501,
+      "covered_lines": 1636,
+      "files": 30,
+      "line_ratio": 0.9802276812462553,
+      "statements": 1669
     },
     "learning": {
-      "branch_ratio": 0.6478723404255319,
-      "branches": 940,
-      "covered_branches": 609,
-      "covered_lines": 2037,
-      "files": 19,
-      "line_ratio": 0.8048202291584354,
-      "statements": 2531
+      "branch_ratio": 0.8181076672104405,
+      "branches": 1226,
+      "covered_branches": 1003,
+      "covered_lines": 3288,
+      "files": 26,
+      "line_ratio": 0.9325014180374361,
+      "statements": 3526
     },
     "live": {
-      "branch_ratio": 0.40476190476190477,
-      "branches": 42,
-      "covered_branches": 17,
-      "covered_lines": 119,
+      "branch_ratio": 1.0,
+      "branches": 50,
+      "covered_branches": 50,
+      "covered_lines": 168,
       "files": 5,
-      "line_ratio": 0.7986577181208053,
-      "statements": 149
+      "line_ratio": 1.0,
+      "statements": 168
     },
     "market_data": {
-      "branch_ratio": 0.5553191489361702,
-      "branches": 470,
-      "covered_branches": 261,
-      "covered_lines": 996,
-      "files": 28,
-      "line_ratio": 0.7318148420279207,
-      "statements": 1361
+      "branch_ratio": 0.9695259593679458,
+      "branches": 886,
+      "covered_branches": 859,
+      "covered_lines": 2448,
+      "files": 34,
+      "line_ratio": 0.9943135662063363,
+      "statements": 2462
     },
     "models": {
-      "branch_ratio": 0.6693548387096774,
-      "branches": 124,
-      "covered_branches": 83,
-      "covered_lines": 796,
-      "files": 23,
-      "line_ratio": 0.951015531660693,
-      "statements": 837
+      "branch_ratio": 0.9841269841269841,
+      "branches": 126,
+      "covered_branches": 124,
+      "covered_lines": 861,
+      "files": 24,
+      "line_ratio": 1.0,
+      "statements": 861
     },
     "simulation": {
-      "branch_ratio": 0.6733333333333333,
-      "branches": 1800,
-      "covered_branches": 1212,
-      "covered_lines": 4162,
-      "files": 76,
-      "line_ratio": 0.8051847552718128,
-      "statements": 5169
+      "branch_ratio": 0.8251798561151079,
+      "branches": 2780,
+      "covered_branches": 2294,
+      "covered_lines": 6854,
+      "files": 119,
+      "line_ratio": 0.9068536649907383,
+      "statements": 7558
     },
     "trading": {
-      "branch_ratio": 0.7386058981233244,
-      "branches": 746,
-      "covered_branches": 551,
-      "covered_lines": 1790,
-      "files": 42,
-      "line_ratio": 0.8540076335877863,
-      "statements": 2096
+      "branch_ratio": 0.9323529411764706,
+      "branches": 1020,
+      "covered_branches": 951,
+      "covered_lines": 2563,
+      "files": 47,
+      "line_ratio": 0.9737841945288754,
+      "statements": 2632
     },
     "training": {
-      "branch_ratio": 0.4441117764471058,
-      "branches": 1002,
-      "covered_branches": 445,
-      "covered_lines": 1910,
-      "files": 46,
-      "line_ratio": 0.532329988851728,
-      "statements": 3588
+      "branch_ratio": 0.7725694444444444,
+      "branches": 1728,
+      "covered_branches": 1335,
+      "covered_lines": 4574,
+      "files": 56,
+      "line_ratio": 0.9122457120063822,
+      "statements": 5014
     }
   },
-  "pytest_execution_seconds": 317.34,
-  "schema_version": 1,
-  "scope": "unit and non-slow integration tests; collected with test contexts",
   "source_branch": "main",
-  "source_commit": "5a23e6321653c45719dfb8fdb831e242ff8c3d78",
-  "test_cases": 2240
+  "source_commit": "8ef76e783645c9f4212778f6efad8796b0bb7300"
 }

@@ -1,10 +1,8 @@
 # Triton Operations
 
 This runbook is for people running or diagnosing work on Aalto's Triton
-cluster. Exact Slurm safety rules for coding agents live in
-[agent Slurm rules](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md); use
-that file when operating as an agent. Hardware availability and queue state
-change, so query Slurm instead of relying on recorded examples.
+cluster. Hardware availability and queue state change, so query Slurm instead
+of relying on recorded examples.
 
 ## Find or start a compute session
 
@@ -20,8 +18,7 @@ sinfo
 ```
 
 Reuse an appropriate running allocation when possible. Before requesting
-compute, check current node, GPU, CPU, and host-memory availability and read
-the [Slurm operating rules](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md). Keep the
+compute, check current node, GPU, CPU, and host-memory availability. Keep the
 allocation shell persistent so completed work can be collected and the
 allocation reused safely.
 
@@ -119,4 +116,3 @@ persistent environment to work around an import stall.
 
 - [Command examples](RUNNING_COMMANDS.md)
 - [Reproducibility requirements](../concepts/reproducibility.md)
-- [Agent Slurm rules](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/.agents/rules/triton-slurm.md)

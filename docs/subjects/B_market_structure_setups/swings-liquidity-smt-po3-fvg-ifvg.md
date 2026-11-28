@@ -64,7 +64,7 @@ examples/swings-liquidity-smt-po3-fvg-ifvg
 
 ## Tasks
 
-- [Add a feature](../../how-to/add_feature.md) and keep its event time distinct from its source location.
+- Keep each feature's event time distinct from its source location.
 - [Build a feature cache](../../how-to/build_feature_cache.md) after changing output semantics or source-time inputs.
 - Use the [feature catalog](../../reference/feature_catalog.md) to inspect configured output families.
 - Use the [causality and normalization guide](../A_data_features/feature-causality-and-normalization.md) for train-only fitting and higher-timeframe availability.

@@ -7,6 +7,8 @@ from collections.abc import Iterable
 import numpy as np
 import pandas as pd
 
+from trading.column_schema import suffix_columns
+
 from .feature_row_contract import FeatureRow
 from .strategy_contract import TradingStrategy, columns_matching
 
@@ -480,7 +482,7 @@ def _columns(row: pd.Series, stem: str) -> list[str]:
     Returns:
         Values returned by ``_columns``, in the declared order.
     """
-    return [str(col) for col in row.index if str(col) == stem or str(col).endswith("_" + stem)]
+    return list(suffix_columns(row.index, (stem,)))
 
 
 def _any(row: pd.Series, stem: str) -> bool:

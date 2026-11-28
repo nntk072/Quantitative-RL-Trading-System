@@ -358,6 +358,7 @@ class TradingEnv(
         )
         self._news_guard = news_guard
         self._news_block_mask: Any = None
+        self._news_mask_bundle_identity: str | None = None
         if not isinstance(server_side_protective_orders, bool):
             raise ValueError("server_side_protective_orders must be boolean")
         if server_side_protective_orders and not tick_execution_required:
@@ -466,6 +467,7 @@ class TradingEnv(
             tickbook=TickBook(arrays["tick_ts"], arrays["tick_bid"], arrays["tick_ask"]),
             **kwargs,
         )
+        env._news_mask_bundle_identity = str(bundle.manifest["key"])
         return env
 
     def step(

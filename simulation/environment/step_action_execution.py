@@ -13,7 +13,7 @@ from market_data.loading.ticks import (
     limit_entry_execution_rng,
     resolve_tick_limit_execution,
 )
-from market_data.news.guard import load_release_times, news_block_mask
+from market_data.news.guard import cached_news_block_mask, load_release_times, news_block_mask
 from simulation.entry_state import EntryCandidate
 from trading.execution import Position
 from trading.orders import limit_order_expiry, limit_price_from_atr_offset
@@ -30,6 +30,7 @@ class StepActionExecutionMixin(RuntimeMixinBase):
     _pending_entry_order: dict[str, Any] | None
     _news_block_mask: Any
     _news_guard: Any
+    _news_mask_bundle_identity: str | None
     _news_close: Any
     _news_atr: Any
     _news_labels: Any
@@ -218,16 +219,37 @@ class StepActionExecutionMixin(RuntimeMixinBase):
                 if self._session_ids_arr is not None
                 else np.zeros(len(self._news_close), dtype=np.int64)
             )
-            self._news_block_mask = news_block_mask(
-                list(pd.DatetimeIndex(self._bar_time_index).to_pydatetime()),
+            release_times = load_release_times(guard.calendar_path)
+            open_manipulation_bars = int(self.open_manipulation_bars)
+            bundle_identity = getattr(self, "_news_mask_bundle_identity", None)
+            mask_inputs = (
+                self._bar_time_index,
                 self._news_close,
                 self._news_atr,
                 session_ids,
                 self._news_labels,
-                load_release_times(guard.calendar_path),
+                release_times,
                 guard,
-                open_manipulation_bars=int(self.open_manipulation_bars),
             )
+            if bundle_identity is None:
+                self._news_block_mask = news_block_mask(
+                    list(pd.DatetimeIndex(self._bar_time_index).to_pydatetime()),
+                    *mask_inputs[1:],
+                    open_manipulation_bars=open_manipulation_bars,
+                )
+            else:
+                cache_key = (
+                    "news-mask-v1",
+                    str(bundle_identity),
+                    guard,
+                    tuple(release_times),
+                    open_manipulation_bars,
+                )
+                self._news_block_mask = cached_news_block_mask(
+                    cache_key,
+                    *mask_inputs,
+                    open_manipulation_bars=open_manipulation_bars,
+                )
         return bool(self._news_block_mask[int(step_idx)])
 
     def _execute_step_action(

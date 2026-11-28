@@ -12,4 +12,4 @@ Historical simulation and paper trading cannot guarantee live fills, latency, li
 
 Choose the compute environment to match the workload and architecture. Record device/runtime details with artifacts. For scheduled work, use the project Slurm helpers and preserve job identity, logs, and allocation state. A scheduler allocation demonstrates allocated resources; it does not by itself demonstrate utilization.
 
-The [live execution architecture](../architecture/runtime/live_execution) traces the strategy boundary. Use [add a broker adapter](../how-to/add_broker_adapter) for extension steps, [deployment](../operations/DEPLOYMENT) for release operations, and the [operations index](../operations/README) for environment-specific guidance.
+The [live execution architecture](../architecture/runtime/live_execution) traces the strategy boundary. Use the [integration module guide](../modules/integrations) for the broker boundary, [deployment](../operations/DEPLOYMENT) for release operations, and the [operations index](../operations/README) for environment-specific guidance.

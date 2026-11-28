@@ -75,9 +75,7 @@ See the [contract reference](../../reference/subjects/cache-identity.md) for a c
 
 - [Build a feature cache](../../how-to/build_feature_cache.md) after checking
   configuration and source identity.
-- [Change a serialized schema or cache identity](../../how-to/schema_version_change.md)
-  with the required compatibility checks.
-- For version and schema naming, see
+- For versioning and compatibility checks, see
   [cache and schema versions](../../reference/cache_and_schema_versions.md).
 
 ## Contract

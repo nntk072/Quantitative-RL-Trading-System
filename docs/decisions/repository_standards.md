@@ -17,9 +17,8 @@ text is in the root `LICENSE`; package metadata declares SPDX identifier `MIT`.
 
 **Status: no standalone policy adopted.** The project does not currently
 designate a private conduct-reporting contact or run a formal contributor
-program. `CONTRIBUTING.md` describes the technical workflow. Revisit a standard
-code of conduct if the project establishes a private reporting route and begins
-actively onboarding external contributors.
+program. Revisit a standard code of conduct if the project establishes a
+private reporting route and begins actively onboarding external contributors.
 
 ## Security disclosure channel
 

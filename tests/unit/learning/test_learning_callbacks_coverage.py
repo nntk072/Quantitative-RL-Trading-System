@@ -266,6 +266,15 @@ def test_periodic_checkpoint_resumes_on_next_boundary_and_coalesces_crossed_step
     ]
 
 
+def test_periodic_checkpoint_zero_frequency_is_disabled(tmp_path: Path) -> None:
+    callback = PeriodicCheckpointCallback(save_freq=0, save_path=tmp_path)
+    callback.init_callback(SimpleNamespace(num_timesteps=0))  # type: ignore[arg-type]
+
+    assert callback._on_step()
+    assert callback._next_save is None
+    assert not list(tmp_path.iterdir())
+
+
 def test_early_abort_ignores_explained_variance_nan_but_stops_on_other_nonfinite_metrics() -> None:
     callback = EarlyAbortCallback(min_timesteps=100, window=2)
     model = SimpleNamespace(
@@ -307,3 +316,15 @@ def test_episode_callback_writes_empty_header_when_no_episode_ever_finishes(tmp_
     callback._on_training_end()
 
     assert path.read_text(encoding="utf-8").startswith("timestep,environment_index,end_equity")
+
+
+def test_episode_callback_skips_finished_steps_without_equity_evidence(tmp_path: Path) -> None:
+    path = tmp_path / "episode_equity.csv"
+    callback = EpisodeEquityCallback(path)
+    callback.init_callback(SimpleNamespace(num_timesteps=3))  # type: ignore[arg-type]
+    callback.locals = {"dones": np.asarray([True, False]), "infos": [{}, {}]}
+
+    assert callback._on_step()
+    callback._on_training_end()
+
+    assert path.read_text(encoding="utf-8").count("\n") == 1

@@ -5,12 +5,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from features.context.entry_ideas import entry_idea_context
 from trading.orders import place_strategy_order
 from trading.risk import compute_sl_tp_long, compute_sl_tp_short
 
 from ..market_view import FeatureRow
 from ..mixin_base import RuntimeMixinBase
+from .context_cache import cached_entry_idea_context
 
 
 class EntryOrderRuntimeMixin(RuntimeMixinBase):
@@ -67,7 +67,7 @@ class EntryOrderRuntimeMixin(RuntimeMixinBase):
         has_levels = False
         placed = None
         if self.strategy_actions:
-            entry_context = entry_idea_context(feat_row, discrete_action)
+            entry_context = cached_entry_idea_context(self, feat_row, discrete_action)
             selected_trade_setup = self._selected_trade_setup if self.trade_setup_actions else None
             timeframe_floor = (
                 str(selected_trade_setup.setup_timeframe)

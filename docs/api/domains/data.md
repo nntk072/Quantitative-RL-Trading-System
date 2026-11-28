@@ -26,4 +26,4 @@ The helper shifts completed bars and forward-fills them; callers that already sh
 
 Prepare normalized bars, align timeframe inputs, build feature columns, apply train-only transforms, then write/read the versioned cache. Add features through the configured pipeline and update its catalog, causality tests, and cache identity. Keep raw market transformations separate from strategy eligibility masks.
 
-Start with the [market data and feature framework](../../framework/market_data_and_features), [causal feature tutorial](../../learn/tutorials/02_causal_features.ipynb), and [add a feature](../../how-to/add_feature). Generated references: {doc}`market data <../generated/market_data/index>` and {doc}`features <../generated/features/index>`.
+Start with the [market data and feature framework](../../framework/market_data_and_features), [causal feature tutorial](../../learn/tutorials/02_causal_features.ipynb), and [feature catalog](../../reference/feature_catalog). Generated references: {doc}`market data <../generated/market_data/index>` and {doc}`features <../generated/features/index>`.

@@ -99,7 +99,9 @@ elif [[ "$GPUS" == gh200:* ]]; then
 fi
 
 if command -v squeue >/dev/null 2>&1; then
-  RUNNING=$(squeue -u "${USER}" -h -t R -o '%i' 2>/dev/null | wc -l | tr -d ' ')
+  # A running CPU validation job must not prevent a separate GPU allocation.
+  RUNNING=$(squeue -u "${USER}" -h -t R -o '%i %P' 2>/dev/null \
+    | awk '$2 ~ /^gpu[-_]/ { count++ } END { print count+0 }')
   if [[ "${RUNNING}" -gt 0 ]]; then
     echo
     echo "REUSE: you already have ${RUNNING} running job(s)."

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+from collections import OrderedDict
+from collections.abc import Hashable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+import pytest
 
+import market_data.news.guard as news_guard
 from market_data.news.guard import (
     NewsGuardConfig,
     load_release_times,
@@ -141,6 +145,110 @@ def test_mask_does_not_depend_on_future_bars() -> None:
     )
 
     assert (base[:20] == after[:20]).all()
+
+
+def test_cached_news_mask_reuses_read_only_result_for_identical_bundle_key() -> None:
+    times, ids, labels = _sessions(3, 6)
+    atr = np.full(18, 1.0)
+    close = np.full(18, 100.0)
+    close[16] = 105.0
+    config = _config()
+    cache_key: Hashable = ("test-bundle-news-mask", config, tuple())
+    cache_mask = getattr(news_guard, "cached_news_block_mask", None)
+    assert callable(cache_mask)
+
+    first = cache_mask(
+        cache_key,
+        times,
+        close,
+        atr,
+        ids,
+        labels,
+        release_times=(),
+        config=config,
+        open_manipulation_bars=0,
+    )
+    second = cache_mask(
+        cache_key,
+        times,
+        close,
+        atr,
+        ids,
+        labels,
+        release_times=(),
+        config=config,
+        open_manipulation_bars=0,
+    )
+
+    np.testing.assert_array_equal(
+        first, news_block_mask(times, close, atr, ids, labels, (), config, open_manipulation_bars=0)
+    )
+    assert first is second
+    assert not first.flags.writeable
+
+
+def test_cached_news_mask_key_separates_guard_semantics() -> None:
+    times, ids, labels = _sessions(3, 6, label="ny")
+    atr = np.full(18, 1.0)
+    close = np.full(18, 100.0)
+    close[16] = 105.0
+    cache_mask = getattr(news_guard, "cached_news_block_mask", None)
+    assert callable(cache_mask)
+
+    blocked = cache_mask(
+        ("test-bundle-open-0",),
+        times,
+        close,
+        atr,
+        ids,
+        labels,
+        release_times=(),
+        config=_config(),
+        open_manipulation_bars=0,
+    )
+    exempt = cache_mask(
+        ("test-bundle-open-20",),
+        times,
+        close,
+        atr,
+        ids,
+        labels,
+        release_times=(),
+        config=_config(),
+        open_manipulation_bars=20,
+    )
+
+    assert blocked[16]
+    assert not exempt[16]
+    assert blocked is not exempt
+
+
+def test_cached_news_mask_evicts_oldest_entry_at_configured_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    times, ids, labels = _sessions(3, 6)
+    atr = np.full(18, 1.0)
+    close = np.full(18, 100.0)
+    cache: OrderedDict[Hashable, np.ndarray[Any, Any]] = OrderedDict()
+    monkeypatch.setattr(news_guard, "_NEWS_MASK_CACHE", cache)
+    monkeypatch.setattr(news_guard, "_NEWS_MASK_CACHE_LIMIT", 2)
+    cache_mask = getattr(news_guard, "cached_news_block_mask", None)
+    assert callable(cache_mask)
+
+    for key in range(3):
+        cache_mask(
+            ("bounded-cache", key),
+            times,
+            close,
+            atr,
+            ids,
+            labels,
+            release_times=(),
+            config=_config(),
+            open_manipulation_bars=0,
+        )
+
+    assert list(cache) == [("bounded-cache", 1), ("bounded-cache", 2)]
 
 
 def test_load_release_times_reads_utc_column(tmp_path: Path) -> None:

@@ -1,6 +1,6 @@
 # Evaluation · `rollout.trained_policy_rollout`
 
-This page contains 4 public callable records owned by `evaluation.rollout.trained_policy_rollout`. Status reflects the exported contract, not a promise that all internal behavior is stable.
+This page contains 3 public callable records owned by `evaluation.rollout.trained_policy_rollout`. Status reflects the exported contract, not a promise that all internal behavior is stable.
 
 ## `evaluate_provider`
 
@@ -8,7 +8,7 @@ This page contains 4 public callable records owned by `evaluation.rollout.traine
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1212](../../../../evaluation/rollout/trained_policy_rollout.py#L1212)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:919](../../../../evaluation/rollout/trained_policy_rollout.py#L919)
 
 **Inputs and outputs:**
 
@@ -78,7 +78,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Walk a trained RL ``model`` over *bars*/*features* and collect trades.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:367](../../../../evaluation/rollout/trained_policy_rollout.py#L367)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_model` · **Source:** [evaluation/rollout/trained_policy_rollout.py:74](../../../../evaluation/rollout/trained_policy_rollout.py#L74)
 
 **Inputs and outputs:**
 
@@ -271,7 +271,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Purpose:** Evaluate a backend-neutral decision provider through the trading environment.
 
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:1212](../../../../evaluation/rollout/trained_policy_rollout.py#L1212)
+**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.evaluate_provider` · **Source:** [evaluation/rollout/trained_policy_rollout.py:919](../../../../evaluation/rollout/trained_policy_rollout.py#L919)
 
 **Inputs and outputs:**
 
@@ -326,77 +326,6 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 def test_evaluate_provider_rejects_object_without_provider_metadata() -> None:
     with pytest.raises(TypeError, match="requires a DecisionProvider implementation"):
         evaluate_provider(object(), pd.DataFrame(), pd.DataFrame())
-```
-
-These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
-
-**Workflow context:**
-
-- Semantic domain guide: {doc}`../../domains/workflows`
-- Generated package reference: {doc}`../../generated/evaluation/index`
-
-## `make_action_fn`
-
-**Kind:** function · **Status:** stable · **Owner:** `evaluation.rollout.trained_policy_rollout`
-
-**Purpose:** Return an observation → action callable with explicit action typing.
-
-**Exact API:** {py:obj}`evaluation.rollout.trained_policy_rollout.make_action_fn` · **Source:** [evaluation/rollout/trained_policy_rollout.py:305](../../../../evaluation/rollout/trained_policy_rollout.py#L305)
-
-**Inputs and outputs:**
-
-- **Args:**
-
-  ```text
-  model: Model used for this operation.
-  continuous_actions: Whether to enable or require the continuous actions.
-  deterministic: Whether to enable or require the deterministic.
-  strategy_actions: Whether to enable or require the strategy actions.
-  decision_callback: Optional receiver for each typed provider result.
-  ```
-
-- **Returns:**
-
-  ```text
-  Result of return an observation → action callable with explicit action typing.
-  ```
-
-**Observed usage:**
-
-1. [test fixture: `test_evaluation_rollout_routes_providers_through_semantic_adapter`](../../../../tests/unit/evaluation/test_decision_provider_rollout.py#L185)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-def test_evaluation_rollout_routes_providers_through_semantic_adapter() -> None:
-    action_schema = ActionSchemaRef(
-        version="discrete-v1", key="hold-enter", coordinates=("hold", "enter"), kind="discrete"
-    )
-    provider = _Provider(Decision(DiscreteAction(1, "enter"), action_schema))
-    action_fn = make_action_fn(provider)
-
-    assert action_fn({"seq": np.ones((2, 3), dtype=np.float32)}) == 1
-    assert provider.inputs[0][0].schema_version == "obs-v1"
-```
-
-2. [test fixture: `test_random_eligible_rollout_model_uses_shared_action_adapter`](../../../../tests/unit/evaluation/test_random_eligible_setup.py#L105)
-
-Source excerpt (not standalone); follow the linked caller for imports and setup.
-
-```python
-# … caller setup omitted …
-    model = RandomEligibleSetupRolloutModel(policy)
-    observation = _observation(2, 7, 31)
-    expected = RandomEligibleSetupPolicy(schema, seed=31, normalized_risk=0.4)
-
-    direct_action, recurrent_state = model.predict(observation, deterministic=True)
-    rollout_action = make_action_fn(model, strategy_actions=True)(observation)
-
-    np.testing.assert_array_equal(direct_action, expected(observation))
-    np.testing.assert_array_equal(rollout_action, expected(observation))
-    assert recurrent_state is None
-    assert model.policy.hybrid_action_coordinates == schema.names
-# … caller assertions omitted …
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

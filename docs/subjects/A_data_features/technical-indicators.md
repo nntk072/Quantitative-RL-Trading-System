@@ -69,8 +69,7 @@ See the [contract reference](../../reference/subjects/technical-indicators.md) f
 
 ## Tasks
 
-- [Add a feature](../../how-to/add_feature.md) and document its config and
-  cache-identity effects.
+- Document a feature's config and cache-identity effects.
 - Check all consumers through the [feature catalog](../../reference/feature_catalog.md).
 - Use [cache identity](cache-identity.md) when changing calculation semantics.
 

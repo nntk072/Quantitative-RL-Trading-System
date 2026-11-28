@@ -4,9 +4,8 @@ Research methods and evidence status live in the
 [research section](../research/README.md); study-specific decisions belong with
 their registered run configuration and artifacts.
 
-Operational guides describe supported environments and procedures. Agent
-allocation rules in `.agents/rules/` govern how coding agents use those
-resources; this directory is the human-facing explanation.
+Operational guides describe supported environments and procedures for
+researchers and system operators.
 
 - [Triton environment and resource workflow](triton.md)
 - [Command reference](RUNNING_COMMANDS.md)

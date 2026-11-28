@@ -104,8 +104,8 @@ examples/live-paper-metatrader
 
 - Read the [live status summary](../../operations/live-status.md) together
   with the source guards when checking the current implementation.
-- Follow the [broker adapter guide](../../how-to/add_broker_adapter.md) for
-  SDK boundaries, input mapping, and controlled test doubles.
+- Keep SDK boundaries, input mapping, and controlled test doubles inside the
+  broker integration layer.
 - Review the [observation schema reference](../../reference/observation_schemas.md)
   and the [live and paper trading contract](../../reference/subjects/live-paper-metatrader.md)
   when investigating a startup issue.

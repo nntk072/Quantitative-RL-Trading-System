@@ -26,6 +26,6 @@ workflow runs it from `main`; results are a focused test-quality signal, not a
 repository-wide mutation score. It uses four workers by default; set
 `QRL_MUTATION_MAX_CHILDREN` to a positive integer to change the cap.
 
-See [test organization](../tests/README.md),
-[documentation maintenance](../docs/MAINTAINING.md), and the
+See the [testing rules](../.agents/rules/testing-rules.md),
+[documentation checks](documentation/check_docs.py), and the
 [agent verification rules](../.agents/rules/ci-verification.md).

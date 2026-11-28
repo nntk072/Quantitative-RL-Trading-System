@@ -41,6 +41,7 @@ api_paths:
 - trading/strategies/feature_row_contract.py
 - trading/strategies/po3_ifvg.py
 - trading/strategies/strategy_contract.py
+- trading/column_schema.py
 - trading/orders/levels.py
 caller_paths:
 - tests/unit/trading/test_semantic_oracle_limits_sizing.py
@@ -57,6 +58,7 @@ caller_paths:
 - tests/unit/trading/test_strategy_coverage_contracts.py
 - tests/unit/trading/test_stop_menu_contracts.py
 - tests/unit/trading/test_order_selection_contracts.py
+- tests/unit/trading/test_column_schema.py
 - tests/unit/trading/test_breakout_simulation_contract.py
 - tests/unit/trading/test_quote_execution_contracts.py
 - evaluation/candidate_execution.py
@@ -203,6 +205,9 @@ source_scopes:
   - trading.account_cashflow_and_limits
   - trading.sizing_orders_and_position_lifecycle
 - path: trading/orders
+  study_ids:
+  - trading.sizing_orders_and_position_lifecycle
+- path: trading/column_schema.py
   study_ids:
   - trading.sizing_orders_and_position_lifecycle
 - path: trading/positions

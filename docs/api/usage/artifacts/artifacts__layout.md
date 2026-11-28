@@ -1122,7 +1122,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L408)
+2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L417)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1229,7 +1229,7 @@ def recovery_checkpoint(self, value: str | Path) -> Path:
         ) from None
 ```
 
-2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L482)
+2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L491)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -1499,7 +1499,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L484)
+2. [production caller: `build_summary`](../../../../experiments/runs/reporting.py#L493)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

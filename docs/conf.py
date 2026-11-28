@@ -72,9 +72,6 @@ autoapi_python_class_content = "class"
 autoapi_python_use_implicit_namespaces = True
 autoapi_ignore = [
     "*migrations*",
-    "*/evaluation/plotting/orders.py",
-    "*/evaluation/plotting/performance.py",
-    "*/simulation/environment/diagnostics.py",
 ]
 autoapi_options = ["members", "show-inheritance", "show-module-summary"]
 

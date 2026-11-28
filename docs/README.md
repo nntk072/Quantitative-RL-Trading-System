@@ -38,18 +38,11 @@ settings must use GitHub Actions as the deployment source.
   evaluation identity expected for a result.
 - [Operations](operations/triton.md): environments, storage, and Triton
   resource workflow.
-- [Testing strategy](development/testing.md): test ownership, scoped gates, and
-  the measured line and branch coverage baseline.
+- [Operations](operations/README.md): supported environments and maintained
+  command workflows.
 - [Commands](operations/RUNNING_COMMANDS.md): current executable commands.
 - [Deployment](operations/DEPLOYMENT.md): paper/live boundaries and promotion
   controls.
-- [Agent rules](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/AGENTS.md): repository invariants and contributor workflow.
-- [Documentation maintenance](MAINTAINING.md): sources of truth and update
-  expectations.
-- [Source documentation policy](development/documentation.md): Google-style
-  docstrings, comments, and useful diagrams.
-- [Contributing](https://github.com/nntk072/Quantitative-RL-Trading-System/blob/main/CONTRIBUTING.md): architecture-aware change and validation
-  workflow.
 - [Repository standards decisions](decisions/repository_standards.md): selected
   license and conduct policy, plus the verified security reporting route.
 - [Architecture decisions](decisions/README.md): durable project choices.
@@ -59,11 +52,7 @@ settings must use GitHub Actions as the deployment source.
 - [Tutorials](tutorials/README.md): a project tour and bounded reproducible
   smoke workflow.
 - [How-to guides](how-to/README.md): prepare data, build caches, train,
-  evaluate, troubleshoot, run experiments, and extend the system.
-- [Subject coverage audit](development/documentation_coverage.md): reviewed
-  matrix for concept, architecture, tutorial, reference, research, and
-  troubleshooting coverage.
-
+  evaluate, troubleshoot, and run experiments.
 Research methods, evidence status, and validity limits are documented in the
 [research section](research/README.md). Operational guides cover supported
 environments and maintained command workflows.

@@ -23,4 +23,4 @@
 - `fit_reward_parts` reconciles named buckets to the clipped scalar (`simulation/environment/rewards.py`).
 - The component names are `pnl`, `dsr`, `soft_daily`, `soft_year`, `soft_trailing`, `strategy`, `breach`, `sweep`, `peak_dd`, `peak_eod_dd`, `equity_growth`, and `survival` (`simulation/environment/rewards.py`).
 
-See the [subject guide](../../subjects/C_trading_risk_execution/reward-and-attribution.md), [reward reference](../rewards.md), and [add reward](../../how-to/add_reward.md). Empirical objective quality is **not measured**.
+See the [subject guide](../../subjects/C_trading_risk_execution/reward-and-attribution.md) and [reward reference](../rewards.md). Empirical objective quality is **not measured**.

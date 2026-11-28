@@ -15,10 +15,45 @@ from decisioning.observation_state import (
     ENTRY_STATES,
     entry_state_one_hot,
 )
+from simulation.environment.entries import context_cache
 from simulation.environment.entries.lifecycle import EntryRuntimeMixin
 from simulation.environment.entry_state import EntryEvidence, EntryStateMachine
 from simulation.environment.env import TradingEnv
 from trading.strategies import BaselineStrategy, PO3IFVGStrategy
+
+
+def test_entry_idea_context_cache_reuses_only_matching_step_inputs(monkeypatch) -> None:
+    env = SimpleNamespace(step_idx=12, _episode_identity=4)
+    calls: list[tuple[int, bool]] = []
+
+    def context(row: Any, direction: int, *, include_zones: bool = False) -> dict[str, Any]:
+        calls.append((direction, include_zones))
+        return {
+            "ideas": [direction],
+            "timeframes": {"fvg_retest": ["M5"]},
+            "zones": [{"zone": direction}] if include_zones else [],
+        }
+
+    monkeypatch.setattr(context_cache, "entry_idea_context", context)
+    row = pd.Series({"entry_idea_fvg_retest_long": 1.0})
+
+    first = context_cache.cached_entry_idea_context(env, row, 1)
+    assert context_cache.cached_entry_idea_context(env, row, 1) is first
+    with_zones = context_cache.cached_entry_idea_context(env, row, 1, include_zones=True)
+    assert with_zones is not first
+    assert first["zones"] == []
+    assert with_zones["zones"] == [{"zone": 1}]
+    first["ideas"].append("caller mutation")
+    assert with_zones["ideas"] == [1]
+    assert context_cache.cached_entry_idea_context(env, row, -1) is not first
+    assert calls == [(1, True), (-1, True)]
+
+    env.step_idx += 1
+    assert context_cache.cached_entry_idea_context(env, row, 1) is not first
+    assert calls[-1] == (1, True)
+    env._episode_identity += 1
+    assert context_cache.cached_entry_idea_context(env, row, 1) is not first
+    assert calls[-1] == (1, True)
 
 
 def _evidence(

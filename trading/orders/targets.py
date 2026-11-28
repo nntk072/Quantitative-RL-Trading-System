@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 from features.context.swing_retracement import SWING_LEVELS, level_token
+from trading.column_schema import suffix_columns
 from trading.orders.timeframes import (
     normalize_timeframe,
     reference_timeframe,
@@ -130,14 +131,12 @@ def target_menu(
         if level is not None:
             raw.append((f"{tf_up}_{swing_name}", level))
     row_columns = getattr(row, "index", ())
-    for column in row_columns:
-        column_name = str(column)
-        if column_name == ob_target_stem or column_name.endswith(f"_{ob_target_stem}"):
-            active_name = column_name.removesuffix("_low").removesuffix("_high") + "_active"
-            if finite_level(row, active_name) == 1.0:
-                level = finite_level(row, column_name)
-                if level is not None:
-                    raw.append((column_name, level))
+    for column_name in suffix_columns(row_columns, (ob_target_stem,)):
+        active_name = column_name.removesuffix("_low").removesuffix("_high") + "_active"
+        if finite_level(row, active_name) == 1.0:
+            level = finite_level(row, column_name)
+            if level is not None:
+                raw.append((column_name, level))
     raw.extend(suffixed_levels(row, gap_suffixes))
     # TP extensions belong to the confirmed swing leg and are available to
     # every entry idea. The stop menu keeps its separate, nearer-level cap.
@@ -281,12 +280,10 @@ def suffixed_levels(row: Any, suffixes: tuple[str, ...]) -> list[tuple[str, floa
     """
     index = getattr(row, "index", ())
     found: list[tuple[str, float]] = []
-    for col in index:
-        text = str(col)
-        if any(text == suffix or text.endswith("_" + suffix) for suffix in suffixes):
-            level = finite_level(row, text)
-            if level is not None:
-                found.append((text, level))
+    for text in suffix_columns(index, suffixes):
+        level = finite_level(row, text)
+        if level is not None:
+            found.append((text, level))
     return found
 
 

@@ -422,21 +422,15 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [test fixture: `test_legacy_action_checkpoint_requires_opt_in_and_explicit_layout`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L33)
+2. [test fixture: `test_v2_schema_has_exact_named_width`](../../../../tests/unit/simulation/test_environment/test_observation_schema.py#L61)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_legacy_action_checkpoint_requires_opt_in_and_explicit_layout() -> None:
-    schema = build_action_schema()
-    model = _continuous_model(schema.width)
-
-    with pytest.raises(ValueError, match="explicit legacy opt-in"):
-        validate_model_action_schema(model, schema)
-    with pytest.raises(ValueError, match="explicit legacy layout key"):
-        validate_model_action_schema(model, schema, allow_legacy=True)
-    with pytest.raises(ValueError, match="differs from expected"):
-        validate_model_action_schema(model, schema, allow_legacy=True, legacy_layout_key="6_dir")
+def test_v2_schema_has_exact_named_width() -> None:
+    schema = build_observation_schema(OBSERVATION_SCHEMA_V2)
+    assert schema.width == len(V2_COORDINATES) == 28
+    assert schema.coordinates == V2_COORDINATES
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

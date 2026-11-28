@@ -24,7 +24,6 @@ be able to understand the module before opening its implementation.
 | `compute/` | Detect compute capabilities and manage scheduled resources | [Compute](compute.md) |
 | `live/` | Apply broker-neutral strategy decisions in a live or paper runtime | [Live runtime](live.md) |
 | `integrations/` | Connect broker-specific APIs to the broker-neutral system | [Integrations](integrations.md) |
-| `tests/` | Check contracts and behavior across all modules | [Testing](testing.md) |
 
 Non-package folders such as `config/`, `data/`, `cache/`, `outputs/`,
 `scripts/`, and `tools/` are described in [Repository layout](repository_layout.md).
@@ -37,8 +36,8 @@ responsibilities; the domain model describes stable trading concepts.
 
 For the full learning path, read configuration, market data, features,
 decisioning, trading, simulation, models, learning, training, evaluation, and
-experiments. Read artifacts, compute, live runtime, integrations, and testing
-when working in those areas.
+experiments. Read artifacts, compute, live runtime, and integrations when
+working in those areas.
 
 The system diagram is in [Architecture](../architecture/README.md). Domain
 terms are explained in [Concepts](../concepts/README.md), and exact schemas
@@ -63,7 +62,6 @@ market_data
 models
 repository_layout
 simulation
-testing
 trading
 training
 ```

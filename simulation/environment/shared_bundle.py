@@ -9,9 +9,11 @@ import os
 import re
 import shutil
 import tempfile
+from collections import OrderedDict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from threading import RLock
 from types import MappingProxyType
 from typing import Any
 
@@ -61,6 +63,30 @@ class BundleArrays:
             Array returned by ``__getitem__``.
         """
         return self.arrays[name]
+
+
+_VERIFIED_BUNDLE_CACHE_LIMIT = 2
+_VERIFIED_BUNDLE_CACHE: OrderedDict[tuple[Any, ...], BundleArrays] = OrderedDict()
+_VERIFIED_BUNDLE_CACHE_LOCK = RLock()
+
+
+def _bundle_file_identity(path: Path) -> tuple[int, int, int, int, int]:
+    """Identify a file version without relying on access time.
+
+    Args:
+        path: Bundle file whose device, inode, size, and change times are inspected.
+
+    Returns:
+        A tuple of device, inode, size, modification-time, and change-time values.
+    """
+    status = path.stat()
+    return (
+        int(status.st_dev),
+        int(status.st_ino),
+        int(status.st_size),
+        int(status.st_mtime_ns),
+        int(status.st_ctime_ns),
+    )
 
 
 def _lookup_path(config: Mapping[str, Any], dotted_path: str) -> tuple[bool, Any]:
@@ -400,7 +426,8 @@ def load_bundle(path: Path | str) -> BundleArrays:
     """
     bundle_path = Path(path)
     manifest_path = bundle_path / "manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes)
     manifest_key = manifest.get("key")
     bundle_version = manifest.get("bundle_version")
     expected_key = bundle_key(
@@ -416,11 +443,37 @@ def load_bundle(path: Path | str) -> BundleArrays:
     entries = manifest.get("arrays")
     if not isinstance(entries, dict) or not entries:
         raise ValueError(f"bundle has no array entries: {bundle_path}")
+    array_paths: dict[str, tuple[str, Path, tuple[int, int, int, int, int]]] = {}
     for name, metadata in entries.items():
         filename = metadata.get("file")
         if not isinstance(filename, str) or Path(filename).name != filename:
             raise ValueError(f"invalid array filename for {name!r}")
         array_path = bundle_path / filename
+        array_paths[name] = (filename, array_path, _bundle_file_identity(array_path))
+    resolved_path = bundle_path.resolve()
+    manifest_identity = hashlib.sha256(manifest_bytes).hexdigest()
+    file_identity = tuple(
+        (
+            name,
+            filename,
+            *status,
+        )
+        for name, (filename, _array_path, status) in array_paths.items()
+    )
+    cache_key = (resolved_path, manifest_identity, file_identity)
+    with _VERIFIED_BUNDLE_CACHE_LOCK:
+        cached = _VERIFIED_BUNDLE_CACHE.get(cache_key)
+        if cached is not None:
+            if manifest_path.read_bytes() != manifest_bytes or any(
+                _bundle_file_identity(array_path) != status
+                for _name, (_filename, array_path, status) in array_paths.items()
+            ):
+                raise ValueError(f"bundle changed while loading: {bundle_path}")
+            _VERIFIED_BUNDLE_CACHE.move_to_end(cache_key)
+            return cached
+
+    for name, metadata in entries.items():
+        _filename, array_path, _status = array_paths[name]
         expected_sha256 = metadata.get("sha256")
         if not isinstance(expected_sha256, str) or _sha256_file(array_path) != expected_sha256:
             raise ValueError(f"bundle array content digest mismatch for {name!r}")
@@ -430,8 +483,21 @@ def load_bundle(path: Path | str) -> BundleArrays:
         if array.flags.writeable:
             raise ValueError(f"bundle array {name!r} is not read-only")
         arrays[name] = array
-    return BundleArrays(
+    if manifest_path.read_bytes() != manifest_bytes or any(
+        _bundle_file_identity(array_path) != status
+        for _name, (_filename, array_path, status) in array_paths.items()
+    ):
+        raise ValueError(f"bundle changed while loading: {bundle_path}")
+    loaded = BundleArrays(
         path=bundle_path,
         arrays=MappingProxyType(arrays),
         manifest=MappingProxyType(manifest),
     )
+    with _VERIFIED_BUNDLE_CACHE_LOCK:
+        for existing_key in tuple(_VERIFIED_BUNDLE_CACHE):
+            if existing_key[0] == resolved_path and existing_key != cache_key:
+                del _VERIFIED_BUNDLE_CACHE[existing_key]
+        _VERIFIED_BUNDLE_CACHE[cache_key] = loaded
+        while len(_VERIFIED_BUNDLE_CACHE) > _VERIFIED_BUNDLE_CACHE_LIMIT:
+            _VERIFIED_BUNDLE_CACHE.popitem(last=False)
+    return loaded

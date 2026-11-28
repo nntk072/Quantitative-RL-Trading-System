@@ -184,6 +184,56 @@ def test_bundle_round_trip_matches_source(tmp_path: Path) -> None:
     ]
 
 
+def test_load_bundle_reuses_verified_mmaps_while_files_are_unchanged(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import simulation.environment.shared_bundle as shared_bundle
+
+    arrays, config = _fixture_bundle_inputs()
+    bundle_path = shared_bundle.build_bundle(
+        tmp_path,
+        arrays=arrays,
+        config=config,
+        source_fingerprints={"bars": {"size": 32}},
+    )
+    original_hash = shared_bundle._sha256_file
+    hashed_paths: list[Path] = []
+
+    def count_hashes(path: Path) -> str:
+        hashed_paths.append(path)
+        return original_hash(path)
+
+    monkeypatch.setattr(shared_bundle, "_sha256_file", count_hashes)
+    first = shared_bundle.load_bundle(bundle_path)
+    verified_file_count = len(hashed_paths)
+    second = shared_bundle.load_bundle(bundle_path)
+
+    assert verified_file_count == len(arrays)
+    assert second is first
+    assert len(hashed_paths) == verified_file_count
+
+
+def test_load_bundle_revalidates_after_cached_array_is_modified(tmp_path: Path) -> None:
+    import simulation.environment.shared_bundle as shared_bundle
+
+    arrays, config = _fixture_bundle_inputs()
+    bundle_path = shared_bundle.build_bundle(
+        tmp_path,
+        arrays=arrays,
+        config=config,
+        source_fingerprints={"bars": {"size": 32}},
+    )
+    shared_bundle.load_bundle(bundle_path)
+    array_path = bundle_path / "bar_ohlc.npy"
+    content = bytearray(array_path.read_bytes())
+    content[-1] ^= 1
+    array_path.write_bytes(content)
+
+    with pytest.raises(ValueError, match="content digest mismatch"):
+        shared_bundle.load_bundle(bundle_path)
+
+
 def test_bundle_load_and_reuse_reject_same_shape_content_tampering(tmp_path: Path) -> None:
     import json
 

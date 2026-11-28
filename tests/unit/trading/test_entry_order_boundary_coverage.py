@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from trading.orders.entries import OrderGeometry, dynamic_tp, place_strategy_order
-from trading.orders.targets import collapse_levels, target_menu
+from trading.orders.targets import collapse_levels, finite_level, target_menu
 
 
 class _StructuralStrategy:
@@ -238,6 +238,13 @@ def test_price_grid_collapses_equivalent_levels_and_skips_non_finite_prices() ->
         [("first", 100.01), ("same_tick", 100.04), ("invalid", float("nan"))],
         price_increment=0.1,
     ) == [("first|same_tick", 100.01)]
+
+
+def test_target_price_grid_rejects_invalid_increment_and_non_numeric_level() -> None:
+    with pytest.raises(ValueError, match="price_increment must be finite and positive"):
+        collapse_levels([("target", 110.0)], price_increment=float("nan"))
+
+    assert finite_level(pd.Series({"target": "not-a-price"}), "target") is None
 
 
 @pytest.mark.parametrize(

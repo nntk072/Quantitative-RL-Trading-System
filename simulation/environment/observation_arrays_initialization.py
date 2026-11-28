@@ -21,6 +21,8 @@ from .mixin_base import RuntimeMixinBase
 from .observations.schema import (
     DEFAULT_HTF_WINDOWS,
     HTF_BRANCHES,
+    _PreparedRollingWindowCacheEntry,
+    _PreparedWindowPrefixCacheEntry,
     split_obs_columns,
     timeframe_starts,
 )
@@ -371,6 +373,8 @@ class ObservationArraysInitializationMixin(RuntimeMixinBase):
                 f"regime observation is missing required D1 features: {missing_regime}"
             )
         self._htf_starts: dict[str, np.ndarray[Any, Any]] = {}
+        self._htf_prepared_observation_cache: dict[str, _PreparedWindowPrefixCacheEntry] = {}
+        self._m1_prepared_observation_cache: dict[str, _PreparedRollingWindowCacheEntry] = {}
         if self.mtf:
             for key, _, _ in HTF_BRANCHES:
                 self._htf_starts[key] = timeframe_starts(

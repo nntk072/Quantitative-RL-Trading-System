@@ -169,7 +169,7 @@ def test_repository_documentation_entrypoints_and_site_configuration_exist() -> 
         "SUPPORT.md",
         "CITATION.cff",
         "docs/decisions/repository_standards.md",
-        "docs/development/documentation.md",
+        "docs/operations/README.md",
         "docs/conf.py",
         "docs/index.md",
         "docs/api/index.md",
@@ -235,17 +235,18 @@ def test_documentation_ci_builds_the_site_for_main() -> None:
     assert "autoapi.extension" in sphinx_config
 
 
-def test_autoapi_ignores_shadowed_legacy_modules() -> None:
+def test_autoapi_ignore_patterns_resolve_to_existing_paths() -> None:
     import runpy
 
     config = runpy.run_path(str(ROOT / "docs/conf.py"))
     ignored = set(config.get("autoapi_ignore", ()))
+    missing = {
+        pattern
+        for pattern in ignored
+        if pattern.startswith("*/") and not (ROOT / pattern.removeprefix("*/")).exists()
+    }
 
-    assert {
-        "*/evaluation/plotting/orders.py",
-        "*/evaluation/plotting/performance.py",
-        "*/simulation/environment/diagnostics.py",
-    } <= ignored
+    assert missing == set()
 
 
 def test_markdown_link_checker_reports_broken_relative_targets(tmp_path: Path) -> None:

@@ -98,7 +98,6 @@ run_docs() {
     tests/unit/tooling/test_documentation_api_usage.py
   run_module tools.documentation.check_notebooks
   run_module tools.documentation.inventory --check
-  run_module tools.documentation.coverage --check
   run_module tools.documentation.figures
   run_module tools.documentation.evidence_audit --check
   run_module tools.documentation.check_docs
@@ -176,6 +175,14 @@ run_pytest_gate() {
 run_unit() {
   sync_dev
   run_pytest_gate "unit and not slow and not integration and not architecture and not gpu and not triton and not research" tests
+}
+run_unit_shard() {
+  sync_dev
+  if [[ "$#" -eq 0 ]]; then
+    echo "unit-shard requires at least one test path" >&2
+    return 2
+  fi
+  run_pytest_gate "unit and not slow and not integration and not architecture and not gpu and not triton and not research" "$@"
 }
 run_build() {
   sync_dev
@@ -282,6 +289,7 @@ case "$GATE" in
   graph-quality) run_graph_quality ;;
   contracts) run_contracts ;;
   unit) run_unit ;;
+  unit-shard) shift; run_unit_shard "$@" ;;
   build) run_build ;;
   integration) run_integration ;;
   research) run_research ;;
@@ -308,5 +316,5 @@ case "$GATE" in
     run_training_smoke
     ;;
   gpu|triton) run_gpu ;;
-  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|docs|coverage|coverage-report|graph-quality|contracts|unit|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
+  *) echo "usage: $0 {deps|security-deps|security-secrets|quality|architecture|docs|coverage|coverage-report|graph-quality|contracts|unit|unit-shard|build|integration|research|slow|parity|training-smoke|fast|full|gpu|triton}" >&2; exit 2 ;;
 esac

@@ -8,4 +8,4 @@ Keep public strategy/provider contracts independent of broker SDK types. Adapter
 
 ## Entry points
 
-Use [live and infrastructure](../../framework/live_and_infrastructure) for system boundaries and [add a broker adapter](../../how-to/add_broker_adapter) for implementation. Generated references: {doc}`live <../generated/live/index>` and {doc}`integrations <../generated/integrations/index>`.
+Use [live and infrastructure](../../framework/live_and_infrastructure) for system boundaries and the [integration module guide](../../modules/integrations) for the broker boundary. Generated references: {doc}`live <../generated/live/index>` and {doc}`integrations <../generated/integrations/index>`.

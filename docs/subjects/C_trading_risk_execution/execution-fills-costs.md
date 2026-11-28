@@ -61,7 +61,7 @@ examples/execution-fills-costs
 
 ## Tasks
 
-- Use [add broker adapter](../../how-to/add_broker_adapter.md) when translating this contract to a real provider.
+- Keep provider-specific quote and order translation inside the integration boundary.
 - Use [prepare market data](../../how-to/prepare_market_data.md) to inspect source spread and timestamps.
 - Use [evaluate checkpoint](../../how-to/evaluate_checkpoint.md) for registered performance reports.
 - Cross-check [stops and targets](stops-targets-multi-tp-exits.md) for proposed protective geometry.

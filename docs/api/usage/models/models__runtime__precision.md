@@ -36,7 +36,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert getattr(encoder, "_amp_wrapped", False) is False
 ```
 
-2. [production caller: `_finalize_cuda_policy`](../../../../learning/rl/agent.py#L1045)
+2. [production caller: `_finalize_cuda_policy`](../../../../learning/rl/agent.py#L771)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

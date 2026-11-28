@@ -92,10 +92,10 @@ full coordinate details.
 
 ## Tasks
 
-- Follow [add an action schema](../../how-to/add_action_schema.md) when a new
-  action meaning is required.
-- Use [schema versioning guidance](../../how-to/schema_version_change.md) when
-  a serialized coordinate or mask contract changes.
+- Use the [action schema reference](../../reference/action_schemas.md) for
+  current coordinates and masks.
+- Use [schema compatibility guidance](../../reference/cache_and_schema_versions.md)
+  when reviewing serialized coordinate or mask changes.
 - Read the [action schema reference](../../reference/action_schemas.md) before
   interpreting model artifacts or action logs.
 
