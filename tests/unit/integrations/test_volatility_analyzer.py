@@ -21,7 +21,13 @@ from integrations.mt5.domain import volatility_analyzer as va  # noqa: E402
 
 mt5: Any = sys.modules["MetaTrader5"]
 
-for _name in ("symbol_select", "copy_rates_from_pos", "symbol_info_tick", "shutdown"):
+for _name in (
+    "symbol_select",
+    "copy_rates_from_pos",
+    "symbol_info_tick",
+    "symbol_info",
+    "shutdown",
+):
     if not hasattr(mt5, _name):
         setattr(mt5, _name, lambda *_args, **_kwargs: None)
 
