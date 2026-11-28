@@ -205,7 +205,10 @@ def test_receipt_destination_survives_test_environment_changes(tmp_path: Path) -
             "-q",
             str(source),
         ],
-        env={**os.environ, "QRL_LOCAL_RECEIPTS": str(receipts)},
+        env={
+            **{key: value for key, value in os.environ.items() if not key.startswith("QRL_LOCAL_")},
+            "QRL_LOCAL_RECEIPTS": str(receipts),
+        },
         capture_output=True,
         text=True,
         timeout=60,

@@ -294,7 +294,7 @@ def run_static_analyzers(out: Path, timeout: int, selected: list[str]) -> dict[s
         if row["status"] in {"ok", "findings"}:
             try:
                 report = file_report or log
-                partial = []
+                partial: list[dict[str, Any]] = []
                 if tool in {"bandit", "semgrep", "pip-audit"}:
                     raw = read_quality_json(report)
                     usable, partial = partition_partial_report(tool, raw, ROOT)
