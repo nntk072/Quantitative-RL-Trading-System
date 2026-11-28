@@ -157,7 +157,7 @@ def run_python_mutation(
         "incomplete"
         if summary["status"] != "complete"
         else "findings"
-        if summary["counts"]["survived"]
+        if any(summary["counts"].get(k) for k in ("survived", "segfault", "suspicious"))
         else "ok"
     )
     return {

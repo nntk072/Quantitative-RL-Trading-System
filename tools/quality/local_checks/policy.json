@@ -43,8 +43,8 @@
     "artifacts/"
   ],
   "markers": {
-    "unit": "unit and not slow and not gpu and not triton and not research",
-    "integration": "integration and not slow and not gpu and not triton and not research"
+    "unit": "unit and not slow and not integration and not architecture and not gpu and not triton and not research",
+    "integration": "integration and not slow"
   },
   "profiles": {
     "fast": [
