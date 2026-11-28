@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -215,11 +216,12 @@ def _semantic_command(args: argparse.Namespace, out: Path) -> dict[str, Any]:
                 "status": "not_run",
                 "reason": "No registered executable hardware scenario suite",
             }
-        # Collapse selectors to unique files for collection; select exact node IDs below.
+        # A whole-file selector subsumes all node selectors in the same file.
+        selected = [s for s in selectors if "::" not in s or s.split("::", 1)[0] not in selectors]
         result = run_balanced_test_shards(
             out,
             args.timeout,
-            sorted(set(selectors)),
+            sorted(set(selected)),
             "not slow and not gpu and not triton and not research",
             1,
             1,
@@ -293,6 +295,8 @@ def _analysis_command(
                 out, args.timeout, args.language, args.query, args.build, args.threads
             )
         case "import-findings":
+            if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", args.tool):
+                raise ValueError("Invalid analyzer identifier")
             rows = read_analyzer_report(args.tool, args.report, ROOT)
             publish_analyzer_findings(out, args.tool, rows)
             return {

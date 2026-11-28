@@ -37,9 +37,16 @@ jobs:
           git diff -- tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
           echo QRL_FORMAT_DIFF_END
           uv run --no-sync ruff check tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
+      - name: Validate repository ownership catalogs
+        run: uv run --no-sync pytest -q tests/unit/research_tools/test_study_catalog.py
+      - name: Check scoped types
+        if: always()
+        run: uv run --no-sync mypy tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
       - name: Test scoped infrastructure and independent product oracles
+        if: always()
         run: uv run --no-sync pytest -q tests/unit/tooling/test_local_quality_*.py
       - name: Exercise local command surface without training
+        if: always()
         shell: bash
         run: |
           export QRL_PYTHON="$PWD/.venv/bin/python"

@@ -141,7 +141,7 @@ def audit_quality_exclusions(base: str) -> dict[str, Any]:
         path = ROOT / name
         if path.is_file() and not path.is_symlink():
             current[name] = _coverage_pragmas(path.read_text())
-        if name in old_names and current.get(name):
+        if name in old_names:
             prior[name] = _coverage_pragmas(quality_git("show", f"{merged}:{name}").decode())
     changed = []
     for name, rows in current.items():
@@ -149,6 +149,12 @@ def audit_quality_exclusions(base: str) -> dict[str, Any]:
         for row in rows:
             if row not in prior.get(name, []):
                 changed.append({"path": name, **row})
+    removed = [
+        {"path": name, **row}
+        for name, rows in prior.items()
+        for row in rows
+        if row not in current.get(name, [])
+    ]
     cfg = tomllib.loads((ROOT / "pyproject.toml").read_text())["tool"]["coverage"]
     old_cfg = tomllib.loads(quality_git("show", f"{merged}:pyproject.toml").decode())["tool"][
         "coverage"
@@ -160,10 +166,11 @@ def audit_quality_exclusions(base: str) -> dict[str, Any]:
         for row in rows
         if f"`{name}`" not in doc
     ]
-    findings = bool(changed or undocumented or cfg != old_cfg)
+    findings = bool(changed or removed or undocumented or cfg != old_cfg)
     return {
         "status": "findings" if findings else "ok",
         "new_or_moved": changed,
+        "removed_or_moved": removed,
         "undocumented": undocumented,
         "configuration_changed": cfg != old_cfg,
         "base": merged,

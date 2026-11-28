@@ -17,6 +17,10 @@ STATES = (
     "unexecuted",
     "equivalent",
     "unknown",
+    "interrupted",
+    "segfault",
+    "type_check",
+    "not_checked",
 )
 
 ALIASES = {
@@ -32,13 +36,16 @@ ALIASES = {
     "invalid": "invalid",
     "suspicious": "suspicious",
     "skipped": "unexecuted",
-    "not checked": "unexecuted",
+    "not checked": "not_checked",
     "not run": "unexecuted",
     "not_run": "unexecuted",
     "unchecked": "unexecuted",
     "unexecuted": "unexecuted",
     "type check error": "invalid",
-    "caught by type checker": "invalid",
+    "caught by type checker": "type_check",
+    "caught by type check": "type_check",
+    "check was interrupted by user": "interrupted",
+    "segfault": "segfault",
 }
 
 
@@ -59,6 +66,10 @@ def _mutation_counts(raw: dict[str, Any], tool: str) -> dict[str, int | None]:
         "invalid": "unviable" if tool == "cargo-mutants" else "invalid",
         "suspicious": "suspicious",
         "unexecuted": "skipped",
+        "interrupted": "check_was_interrupted_by_user",
+        "segfault": "segfault",
+        "type_check": "caught_by_type_check",
+        "not_checked": "not_checked",
     }
     if not all(keys[k] in raw for k in ("killed", "survived", "timeout")):
         raise ValueError(f"Unsupported {tool} mutation summary")
@@ -106,12 +117,15 @@ def summarize_mutation_results(
                 raise ValueError(f"Mutation status mismatch: {state}")
         counts = observed
         residual = 0
+    unfinished = any(counts.get(state) for state in ("not_checked", "interrupted"))
+    complete = complete and not unfinished
     killed = counts["killed"] or 0
     survived = counts["survived"] or 0
     denominator = killed + survived
     return {
         "schema_version": 1,
         "tool": tool,
+        "native_counts": raw,
         "scope": scope,
         "status": "complete" if complete and residual == 0 else "incomplete",
         "generated": total,

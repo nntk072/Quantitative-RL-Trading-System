@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.quality.coverage_report import PRODUCT_PACKAGES
-from tools.quality.local_checks.mutation_results import summarize_mutation_results
+from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize_mutation_results
 from tools.quality.local_checks.resources import discover_worker_capacity
 from tools.quality.local_checks.run_evidence import (
     OUTPUT,
@@ -130,6 +130,12 @@ def run_python_mutation(
     if not report.is_file():
         return {"status": "incomplete", "worktree": str(checkout), "stages": stages}
     shutil.copyfile(report, out / "mutmut-native.json")
+    details = stages.get("details", {})
+    mutants = (
+        parse_mutmut_results((out / "mutation-details.log").read_text())
+        if details.get("status") == "ok"
+        else None
+    )
     summary = summarize_mutation_results(
         read_quality_json(report),
         tool="mutmut",
@@ -139,7 +145,12 @@ def run_python_mutation(
             "patterns": patterns,
             "only_mutate": config["only_mutate"],
         },
-        complete=run["status"] == "ok",
+        complete=(
+            run["status"] == "ok"
+            and stages.get("stats", {}).get("status") == "ok"
+            and mutants is not None
+        ),
+        mutants=mutants,
     )
     write_quality_json(out / "mutation-summary.json", summary)
     status = (
