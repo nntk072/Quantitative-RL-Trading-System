@@ -10,11 +10,11 @@ Compatibility names and experimental exports remain labeled explicitly.
 
 | Classification | Exported names |
 |---|---:|
-| stable | 798 |
+| stable | 826 |
 | experimental | 0 |
 | compatibility-only | 10 |
 | cross-package internal | 654 |
-| private implementation | 1125 |
+| private implementation | 1127 |
 
 ## Public package exports
 
@@ -226,9 +226,9 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `CalibrationReport.summary` | method | [evaluation.metrics.calibration](../../evaluation/metrics/calibration.py#L31) | stable |
 | `plot_drawdown` | function | [evaluation.plotting.performance.equity](../../evaluation/plotting/performance/equity.py#L247) | stable |
 | `plot_equity_curve` | function | [evaluation.plotting.performance.equity](../../evaluation/plotting/performance/equity.py#L41) | stable |
-| `plot_per_trade_orders` | function | [evaluation.plotting.orders](../../evaluation/plotting/orders.py#L626) | stable |
+| `plot_per_trade_orders` | external | [None](../../evaluation/plotting/__init__.py) | stable |
 | `plot_per_trade_orders_html (alias for plot_per_trade_orders)` | function | [evaluation.plotting.interactive.orders](../../evaluation/plotting/interactive/orders.py#L217) | stable |
-| `plot_price_with_orders` | function | [evaluation.plotting.orders](../../evaluation/plotting/orders.py#L37) | stable |
+| `plot_price_with_orders` | external | [None](../../evaluation/plotting/__init__.py) | stable |
 | `plot_activity_24h` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
 | `plot_annotated_ny_session` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
 | `plot_coverage_calendar` | external | [None](../../evaluation/plotting/data/__init__.py) | stable |
@@ -272,6 +272,16 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `plot_price_with_orders` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
 | `plot_returns_dist` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
 | `plot_trade_pnl_hist` | external | [None](../../evaluation/plotting/interactive/__init__.py) | stable |
+| `plot_per_trade_orders` | external | [None](../../evaluation/plotting/orders/__init__.py) | stable |
+| `plot_price_with_orders` | external | [None](../../evaluation/plotting/orders/__init__.py) | stable |
+| `plot_baseline_comparison` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_daily_pnl` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_direction_summary` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_drawdown` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_equity_curve` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_monthly_returns_heatmap` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_returns_dist` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
+| `plot_trade_pnl_hist` | external | [None](../../evaluation/plotting/performance/__init__.py) | stable |
 | `BREACH_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
 | `CLOSE_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
 | `EQUITY_COLOR` | external | [None](../../evaluation/plotting/shared/__init__.py) | stable |
@@ -678,9 +688,27 @@ Compatibility names and experimental exports remain labeled explicitly.
 | `strategy_from_cfg` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L145) | stable |
 | `strategy_risk_ranges` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L25) | stable |
 | `tick_execution_required` | function | [simulation.environment.trading_environment_factory](../../simulation/environment/trading_environment_factory.py#L423) | stable |
+| `DebugStepError` | class | [simulation.environment.diagnostics.errors](../../simulation/environment/diagnostics/errors.py#L18) | stable |
+| `jsonable` | function | [simulation.environment.diagnostics.errors](../../simulation/environment/diagnostics/errors.py#L224) | stable |
+| `new_debug_window` | function | [simulation.environment.diagnostics.errors](../../simulation/environment/diagnostics/errors.py#L40) | stable |
+| `note_debug_step` | function | [simulation.environment.diagnostics.errors](../../simulation/environment/diagnostics/errors.py#L68) | stable |
+| `summarize_window` | function | [simulation.environment.diagnostics.errors](../../simulation/environment/diagnostics/errors.py#L142) | stable |
+| `wiring_from_env` | function | [simulation.environment.diagnostics.errors](../../simulation/environment/diagnostics/errors.py#L175) | stable |
 | `TradingEnv.from_bundle` | method | [simulation.environment.env](../../simulation/environment/env.py#L440) | stable |
 | `TradingEnv.step` | method | [simulation.environment.env](../../simulation/environment/env.py#L473) | stable |
 | `TradingEnv.transition` | method | [simulation.environment.env](../../simulation/environment/env.py#L487) | stable |
+| `AVAILABLE_OBSERVATION_TIMEFRAMES` | value | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L16) | stable |
+| `DEFAULT_HTF_WINDOWS` | value | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L33) | stable |
+| `DEFAULT_MTF_TIMEFRAMES` | value | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L32) | stable |
+| `HTF_BRANCHES` | value | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L27) | stable |
+| `closed_window` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L516) | stable |
+| `closed_window_raw` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L172) | stable |
+| `prepare_observation_feature_channels` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L61) | stable |
+| `prepare_observation_feature_channels_many` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L475) | stable |
+| `run_starts` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L121) | stable |
+| `sanitize_observation_values` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L45) | stable |
+| `split_obs_columns` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L88) | stable |
+| `timeframe_starts` | function | [simulation.environment.observations.schema](../../simulation/environment/observations/schema.py#L142) | stable |
 
 ### `trading`
 

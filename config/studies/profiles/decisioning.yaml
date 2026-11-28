@@ -61,7 +61,6 @@ caller_paths:
 - simulation/environment/episode/lifecycle.py
 - simulation/environment/episode_spaces_initialization.py
 - simulation/environment/observation_arrays_initialization.py
-- simulation/environment/observations.py
 - simulation/environment/observations/runtime.py
 - simulation/environment/observations/schema.py
 - simulation/environment/risk_entry_initialization.py

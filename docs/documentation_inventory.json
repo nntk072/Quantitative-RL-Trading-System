@@ -1,5 +1,5 @@
 {
-  "page_count": 470,
+  "page_count": 471,
   "pages": [
     {
       "links": [
@@ -911,22 +911,6 @@
       "section": "api",
       "status": "current",
       "title": "Evaluation \u00b7 `plotting.interactive.orders`",
-      "type": "reference"
-    },
-    {
-      "links": [
-        "../../../../evaluation/plotting/orders.py#L626",
-        "../../../../tests/unit/evaluation/test_order_plot_origin_contract.py#L82",
-        "../../../../evaluation/plotting/orders.py#L37"
-      ],
-      "orphan_status": "in toctree",
-      "path": "docs/api/usage/evaluation/evaluation__plotting__orders.md",
-      "primary_navigation_owner": [
-        "API"
-      ],
-      "section": "api",
-      "status": "current",
-      "title": "Evaluation \u00b7 `plotting.orders`",
       "type": "reference"
     },
     {
@@ -2916,6 +2900,37 @@
     },
     {
       "links": [
+        "../../../../simulation/environment/diagnostics/errors.py#L18",
+        "../../../../simulation/environment/diagnostics/errors.py#L96",
+        "../../../../simulation/environment/env.py#L507",
+        "../../../../simulation/environment/diagnostics/errors.py#L224",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L129",
+        "../../../../simulation/environment/diagnostics/errors.py#L99",
+        "../../../../simulation/environment/diagnostics/errors.py#L40",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L48",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L101",
+        "../../../../simulation/environment/diagnostics/errors.py#L68",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L33",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L105",
+        "../../../../simulation/environment/diagnostics/errors.py#L142",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L73",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L125",
+        "../../../../simulation/environment/diagnostics/errors.py#L175",
+        "../../../../tests/unit/simulation/test_environment/test_diagnostics_coverage.py#L148",
+        "../../../../simulation/environment/diagnostics/runtime.py#L52"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/simulation/simulation__environment__diagnostics__errors.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Simulation \u00b7 `environment.diagnostics.errors`",
+      "type": "reference"
+    },
+    {
+      "links": [
         "../../../../simulation/environment/env.py#L34",
         "../../../../tests/integration/backtest/test_account_transition_parity.py#L69",
         "../../../../tests/integration/backtest/test_account_transition_parity.py#L133",
@@ -2940,6 +2955,39 @@
       "section": "api",
       "status": "current",
       "title": "Simulation \u00b7 `environment.env`",
+      "type": "reference"
+    },
+    {
+      "links": [
+        "../../../../simulation/environment/observations/schema.py#L516",
+        "../../../../tests/unit/simulation/test_environment/test_mtf_windows.py#L30",
+        "../../../../tests/unit/simulation/test_environment/test_mtf_windows.py#L44",
+        "../../../../simulation/environment/observations/schema.py#L172",
+        "../../../../simulation/environment/observations/schema.py#L372",
+        "../../../../simulation/environment/observations/schema.py#L61",
+        "../../../../tests/unit/features/test_pd_context.py#L204",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1196",
+        "../../../../simulation/environment/observations/schema.py#L475",
+        "../../../../simulation/environment/observations/schema.py#L121",
+        "../../../../tests/unit/simulation/test_environment/test_mtf_windows.py#L30",
+        "../../../../simulation/environment/observations/schema.py#L45",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1351",
+        "../../../../simulation/environment/observations/runtime.py#L295",
+        "../../../../simulation/environment/observations/schema.py#L88",
+        "../../../../simulation/backtest/event_driven_backtest.py#L1091",
+        "../../../../simulation/environment/observation_arrays_initialization.py#L303",
+        "../../../../simulation/environment/observations/schema.py#L142",
+        "../../../../tests/unit/simulation/test_environment/test_mtf_windows.py#L305",
+        "../../../../tests/unit/simulation/test_environment/test_mtf_windows.py#L317"
+      ],
+      "orphan_status": "in toctree",
+      "path": "docs/api/usage/simulation/simulation__environment__observations__schema.md",
+      "primary_navigation_owner": [
+        "API"
+      ],
+      "section": "api",
+      "status": "current",
+      "title": "Simulation \u00b7 `environment.observations.schema`",
       "type": "reference"
     },
     {
@@ -6202,9 +6250,9 @@
         "../../evaluation/metrics/calibration.py#L31",
         "../../evaluation/plotting/performance/equity.py#L247",
         "../../evaluation/plotting/performance/equity.py#L41",
-        "../../evaluation/plotting/orders.py#L626",
+        "../../evaluation/plotting/__init__.py",
         "../../evaluation/plotting/interactive/orders.py#L217",
-        "../../evaluation/plotting/orders.py#L37",
+        "../../evaluation/plotting/__init__.py",
         "../../evaluation/plotting/data/__init__.py",
         "../../evaluation/plotting/data/__init__.py",
         "../../evaluation/plotting/data/__init__.py",
@@ -6248,6 +6296,16 @@
         "../../evaluation/plotting/interactive/__init__.py",
         "../../evaluation/plotting/interactive/__init__.py",
         "../../evaluation/plotting/interactive/__init__.py",
+        "../../evaluation/plotting/orders/__init__.py",
+        "../../evaluation/plotting/orders/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
+        "../../evaluation/plotting/performance/__init__.py",
         "../../evaluation/plotting/shared/__init__.py",
         "../../evaluation/plotting/shared/__init__.py",
         "../../evaluation/plotting/shared/__init__.py",
@@ -6614,9 +6672,27 @@
         "../../simulation/environment/trading_environment_factory.py#L145",
         "../../simulation/environment/trading_environment_factory.py#L25",
         "../../simulation/environment/trading_environment_factory.py#L423",
+        "../../simulation/environment/diagnostics/errors.py#L18",
+        "../../simulation/environment/diagnostics/errors.py#L224",
+        "../../simulation/environment/diagnostics/errors.py#L40",
+        "../../simulation/environment/diagnostics/errors.py#L68",
+        "../../simulation/environment/diagnostics/errors.py#L142",
+        "../../simulation/environment/diagnostics/errors.py#L175",
         "../../simulation/environment/env.py#L440",
         "../../simulation/environment/env.py#L473",
         "../../simulation/environment/env.py#L487",
+        "../../simulation/environment/observations/schema.py#L16",
+        "../../simulation/environment/observations/schema.py#L33",
+        "../../simulation/environment/observations/schema.py#L32",
+        "../../simulation/environment/observations/schema.py#L27",
+        "../../simulation/environment/observations/schema.py#L516",
+        "../../simulation/environment/observations/schema.py#L172",
+        "../../simulation/environment/observations/schema.py#L61",
+        "../../simulation/environment/observations/schema.py#L475",
+        "../../simulation/environment/observations/schema.py#L121",
+        "../../simulation/environment/observations/schema.py#L45",
+        "../../simulation/environment/observations/schema.py#L88",
+        "../../simulation/environment/observations/schema.py#L142",
         "../../trading/account/account_state.py#L28",
         "../../trading/policy/config.py#L24",
         "../../trading/policy/config.py#L202",

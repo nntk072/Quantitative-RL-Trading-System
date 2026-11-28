@@ -1,6 +1,6 @@
 # Evaluation function usage
 
-This guide contains 80 public callable records across 20 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
+This guide contains 78 public callable records across 19 source modules. Choose a module for function-level purpose, contract, verified call paths, and lifecycle context.
 
 ```{toctree}
 :maxdepth: 1
@@ -13,7 +13,6 @@ evaluation__metrics__limit_execution_sensitivity
 evaluation__metrics__performance
 evaluation__metrics__temporal
 evaluation__plotting__interactive__orders
-evaluation__plotting__orders
 evaluation__plotting__performance__equity
 evaluation__reanalysis
 evaluation__reporting__evaluation_manifest

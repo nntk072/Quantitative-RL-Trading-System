@@ -84,7 +84,6 @@ caller_paths:
 - simulation/environment/execution_controls_initialization.py
 - simulation/environment/market_source_initialization.py
 - simulation/environment/observation_arrays_initialization.py
-- simulation/environment/observations.py
 - simulation/environment/observations/schema.py
 - simulation/environment/exits/protective_levels.py
 - simulation/environment/accounting/step.py
