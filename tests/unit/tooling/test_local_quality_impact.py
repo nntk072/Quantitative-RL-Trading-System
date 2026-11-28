@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
+from tools.quality.local_checks.coverage_tools import changed_coverage_metrics, changed_source_lines, validate_coverage_report
+from tools.quality.local_checks.receipts import read_collected_inventory, validate_test_receipts
+from tools.quality.local_checks.run_evidence import quality_file_sha256, verify_quality_manifest, write_quality_json
+from tools.quality.local_checks.test_scheduling import balance_test_shards
 from tools.quality.local_checks.impact import (
     reverse_imports,
     select_impacted_tests,
@@ -72,3 +77,79 @@ def test_waves_do_not_oversubscribe_memory() -> None:
     assert all(sum(groups[name][1] for name in wave) <= 10 for wave in waves)
     with pytest.raises(ValueError, match="memory"):
         schedule_resource_waves({"too_large": (1.0, 11)}, 3, 10)
+
+
+def test_impact_falls_back_for_dynamic_import_resolution() -> None:
+    sources = {"pkg/a.py": "import importlib\nimportlib.import_module(name)", "tests/test_a.py": "import pkg.a"}
+    result = select_impacted_tests({"pkg/a.py"}, sources, {"tests/test_a.py"}, {"pkg/a.py": {"tests/test_a.py"}})
+    assert result["mode"] == "full"
+
+
+def test_changed_coverage_counts_branches_without_counting_exclusions() -> None:
+    path = "trading/risk/sample.py"
+    changed = changed_source_lines(
+        "diff --git a/trading/risk/sample.py b/trading/risk/sample.py\n"
+        "+++ b/trading/risk/sample.py\n@@ -3,0 +4,3 @@\n"
+    )
+    row = {
+        "executed_lines": [4], "missing_lines": [5], "excluded_lines": [6],
+        "executed_branches": [[4, 5]], "missing_branches": [[4, 7]],
+        "summary": {"covered_lines": 1, "num_statements": 2, "covered_branches": 1, "num_branches": 2},
+    }
+    report = {"files": {path: row}, "meta": {"branch_coverage": True}}
+    validate_coverage_report(report, False)
+    result = changed_coverage_metrics(report, changed, ["trading/"])["files"][path]
+    assert result["statement_total"] == 2
+    assert result["branch_total"] == 2
+    assert result["excluded_changed_lines"] == [6]
+    row["missing_lines"] = [4]
+    with pytest.raises(ValueError, match="Overlapping"):
+        validate_coverage_report(report, False)
+
+
+def test_receipts_reject_partial_and_duplicate_evidence(tmp_path: Path) -> None:
+    path = tmp_path / "receipts.jsonl"
+    node = "tests/test_a.py::test_a"
+    rows = [
+        {"nodeid": node, "phase": phase, "outcome": "passed", "seconds": 0.1, "xfail": False}
+        for phase in ("setup", "call", "teardown")
+    ]
+    path.write_text("\n".join(json.dumps(row) for row in rows))
+    assert validate_test_receipts(path, {node})[node]["status"] == "passed"
+    with pytest.raises(ValueError, match="missing"):
+        validate_test_receipts(path, {node, "tests/test_b.py::test_b"})
+    path.write_text("\n".join(json.dumps(row) for row in rows + [rows[0]]))
+    with pytest.raises(ValueError, match="Duplicate"):
+        validate_test_receipts(path, {node})
+
+
+def test_inventory_and_shards_reject_missing_or_duplicate_nodes(tmp_path: Path) -> None:
+    rows = [{"nodeid": "tests/test_a.py::test_a"}, {"nodeid": "tests/test_b.py::test_b"}]
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    write_quality_json(first, rows)
+    write_quality_json(second, rows[:1])
+    with pytest.raises(ValueError, match="different"):
+        read_collected_inventory([first, second])
+    plan = balance_test_shards(rows, {rows[0]["nodeid"]: 10.0}, 2, True)
+    assert sorted(node for shard in plan for node in shard["nodes"]) == sorted(row["nodeid"] for row in rows)
+    with pytest.raises(ValueError, match="Invalid"):
+        balance_test_shards(rows + rows[:1], {}, 2, True)
+
+
+def test_manifest_rejects_tampered_or_unexpected_artifacts(tmp_path: Path) -> None:
+    data = tmp_path / "result.json"
+    data.write_text("{}")
+    manifest = tmp_path / "manifest.json"
+    write_quality_json(manifest, {
+        "schema_version": 1, "source_unchanged": True,
+        "artifacts": {"result.json": quality_file_sha256(data)},
+    })
+    assert verify_quality_manifest(manifest)["status"] == "ok"
+    data.write_text("tampered")
+    with pytest.raises(ValueError, match="integrity"):
+        verify_quality_manifest(manifest)
+    data.write_text("{}")
+    (tmp_path / "unexpected.json").write_text("{}")
+    with pytest.raises(ValueError, match="unexpected"):
+        verify_quality_manifest(manifest)

@@ -113,6 +113,10 @@ api_paths:
 - tools/quality/local_checks/product_oracles.py
 - tools/quality/local_checks/resources.py
 - tools/quality/local_checks/trace_comparison.py
+- tools/quality/local_checks/coverage_tools.py
+- tools/quality/local_checks/receipts.py
+- tools/quality/local_checks/run_evidence.py
+- tools/quality/local_checks/test_scheduling.py
 caller_paths:
 - tests/architecture/test_module_size_gate.py
 - tests/architecture/test_documentation_contracts.py

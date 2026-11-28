@@ -66,6 +66,18 @@ def _source_import_names(path: str, tree: ast.AST) -> set[str]:
     return names
 
 
+def _has_dynamic_import(source: str) -> bool:
+    """Detect runtime import resolution that the static graph cannot prove."""
+    return any(
+        isinstance(node, ast.Call)
+        and (
+            isinstance(node.func, ast.Name) and node.func.id in {"__import__", "import_module"}
+            or isinstance(node.func, ast.Attribute) and node.func.attr in {"import_module", "spec_from_file_location"}
+        )
+        for node in ast.walk(ast.parse(source))
+    )
+
+
 def reverse_imports(sources: dict[str, str]) -> dict[str, set[str]]:
     """Build a reverse file dependency graph without executing imported modules."""
     by_module = {_python_module_name(path): path for path in sources}
@@ -129,6 +141,8 @@ def select_impacted_tests(
     try:
         graph = reverse_imports(sources)
         affected = transitive_import_dependants(graph, changed)
+        if any(_has_dynamic_import(sources[p]) for p in affected if p in sources):
+            reasons.append("runtime import resolution in affected sources")
     except (SyntaxError, ValueError) as exc:
         graph = {}
         affected = changed
