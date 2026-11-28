@@ -50,7 +50,6 @@ api_paths:
 - scripts/research/analysis/evidence/verify_research_provenance_bytes.py
 - scripts/research/analysis/evidence/verify_result_manifest.py
 - scripts/research/analysis/features/__init__.py
-- scripts/research/analysis/features/audit_observation_warmup_validity_profiles.py
 - scripts/research/analysis/features/build_feature_causality_matrix.py
 - scripts/research/analysis/features/candidate_geometry_support.py
 - scripts/research/analysis/features/count_entry_idea_opportunities.py
@@ -134,7 +133,6 @@ caller_paths:
 - tests/research/test_model_observation_action_artifact_inventory.py
 - tests/research/test_observation_validity_semantics.py
 - tests/research/test_observation_validity_summary.py
-- tests/research/test_observation_warmup_validity_profiles.py
 - tests/research/test_order_block_zone_event_ledger.py
 - tests/research/test_plot_trade_setup_opportunity_census.py
 - tests/research/test_po3_setup_lifecycle_ledger.py
