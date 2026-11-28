@@ -178,6 +178,7 @@ caller_paths:
 - evaluation/plotting/shared/indicators.py
 - tests/unit/simulation/test_environment/test_protective_level_runtime.py
 - tests/unit/simulation/test_policy_action_coverage.py
+- tools/quality/local_checks/product_oracles.py
 source_scopes:
 - path: market_data/arrow_schemas.py
   study_ids:

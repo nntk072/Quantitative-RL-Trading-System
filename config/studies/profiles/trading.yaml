@@ -196,6 +196,7 @@ caller_paths:
 - evaluation/plotting/orders/geometry.py
 - evaluation/plotting/shared/levels.py
 - tests/unit/evaluation/test_account_state_trace_reconciliation_remaining_contracts.py
+- tools/quality/local_checks/product_oracles.py
 source_scopes:
 - path: trading/account
   study_ids:

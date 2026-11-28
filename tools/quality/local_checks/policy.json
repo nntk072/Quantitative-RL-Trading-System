@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "enforcement": {
+    "existing_ci": "unchanged",
+    "coverage": "advisory",
+    "branch": "advisory",
+    "diff": "advisory",
+    "static": "advisory",
+    "mutation": "advisory",
+    "semantic": "advisory",
+    "parity": "advisory",
+    "performance": "advisory",
+    "native": "advisory",
+    "properties": "advisory",
+    "fuzz": "advisory",
+    "debt": "advisory",
+    "test-inventory": "advisory",
+    "test-shards": "advisory",
+    "impacted": "advisory",
+    "environment": "advisory",
+    "dashboard": "advisory",
+    "cache": "advisory"
+  },
+  "targets": {
+    "statement": 100,
+    "branch": 98,
+    "changed_statement": 95,
+    "changed_branch": 90,
+    "critical_changed_statement": 100,
+    "critical_changed_branch": 100,
+    "mutation_critical": 95,
+    "mutation_ordinary": 85
+  },
+  "critical_prefixes": [
+    "trading/",
+    "simulation/environment/",
+    "market_data/loading/",
+    "market_data/splits/",
+    "market_data/transforms/align.py",
+    "decisioning/",
+    "learning/rl/",
+    "configuration/",
+    "artifacts/"
+  ],
+  "markers": {
+    "unit": "unit and not slow and not integration and not architecture and not gpu and not triton and not research",
+    "integration": "integration and not slow"
+  },
+  "profiles": {
+    "fast": [
+      "ruff",
+      "mypy",
+      "shellcheck",
+      "actionlint"
+    ],
+    "deep": [
+      "bandit",
+      "semgrep",
+      "vulture",
+      "radon",
+      "xenon"
+    ],
+    "security": [
+      "pip-audit",
+      "gitleaks",
+      "osv-scanner",
+      "trivy"
+    ],
+    "infrastructure": [
+      "checkov",
+      "hadolint",
+      "sqlfluff"
+    ]
+  }
+}

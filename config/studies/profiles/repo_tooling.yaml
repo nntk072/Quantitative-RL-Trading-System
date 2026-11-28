@@ -107,6 +107,16 @@ api_paths:
 - tools/quality/repository_audit.py
 - tools/quality/research_script_migration.py
 - tools/quality/test_overlap.py
+- tools/quality/local_checks/impact.py
+- tools/quality/local_checks/mutation_results.py
+- tools/quality/local_checks/normalization.py
+- tools/quality/local_checks/product_oracles.py
+- tools/quality/local_checks/resources.py
+- tools/quality/local_checks/trace_comparison.py
+- tools/quality/local_checks/coverage_tools.py
+- tools/quality/local_checks/receipts.py
+- tools/quality/local_checks/run_evidence.py
+- tools/quality/local_checks/test_scheduling.py
 caller_paths:
 - tests/architecture/test_module_size_gate.py
 - tests/architecture/test_documentation_contracts.py
@@ -201,6 +211,9 @@ caller_paths:
 - tests/unit/tooling/test_repository_audit.py
 - tests/unit/tooling/test_research_script_migration.py
 - tests/unit/tooling/test_test_overlap.py
+- tests/unit/tooling/test_local_quality_impact.py
+- tests/unit/tooling/test_local_quality_normalization.py
+- tests/unit/tooling/test_local_quality_product_oracles.py
 source_scopes:
   - {path: tools/agent, study_ids: [repo_tooling.architecture_and_documentation_contracts]}
   - {path: tools/documentation, study_ids: [repo_tooling.package_cli_and_dependency_surface, repo_tooling.architecture_and_documentation_contracts]}

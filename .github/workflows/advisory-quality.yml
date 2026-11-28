@@ -1,0 +1,359 @@
+name: Advisory quality
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  UV_FROZEN: "1"
+  QRL_CHECK_NO_SYNC: "1"
+  SEMGREP_SEND_METRICS: "off"
+  QRL_OSV_UPDATE: "1"
+
+jobs:
+  groups:
+    name: advisory / ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        group:
+          - infrastructure
+          - static-analysis
+          - technical-debt
+          - security
+          - scientific-parity
+          - property-fuzz
+          - mutation
+          - native-environment
+          - coverity
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.17"
+          enable-cache: true
+      - name: Install locked product environment
+        run: |
+          if [[ "$GROUP" == mutation ]]; then
+            uv sync --extra dev --extra mutation
+          else
+            uv sync --extra dev
+          fi
+          echo "QRL_PYTHON=$PWD/.venv/bin/python" >> "$GITHUB_ENV"
+        env:
+          GROUP: ${{ matrix.group }}
+      - name: Install group-specific tools
+        shell: bash
+        env:
+          GROUP: ${{ matrix.group }}
+        run: |
+          set +e
+          failed=0
+          install_tool() {
+            uv tool install --python 3.12 "$1" || failed=1
+          }
+          install_binary() {
+            local url="$1" digest="$2" name="$3" archive="$4"
+            local tmp
+            tmp=$(mktemp -d)
+            curl --fail --silent --show-error --location --retry 2 "$url" -o "$tmp/download" &&
+              echo "$digest  $tmp/download" | sha256sum -c - || { failed=1; return; }
+            if [[ "$archive" == tar ]]; then
+              tar -xzf "$tmp/download" -C "$tmp" "$name" || { failed=1; return; }
+              install -m 755 "$tmp/$name" "$RUNNER_TEMP/advisory-bin/$name" || failed=1
+            else
+              install -m 755 "$tmp/download" "$RUNNER_TEMP/advisory-bin/$name" || failed=1
+            fi
+          }
+          mkdir -p "$RUNNER_TEMP/advisory-bin"
+          echo "$RUNNER_TEMP/advisory-bin" >> "$GITHUB_PATH"
+          uv tool dir --bin >> "$GITHUB_PATH"
+          case "$GROUP" in
+            static-analysis)
+              install_tool semgrep==1.187.0
+              install_tool bandit==1.9.4
+              ;;
+            technical-debt)
+              install_tool vulture==2.16
+              install_tool radon==6.0.1
+              install_tool xenon==0.9.3
+              ;;
+            security)
+              install_tool pip-audit==2.9.0
+              install_tool checkov==3.2.495
+              install_binary https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb gitleaks tar
+              install_binary https://github.com/google/osv-scanner/releases/download/v2.7.1/osv-scanner_linux_amd64 fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8 osv-scanner binary
+              install_binary https://github.com/aquasecurity/trivy/releases/download/v0.76.2/trivy_0.76.2_Linux-64bit.tar.gz bc0fc726e017b8927a62b2d3531d7a84ee01769daf5c99ed866dced54089fdbf trivy tar
+              if [[ -x "$RUNNER_TEMP/advisory-bin/trivy" ]]; then
+                "$RUNNER_TEMP/advisory-bin/trivy" image --download-db-only || failed=1
+              fi
+              ;;
+            infrastructure)
+              install_tool sqlfluff==3.4.2
+              GOBIN="$RUNNER_TEMP/advisory-bin" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 || failed=1
+              install_binary https://github.com/hadolint/hadolint/releases/download/v2.15.1/hadolint-linux-x86_64 c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507 hadolint binary
+              ;;
+            property-fuzz)
+              uv pip install --python "$QRL_PYTHON" atheris==3.1.0 || failed=1
+              ;;
+          esac
+          exit "$failed"
+      - name: Execute independent advisory checks
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GROUP: ${{ matrix.group }}
+        run: |
+          set +e
+          failed=0
+          receipts="$RUNNER_TEMP/advisory-checks.tsv"
+          : > "$receipts"
+          run_check() {
+            local label="$1" code=0
+            printf 'Running advisory check: %s\n' "$label"
+            shift
+            "$@" || code=$?
+            printf '%s\t%s\n' "$label" "$code" >> "$receipts"
+            if [[ "$code" != 0 ]]; then failed=1; fi
+          }
+          quality() {
+            ./tools/check local-quality "$@"
+          }
+          case "$GROUP" in
+            infrastructure)
+              run_check quality-format "$QRL_PYTHON" -m ruff format --check --diff tools/quality/local_checks tests/unit/tooling/test_local_quality_impact.py tests/unit/tooling/test_local_quality_normalization.py tests/unit/tooling/test_local_quality_product_oracles.py
+              run_check infrastructure-tests "$QRL_PYTHON" -m pytest -q tests/unit/tooling/test_local_quality_impact.py tests/unit/tooling/test_local_quality_normalization.py
+              run_check workflow-and-shell quality --timeout 120 static actionlint shellcheck hadolint sqlfluff
+              ;;
+            static-analysis)
+              run_check python-static quality --timeout 180 static ruff mypy semgrep bandit
+              ;;
+            technical-debt)
+              run_check debt quality debt
+              run_check complexity quality --timeout 120 static vulture radon xenon
+              ;;
+            security)
+              run_check security quality --timeout 180 static pip-audit gitleaks osv-scanner trivy checkov
+              ;;
+            scientific-parity)
+              run_check product-oracles "$QRL_PYTHON" -m pytest -q tests/unit/tooling/test_local_quality_product_oracles.py
+              run_check semantic-registry quality semantic
+              run_check semantic-cpu quality --timeout 300 semantic --run
+              for pair in frame-bundle gym-transition backtest rollout-buffer ppo-math; do
+                run_check "$pair" quality --timeout 180 product-parity "$pair"
+              done
+              ;;
+            property-fuzz)
+              run_check properties quality --timeout 120 properties --target all --profile dev
+              for target in risk actions ticks chronology accounting provenance; do
+                run_check "$target" quality --timeout 90 fuzz --target "$target" --seconds 10
+              done
+              ;;
+            mutation)
+              run_check bounded-mutation quality --timeout 240 mutation --scope account-limits --test tests/unit/trading/test_semantic_oracle_limits_sizing.py --children 2
+              ;;
+            native-environment)
+              run_check native-inventory quality native
+              run_check rust-format quality --timeout 120 native rust fmt
+              run_check cpp-analysis quality --timeout 120 native cpp cppcheck
+              run_check sql-lint quality --timeout 120 native sql lint
+              run_check web-lint quality --timeout 120 native web lint
+              run_check tool-inventory quality doctor
+              for profile in cpu gpu analyzers; do
+                run_check "$profile" quality environment "$profile" plan
+              done
+              run_check cache quality cache --profile gpu
+              run_check repository-inventory quality inventory
+              run_check dashboard quality dashboard
+              ;;
+            coverity)
+              # Do not download a licensed kit, expose secrets or use a persistent
+              # self-hosted runner for arbitrary pull-request code.
+              if command -v coverity >/dev/null; then
+                run_check coverity quality --timeout 300 coverity
+              else
+                echo "::notice::Coverity unavailable on the hosted runner (licensed kit required)"
+                quality --timeout 30 coverity || true
+              fi
+              ;;
+          esac
+          exit "$failed"
+      - name: Publish advisory status summary
+        if: always()
+        env:
+          GROUP: ${{ matrix.group }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          rows = []
+          for path in sorted(Path("outputs/quality-local").glob("*/manifest.json")):
+              data = json.loads(path.read_text())
+              result = data.get("result", {})
+              rows.append({
+                  "action": data["action"],
+                  "status": data["execution_status"],
+                  "source_commit": data["source_commit"],
+                  "tools": {k: {"status": v.get("status"), "findings": v.get("findings_count"),
+                                 "skipped": v.get("skipped_count"), "returncode": v.get("returncode"),
+                                 "error_type": v.get("error_type"),
+                                 "scope_exclusions": v.get("skipped", []) if k == "pip-audit" else []}
+                            for k, v in result.get("tools", {}).items()},
+                  "stages": {k: {"status": v.get("status"), "returncode": v.get("returncode")}
+                             for k, v in result.get("stages", {}).items()},
+                  "mutation_counts": result.get("summary", {}).get("counts") if data["action"] == "mutation" else None,
+                  "findings_count": result.get("findings_count"),
+                  "scenario_counts": result.get("counts") if data["action"] == "semantic" else None,
+                  "diagnostic": result.get("error") if result.get("error") in {
+                      "Unexpected test or phase", "Duplicate or invalid receipt",
+                      "Invalid test duration", "Collected tests are missing execution evidence",
+                      "Shard did not collect its assigned test inventory",
+                      "No inventory files", "Empty or duplicate inventory",
+                      "Workers collected different tests", "Invalid inventory or shard count",
+                  } else None,
+                  "error_type": result.get("error_type"),
+              })
+          directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-report"
+          directory.mkdir(exist_ok=True)
+          receipts = Path(os.environ["RUNNER_TEMP"]) / "advisory-checks.tsv"
+          checks = [{"check": line.split("\t")[0], "exit": int(line.split("\t")[1])}
+                    for line in receipts.read_text().splitlines()] if receipts.is_file() else []
+          payload = {"group": os.environ["GROUP"], "commit": os.environ["GITHUB_SHA"],
+                     "checks": checks, "manifests": rows}
+          (directory / "status.json").write_text(json.dumps(payload, indent=2) + "\n")
+          print(json.dumps(payload, indent=2))
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
+              f.write("## Advisory: " + os.environ["GROUP"] + "\n\n")
+              f.write("| Check | Status |\n|---|---|\n")
+              for check in checks:
+                  f.write(f"| {check['check']} | exit {check['exit']} |\n")
+              for row in rows:
+                  f.write(f"| {row['action']} | {row['status']} |\n")
+                  for name, tool in row["tools"].items():
+                      f.write(f"| {name} | {tool['status']} |\n")
+              if not rows:
+                  f.write("\nNo local manifests produced; inspect the job steps.\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: advisory-${{ matrix.group }}
+          path: ${{ runner.temp }}/advisory-report/status.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  codeql:
+    name: advisory / codeql
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python
+          build-mode: none
+      - uses: github/codeql-action/analyze@v4
+        id: codeql-analysis
+        with:
+          upload: never
+          upload-database: false
+          output: ${{ runner.temp }}/codeql-results
+      - name: Report finding count without publishing source snippets
+        if: always()
+        env:
+          ANALYSIS_OUTCOME: ${{ steps.codeql-analysis.outcome }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          reports = list((Path(os.environ["RUNNER_TEMP"]) / "codeql-results").glob("*.sarif"))
+          count = sum(len(run.get("results", [])) for path in reports
+                      for run in json.loads(path.read_text())["runs"])
+          status = ("incomplete" if os.environ["ANALYSIS_OUTCOME"] != "success"
+                    else "findings" if count else "ok" if reports else "unavailable")
+          directory = Path(os.environ["RUNNER_TEMP"]) / "advisory-codeql"
+          directory.mkdir(exist_ok=True)
+          payload = {"group": "codeql", "commit": os.environ["GITHUB_SHA"],
+                     "checks": [], "manifests": [{"action": "codeql", "status": status,
+                                                  "findings_count": count if reports else None}]}
+          (directory / "status.json").write_text(json.dumps(payload, indent=2) + "\n")
+          print(json.dumps(payload, indent=2))
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
+              f.write(f"## CodeQL: {status}\n\nFindings: {count if reports else 'unavailable'}\n")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: advisory-codeql
+          path: ${{ runner.temp }}/advisory-codeql/status.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  report:
+    name: advisory / consolidated-report
+    needs: [groups, codeql]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: advisory-*
+          path: ${{ runner.temp }}/advisory-reports
+      - name: Consolidate independent advisory evidence
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          root = Path(os.environ["RUNNER_TEMP"]) / "advisory-reports"
+          expected = {"infrastructure", "static-analysis", "technical-debt", "security",
+                      "scientific-parity", "property-fuzz", "mutation", "native-environment",
+                      "coverity", "codeql"}
+          reports = {}
+          for path in sorted(root.glob("advisory-*/status.json")):
+              row = json.loads(path.read_text())
+              if row.get("commit") == os.environ["GITHUB_SHA"]:
+                  reports[row["group"]] = row
+          missing = sorted(expected - reports.keys())
+          payload = {"commit": os.environ["GITHUB_SHA"], "groups": reports,
+                     "missing_groups": missing,
+                     "coverage": "See advisory / coverage in the required CI workflow"}
+          destination = Path(os.environ["RUNNER_TEMP"]) / "advisory-consolidated.json"
+          destination.write_text(json.dumps(payload, indent=2) + "\n")
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
+              f.write("## Consolidated advisory evidence\n\n")
+              f.write("| Group | Reported outcomes |\n|---|---|\n")
+              for group in sorted(expected):
+                  row = reports.get(group)
+                  outcomes = sorted({m["status"] for m in row["manifests"]}) if row else []
+                  if row and any(c["exit"] for c in row["checks"]):
+                      outcomes.append("nonzero check")
+                  f.write(f"| {group} | {', '.join(outcomes) or 'unavailable'} |\n")
+              f.write("\nCoverage reuses the required CI artifact in advisory / coverage.\n")
+          if missing:
+              raise SystemExit("Missing or mismatched advisory status reports")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: advisory-consolidated
+          path: ${{ runner.temp }}/advisory-consolidated.json
+          retention-days: 7
+          if-no-files-found: warn

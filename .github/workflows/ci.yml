@@ -186,6 +186,71 @@ jobs:
             coverage.json
           if-no-files-found: ignore
 
+  advisory-coverage:
+    name: advisory / coverage
+    needs: coverage-report
+    if: always()
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.12.17"
+          enable-cache: true
+      - run: uv sync --extra dev
+      - uses: actions/download-artifact@v4
+        if: ${{ needs.coverage-report.result == 'success' }}
+        with:
+          name: qrl-coverage-report
+          path: ${{ runner.temp }}/advisory-coverage-input
+      - name: Reuse required CI coverage evidence
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          COVERAGE_GATE: ${{ needs.coverage-report.result }}
+        shell: bash
+        run: |
+          set +e
+          export QRL_PYTHON="$PWD/.venv/bin/python"
+          base="$BASE_SHA"
+          if [[ ! "$base" =~ ^[0-9a-f]{40}$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base=$(git merge-base HEAD origin/main) || exit 2
+          fi
+          failed=0
+          ./tools/check local-quality exclusions --base "$base" || failed=1
+          if [[ "$COVERAGE_GATE" == success ]]; then
+            ./tools/check local-quality coverage-diff "$RUNNER_TEMP/advisory-coverage-input/coverage.json" --full --base "$base" || failed=1
+          else
+            echo "::warning::Full coverage evidence unavailable because the required coverage gate did not pass"
+            failed=1
+          fi
+          exit "$failed"
+      - name: Summarize coverage and exclusions
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as f:
+              f.write("## Advisory coverage (reused required CI evidence)\n")
+              for p in sorted(Path("outputs/quality-local").glob("*/manifest.json")):
+                  data = json.loads(p.read_text())
+                  f.write(f"\n- {data['action']}: {data['execution_status']}")
+                  result = data.get("result", {})
+                  summary = result.get("summary", {}).get("overall", {})
+                  for metric in ("line_ratio", "branch_ratio"):
+                      if summary.get(metric) is not None:
+                          f.write(f"\n  - {metric}: {summary[metric]:.2%}")
+                  if isinstance(result.get("findings"), list):
+                      f.write(f"\n  - Findings: {len(result['findings'])}")
+                  f.write("\n")
+          PY
+
   parity:
     needs: dependency-lock
     runs-on: ubuntu-latest
