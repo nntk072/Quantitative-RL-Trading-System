@@ -18,7 +18,7 @@ def test_survival_price_overlay_resolves_candidate_geometry_contract() -> None:
     assert cfg.ppo.policy_distribution == "trade_setup_candidate_geometry_v1"
     assert float(cfg.ppo.gamma) == 1.0
     assert float(cfg.ppo.gae_lambda) == 1.0
-    assert int(cfg.env.n_envs) == 16
+    assert int(cfg.env.n_envs) == 8
     assert list(cfg.data.timeframes) == ["M1", "M3", "M5", "M10", "M15", "M30", "H1", "H4", "D1"]
     assert list(cfg.features.entry_ideas.timeframes) == [
         "M1",

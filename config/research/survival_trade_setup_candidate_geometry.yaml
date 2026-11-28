@@ -19,7 +19,7 @@ features:
     timeframes: [M1, M3, M5, M10, M15, M30, H1, H4, D1]
 
 env:
-  n_envs: 16
+  n_envs: 8
   strategy_actions: true
   trade_setup_actions: true
   candidate_geometry_actions: true
@@ -61,11 +61,6 @@ agent:
   arch: mtf_reasoning
 
 ppo:
-  rollout_feature_graph: true
-  update_graph: true
-  rollout_host_mask_check: true
-  rollout_policy_graph: true
-  torch_compile_features: true
   policy_distribution: trade_setup_candidate_geometry_v1
   candidate_geometry:
     embedding_dim: 32
@@ -84,5 +79,5 @@ ppo:
   checkpoint_freq: 250000
 
 quality_execution:
-  requested_n_envs: 16
+  requested_n_envs: 8
   exact_n_envs: true
