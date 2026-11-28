@@ -540,43 +540,41 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_version_and_layout_survive_sb3_save_load_without_training`](../../../../tests/unit/models/test_action_schema_sb3_roundtrip.py#L58)
+1. [test fixture: `test_versioned_continuous_checkpoint_restores_policy_layout_metadata`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L99)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_version_and_layout_survive_sb3_save_load_without_training(tmp_path):
-    schema = build_action_schema(has_direction=True)
-    model = PPO("MlpPolicy", _TinyEnv(), n_steps=2, batch_size=2, device="cpu")
-    cast(Any, model)._action_schema_version = schema.version
-    cast(Any, model)._action_layout_key = schema.key
-    path = tmp_path / "schema_saved.zip"
-    model.save(path)
+def test_versioned_continuous_checkpoint_restores_policy_layout_metadata() -> None:
+    schema = build_action_schema()
+    model = _continuous_model(
+        schema.width,
+        _action_schema_version=schema.version,
+        _action_layout_key=schema.key,
+    )
 
-    loaded = PPO.load(path, device="cpu")
-    assert cast(Any, loaded)._action_schema_version == schema.version
-# … caller assertions omitted …
+    assert validate_model_action_schema(model, schema) is None
+    assert model.policy._action_schema_version == schema.version
+    assert model.policy._action_layout_key == schema.key
 ```
 
-2. [production caller: `to_dict`](../../../../decisioning/actions.py#L55)
+2. [test fixture: `test_discrete_legacy_schema_needs_exact_layout_opt_in_and_is_labeled`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L119)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def to_dict(self) -> dict[str, object]:
-    return {
-        "kind": "discrete",
-        "version": self.version,
-        "key": self.key,
-        "width": self.width,
-        "n_actions": self.width,
-        "coordinates": list(self.names),
-        "has_direction": False,
-        "has_sl_mode": False,
-        "has_tp_mode": False,
-        "has_multi_tp": False,
-        "has_simplex": False,
-    }
+# … caller setup omitted …
+    disposition = validate_model_discrete_action_schema(
+        model,
+        schema,
+        source_schema=None,
+        allow_legacy=True,
+        legacy_layout_key=schema.key,
+    )
+
+    assert disposition == "legacy_unverified"
+    assert model._action_schema["checkpoint_metadata"] == disposition
+    assert model.policy._action_schema == model._action_schema
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.
@@ -660,35 +658,36 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_discrete_schema_binding_rejects_action_space_width_mismatch`](../../../../tests/unit/learning/test_rl_agent_additional_runtime_contracts.py#L33)
+1. [test fixture: `test_legacy_action_checkpoint_requires_opt_in_and_explicit_layout`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L44)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-def test_discrete_schema_binding_rejects_action_space_width_mismatch() -> None:
-    schema = build_discrete_trading_action_schema()
-    model = SimpleNamespace(action_space=spaces.Discrete(schema.width + 1), policy=None)
+def test_legacy_action_checkpoint_requires_opt_in_and_explicit_layout() -> None:
+    schema = build_action_schema()
+    model = _continuous_model(schema.width)
 
-    with pytest.raises(ValueError, match="width differs from the model action space"):
-        agent.bind_discrete_action_schema(model, schema)
-
-    assert not hasattr(model, "_action_schema")
+    with pytest.raises(ValueError, match="explicit legacy opt-in"):
+        validate_model_action_schema(model, schema)
+    with pytest.raises(ValueError, match="explicit legacy layout key"):
+        validate_model_action_schema(model, schema, allow_legacy=True)
+    with pytest.raises(ValueError, match="differs from expected"):
+        validate_model_action_schema(model, schema, allow_legacy=True, legacy_layout_key="6_dir")
 ```
 
-2. [test fixture: `test_version_and_layout_survive_sb3_save_load_without_training`](../../../../tests/unit/models/test_action_schema_sb3_roundtrip.py#L68)
+2. [test fixture: `test_versioned_continuous_checkpoint_rejects_mismatched_schema_metadata`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L88)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-# … caller setup omitted …
-    assert cast(Any, loaded)._action_schema_version == schema.version
-    assert cast(Any, loaded)._action_layout_key == schema.key
-    validate_model_action_schema(loaded, schema)
+def test_versioned_continuous_checkpoint_rejects_mismatched_schema_metadata(
+    metadata: dict[str, str], message: str
+) -> None:
+    schema = build_action_schema()
+    model = _continuous_model(schema.width, **metadata)
 
-    same_width_other_layout = build_action_schema(has_sl_mode=True)
-    assert same_width_other_layout.width == schema.width
-    with pytest.raises(ValueError, match="layout"):
-        validate_model_action_schema(loaded, same_width_other_layout)
+    with pytest.raises(ValueError, match=message):
+        validate_model_action_schema(model, schema)
 ```
 
 These excerpts demonstrate the API with the named project fixtures; adapt their setup to the documented contract before reusing them.

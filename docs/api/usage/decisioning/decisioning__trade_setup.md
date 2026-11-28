@@ -1237,20 +1237,23 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 # … caller assertions omitted …
 ```
 
-2. [production caller: `to_dict`](../../../../decisioning/trade_setup.py#L252)
+2. [test fixture: `test_action_contract_rejects_incompatible_legacy_and_checkpoint_metadata`](../../../../tests/unit/learning/test_action_schema_validation_contracts.py#L172)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 ```python
-        return {
-            "kind": "trade_setup_overlay",
-            "version": self.version,
-            "key": self.key,
-            "width": self.width,
-            "coordinates": list(self.names),
-            "categorical_coordinates": [
-                name
-                for name in ("trade_setup", "sl_mode", "tp_mode", "entry_execution", "exit")
+# … caller setup omitted …
+        setup_schema = build_trade_setup_action_schema()
+        validate_model_action_schema(
+            _continuous_model(setup_schema.width),
+            setup_schema,
+            allow_legacy=True,
+            legacy_layout_key=setup_schema.key,
+        )
+
+    with pytest.raises(ValueError, match="legacy4_no_exit_v1 requires a 4D checkpoint"):
+        validate_contract_action_schema(
+            _continuous_model(schema.width),
 # … caller assertions omitted …
 ```
 

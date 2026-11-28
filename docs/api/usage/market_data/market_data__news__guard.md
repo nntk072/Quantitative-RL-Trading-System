@@ -165,7 +165,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_load_release_times_reads_utc_column`](../../../../tests/unit/market_data/test_news_guard.py#L232)
+1. [test fixture: `test_load_release_times_reads_utc_column`](../../../../tests/unit/market_data/test_news_guard.py#L262)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -238,7 +238,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
 
 **Observed usage:**
 
-1. [test fixture: `test_spike_blocks_new_entries_outside_ny_open_window`](../../../../tests/unit/market_data/test_news_guard.py#L62)
+1. [test fixture: `test_spike_blocks_new_entries_outside_ny_open_window`](../../../../tests/unit/market_data/test_news_guard.py#L64)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -264,7 +264,7 @@ Source excerpt (not standalone); follow the linked caller for imports and setup.
     assert not mask[0:6].any()
 ```
 
-2. [test fixture: `test_ny_open_manipulation_is_not_treated_as_news`](../../../../tests/unit/market_data/test_news_guard.py#L83)
+2. [test fixture: `test_ny_open_manipulation_is_not_treated_as_news`](../../../../tests/unit/market_data/test_news_guard.py#L85)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 
@@ -324,7 +324,7 @@ These excerpts demonstrate the API with the named project fixtures; adapt their 
 
 **Observed usage:**
 
-1. [test fixture: `test_news_guard_config_is_optional_and_resolves_relative_calendar_path`](../../../../tests/unit/market_data/test_news_guard.py#L236)
+1. [test fixture: `test_news_guard_config_is_optional_and_resolves_relative_calendar_path`](../../../../tests/unit/market_data/test_news_guard.py#L266)
 
 Source excerpt (not standalone); follow the linked caller for imports and setup.
 

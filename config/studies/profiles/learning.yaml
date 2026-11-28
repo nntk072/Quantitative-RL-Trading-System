@@ -5,6 +5,7 @@ api_paths:
 - learning/contracts.py
 - learning/rl/__init__.py
 - learning/rl/agent.py
+- learning/rl/agent_contracts.py
 - learning/rl/auxiliary.py
 - learning/rl/callbacks.py
 - learning/rl/candidate_geometry.py
