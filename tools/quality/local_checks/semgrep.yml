@@ -1,0 +1,37 @@
+rules:
+  - id: qrl-unsafe-deserialization
+    languages: [python]
+    severity: WARNING
+    message: Review whether the loaded checkpoint is trusted and provenance-checked.
+    patterns:
+      - pattern: torch.load(...)
+      - pattern-not: torch.load(..., weights_only=True, ...)
+  - id: qrl-broad-exception-suppression
+    languages: [python]
+    severity: WARNING
+    message: Review whether suppressed exceptions can hide trading or research failures.
+    pattern: |
+      try:
+        ...
+      except Exception:
+        pass
+  - id: qrl-future-feature-shift
+    languages: [python]
+    severity: WARNING
+    message: Negative shifts require a review for future-data leakage.
+    pattern: $FRAME.shift(-$N, ...)
+  - id: qrl-hot-loop-cuda-sync
+    languages: [python]
+    severity: WARNING
+    message: Review synchronization in a learning or simulation loop.
+    pattern: torch.cuda.synchronize(...)
+  - id: qrl-shell-subprocess
+    languages: [python]
+    severity: WARNING
+    message: Review subprocess shell argument provenance.
+    pattern: subprocess.run(..., shell=True, ...)
+  - id: qrl-global-seed-reset
+    languages: [python]
+    severity: INFO
+    message: Review whether global RNG state affects experiment reproducibility.
+    pattern: numpy.random.seed(...)
