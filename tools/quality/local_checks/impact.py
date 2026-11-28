@@ -14,6 +14,7 @@ from coverage import CoverageData
 
 
 def _git(root: Path, *args: str) -> str:
+    """Run a read-only Git query in the selected checkout."""
     return subprocess.check_output(["git", *args], cwd=root).decode()
 
 
@@ -28,15 +29,18 @@ def changed_paths(root: Path, base: str) -> tuple[str, list[str]]:
 
 
 def _module(path: str) -> str:
+    """Translate a Python source path into its import name."""
     return path.removesuffix(".py").removesuffix("/__init__").replace("/", ".")
 
 
 def _parents(module: str) -> set[str]:
+    """Return all package prefixes of a module name."""
     parts = module.split(".")
     return {".".join(parts[:i]) for i in range(1, len(parts) + 1)}
 
 
 def _imports(path: str, tree: ast.AST) -> set[str]:
+    """Extract explicit absolute and relative imports."""
     names: set[str] = set()
     package = _module(path) if path.endswith("/__init__.py") else _module(path).rpartition(".")[0]
     for node in ast.walk(tree):
@@ -119,15 +123,17 @@ def select(
     if not contexts:
         reasons.append("missing validated coverage contexts")
     try:
-        affected = closure(reverse_imports(sources), changed)
+        graph = reverse_imports(sources)
+        affected = closure(graph, changed)
     except (SyntaxError, ValueError) as exc:
+        graph = {}
         affected = changed
         reasons.append(str(exc))
     selected = affected & tests
     for path in affected:
         selected.update(contexts.get(path, set()) & tests)
     for path in changed - tests:
-        if path not in contexts and not (closure(reverse_imports(sources), {path}) & tests):
+        if path not in contexts and not (closure(graph, {path}) & tests):
             reasons.append(f"no test evidence for {path}")
     if changed and not selected:
         reasons.append("no tests selected for nonempty change")

@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from tools.quality.local_checks.impact import closure, reverse_imports, select
 from tools.quality.local_checks.resources import budget, cache_key, schedule
 

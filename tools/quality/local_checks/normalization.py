@@ -12,12 +12,14 @@ from xml.etree import ElementTree
 
 
 def _list(value: Any, label: str) -> list[Any]:
+    """Validate a structured list rather than silently discarding malformed data."""
     if not isinstance(value, list):
         raise ValueError(f"Expected list: {label}")
     return value
 
 
 def _location(value: Any, root: Path) -> str | None:
+    """Normalize repository-relative and file URI locations."""
     if value is None:
         return None
     path = str(value)
@@ -68,6 +70,7 @@ def finding(
 
 
 def _sarif(raw: dict[str, Any], tool: str, root: Path) -> list[dict[str, Any]]:
+    """Parse standard SARIF and reject reported execution failure."""
     runs = _list(raw["runs"], "SARIF runs")
     if not runs or raw.get("version") != "2.1.0":
         raise ValueError("Unsupported SARIF document")
@@ -93,6 +96,7 @@ def _sarif(raw: dict[str, Any], tool: str, root: Path) -> list[dict[str, Any]]:
 
 
 def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
+    """Normalize supported source diagnostic schemas."""
     result = []
     if tool in {"semgrep", "bandit"}:
         if raw.get("errors"):
@@ -135,6 +139,7 @@ def _source_findings(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
 
 
 def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """Normalize package vulnerability reports."""
     result = []
     if tool == "pip-audit":
         for dep in _list(raw["dependencies"], "dependencies"):
@@ -168,6 +173,7 @@ def _dependencies(tool: str, raw: dict[str, Any], root: Path) -> list[dict[str, 
 
 
 def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """Normalize vulnerability, configuration, secret and license findings."""
     result = []
     if "Results" not in raw or raw.get("Results") is None:
         raise ValueError("Trivy did not report a result inventory")
@@ -198,6 +204,7 @@ def _trivy(raw: dict[str, Any], root: Path) -> list[dict[str, Any]]:
 
 
 def _other(tool: str, raw: Any, root: Path) -> list[dict[str, Any]]:
+    """Normalize other explicitly supported analyzer formats."""
     result = []
     if tool == "coverity":
         if raw.get("error"):

@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from tools.quality.local_checks.mutation_results import parse_mutmut_results, summarize
 from tools.quality.local_checks.normalization import normalize, read_report
 

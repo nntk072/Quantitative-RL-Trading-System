@@ -43,12 +43,14 @@ ALIASES = {
 
 
 def _count(value: Any) -> int:
+    """Validate an integer count without accepting booleans."""
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise ValueError("Mutation counts must be nonnegative integers")
     return value
 
 
 def _counts(raw: dict[str, Any], tool: str) -> dict[str, int | None]:
+    """Read known status counters, preserving unknown counters as null."""
     keys = {
         "killed": "caught" if tool == "cargo-mutants" else "killed",
         "survived": "missed" if tool == "cargo-mutants" else "survived",

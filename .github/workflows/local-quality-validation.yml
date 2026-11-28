@@ -1,0 +1,38 @@
+name: Local quality development validation
+
+on:
+  push:
+    branches:
+      - quality/local-infrastructure-finalization
+
+permissions:
+  contents: read
+
+concurrency:
+  group: local-quality-development-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tooling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install bounded tooling
+        run: python -m pip install ruff==0.15.22 coverage==7.15.2 pytest==9.1.1
+      - name: Print scoped formatting fixes
+        shell: bash
+        run: |
+          ruff check --select I --fix tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
+          ruff format tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
+          echo QRL_FORMAT_DIFF_BEGIN
+          git diff -- tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
+          echo QRL_FORMAT_DIFF_END
+          ruff check tools/quality/local_checks tests/unit/tooling/test_local_quality_*.py
+      - name: Test bounded infrastructure without product or training dependencies
+        run: python -m pytest --noconftest -q tests/unit/tooling/test_local_quality_*.py

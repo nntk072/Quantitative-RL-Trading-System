@@ -12,6 +12,7 @@ from typing import Any
 
 
 def _number(path: Path) -> int | None:
+    """Read a cgroup integer, treating an unlimited or unavailable value as unknown."""
     try:
         value = path.read_text().strip()
         return int(value) if value != "max" else None
@@ -31,6 +32,7 @@ def cgroup_directory(proc: Path = Path("/proc/self/cgroup")) -> Path | None:
 
 
 def _limits(directory: Path | None) -> tuple[int | None, int | None]:
+    """Collect the tightest CPU quota and memory headroom across cgroup ancestors."""
     if directory is None:
         return None, None
     cpu_limits: list[int] = []
@@ -52,6 +54,7 @@ def _limits(directory: Path | None) -> tuple[int | None, int | None]:
 
 
 def _host_available() -> int | None:
+    """Read the host available-memory estimate when exposed."""
     try:
         for line in Path("/proc/meminfo").read_text().splitlines():
             if line.startswith("MemAvailable:"):
